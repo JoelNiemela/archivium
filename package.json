@@ -1,0 +1,29 @@
+{
+  "name": "archivium",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JoelNiemela/archivium.git"
+  },
+  "author": "JoelNiemela",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JoelNiemela/archivium/issues"
+  },
+  "homepage": "https://hmi.dynu.net/archivium",
+  "dependencies": {
+    "express": "^4.18.0",
+    "mongoose": "^6.3.4",
+    "pug": "^3.0.2",
+    "serve-favicon": "^2.5.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  }
+}

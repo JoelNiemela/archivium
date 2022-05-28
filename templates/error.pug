@@ -1,0 +1,18 @@
+extends layout.pug
+
+block content
+  //- error msg table
+  -
+    const errorMsgTable = {
+      404: 'Uh oh! It looks like the page you\'re looking for doesn\'t exist. If you believe it should, go bug Carl about it :D',
+      500: 'Uh oh! Looks like something went wrong whilst trying to render this page. If you want something to be done about this shameful negligence, go bug Carl about it :D',
+    };
+    const defaultErrorMsg = 'Uh oh! There seems to have been an error so strange not even Carl could think of a bad joke to go with it. Apologies.'
+  .containerCol
+    .container.header
+      h1 Error #{code}
+    .containerRow( style={ height: '350px' } )
+      .container( style={ width: '65%' } )
+        p.text #{errorMsgTable[code] || defaultErrorMsg}
+      .container( style={ 'flex-grow': 1, padding: 0 } )
+        img(src=`https://http.cat/${code}` style={ width: '100%', height: '100%', 'object-fit': 'cover' })

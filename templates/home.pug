@@ -1,0 +1,31 @@
+extends layout.pug
+
+mixin typeTile(type, color)
+  .feild-frame
+    .card-container.card
+      a.link(href=`/archivium/${type}`)
+        div(style={ 'background-color': color })
+          br
+          h2(align='center')= capitalize(type)
+          br
+      br
+      div
+        a.btn.btn-sm.btn-margin-narrow.margin-side &#x2795; New
+        a.btn.btn-sm My #{type}
+
+
+block content
+  .container(style={
+    width: '90%',
+    margin: '0 auto',
+  })
+    h1(align='center') Welcome to Archivium
+    br
+    .feild-frame-container
+      +typeTile('characters', '#F44336')
+      +typeTile('locations', '#4CAF50')
+      +typeTile('events', '#9e9e9e')
+      +typeTile('archives', '#a1887f')
+      +typeTile('documents', '#4d4d4d')
+      +typeTile('timelines', '#64B5F6')
+      +typeTile('items', '#ffc107')

@@ -1,0 +1,101 @@
+-
+  const capitalize = (str) => str[0].toUpperCase() + str.substr(1,str.length-1);
+  const prefixItems = (prefix, items) => {
+    const prefixedItems = [];
+    for (const item of items) {
+      prefixedItems.push(prefix + item);
+    }
+    return prefixedItems;
+  };
+  class MarkdownTag {
+    constructor(tagName, content, className, link, parent) {
+      this.tagName = tagName;
+      this.content = content;
+      this.subtags = [];
+      this.className = className;
+      this.link = link;
+      this.parent = parent;
+    }
+    replace(tagName, content, className, link) {
+      this.tagName = tagName;
+      this.content = content;
+      this.className = className;
+      this.link = link;
+    }
+    addChild(tagName, content, className, link) {
+      const newChild = new MarkdownTag(tagName, content, className, link, this);
+      this.subtags.push(newChild);
+      return newChild;
+    }
+    evaluate() {
+      return [this.tagName, this.content, this.className, this.link, this.subtags.map(tag => tag.evaluate())]
+    }
+  }
+  const parseMdText = (text) => {
+    let tagArray = [new MarkdownTag('p', '', 'text')];
+    let curTag = tagArray[0];
+    let chunk = '';
+    let tagName = 'p';
+    let className = 'text';
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (char === '\\') {
+        chunk += text[i+1];
+        i++;
+      } else if (char === '\n') {
+        curTag.addChild(tagName, chunk, className);
+        curTag = new MarkdownTag('p', '', className);
+        tagArray.push(curTag);
+        chunk = '';
+        tagName = 'p';
+      } else if (char === '*' && text[i+1] === '*') {
+        curTag = curTag.addChild(tagName, chunk, className);
+        chunk = '';
+        i++;
+        if (tagName === 'b') {
+          curTag = curTag.parent;
+          tagName = curTag.tagName;
+        } else {
+          tagName = 'b';
+        }
+      } else if (char === '*') {
+        curTag = curTag.addChild(tagName, chunk, className);
+        chunk = '';
+        if (tagName === 'i') {
+          curTag = curTag.parent;
+          tagName = curTag.tagName;
+        } else {
+          tagName = 'i';
+        }
+      } else if (char === '[') {
+        curTag = curTag.addChild(tagName, chunk, className);
+        chunk = '';
+        tagName = 'a';
+      } else if (char === ']' && tagName === 'a') {
+        if (text[i+1] === '(') {
+          const linkText = chunk;
+          chunk = '';
+          i += 2;
+          while (i < text.length && text[i] !== ')') {
+            chunk += text[i];
+            i++;
+          }
+          if (curTag.tagName === 'a') {
+            curTag.replace(tagName, linkText, className, chunk);
+          } else {
+            curTag.addChild(tagName, linkText, className, chunk);
+          }
+          curTag = curTag.parent;
+          tagName = curTag.tagName;
+          chunk = '';
+        } else {
+          tagName = curTag.tagName;
+          curTag = curTag.parent;
+        }
+      } else {
+        chunk += char;
+      }
+    }
+    tagArray = tagArray.map(tag => tag.evaluate());
+    return tagArray;
+  };

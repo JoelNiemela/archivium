@@ -23,6 +23,7 @@ CREATE TABLE universes (
   authorId INT,
   createdAt TIMESTAMP,
   updatedAt TIMESTAMP,
+  public BIT,
   objData TEXT,
   FOREIGN KEY (authorId) REFERENCES users (id),
   PRIMARY KEY (id)
@@ -31,11 +32,12 @@ CREATE TABLE universes (
 CREATE TABLE items (
   id INT NOT NULL AUTO_INCREMENT,
   title VARCHAR(32),
-  authorId INT,
+  authorId INT NOT NULL,
   universeId INT NOT NULL,
   parentId INT,
   createdAt TIMESTAMP,
   updatedAt TIMESTAMP,
+  public BIT,
   objData TEXT,
   FOREIGN KEY (authorId) REFERENCES users (id),
   FOREIGN KEY (universeId) REFERENCES universes (id),
@@ -45,10 +47,10 @@ CREATE TABLE items (
 
 CREATE TABLE authoruniverses (
   id INT NOT NULL AUTO_INCREMENT,
-  itemId INT,
+  universeId INT,
   userId INT,
   permissionLevel INT,
-  FOREIGN KEY (itemId) REFERENCES items (id),
+  FOREIGN KEY (universeId) REFERENCES universes (id),
   FOREIGN KEY (userId) REFERENCES users (id),
   PRIMARY KEY (id)
 );

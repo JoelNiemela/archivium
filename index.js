@@ -33,23 +33,7 @@ app.get(`${ADDR_PREFIX}/`, (req, res) => {
   res.end(html);
 });
 
-// app.get(`${ADDR_PREFIX}/universes`, Auth.verifySession, (req, res) => {
-//   const user = req.session.user;
-//   const username = user && user.username;
-//   models.Universes.getAll()
-//     .then((data) => {
-//       res.end(JSON.stringify(data));
-//     })
-//     .catch((err) => {
-//       console.error(err);
-//     });
-// });
-
-
-/*
-  API ROUTES
-*/
-app.get(`${ADDR_PREFIX}/api/universes`, Auth.verifySession, (req, res) => {
+app.get(`${ADDR_PREFIX}/universes`, Auth.verifySession, (req, res) => {
   const user = req.session.user;
   const username = user && user.username;
   models.Universes.getAll()
@@ -59,6 +43,57 @@ app.get(`${ADDR_PREFIX}/api/universes`, Auth.verifySession, (req, res) => {
     .catch((err) => {
       console.error(err);
     });
+});
+
+
+/*
+  API ROUTES
+*/
+app.get(`${ADDR_PREFIX}/api/universes`, (req, res) => {
+  const user = req.session.user ? { id: req.session.user.id, username: req.session.user.username } : null;
+  models.Universes.getAll()
+    .then((data) => {
+      res.json({
+        user,
+        data,
+      });
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+});
+app.get(`${ADDR_PREFIX}/api/universes/:id`, (req, res) => {
+  const user = req.session.user ? { id: req.session.user.id, username: req.session.user.username } : null;
+  return models.Universes.get({ id: req.params.id })
+    .then((data) => {
+      res.json({
+        user,
+        data,
+      });
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+});
+app.post(`${ADDR_PREFIX}/api/universes`, (req, res) => {
+  const user = req.session.user;
+  if (user) {
+    console.log(req.body, user);
+    return models.Universes.create({
+      title: req.body.title,
+      authorId: user.id,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      public: req.body.public === '1',
+      objData: req.body.objData,
+    })
+      .then((data) => {
+        console.log(data);
+        res.sendStatus(201);
+      })
+  } else {
+    res.sendStatus(401);
+  }
 });
 
 
@@ -138,7 +173,7 @@ app.post(`${ADDR_PREFIX}/signup`, (req, res) => {
     })
     .catch((err) => {
       console.error(err);
-      return res.redirect(`${ADDR_PREFIX}/signup`)
+      return res.redirect(`${ADDR_PREFIX}/signup`);
     });
 });
 

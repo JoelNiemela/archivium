@@ -1,14 +1,31 @@
 const Model = require('./model');
 
 /**
- * Sessions is a class with methods to interact with the sessions table, which
- * stores the information about a session (id, hash, userId).
+ *
  * @constructor
  * @augments Model
  */
 class Universes extends Model {
   constructor() {
     super('universes');
+  }
+
+  /**
+   * Gets all records in the table matching the specified conditions.
+   * @param {Object} options - An object where the keys are column names and the
+   * values are the current values to be matched.
+   * @returns {Promise<Array>} A promise that is fulfilled with an array of objects
+   * matching the conditions or is rejected with the the error that occurred during
+   * the query.
+   */
+   getAll(user, options) {
+    if (!options) {
+      let queryString = `SELECT * FROM ${this.tablename} WHERE public = 1 OR authorId = ?`;
+      return this.executeQuery(queryString, [ user.id ]);
+    }
+    let parsedOptions = this.parseData(options);
+    let queryString = `SELECT * FROM ${this.tablename} WHERE (public = 1 OR authorId = ?) AND (${parsedOptions.string.join(' AND ')})`;
+    return this.executeQuery(queryString, [ user.id, ...parsedOptions.values ]);
   }
 
   /**

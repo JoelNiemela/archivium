@@ -47,7 +47,7 @@ app.get(`${ADDR_PREFIX}/universes`, Auth.verifySession, (req, res) => {
 app.get(`${ADDR_PREFIX}/api/universes`, async (req, res) => {
   const user = req.session.user ? { id: req.session.user.id, username: req.session.user.username } : null;
   try {
-    const data = await models.Universes.getAll();
+    const data = await models.Universes.getAll(user);
     res.json({ user, data });
   } catch (err) {
     console.error(err);

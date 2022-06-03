@@ -1,18 +1,6 @@
 const db = require('../database');
 const _ = require('lodash');
 
-const executeQuery = (query, values) => {
-  return db.queryAsync(query, values).spread(results => results);
-};
-
-const parseData = options => {
-  return _.reduce(options, (parsed, value, key) => {
-    parsed.string.push(`${key} = ?`);
-    parsed.values.push(value);
-    return parsed;
-  }, { string: [], values: [] });
-};
-
 /**
  * Base class for all database models, written in ES6 class format. You should NOT refer
  * to this interface directly unless you are creating a new model subclass.
@@ -21,6 +9,18 @@ const parseData = options => {
 class Model {
   constructor(tablename) {
     this.tablename = tablename;
+  }
+
+  executeQuery(query, values) {
+    return db.queryAsync(query, values).spread(results => results);
+  }
+  
+  parseData(options) {
+    return _.reduce(options, (parsed, value, key) => {
+      parsed.string.push(`${key} = ?`);
+      parsed.values.push(value);
+      return parsed;
+    }, { string: [], values: [] });
   }
 
   /**
@@ -34,11 +34,11 @@ class Model {
   getAll(options) {
     if (!options) {
       let queryString = `SELECT * FROM ${this.tablename}`;
-      return executeQuery(queryString);
+      return this.executeQuery(queryString);
     }
-    let parsedOptions = parseData(options);
+    let parsedOptions = this.parseData(options);
     let queryString = `SELECT * FROM ${this.tablename} WHERE ${parsedOptions.string.join(' AND ')}`;
-    return executeQuery(queryString, parsedOptions.values);
+    return this.executeQuery(queryString, parsedOptions.values);
   }
 
   /**
@@ -51,9 +51,9 @@ class Model {
    * the conditions provided, only one will be provided upon fulfillment.
    */
   get(options) {
-    let parsedOptions = parseData(options);
+    let parsedOptions = this.parseData(options);
     let queryString = `SELECT * FROM ${this.tablename} WHERE ${parsedOptions.string.join(' AND ')} LIMIT 1`;
-    return executeQuery(queryString, parsedOptions.values).then(results => results[0]);
+    return this.executeQuery(queryString, parsedOptions.values).then(results => results[0]);
   }
 
   /**
@@ -67,7 +67,7 @@ class Model {
    */
   create(options) {
     let queryString = `INSERT INTO ${this.tablename} SET ?`;
-    return executeQuery(queryString, options);
+    return this.executeQuery(queryString, options);
   }
 
   /**
@@ -82,9 +82,9 @@ class Model {
    * during the query.
    */
   update(options, values) {
-    let parsedOptions = parseData(options);
+    let parsedOptions = this.parseData(options);
     let queryString = `UPDATE ${this.tablename} SET ? WHERE ${parsedOptions.string.join(' AND ')}`;
-    return executeQuery(queryString, Array.prototype.concat(values, parsedOptions.values));
+    return this.executeQuery(queryString, Array.prototype.concat(values, parsedOptions.values));
   }
 
   /**
@@ -97,9 +97,9 @@ class Model {
    * during the query.
    */
   delete(options) {
-    let parsedOptions = parseData(options);
+    let parsedOptions = this.parseData(options);
     let queryString = `DELETE FROM ${this.tablename} WHERE ${parsedOptions.string.join(' AND ')}`;
-    return executeQuery(queryString, parsedOptions.values);
+    return this.executeQuery(queryString, parsedOptions.values);
   }
 
   /**
@@ -110,7 +110,7 @@ class Model {
    */
   deleteAll() {
     let queryString = `TRUNCATE TABLE ${this.tablename}`;
-    return executeQuery(queryString);
+    return this.executeQuery(queryString);
   }
 }
 

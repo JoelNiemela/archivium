@@ -3,7 +3,7 @@ extends layout.pug
 mixin typeTile(type, color)
   .feild-frame
     .card-container.card
-      a.link(href=`/archivium/${type}`)
+      a.link(href=`${ADDR_PREFIX}/${type}`)
         div(style={ 'background-color': color })
           br
           h2(align='center')= capitalize(type)

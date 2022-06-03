@@ -36,13 +36,8 @@ app.get(`${ADDR_PREFIX}/`, (req, res) => {
 app.get(`${ADDR_PREFIX}/universes`, Auth.verifySession, (req, res) => {
   const user = req.session.user;
   const username = user && user.username;
-  models.Universes.getAll()
-    .then((data) => {
-      res.end(JSON.stringify(data));
-    })
-    .catch((err) => {
-      console.error(err);
-    });
+  const html = homeTemplate({ username, ADDR_PREFIX });
+  res.end(html);
 });
 
 
@@ -70,20 +65,17 @@ app.get(`${ADDR_PREFIX}/api/universes/:id`, async (req, res) => {
     res.sendStatus(500);
   }
 });
-app.post(`${ADDR_PREFIX}/api/universes`, (req, res) => {
+app.post(`${ADDR_PREFIX}/api/universes`, async (req, res) => {
   const user = req.session.user;
   if (user) {
-    console.log(req.body, user);
-    return models.Universes.create({
+    const data = await models.Universes.create({
       title: req.body.title,
       authorId: user.id,
       public: req.body.public === '1',
       objData: req.body.objData,
-    })
-      .then((data) => {
-        console.log(data);
-        res.sendStatus(201);
-      })
+    });
+    console.log(data);
+    res.sendStatus(201);
   } else {
     res.sendStatus(401);
   }
@@ -93,18 +85,18 @@ app.post(`${ADDR_PREFIX}/api/universes`, (req, res) => {
 /* 
   ACCOUNT ROUTES
 */
-app.get(`${ADDR_PREFIX}/login`, (req, res) => {
+app.get(`${ADDR_PREFIX}/login`, async (req, res) => {
   const user = req.session.user;
   const username = user && user.username;
   if (user) {
-    return models.Sessions.delete({ id: req.session.id })
-      .then((data) => {
-        res.clearCookie('archiviumuid', req.session.id);
-        res.end(loginTemplate({ username, ADDR_PREFIX }));
-      })
-      .catch((err) => {
-        console.error(err);
-      });
+    try {
+      await models.Sessions.delete({ id: req.session.id })
+      res.clearCookie('archiviumuid', req.session.id);
+      res.end(loginTemplate({ username, ADDR_PREFIX }));
+    } catch (err) {
+      console.error(err);
+      res.sendStatus(500);
+    }
   }
   res.end(loginTemplate({ user, ADDR_PREFIX }));
 });
@@ -115,59 +107,52 @@ app.get(`${ADDR_PREFIX}/signup`, (req, res) => {
   res.end(signupTemplate({ username, ADDR_PREFIX }));
 });
 
-app.get(`${ADDR_PREFIX}/logout`, (req, res) => {
-  return models.Sessions.delete({ id: req.session.id })
-    .then((data) => {
-      res.clearCookie('archiviumuid', req.session.id);
-      res.redirect(`${ADDR_PREFIX}/`);
-    })
-    .catch((err) => {
-      console.error(err);
-    });
+app.get(`${ADDR_PREFIX}/logout`, async (req, res) => {
+  try {
+    await models  .Sessions.delete({ id: req.session.id })
+    res.clearCookie('archiviumuid', req.session.id);
+    res.redirect(`${ADDR_PREFIX}/`);
+  } catch (err) {
+    console.error(err);
+    res.sendStatus(500);
+  }
 });
 
-app.post(`${ADDR_PREFIX}/login`, (req, res) => {
-  return models.Users.get({ username: req.body.username })
-    .then((user) => {
-      if (user) {
-        req.loginId = user.id;
-        return models.Users.compare(req.body.password, user.password, user.salt);
-      }
-    })
-    .then((isValidUser) => {
+app.post(`${ADDR_PREFIX}/login`, async (req, res) => {
+  try {  
+    const user = await models.Users.get({ username: req.body.username });
+    if (user) {
+      req.loginId = user.id;
+      const isValidUser = models.Users.compare(req.body.password, user.password, user.salt);
       if (isValidUser) {
-        return models.Sessions.update({ id: req.session.id }, { userId: req.loginId })
-          .then(() => {
-            res.status(200);
-            return res.redirect(`${ADDR_PREFIX}/`);
-          })
-          .catch((err) => {
-            console.error(err);
-            return res.sendStatus(500);
-          })
+        await models.Sessions.update({ id: req.session.id }, { userId: req.loginId });
+        res.status(200);
+        return res.redirect(`${ADDR_PREFIX}/`);
       } else {
         return res.redirect(`${ADDR_PREFIX}/login`);
       }
-    });
+    }
+  } catch (err) {
+    console.error(err);
+    return res.sendStatus(500);
+  }
 });
 
-app.post(`${ADDR_PREFIX}/signup`, (req, res) => {
-  return models.Users.create( req.body )
-    .then((data) => {
-      return models.Sessions.update({ id: req.session.id }, { userId: data.insertId })
-        .then(() => {
-          res.status(201);
-          return res.redirect(`${ADDR_PREFIX}/`);
-        })
-        .catch((err) => {
-          console.error(err);
-          return res.sendStatus(500);
-        });
-    })
-    .catch((err) => {
+app.post(`${ADDR_PREFIX}/signup`, async (req, res) => {
+  try {
+    const data = await models.Users.create( req.body );
+    try {
+      await models.Sessions.update({ id: req.session.id }, { userId: data.insertId });
+      res.status(201);
+      return res.redirect(`${ADDR_PREFIX}/`);
+    } catch (err) {
       console.error(err);
-      return res.redirect(`${ADDR_PREFIX}/signup`);
-    });
+      return res.sendStatus(500);
+    }
+  } catch (err) {
+    console.error(err);
+    return res.redirect(`${ADDR_PREFIX}/signup`);
+  }
 });
 
 // 404 errors

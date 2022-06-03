@@ -49,31 +49,26 @@ app.get(`${ADDR_PREFIX}/universes`, Auth.verifySession, (req, res) => {
 /*
   API ROUTES
 */
-app.get(`${ADDR_PREFIX}/api/universes`, (req, res) => {
+app.get(`${ADDR_PREFIX}/api/universes`, async (req, res) => {
   const user = req.session.user ? { id: req.session.user.id, username: req.session.user.username } : null;
-  models.Universes.getAll()
-    .then((data) => {
-      res.json({
-        user,
-        data,
-      });
-    })
-    .catch((err) => {
-      console.error(err);
-    });
+  try {
+    const data = await models.Universes.getAll();
+    res.json({ user, data });
+  } catch (err) {
+    console.error(err);
+    res.sendStatus(500);
+  }
 });
-app.get(`${ADDR_PREFIX}/api/universes/:id`, (req, res) => {
+app.get(`${ADDR_PREFIX}/api/universes/:id`, async (req, res) => {
   const user = req.session.user ? { id: req.session.user.id, username: req.session.user.username } : null;
-  return models.Universes.get({ id: req.params.id })
-    .then((data) => {
-      res.json({
-        user,
-        data,
-      });
-    })
-    .catch((err) => {
-      console.error(err);
-    });
+  try {
+    const data = await models.Universes.get({ id: req.params.id });
+    if (data.public || (user && user.id === data.authorId)) res.json({ user, data });
+    else res.sendStatus(user ? 403 : 401);
+  } catch (err) {
+    console.error(err);
+    res.sendStatus(500);
+  }
 });
 app.post(`${ADDR_PREFIX}/api/universes`, (req, res) => {
   const user = req.session.user;
@@ -82,8 +77,6 @@ app.post(`${ADDR_PREFIX}/api/universes`, (req, res) => {
     return models.Universes.create({
       title: req.body.title,
       authorId: user.id,
-      createdAt: new Date(),
-      updatedAt: new Date(),
       public: req.body.public === '1',
       objData: req.body.objData,
     })

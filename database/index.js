@@ -7,6 +7,7 @@ const connection = mysql.createConnection({
   user: 'root',
   password: PASSWORD,
   database: DATABASE,
+  multipleStatements: true,
 });
 
 const db = Promise.promisifyAll(connection, { multiArgs: true });

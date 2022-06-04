@@ -19,13 +19,14 @@ class Universes extends Model {
    * the query.
    */
    getAll(user, options) {
+    const usrQueryString = user ? ` OR authorId = ${user.id}` : '';
     if (!options) {
-      let queryString = `SELECT * FROM ${this.tablename} WHERE public = 1 OR authorId = ?`;
-      return this.executeQuery(queryString, [ user.id ]);
+      let queryString = `SELECT * FROM ${this.tablename} WHERE public = 1${usrQueryString}`;
+      return this.executeQuery(queryString);
     }
     let parsedOptions = this.parseData(options);
-    let queryString = `SELECT * FROM ${this.tablename} WHERE (public = 1 OR authorId = ?) AND (${parsedOptions.string.join(' AND ')})`;
-    return this.executeQuery(queryString, [ user.id, ...parsedOptions.values ]);
+    let queryString = `SELECT * FROM ${this.tablename} WHERE (public = 1${usrQueryString}) AND (${parsedOptions.string.join(' AND ')})`;
+    return this.executeQuery(queryString, [ parsedOptions.values ]);
   }
 
   /**

@@ -19,7 +19,7 @@ CREATE TABLE users (
 
 CREATE TABLE universes (
   id INT NOT NULL AUTO_INCREMENT,
-  title VARCHAR(32),
+  title VARCHAR(64),
   authorId INT,
   createdAt TIMESTAMP,
   updatedAt TIMESTAMP,
@@ -31,7 +31,7 @@ CREATE TABLE universes (
 
 CREATE TABLE items (
   id INT NOT NULL AUTO_INCREMENT,
-  title VARCHAR(32),
+  title VARCHAR(64),
   authorId INT NOT NULL,
   universeId INT NOT NULL,
   parentId INT,

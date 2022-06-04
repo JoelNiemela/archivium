@@ -3,3 +3,5 @@ package-lock.json
 
 database/config.js
 config.js
+
+database/export/

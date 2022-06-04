@@ -21,19 +21,31 @@ mixin mdText(text)
 doctype html
 html(lang='en')
   head
-    title Remnants
-    link(rel='stylesheet' href='https://archivium.herokuapp.com/assets/application-d8877ee1339f211cf14d5e49bd4d2e919d7909a28c566f3f27fa90cc9ddc84fb.css')
+    title Archivium
+    link(rel='stylesheet' href=`${ADDR_PREFIX}/assets/styles.css`)
   body
     nav.navbar
-      ul.navbar-body
-        li.navbar-btn
-          a.navbar-btn-link(href='/archivium') Home
-        li.navbar-btn
-          a.navbar-btn-link(href='/archivium/users') Users
-        li.navbar-btn
-          a.navbar-btn-link(href='/archivium/universes') Universes
-        li.navbar-btn
-          a.navbar-btn-link(href='/archivium/objects') Objects
+      ul.navbarBtns
+        li.navbarBtn
+          a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/`) Home
+        li.navbarBtn
+          a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/users`) Users
+        li.navbarBtn
+          a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/universes`) Universes
+        li.navbarBtn
+          a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/objects`) Objects
+      if username
+        ul.navbarBtns
+          li.navbarBtn
+            span.navbarText Logged in as #{username}
+          li.navbarBtn
+            a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/logout`) Log Out
+      else
+        ul.navbarBtns
+          li.navbarBtn
+            a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/login`) Login
+          li.navbarBtn
+            a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/signup`) Sign Up
 
 
     .page

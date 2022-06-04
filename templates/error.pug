@@ -8,11 +8,8 @@ block content
       500: 'Uh oh! Looks like something went wrong whilst trying to render this page. If you want something to be done about this shameful negligence, go bug Carl about it :D',
     };
     const defaultErrorMsg = 'Uh oh! There seems to have been an error so strange not even Carl could think of a bad joke to go with it. Apologies.'
-  .containerCol
-    .container.header
+  div
+    div.error
       h1 Error #{code}
-    .containerRow( style={ height: '350px' } )
-      .container( style={ width: '65%' } )
-        p.text #{errorMsgTable[code] || defaultErrorMsg}
-      .container( style={ 'flex-grow': 1, padding: 0 } )
-        img(src=`https://http.cat/${code}` style={ width: '100%', height: '100%', 'object-fit': 'cover' })
+      img(src=`https://http.cat/${code}` style={ height: '90%', 'object-fit': 'contain' })
+      p #{errorMsgTable[code] || defaultErrorMsg}

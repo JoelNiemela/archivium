@@ -1,0 +1,9 @@
+extends layout.pug
+
+block content
+  h1 #{universe.title}
+  span
+    small Created by 
+      a( href=`${ADDR_PREFIX}/users/${owner.id}` ) #{owner.username}
+      |  #{formatDate(new Date(universe.createdAt))}
+      |  - Last updated #{formatDate(new Date(universe.updatedAt))}

@@ -99,3 +99,17 @@
     tagArray = tagArray.map(tag => tag.evaluate());
     return tagArray;
   };
+
+  const formatDate = (date) => {
+    const now = new Date();
+    const secondsAgo = (now - date) / 1000;
+    if (secondsAgo < 60) return `${Math.round(secondsAgo)} seconds ago`;
+    const minutesAgo = secondsAgo / 60;
+    if (minutesAgo < 60) return `${Math.round(minutesAgo)} minutes ago`;
+    const hoursAgo = minutesAgo / 60;
+    if (hoursAgo < 24) return `${Math.round(hoursAgo)} hours ago`;
+    const daysAgo = hoursAgo / 24;
+    if (daysAgo < 30) return `${Math.round(daysAgo)} days ago`;
+
+    return `on ${date.toDateString()} at ${date.toLocaleTimeString()}`;
+  };

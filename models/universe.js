@@ -19,7 +19,7 @@ class Universes extends Model {
    * the query.
    */
    getAll(user, options) {
-    const usrQueryString = user ? ` OR authorId = ${user.id}` : '';
+    const usrQueryString = user ? ` OR id IN (SELECT universeId FROM authoruniverses WHERE userId = ${user.id} AND permissionLevel <> 0)` : '';
     if (!options) {
       let queryString = `SELECT * FROM ${this.tablename} WHERE public = 1${usrQueryString}`;
       return this.executeQuery(queryString);
@@ -53,12 +53,20 @@ class Universes extends Model {
    * containing the results of the query or is rejected with the the error that occurred
    * during the query.
    */
-  create(options) {
-    return super.create.call(this, {
+  async create(options) {
+    const data = await super.create.call(this, {
       ...options,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+    console.log(data.insertId);
+    const queryString = `INSERT INTO authoruniverses SET ?`;
+    return [data, await this.executeQuery(queryString, {
+      universeId: data.insertId,
+      userId: options.authorId,
+      permissionLevel: 3,
+
+    })];
   }
 }
 

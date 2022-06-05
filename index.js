@@ -20,7 +20,8 @@ const errorTemplate = pug.compileFile('templates/error.pug');
 const homeTemplate = pug.compileFile('templates/home.pug');
 const loginTemplate = pug.compileFile('templates/login.pug');
 const signupTemplate = pug.compileFile('templates/signup.pug');
-const itemTemplate = pug.compileFile('templates/item.pug');
+const universeTemplate = pug.compileFile('templates/universe.pug');
+// const itemTemplate = pug.compileFile('templates/item.pug');
 
 // Serve static assets
 app.use(`${ADDR_PREFIX}/assets`, express.static(path.join(__dirname, 'assets/')));
@@ -50,7 +51,7 @@ app.get(`${ADDR_PREFIX}/universes/:id`, async (req, res) => {
     res.status(errCode1 || errCode2);
     res.end(errorTemplate({ code: errCode1 || errCode2, username, ADDR_PREFIX }));
   }
-  else res.end(itemTemplate({ universe: result.data, owner, ADDR_PREFIX }));
+  else res.end(universeTemplate({ universe: result.data, owner, ADDR_PREFIX }));
 });
 
 
@@ -68,6 +69,13 @@ app.get(`${ADDR_PREFIX}/api/universes/:id`, async (req, res) => {
   else res.json(result);
 });
 app.post(`${ADDR_PREFIX}/api/universes`, api.post.universes);
+
+
+app.get(`${ADDR_PREFIX}/api/users/:id`, async (req, res) => {
+  const [errCode, result] = await api.get.userById(req.params.id);
+  if (errCode) res.sendStatus(errCode);
+  else res.json(result);
+});
 
 
 /* 

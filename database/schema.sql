@@ -12,6 +12,7 @@ CREATE TABLE sessions (
 CREATE TABLE users (
   id INT NOT NULL AUTO_INCREMENT,
   username VARCHAR(32) UNIQUE,
+  email VARCHAR(64) UNIQUE,
   password VARCHAR(64),
   salt VARCHAR(64),
   permissionLevel TINYINT,

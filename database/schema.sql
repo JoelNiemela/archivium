@@ -25,7 +25,7 @@ CREATE TABLE universes (
   authorId INT,
   createdAt TIMESTAMP,
   updatedAt TIMESTAMP,
-  public BIT,
+  public BOOLEAN,
   objData TEXT,
   FOREIGN KEY (authorId) REFERENCES users (id),
   PRIMARY KEY (id)
@@ -39,7 +39,7 @@ CREATE TABLE items (
   parentId INT,
   createdAt TIMESTAMP,
   updatedAt TIMESTAMP,
-  public BIT,
+  public BOOLEAN,
   objData TEXT,
   FOREIGN KEY (authorId) REFERENCES users (id),
   FOREIGN KEY (universeId) REFERENCES universes (id),

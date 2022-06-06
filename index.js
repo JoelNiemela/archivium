@@ -1,6 +1,5 @@
 const express = require('express');
 const path = require('path');
-const models = require('./models');
 const api = require('./api');
 const CookieParser = require('./middleware/cookieParser');
 const Auth = require('./middleware/auth');
@@ -58,7 +57,7 @@ app.get(`${ADDR_PREFIX}/universes/:id`, async (req, res) => {
 
 app.get(`${ADDR_PREFIX}/users/:id`, async (req, res) => {
   const username = req.session.user && req.session.user.username;
-  const [errCode1, user] = await api.get.userById(req.params.id);
+  const [errCode1, user] = await api.get.user({ id: req.params.id });
   const [errCode2, universes] = await api.get.universesByAuthorId(req.session.user, req.params.id);
   if (errCode1) {
     res.status(errCode1 || errCode2);
@@ -88,11 +87,20 @@ app.get(`${ADDR_PREFIX}/api/universes/:id`, async (req, res) => {
   if (errCode) res.sendStatus(errCode);
   else res.json(result);
 });
-app.post(`${ADDR_PREFIX}/api/universes`, api.post.universes);
+app.post(`${ADDR_PREFIX}/api/universes`, async (req, res) => {
+  const user = req.session.user;
+  if (user) {
+    const data = await api.post.universe(user, req.body);
+    console.log(data);
+    res.sendStatus(201);
+  } else {
+    res.sendStatus(401);
+  }
+});
 
 
 app.get(`${ADDR_PREFIX}/api/users/:id`, async (req, res) => {
-  const [errCode, user] = await api.get.userById(req.params.id);
+  const [errCode, user] = await api.get.user({ id: req.params.id });
   if (errCode) res.sendStatus(errCode);
   else res.json(user);
 });
@@ -112,7 +120,7 @@ app.get(`${ADDR_PREFIX}/login`, async (req, res) => {
   const username = user && user.username;
   if (user) {
     try {
-      await models.Sessions.delete({ id: req.session.id })
+      await api.delete.session({ id: req.session.id })
       res.clearCookie('archiviumuid', req.session.id);
       res.end(loginTemplate({ username, ADDR_PREFIX }));
     } catch (err) {
@@ -131,7 +139,7 @@ app.get(`${ADDR_PREFIX}/signup`, (req, res) => {
 
 app.get(`${ADDR_PREFIX}/logout`, async (req, res) => {
   try {
-    await models  .Sessions.delete({ id: req.session.id })
+    await api.delete.session({ id: req.session.id })
     res.clearCookie('archiviumuid', req.session.id);
     res.redirect(`${ADDR_PREFIX}/`);
   } catch (err) {
@@ -142,12 +150,12 @@ app.get(`${ADDR_PREFIX}/logout`, async (req, res) => {
 
 app.post(`${ADDR_PREFIX}/login`, async (req, res) => {
   try {  
-    const user = await models.Users.get({ username: req.body.username });
+    const [errCode, user] = await api.get.user({ username: req.body.username }, true);
     if (user) {
       req.loginId = user.id;
-      const isValidUser = models.Users.compare(req.body.password, user.password, user.salt);
+      const isValidUser = api.validatePassword(req.body.password, user.password, user.salt);
       if (isValidUser) {
-        await models.Sessions.update({ id: req.session.id }, { userId: req.loginId });
+        await api.put.session({ id: req.session.id }, { userId: req.loginId });
         res.status(200);
         return res.redirect(`${ADDR_PREFIX}/`);
       } else {
@@ -162,9 +170,9 @@ app.post(`${ADDR_PREFIX}/login`, async (req, res) => {
 
 app.post(`${ADDR_PREFIX}/signup`, async (req, res) => {
   try {
-    const data = await models.Users.create( req.body );
+    const data = await api.post.user( req.body );
     try {
-      await models.Sessions.update({ id: req.session.id }, { userId: data.insertId });
+      await api.put.session({ id: req.session.id }, { userId: data.insertId });
       res.status(201);
       return res.redirect(`${ADDR_PREFIX}/`);
     } catch (err) {

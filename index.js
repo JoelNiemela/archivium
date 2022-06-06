@@ -47,10 +47,14 @@ app.get(`${ADDR_PREFIX}/universes/:id`, async (req, res) => {
   const user = req.session.user;
   const username = user && user.username;
   const [errCode1, universe] = await api.get.universeById(user, req.params.id);
-  const [errCode2, owner] = await api.get.userById(universe.authorId);
-  if (errCode1 || errCode2) {
-    res.status(errCode1 || errCode2);
-    res.end(errorTemplate({ code: errCode1 || errCode2, username, ADDR_PREFIX }));
+  if (errCode1) {
+    res.status(errCode1);
+    return res.end(errorTemplate({ code: errCode1, username, ADDR_PREFIX }));
+  }
+  const [errCode2, owner] = await api.get.user({ id: universe.authorId });
+  if (errCode2) {
+    res.status(errCode2);
+    res.end(errorTemplate({ code: errCode2, username, ADDR_PREFIX }));
   }
   else res.end(universeTemplate({ universe, owner, username, ADDR_PREFIX }));
 });

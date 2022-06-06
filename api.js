@@ -88,21 +88,22 @@ api.post.user = ({ username, password }) => {
 };
 
 api.get.universeById = async (user, id) => {
-  try {
-    const queryString = 'SELECT * FROM universes WHERE id = ? LIMIT 1;';
-    const data = await executeQuery(queryString, [ id ]);
-    const universe = data[0];
-    if (universe.public || (user && user.id in universe.authors)) return [null, universe];
-    else return [user ? 403 : 401, null];
-  } catch (err) {
-    console.error(err);
-    return [500, null];
-  }
+  const [errCode, data] = await api.get.universes(user, { 
+    strings: [
+      'universeId = ?',
+    ], values: [
+      id,
+    ] 
+  });
+  if (errCode) return [errCode, null];
+  const universe = data[0];
+  if (!universe) return [user ? 403 : 401, null];
+  return [null, universe];
 };
 
 api.get.universesByAuthorId = async (user, authorId) => {
   return api.get.universes(user, { 
-      strings: [
+    strings: [
       'universeId IN (SELECT universeId FROM authoruniverses as au WHERE au.userId = ? AND au.permissionLevel <> 0)',
     ], values: [
       authorId,
@@ -124,7 +125,7 @@ api.get.universes = async (user, conditions) => {
       INNER JOIN users ON users.id = userId
       WHERE (universes.public = 1${usrQueryString})
       ${conditionString}
-      GROUP BY universeId;`;//${usrQueryString}
+      GROUP BY universeId;`;
     const data = await executeQuery(queryString, conditions && conditions.values);
     return [null, data];
   } catch (err) {

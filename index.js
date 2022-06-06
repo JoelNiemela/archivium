@@ -5,6 +5,7 @@ const api = require('./api');
 const CookieParser = require('./middleware/cookieParser');
 const Auth = require('./middleware/auth');
 const pug = require('pug');
+const md5 = require('md5');
 
 const PORT = 3004;
 const { ADDR_PREFIX } = require('./config');
@@ -21,6 +22,7 @@ const homeTemplate = pug.compileFile('templates/home.pug');
 const loginTemplate = pug.compileFile('templates/login.pug');
 const signupTemplate = pug.compileFile('templates/signup.pug');
 const universeTemplate = pug.compileFile('templates/universe.pug');
+const userTemplate = pug.compileFile('templates/user.pug');
 // const itemTemplate = pug.compileFile('templates/item.pug');
 
 // Serve static assets
@@ -45,13 +47,29 @@ app.get(`${ADDR_PREFIX}/universes`, Auth.verifySession, async (req, res) => {
 app.get(`${ADDR_PREFIX}/universes/:id`, async (req, res) => {
   const user = req.session.user;
   const username = user && user.username;
-  const [errCode1, result] = await api.get.universeById(user, req.params.id);
-  const [errCode2, owner] = await api.get.userById(result.data.authorId);
+  const [errCode1, universe] = await api.get.universeById(user, req.params.id);
+  const [errCode2, owner] = await api.get.userById(universe.authorId);
   if (errCode1 || errCode2) {
     res.status(errCode1 || errCode2);
     res.end(errorTemplate({ code: errCode1 || errCode2, username, ADDR_PREFIX }));
   }
-  else res.end(universeTemplate({ universe: result.data, owner, ADDR_PREFIX }));
+  else res.end(universeTemplate({ universe, owner, username, ADDR_PREFIX }));
+});
+
+app.get(`${ADDR_PREFIX}/users/:id`, async (req, res) => {
+  const username = req.session.user && req.session.user.username;
+  const [errCode1, user] = await api.get.userById(req.params.id);
+  const [errCode2, universes] = await api.get.universesByAuthorId(req.session.user, req.params.id);
+  if (errCode1) {
+    res.status(errCode1 || errCode2);
+    res.end(errorTemplate({ code: errCode1 || errCode2, username, ADDR_PREFIX }));
+  }
+  else res.end(userTemplate({ 
+    user,
+    gravatarLink: `http://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
+    universes,
+    username, ADDR_PREFIX
+  }));
 });
 
 
@@ -59,12 +77,14 @@ app.get(`${ADDR_PREFIX}/universes/:id`, async (req, res) => {
   API ROUTES
 */
 app.get(`${ADDR_PREFIX}/api/universes`, async (req, res) => {
-  const [errCode, result] = await api.get.universes(req.session.user);
+  const user = req.session.user;
+  const [errCode, result] = await api.get.universes(user);
   if (errCode) res.sendStatus(errCode);
   else res.json(result);
 });
 app.get(`${ADDR_PREFIX}/api/universes/:id`, async (req, res) => {
-  const [errCode, result] = await api.get.universeById(req.session.user, req.params.id);
+  const user = req.session.user;
+  const [errCode, result] = await api.get.universeById(user, req.params.id);
   if (errCode) res.sendStatus(errCode);
   else res.json(result);
 });
@@ -72,9 +92,15 @@ app.post(`${ADDR_PREFIX}/api/universes`, api.post.universes);
 
 
 app.get(`${ADDR_PREFIX}/api/users/:id`, async (req, res) => {
-  const [errCode, result] = await api.get.userById(req.params.id);
+  const [errCode, user] = await api.get.userById(req.params.id);
   if (errCode) res.sendStatus(errCode);
-  else res.json(result);
+  else res.json(user);
+});
+app.get(`${ADDR_PREFIX}/api/users/:id/universes`, async (req, res) => {
+  const user = req.session.user;
+  const [errCode, universes] = await api.get.universesByAuthorId(user, req.params.id);
+  if (errCode) res.sendStatus(errCode);
+  else res.json(universes);
 });
 
 

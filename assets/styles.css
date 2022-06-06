@@ -3,6 +3,10 @@ body {
   font-family: 'Lato', sans-serif;
 }
 
+.center {
+  text-align: center;
+}
+
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -42,4 +46,8 @@ body {
   flex-direction: column;
   align-items: center;
   height: 70vh;
+}
+
+.userIcon {
+  border-radius: 50%;
 }

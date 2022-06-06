@@ -44,6 +44,11 @@ class Universes extends Model {
     return data;
   }
 
+  async getAuthorsById(id) {
+    let queryString = `SELECT users.id, users.username, users.email FROM users INNER JOIN authoruniverses ON authoruniverses.userId = users.id WHERE authoruniverses.universeId = ?;`;
+    return this.executeQuery(queryString, [ id ]);
+  }
+
   /**
    * Creates a new record in the table.
    * @param {Object} options - An object with key/value pairs, where the keys should match

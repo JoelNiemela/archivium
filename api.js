@@ -22,7 +22,7 @@ api.get.userById = async (id) => {
 api.get.universeById = async (user, id) => {
   try {
     const data = await models.Universes.get({ id });
-    if (data.public || (user && user.id === data.authorId)) return [null, { user, data }];
+    if (data.public || (user && user.id === data.authorId)) return [null, data];
     else return [user ? 403 : 401, null];
   } catch (err) {
     console.error(err);
@@ -30,10 +30,19 @@ api.get.universeById = async (user, id) => {
   }
 };
 
-api.get.universes = async (user) => {
+api.get.universesByAuthorId = async (user, authorId) => {
+  return api.get.universes(user, { authorId });
+};
+
+api.get.universes = async (user, options) => {
   try {
-    const data = await models.Universes.getAll(user);
-    return [null, { user, data }];
+    const data = await models.Universes.getAll(user, options);
+    // this is probably not optimal - fix this!
+    for (const universe of data) {
+      universe.public = !!universe.public.readInt8();
+      universe.authors = await models.Universes.getAuthorsById(universe.id);
+    }
+    return [null, data];
   } catch (err) {
     console.error(err);
     return [500, null];

@@ -40,7 +40,8 @@ block content
     tbody
       each universe in universes
         tr
-          td #{universe.title}
+          td
+            a( href=`${ADDR_PREFIX}/universes/${universe.id}` ) #{universe.title}
           td
             +authorList(universe.authors)
           td #{formatDate(universe.createdAt)}

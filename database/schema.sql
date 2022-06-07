@@ -39,7 +39,6 @@ CREATE TABLE items (
   parentId INT,
   createdAt TIMESTAMP,
   updatedAt TIMESTAMP,
-  public BOOLEAN,
   objData TEXT,
   FOREIGN KEY (authorId) REFERENCES users (id),
   FOREIGN KEY (universeId) REFERENCES universes (id),

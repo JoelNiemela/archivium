@@ -15,6 +15,8 @@ CREATE TABLE users (
   email VARCHAR(64) UNIQUE,
   password VARCHAR(64),
   salt VARCHAR(64),
+  createdAt TIMESTAMP,
+  updatedAt TIMESTAMP,
   permissionLevel TINYINT,
   PRIMARY KEY (id)
 );
@@ -39,7 +41,6 @@ CREATE TABLE items (
   parentId INT,
   createdAt TIMESTAMP,
   updatedAt TIMESTAMP,
-  public BOOLEAN,
   objData TEXT,
   FOREIGN KEY (authorId) REFERENCES users (id),
   FOREIGN KEY (universeId) REFERENCES universes (id),

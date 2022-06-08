@@ -1,0 +1,23 @@
+extends layout.pug
+include mixins.pug
+
+block content
+  h1.center Universes
+  hr
+  table
+    thead
+      th Name
+      th Authors
+      th Created
+      th Updated
+      th Visibility
+    tbody
+      each universe in universes
+        tr
+          td
+            a( href=`${ADDR_PREFIX}/universes/${universe.id}` ) #{universe.title}
+          td
+            +authorList(universe.authors)
+          td #{formatDate(universe.createdAt)}
+          td #{formatDate(universe.updatedAt)}
+          td #{universe.public ? 'Public' : 'Private'}

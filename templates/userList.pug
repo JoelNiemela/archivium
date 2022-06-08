@@ -1,0 +1,18 @@
+extends layout.pug
+include mixins.pug
+
+block content
+  h1.center Users
+  hr
+  table
+    thead
+      th Name
+      th Joined
+      th Last seen
+    tbody
+      each user in users
+        tr
+          td
+            a( href=`${ADDR_PREFIX}/users/${user.id}` ) #{user.username}
+          td #{formatDate(user.createdAt)}
+          td #{formatDate(user.updatedAt)}

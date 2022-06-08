@@ -15,6 +15,8 @@ CREATE TABLE users (
   email VARCHAR(64) UNIQUE,
   password VARCHAR(64),
   salt VARCHAR(64),
+  createdAt TIMESTAMP,
+  updatedAt TIMESTAMP,
   permissionLevel TINYINT,
   PRIMARY KEY (id)
 );

@@ -54,20 +54,37 @@ api.validatePassword = (attempted, password, salt) => {
 
 /* standard API functions */
 
-// returns a version of the user object with password data removed unless the includeAuth parameter is true
+// returns a "safe" version of the user object with password data removed unless the includeAuth parameter is true
 api.get.user = async (options, includeAuth=false) => {
   try {
     if (!options || Object.keys(options).length === 0) throw 'options required for api.get.user';
     const parsedOptions = parseData(options);
-    let queryString;
-    if (options) queryString = `SELECT * FROM users WHERE ${parsedOptions.string.join(' AND ')} LIMIT 1;`;
-    else queryString = 'SELECT * FROM users LIMIT 1;';
+    const queryString = `SELECT * FROM users WHERE ${parsedOptions.string.join(' AND ')} LIMIT 1;`;
     const user = (await executeQuery(queryString, parsedOptions.values))[0];
     if (!includeAuth) {
       delete user.password;
       delete user.salt;
     }
     return [null, user];
+  } catch (err) {
+    console.error(err);
+    return [500, null];
+  }
+};
+api.get.users = async (options) => {
+  try {
+    const parsedOptions = parseData(options);
+    let queryString;
+    if (options) queryString = `
+      SELECT 
+        id, username,
+        createdAt, updatedAt
+      FROM users 
+      WHERE ${parsedOptions.string.join(' AND ')};
+    `;
+    else queryString = 'SELECT * FROM users;';
+    const users = await executeQuery(queryString, parsedOptions.values);
+    return [null, users];
   } catch (err) {
     console.error(err);
     return [500, null];

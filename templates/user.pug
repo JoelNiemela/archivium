@@ -5,7 +5,10 @@ block content
   h1.center Welcome to #{user.username}'s page
   div( align='center' )
     img.userIcon( alt=user.username, src=gravatarLink )
-
+  p.center
+    small Joined
+      |  #{formatDate(new Date(user.createdAt))}
+      |  - Last seen #{formatDate(new Date(user.updatedAt))}
   hr
   h3 #{user.username}'s items
   table

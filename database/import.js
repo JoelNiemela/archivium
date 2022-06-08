@@ -17,10 +17,10 @@ async function dbImport() {
   // users
   const users = JSON.parse(await fsPromises.readFile(path.join(__dirname, 'export/users.json'), { encoding: 'utf8' }));
   for (const id in users) {
-    const { username, password, salt } = users[id];
+    const { username, email, password, salt, permissionLevel } = users[id];
     await db.queryAsync(
-      'INSERT INTO users (id, username, password, salt) VALUES (?,?,?,?);',
-      [id, username, password, salt]
+      'INSERT INTO users (id, username, email, password, salt, permissionLevel) VALUES (?,?,?,?,?,?);',
+      [id, username, email, password, salt, permissionLevel || 0]
     );
   }
 

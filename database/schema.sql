@@ -12,8 +12,10 @@ CREATE TABLE sessions (
 CREATE TABLE users (
   id INT NOT NULL AUTO_INCREMENT,
   username VARCHAR(32) UNIQUE,
+  email VARCHAR(64) UNIQUE,
   password VARCHAR(64),
   salt VARCHAR(64),
+  permissionLevel TINYINT,
   PRIMARY KEY (id)
 );
 
@@ -23,7 +25,7 @@ CREATE TABLE universes (
   authorId INT,
   createdAt TIMESTAMP,
   updatedAt TIMESTAMP,
-  public BIT,
+  public BOOLEAN,
   objData TEXT,
   FOREIGN KEY (authorId) REFERENCES users (id),
   PRIMARY KEY (id)
@@ -37,7 +39,7 @@ CREATE TABLE items (
   parentId INT,
   createdAt TIMESTAMP,
   updatedAt TIMESTAMP,
-  public BIT,
+  public BOOLEAN,
   objData TEXT,
   FOREIGN KEY (authorId) REFERENCES users (id),
   FOREIGN KEY (universeId) REFERENCES universes (id),
@@ -49,7 +51,7 @@ CREATE TABLE authoruniverses (
   id INT NOT NULL AUTO_INCREMENT,
   universeId INT,
   userId INT,
-  permissionLevel INT,
+  permissionLevel TINYINT,
   FOREIGN KEY (universeId) REFERENCES universes (id),
   FOREIGN KEY (userId) REFERENCES users (id),
   PRIMARY KEY (id)

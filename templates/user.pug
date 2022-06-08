@@ -1,0 +1,47 @@
+extends layout.pug
+
+mixin authorList(authors)
+  - let i = 0;
+  span
+    each val, key in authors
+      -
+        let suff;
+        if (i === Object.keys(authors).length - 1) suff = '';
+        else if (i === Object.keys(authors).length - 2) suff = Object.keys(authors).length === 2 ? ' and ' : ', and ';
+        else suff = ', ';
+      a( href=`${ADDR_PREFIX}/users/${key}` )= val
+      | #{suff}
+      - i++;
+
+
+block content
+  h1.center Welcome to #{user.username}'s page
+  div( align='center' )
+    img.userIcon( alt=user.username, src=gravatarLink )
+
+  hr
+  h3 #{user.username}'s items
+  table
+    thead
+      th Name
+      th Type
+      th Universe
+      th Authors
+      th Created
+      th Updated
+
+  h3 #{user.username}'s universes
+  table
+    thead
+      th Name
+      th Authors
+      th Created
+      th Updated
+    tbody
+      each universe in universes
+        tr
+          td #{universe.title}
+          td
+            +authorList(universe.authors)
+          td #{formatDate(universe.createdAt)}
+          td #{formatDate(universe.updatedAt)}

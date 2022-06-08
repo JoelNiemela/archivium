@@ -1,11 +1,11 @@
-const models = require('../models');
 const Promise = require('bluebird');
+const api = require('../api');
 const { ADDR_PREFIX } = require('../config');
 
 module.exports.createSession = (req, res, next) => {
   // console.log('res cookie', res.cookie);
   if (req.cookies['archiviumuid']) {
-    models.Sessions.get({hash: req.cookies['archiviumuid']})
+    api.get.session({hash: req.cookies['archiviumuid']})
       .then((session) => {
         if (session) {
           // console.log('session:', session.user);
@@ -24,9 +24,9 @@ module.exports.createSession = (req, res, next) => {
           // console.log('AUTH req session', req.session);
           next();
         } else {
-          models.Sessions.create()
+          api.post.session()
             .then((data) => {
-              return models.Sessions.get({ id: data.insertId });
+              return api.get.session({ id: data.insertId });
             })
             .then((session) => {
               // console.log('session:', session)
@@ -48,9 +48,9 @@ module.exports.createSession = (req, res, next) => {
         next();
       });
   } else {
-    models.Sessions.create()
+    api.post.session()
     .then((data) => {
-      return models.Sessions.get({ id: data.insertId });
+      return api.get.session({ id: data.insertId });
     })
     .then((session) => {
       // console.log('session:', session)

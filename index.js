@@ -1,9 +1,10 @@
 const express = require('express');
 const path = require('path');
-const models = require('./models');
+const api = require('./api');
 const CookieParser = require('./middleware/cookieParser');
 const Auth = require('./middleware/auth');
 const pug = require('pug');
+const md5 = require('md5');
 
 const PORT = 3004;
 const { ADDR_PREFIX } = require('./config');
@@ -19,6 +20,9 @@ const errorTemplate = pug.compileFile('templates/error.pug');
 const homeTemplate = pug.compileFile('templates/home.pug');
 const loginTemplate = pug.compileFile('templates/login.pug');
 const signupTemplate = pug.compileFile('templates/signup.pug');
+const universeTemplate = pug.compileFile('templates/universe.pug');
+const userTemplate = pug.compileFile('templates/user.pug');
+// const itemTemplate = pug.compileFile('templates/item.pug');
 
 // Serve static assets
 app.use(`${ADDR_PREFIX}/assets`, express.static(path.join(__dirname, 'assets/')));
@@ -33,11 +37,42 @@ app.get(`${ADDR_PREFIX}/`, (req, res) => {
   res.end(html);
 });
 
-app.get(`${ADDR_PREFIX}/universes`, Auth.verifySession, (req, res) => {
+app.get(`${ADDR_PREFIX}/universes`, Auth.verifySession, async (req, res) => {
   const user = req.session.user;
   const username = user && user.username;
   const html = homeTemplate({ username, ADDR_PREFIX });
   res.end(html);
+});
+app.get(`${ADDR_PREFIX}/universes/:id`, async (req, res) => {
+  const user = req.session.user;
+  const username = user && user.username;
+  const [errCode1, universe] = await api.get.universeById(user, req.params.id);
+  if (errCode1) {
+    res.status(errCode1);
+    return res.end(errorTemplate({ code: errCode1, username, ADDR_PREFIX }));
+  }
+  const [errCode2, owner] = await api.get.user({ id: universe.authorId });
+  if (errCode2) {
+    res.status(errCode2);
+    res.end(errorTemplate({ code: errCode2, username, ADDR_PREFIX }));
+  }
+  else res.end(universeTemplate({ universe, owner, username, ADDR_PREFIX }));
+});
+
+app.get(`${ADDR_PREFIX}/users/:id`, async (req, res) => {
+  const username = req.session.user && req.session.user.username;
+  const [errCode1, user] = await api.get.user({ id: req.params.id });
+  const [errCode2, universes] = await api.get.universesByAuthorId(req.session.user, req.params.id);
+  if (errCode1) {
+    res.status(errCode1 || errCode2);
+    res.end(errorTemplate({ code: errCode1 || errCode2, username, ADDR_PREFIX }));
+  }
+  else res.end(userTemplate({ 
+    user,
+    gravatarLink: `http://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
+    universes,
+    username, ADDR_PREFIX
+  }));
 });
 
 
@@ -45,40 +80,39 @@ app.get(`${ADDR_PREFIX}/universes`, Auth.verifySession, (req, res) => {
   API ROUTES
 */
 app.get(`${ADDR_PREFIX}/api/universes`, async (req, res) => {
-  const user = req.session.user ? { id: req.session.user.id, username: req.session.user.username } : null;
-  try {
-    const data = await models.Universes.getAll(user);
-    res.json({ user, data });
-  } catch (err) {
-    console.error(err);
-    res.sendStatus(500);
-  }
+  const user = req.session.user;
+  const [errCode, result] = await api.get.universes(user);
+  if (errCode) res.sendStatus(errCode);
+  else res.json(result);
 });
 app.get(`${ADDR_PREFIX}/api/universes/:id`, async (req, res) => {
-  const user = req.session.user ? { id: req.session.user.id, username: req.session.user.username } : null;
-  try {
-    const data = await models.Universes.get({ id: req.params.id });
-    if (data.public || (user && user.id === data.authorId)) res.json({ user, data });
-    else res.sendStatus(user ? 403 : 401);
-  } catch (err) {
-    console.error(err);
-    res.sendStatus(500);
-  }
+  const user = req.session.user;
+  const [errCode, result] = await api.get.universeById(user, req.params.id);
+  if (errCode) res.sendStatus(errCode);
+  else res.json(result);
 });
 app.post(`${ADDR_PREFIX}/api/universes`, async (req, res) => {
   const user = req.session.user;
   if (user) {
-    const data = await models.Universes.create({
-      title: req.body.title,
-      authorId: user.id,
-      public: req.body.public === '1',
-      objData: req.body.objData,
-    });
+    const data = await api.post.universe(user, req.body);
     console.log(data);
     res.sendStatus(201);
   } else {
     res.sendStatus(401);
   }
+});
+
+
+app.get(`${ADDR_PREFIX}/api/users/:id`, async (req, res) => {
+  const [errCode, user] = await api.get.user({ id: req.params.id });
+  if (errCode) res.sendStatus(errCode);
+  else res.json(user);
+});
+app.get(`${ADDR_PREFIX}/api/users/:id/universes`, async (req, res) => {
+  const user = req.session.user;
+  const [errCode, universes] = await api.get.universesByAuthorId(user, req.params.id);
+  if (errCode) res.sendStatus(errCode);
+  else res.json(universes);
 });
 
 
@@ -90,7 +124,7 @@ app.get(`${ADDR_PREFIX}/login`, async (req, res) => {
   const username = user && user.username;
   if (user) {
     try {
-      await models.Sessions.delete({ id: req.session.id })
+      await api.delete.session({ id: req.session.id })
       res.clearCookie('archiviumuid', req.session.id);
       res.end(loginTemplate({ username, ADDR_PREFIX }));
     } catch (err) {
@@ -109,7 +143,7 @@ app.get(`${ADDR_PREFIX}/signup`, (req, res) => {
 
 app.get(`${ADDR_PREFIX}/logout`, async (req, res) => {
   try {
-    await models  .Sessions.delete({ id: req.session.id })
+    await api.delete.session({ id: req.session.id })
     res.clearCookie('archiviumuid', req.session.id);
     res.redirect(`${ADDR_PREFIX}/`);
   } catch (err) {
@@ -120,12 +154,12 @@ app.get(`${ADDR_PREFIX}/logout`, async (req, res) => {
 
 app.post(`${ADDR_PREFIX}/login`, async (req, res) => {
   try {  
-    const user = await models.Users.get({ username: req.body.username });
+    const [errCode, user] = await api.get.user({ username: req.body.username }, true);
     if (user) {
       req.loginId = user.id;
-      const isValidUser = models.Users.compare(req.body.password, user.password, user.salt);
+      const isValidUser = api.validatePassword(req.body.password, user.password, user.salt);
       if (isValidUser) {
-        await models.Sessions.update({ id: req.session.id }, { userId: req.loginId });
+        await api.put.session({ id: req.session.id }, { userId: req.loginId });
         res.status(200);
         return res.redirect(`${ADDR_PREFIX}/`);
       } else {
@@ -140,9 +174,9 @@ app.post(`${ADDR_PREFIX}/login`, async (req, res) => {
 
 app.post(`${ADDR_PREFIX}/signup`, async (req, res) => {
   try {
-    const data = await models.Users.create( req.body );
+    const data = await api.post.user( req.body );
     try {
-      await models.Sessions.update({ id: req.session.id }, { userId: data.insertId });
+      await api.put.session({ id: req.session.id }, { userId: data.insertId });
       res.status(201);
       return res.redirect(`${ADDR_PREFIX}/`);
     } catch (err) {

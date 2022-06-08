@@ -102,6 +102,12 @@ app.post(`${ADDR_PREFIX}/api/universes`, async (req, res) => {
   }
 });
 
+app.get(`${ADDR_PREFIX}/api/items`, async (req, res) => {
+  const user = req.session.user;
+  const [errCode, result] = await api.get.items(user);
+  if (errCode) res.sendStatus(errCode);
+  else res.json(result);
+});
 
 app.get(`${ADDR_PREFIX}/api/users/:id`, async (req, res) => {
   const [errCode, user] = await api.get.user({ id: req.params.id });

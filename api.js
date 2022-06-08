@@ -134,6 +134,29 @@ api.get.universes = async (user, conditions) => {
   }
 };
 
+api.get.items = async (user, conditions) => {
+  try {
+    const usrQueryString = user ? ` OR (au.userId = ${user.id} AND au.permissionLevel <> 0)` : '';
+    const conditionString = conditions ? ` AND ${conditions.strings.join(' AND ')}` : '';
+    const queryString = `
+      SELECT * FROM items
+      WHERE items.universeId IN (
+        SELECT au.universeId FROM authoruniverses as au
+        INNER JOIN universes ON universes.id = au.universeId 
+        WHERE public = 1${usrQueryString}
+        GROUP BY au.universeId
+      )
+      ${conditionString};`;
+    const data = await executeQuery(queryString, conditions && conditions.values);
+    return [null, data];
+  } catch (err) {
+    console.error(err);
+    return [500, null];
+  }
+};
+
+
+
 api.post.universe = async (user, body) => {
   let queryString1 = `INSERT INTO universes SET ?`;
   const data = await executeQuery(queryString1, {

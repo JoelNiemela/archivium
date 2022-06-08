@@ -17,10 +17,10 @@ async function dbImport() {
   // users
   const users = JSON.parse(await fsPromises.readFile(path.join(__dirname, 'export/users.json'), { encoding: 'utf8' }));
   for (const id in users) {
-    const { username, email, password, salt, permissionLevel } = users[id];
+    const { username, email, password, salt, createdAt, updatedAt, permissionLevel } = users[id];
     await db.queryAsync(
-      'INSERT INTO users (id, username, email, password, salt, permissionLevel) VALUES (?,?,?,?,?,?);',
-      [id, username, email, password, salt, permissionLevel || 0]
+      'INSERT INTO users (id, username, email, password, salt, createdAt, updatedAt, permissionLevel) VALUES (?,?,?,?,?,?,?,?);',
+      [id, username, email, password, salt, new Date(createdAt), new Date(updatedAt), permissionLevel || 0]
     );
   }
 
@@ -37,10 +37,10 @@ async function dbImport() {
   // items
   const items = JSON.parse(await fsPromises.readFile(path.join(__dirname, 'export/items.json'), { encoding: 'utf8' }));
   for (const id in items) {
-    const { title, authorId, universeId, parentId, createdAt, updatedAt, public, objData } = items[id];
+    const { title, authorId, universeId, parentId, createdAt, updatedAt, objData } = items[id];
     await db.queryAsync(
-      'INSERT INTO items (id, title, authorId, universeId, parentId, createdAt, updatedAt, public, objData) VALUES (?,?,?,?,?,?,?,?,?);',
-      [id, title, authorId, universeId, parentId, new Date(createdAt), new Date(updatedAt), public, JSON.stringify(objData)]
+      'INSERT INTO items (id, title, authorId, universeId, parentId, createdAt, updatedAt, objData) VALUES (?,?,?,?,?,?,?,?);',
+      [id, title, authorId, universeId, parentId, new Date(createdAt), new Date(updatedAt), JSON.stringify(objData)]
     );
   }
 

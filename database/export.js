@@ -24,7 +24,6 @@ async function dbExport() {
   universeArray[0].forEach(universe => {
     const id = universe.id;
     delete universe.id;
-    universe.public = !!universe.public.readInt8();
     universe.objData = JSON.parse(universe.objData);
     universes[id] = universe;
   });
@@ -36,7 +35,6 @@ async function dbExport() {
   itemArray[0].forEach(item => {
     const id = item.id;
     delete item.id;
-    item.public = !!item.public.readInt8();
     item.objData = JSON.parse(item.objData);
     items[id] = item;
   });

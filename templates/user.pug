@@ -1,24 +1,14 @@
 extends layout.pug
-
-mixin authorList(authors)
-  - let i = 0;
-  span
-    each val, key in authors
-      -
-        let suff;
-        if (i === Object.keys(authors).length - 1) suff = '';
-        else if (i === Object.keys(authors).length - 2) suff = Object.keys(authors).length === 2 ? ' and ' : ', and ';
-        else suff = ', ';
-      a( href=`${ADDR_PREFIX}/users/${key}` )= val
-      | #{suff}
-      - i++;
-
+include mixins.pug
 
 block content
   h1.center Welcome to #{user.username}'s page
   div( align='center' )
     img.userIcon( alt=user.username, src=gravatarLink )
-
+  p.center
+    small Joined
+      |  #{formatDate(new Date(user.createdAt))}
+      |  - Last seen #{formatDate(new Date(user.updatedAt))}
   hr
   h3 #{user.username}'s items
   table
@@ -40,7 +30,8 @@ block content
     tbody
       each universe in universes
         tr
-          td #{universe.title}
+          td
+            a( href=`${ADDR_PREFIX}/universes/${universe.id}` ) #{universe.title}
           td
             +authorList(universe.authors)
           td #{formatDate(universe.createdAt)}

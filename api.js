@@ -82,7 +82,7 @@ api.get.users = async (options) => {
       FROM users 
       WHERE ${parsedOptions.string.join(' AND ')};
     `;
-    else queryString = 'SELECT * FROM users;';
+    else queryString = 'SELECT id, username, createdAt, updatedAt FROM users;';
     const users = await executeQuery(queryString, parsedOptions.values);
     return [null, users];
   } catch (err) {

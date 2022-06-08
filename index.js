@@ -23,6 +23,8 @@ const signupTemplate = pug.compileFile('templates/signup.pug');
 const universeTemplate = pug.compileFile('templates/universe.pug');
 const universeListTemplate = pug.compileFile('templates/universeList.pug');
 const userTemplate = pug.compileFile('templates/user.pug');
+const userListTemplate = pug.compileFile('templates/userList.pug');
+
 // const itemTemplate = pug.compileFile('templates/item.pug');
 
 // Serve static assets
@@ -38,7 +40,7 @@ app.get(`${ADDR_PREFIX}/`, (req, res) => {
   res.end(html);
 });
 
-app.get(`${ADDR_PREFIX}/universes`, Auth.verifySession, async (req, res) => {
+app.get(`${ADDR_PREFIX}/universes`, async (req, res) => {
   const user = req.session.user;
   const username = user && user.username;
   const [errCode, universes] = await api.get.universes(user);
@@ -61,6 +63,13 @@ app.get(`${ADDR_PREFIX}/universes/:id`, async (req, res) => {
   else return res.end(universeTemplate({ universe, owner, username, ADDR_PREFIX }));
 });
 
+app.get(`${ADDR_PREFIX}/users`, Auth.verifySession, async (req, res) => {
+  const user = req.session.user;
+  const username = user && user.username;
+  const [errCode, users] = await api.get.users();
+  if (errCode) res.sendStatus(errCode);
+  else return res.end(userListTemplate({ users, username, ADDR_PREFIX }));
+});
 app.get(`${ADDR_PREFIX}/users/:id`, async (req, res) => {
   const username = req.session.user && req.session.user.username;
   const [errCode1, user] = await api.get.user({ id: req.params.id });

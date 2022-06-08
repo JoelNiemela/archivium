@@ -14,63 +14,101 @@ const parseData = (options) => {
   }, { string: [], values: [] });
 };
 
-const api = {
-  get: {},
-  post: {},
-  put: {},
-  delete: {},
-};
+class APIGetMethods {
+  /**
+   * for internal use only - does not conform to the standard return format!
+   * @param {{key: value}} options
+   * @returns {Promise<session>}
+   */
+  async session(options) {
+    const parsedOptions = parseData(options);
+    const queryString = `SELECT * FROM sessions WHERE ${parsedOptions.string.join(' AND ')} LIMIT 1;`;
+    const data = await executeQuery(queryString, parsedOptions.values);
+    const session = data[0];
+    if (!session || !session.userId) return session;
+    const [errCode, user] = await api.get.user({ id: session.userId });
+    session.user = user;
+    return session;
+  }
 
-/* for internal use only - does not conform to the standard return format! */
-api.get.session = async (options) => {
-  const parsedOptions = parseData(options);
-  const queryString = `SELECT * FROM sessions WHERE ${parsedOptions.string.join(' AND ')} LIMIT 1;`;
-  const data = await executeQuery(queryString, parsedOptions.values);
-  const session = data[0];
-  if (!session || !session.userId) return session;
-  const [errCode, user] = await api.get.user({ id: session.userId });
-  session.user = user;
-  return session;
-};
-api.post.session = () => {
-  const data = utils.createRandom32String();
-  const hash = utils.createHash(data);
-  const queryString = `INSERT INTO sessions SET ?`;
-  return executeQuery(queryString, { hash });
-};
-api.put.session = (options, values) => {
-  const parsedOptions = parseData(options);
-  const queryString = `UPDATE sessions SET ? WHERE ${parsedOptions.string.join(' AND ')}`;
-  return executeQuery(queryString, Array.prototype.concat(values, parsedOptions.values));
-}; 
-api.delete.session = (options) => {
-  const parsedOptions = parseData(options);
-  const queryString = `DELETE FROM sessions WHERE ${parsedOptions.string.join(' AND ')}`;
-  return executeQuery(queryString, parsedOptions.values);
-}; 
-api.validatePassword = (attempted, password, salt) => {
+  /**
+   * returns a "safe" version of the user object with password data removed unless the includeAuth parameter is true
+   * @param {*} options 
+   * @param {boolean} includeAuth 
+   * @returns {Promise<[errCode, data]>}
+   */
+  async user(options, includeAuth=false) {
+    try {
+      if (!options || Object.keys(options).length === 0) throw 'options required for api.get.user';
+      const parsedOptions = parseData(options);
+      const queryString = `SELECT * FROM users WHERE ${parsedOptions.string.join(' AND ')} LIMIT 1;`;
+      const user = (await executeQuery(queryString, parsedOptions.values))[0];
+      if (!includeAuth) {
+        delete user.password;
+        delete user.salt;
+      }
+      return [null, user];
+    } catch (err) {
+      console.error(err);
+      return [500, null];
+    }
+  }
+}
+
+class APIPostMethods {
+  /**
+   * for internal use only - does not conform to the standard return format!
+   * @returns 
+   */
+  session() {
+    const data = utils.createRandom32String();
+    const hash = utils.createHash(data);
+    const queryString = `INSERT INTO sessions SET ?`;
+    return executeQuery(queryString, { hash });
+  }
+
+  
+}
+
+class APIPutMethods {
+  /**
+   * for internal use only - does not conform to the standard return format!
+   * @param {{key: value}} options 
+   * @param {{key: value}} values 
+   * @returns 
+   */
+  session(options, values) {
+    const parsedOptions = parseData(options);
+    const queryString = `UPDATE sessions SET ? WHERE ${parsedOptions.string.join(' AND ')}`;
+    return executeQuery(queryString, Array.prototype.concat(values, parsedOptions.values));
+  }
+}
+
+class APIDeleteMethods {
+  /**
+   * for internal use only - does not conform to the standard return format!
+   * @param {*} options 
+   * @returns 
+   */
+  session(options) {
+    const parsedOptions = parseData(options);
+    const queryString = `DELETE FROM sessions WHERE ${parsedOptions.string.join(' AND ')}`;
+    return executeQuery(queryString, parsedOptions.values);
+  }
+}
+
+/**
+ * 
+ * @param {*} attempted 
+ * @param {*} password 
+ * @param {*} salt 
+ * @returns 
+ */
+function validatePassword(attempted, password, salt) {
   return utils.compareHash(attempted, password, salt);
 };
 
-/* standard API functions */
 
-// returns a "safe" version of the user object with password data removed unless the includeAuth parameter is true
-api.get.user = async (options, includeAuth=false) => {
-  try {
-    if (!options || Object.keys(options).length === 0) throw 'options required for api.get.user';
-    const parsedOptions = parseData(options);
-    const queryString = `SELECT * FROM users WHERE ${parsedOptions.string.join(' AND ')} LIMIT 1;`;
-    const user = (await executeQuery(queryString, parsedOptions.values))[0];
-    if (!includeAuth) {
-      delete user.password;
-      delete user.salt;
-    }
-    return [null, user];
-  } catch (err) {
-    console.error(err);
-    return [500, null];
-  }
-};
 api.get.users = async (options) => {
   try {
     const parsedOptions = parseData(options);
@@ -104,7 +142,14 @@ api.post.user = ({ username, password }) => {
   return this.executeQuery(queryString, newUser);
 };
 
-api.get.universeById = async (user, id) => {
+/**
+ * 
+ * @param {*} user 
+ * @param {*} id 
+ * @param {*} permissionRequired 
+ * @returns {Promise<[errCode, data]>}
+ */
+api.get.universeById = async function (user, id, permissionRequired) {
   const [errCode, data] = await api.get.universes(user, { 
     strings: [
       'universeId = ?',
@@ -192,6 +237,14 @@ api.post.universe = async (user, body) => {
     permissionLevel: 3,
 
   })];
+};
+
+const api = {
+  get: new APIGetMethods(),
+  post: new APIPostMethods(),
+  put: new APIPutMethods(),
+  delete: new APIDeleteMethods(),
+  validatePassword: validatePassword,
 };
 
 module.exports = api;

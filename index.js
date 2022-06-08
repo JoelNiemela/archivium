@@ -21,6 +21,7 @@ const homeTemplate = pug.compileFile('templates/home.pug');
 const loginTemplate = pug.compileFile('templates/login.pug');
 const signupTemplate = pug.compileFile('templates/signup.pug');
 const universeTemplate = pug.compileFile('templates/universe.pug');
+const editUniverseTemplate = pug.compileFile('templates/edit/universe.pug');
 const universeListTemplate = pug.compileFile('templates/universeList.pug');
 const userTemplate = pug.compileFile('templates/user.pug');
 const userListTemplate = pug.compileFile('templates/userList.pug');
@@ -61,6 +62,21 @@ app.get(`${ADDR_PREFIX}/universes/:id`, async (req, res) => {
     return res.end(errorTemplate({ code: errCode2, username, ADDR_PREFIX }));
   }
   else return res.end(universeTemplate({ universe, owner, username, ADDR_PREFIX }));
+});
+app.get(`${ADDR_PREFIX}/universes/:id/edit`, async (req, res) => {
+  const user = req.session.user;
+  const username = user && user.username;
+  const [errCode1, universe] = await api.get.universeById(user, req.params.id);
+  if (errCode1) {
+    res.status(errCode1);
+    return res.end(errorTemplate({ code: errCode1, username, ADDR_PREFIX }));
+  }
+  const [errCode2, owner] = await api.get.user({ id: universe.authorId });
+  if (errCode2) {
+    res.status(errCode2);
+    return res.end(errorTemplate({ code: errCode2, username, ADDR_PREFIX }));
+  }
+  else return res.end(editUniverseTemplate({ universe, owner, username, ADDR_PREFIX }));
 });
 
 app.get(`${ADDR_PREFIX}/users`, Auth.verifySession, async (req, res) => {

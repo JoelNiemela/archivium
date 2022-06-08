@@ -25,7 +25,7 @@ const userTemplate = pug.compileFile('templates/user.pug');
 // const itemTemplate = pug.compileFile('templates/item.pug');
 
 // Serve static assets
-app.use(`${ADDR_PREFIX}/assets`, express.static(path.join(__dirname, 'assets/')));
+app.use(`${ADDR_PREFIX}/static`, express.static(path.join(__dirname, 'static/')));
 
 /*
   VIEW ROUTES

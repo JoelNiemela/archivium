@@ -19,12 +19,13 @@ const errorTemplate = pug.compileFile('templates/error.pug');
 const homeTemplate = pug.compileFile('templates/home.pug');
 const loginTemplate = pug.compileFile('templates/login.pug');
 const signupTemplate = pug.compileFile('templates/signup.pug');
-const universeTemplate = pug.compileFile('templates/universe.pug');
+const universeTemplate = pug.compileFile('templates/view/universe.pug');
 const editUniverseTemplate = pug.compileFile('templates/edit/universe.pug');
-const universeListTemplate = pug.compileFile('templates/universeList.pug');
+const universeListTemplate = pug.compileFile('templates/list/universe.pug');
 const editItemTemplate = pug.compileFile('templates/edit/item.pug');
-const userTemplate = pug.compileFile('templates/user.pug');
-const userListTemplate = pug.compileFile('templates/userList.pug');
+const itemListTemplate = pug.compileFile('templates/list/item.pug');
+const userTemplate = pug.compileFile('templates/view/user.pug');
+const userListTemplate = pug.compileFile('templates/list/user.pug');
 
 // const itemTemplate = pug.compileFile('templates/item.pug');
 
@@ -110,6 +111,23 @@ app.get(`${ADDR_PREFIX}/users/:id`, async (req, res) => {
   }));
 });
 
+app.get(`${ADDR_PREFIX}/items`, async (req, res) => {
+  const user = req.session.user;
+  const username = user && user.username;
+  const [errCode, items] = await api.get.items(user);
+  if (errCode) res.sendStatus(errCode);
+  else return res.end(itemListTemplate({ items, username, ADDR_PREFIX }));
+});
+app.get(`${ADDR_PREFIX}/items/:id`, async (req, res) => {
+  const user = req.session.user;
+  const username = user && user.username;
+  const [errCode, item] = await api.get.itemById(user, req.params.id);
+  if (errCode) {
+    res.status(errCode);
+    return res.end(errorTemplate({ code: errCode, username, ADDR_PREFIX }));
+  }
+  else return res.end(universeTemplate({ item, username, ADDR_PREFIX }));
+});
 app.get(`${ADDR_PREFIX}/items/:id/edit`, async (req, res) => {
   const user = req.session.user;
   const username = user && user.username;

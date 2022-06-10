@@ -160,7 +160,13 @@ class APIGetMethods {
       const usrQueryString = user ? ` OR (au.userId = ${user.id} AND au.permissionLevel <> 0)` : '';
       const conditionString = conditions ? ` AND ${conditions.strings.join(' AND ')}` : '';
       const queryString = `
-        SELECT * FROM items
+        SELECT 
+          items.*,
+          users.username as author,
+          universes.title as universe
+        FROM items
+        INNER JOIN users ON users.id = items.authorId
+        INNER JOIN universes ON universes.id = universeId
         WHERE items.universeId IN (
           SELECT au.universeId FROM authoruniverses as au
           INNER JOIN universes ON universes.id = au.universeId 

@@ -5163,7 +5163,7 @@ var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Pages$EditItem$init = function (flags) {
 	return _Utils_Tuple2(
-		{},
+		{tabs: _List_Nil},
 		$elm$core$Platform$Cmd$none);
 };
 var $elm$core$Platform$Sub$batch = _Platform_batch;
@@ -5177,13 +5177,54 @@ var $author$project$Pages$EditItem$update = F2(
 	});
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $author$project$Pages$EditItem$formView = $elm$html$Html$text('form');
+var $elm$html$Html$div = _VirtualDom_node('div');
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $elm$html$Html$Attributes$stringProperty = F2(
+	function (key, string) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$string(string));
+	});
+var $elm$html$Html$Attributes$for = $elm$html$Html$Attributes$stringProperty('htmlFor');
+var $elm$html$Html$Attributes$id = $elm$html$Html$Attributes$stringProperty('id');
+var $elm$html$Html$input = _VirtualDom_node('input');
+var $elm$html$Html$label = _VirtualDom_node('label');
+var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
+var $author$project$Pages$EditItem$nameView = A2(
+	$elm$html$Html$div,
+	_List_Nil,
+	_List_fromArray(
+		[
+			A2(
+			$elm$html$Html$label,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$for('name')
+				]),
+			_List_fromArray(
+				[
+					$elm$html$Html$text('name')
+				])),
+			A2(
+			$elm$html$Html$input,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$id('name'),
+					$elm$html$Html$Attributes$value('')
+				]),
+			_List_Nil)
+		]));
 var $author$project$Pages$EditItem$view = function (model) {
 	return {
 		body: _List_fromArray(
 			[
-				$elm$html$Html$text('Home')
+				$elm$html$Html$text('Edit Item'),
+				$author$project$Pages$EditItem$nameView,
+				$author$project$Pages$EditItem$formView
 			]),
-		title: 'Home'
+		title: 'Edit Item'
 	};
 };
 var $author$project$Pages$EditItem$main = $elm$browser$Browser$document(

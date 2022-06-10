@@ -6,8 +6,7 @@ const Auth = require('./middleware/auth');
 const pug = require('pug');
 const md5 = require('md5');
 
-const PORT = 3004;
-const { ADDR_PREFIX } = require('./config');
+const { PORT, ADDR_PREFIX, DEV_MODE } = require('./config');
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));
@@ -21,11 +20,21 @@ const homeTemplate = pug.compileFile('templates/home.pug');
 const loginTemplate = pug.compileFile('templates/login.pug');
 const signupTemplate = pug.compileFile('templates/signup.pug');
 const universeTemplate = pug.compileFile('templates/universe.pug');
+const editUniverseTemplate = pug.compileFile('templates/edit/universe.pug');
 const universeListTemplate = pug.compileFile('templates/universeList.pug');
+const editItemTemplate = pug.compileFile('templates/edit/item.pug');
 const userTemplate = pug.compileFile('templates/user.pug');
 const userListTemplate = pug.compileFile('templates/userList.pug');
 
 // const itemTemplate = pug.compileFile('templates/item.pug');
+
+// Logger if in Dev Mode
+if (DEV_MODE) {
+  app.use('/', (req, res, next) => {
+    console.log(req.method, req.path, req.body || '');
+    next();
+  })
+}
 
 // Serve static assets
 app.use(`${ADDR_PREFIX}/static`, express.static(path.join(__dirname, 'static/')));
@@ -62,6 +71,21 @@ app.get(`${ADDR_PREFIX}/universes/:id`, async (req, res) => {
   }
   else return res.end(universeTemplate({ universe, owner, username, ADDR_PREFIX }));
 });
+app.get(`${ADDR_PREFIX}/universes/:id/edit`, async (req, res) => {
+  const user = req.session.user;
+  const username = user && user.username;
+  const [errCode1, universe] = await api.get.universeById(user, req.params.id, 3);
+  if (errCode1) {
+    res.status(errCode1);
+    return res.end(errorTemplate({ code: errCode1, username, ADDR_PREFIX }));
+  }
+  const [errCode2, owner] = await api.get.user({ id: universe.authorId });
+  if (errCode2) {
+    res.status(errCode2);
+    return res.end(errorTemplate({ code: errCode2, username, ADDR_PREFIX }));
+  }
+  else return res.end(editUniverseTemplate({ universe, owner, username, ADDR_PREFIX }));
+});
 
 app.get(`${ADDR_PREFIX}/users`, Auth.verifySession, async (req, res) => {
   const user = req.session.user;
@@ -84,6 +108,19 @@ app.get(`${ADDR_PREFIX}/users/:id`, async (req, res) => {
     universes,
     username, ADDR_PREFIX
   }));
+});
+
+app.get(`${ADDR_PREFIX}/items/:id/edit`, async (req, res) => {
+  const user = req.session.user;
+  const username = user && user.username;
+  // const [errCode, item] = await api.get.universeById(user, req.params.id, 3);
+  // if (errCode) {
+  //   res.status(errCode);
+  //   return res.end(errorTemplate({ code: errCode, username, ADDR_PREFIX }));
+  // }
+  // else return res.end(editUniverseTemplate({ universe, owner, username, ADDR_PREFIX }));
+  
+  return res.end(editItemTemplate({ username, ADDR_PREFIX }));
 });
 
 

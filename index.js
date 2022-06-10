@@ -22,6 +22,7 @@ const signupTemplate = pug.compileFile('templates/signup.pug');
 const universeTemplate = pug.compileFile('templates/universe.pug');
 const editUniverseTemplate = pug.compileFile('templates/edit/universe.pug');
 const universeListTemplate = pug.compileFile('templates/universeList.pug');
+const editItemTemplate = pug.compileFile('templates/edit/item.pug');
 const userTemplate = pug.compileFile('templates/user.pug');
 const userListTemplate = pug.compileFile('templates/userList.pug');
 
@@ -107,6 +108,19 @@ app.get(`${ADDR_PREFIX}/users/:id`, async (req, res) => {
     universes,
     username, ADDR_PREFIX
   }));
+});
+
+app.get(`${ADDR_PREFIX}/items/:id/edit`, async (req, res) => {
+  const user = req.session.user;
+  const username = user && user.username;
+  // const [errCode, item] = await api.get.universeById(user, req.params.id, 3);
+  // if (errCode) {
+  //   res.status(errCode);
+  //   return res.end(errorTemplate({ code: errCode, username, ADDR_PREFIX }));
+  // }
+  // else return res.end(editUniverseTemplate({ universe, owner, username, ADDR_PREFIX }));
+  
+  return res.end(editItemTemplate({ username, ADDR_PREFIX }));
 });
 
 

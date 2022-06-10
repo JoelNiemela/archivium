@@ -106,6 +106,30 @@ class APIGetMethods {
   /**
    * 
    * @param {*} user 
+   * @param {*} id 
+   * @param {boolean} permissionRequired only return item if user has write access
+   * @returns 
+   */
+  async itemById(user, id, permissionRequired=1) {
+
+    const conditions = { 
+      strings: [
+        'items.id = ?',
+      ], values: [
+        id,
+      ]
+    };
+
+    const [errCode, data] = await api.get.items(user, conditions, [3, 2, 1].filter(num => num >= permissionRequired));
+    if (errCode) return [errCode, null];
+    const universe = data[0];
+    if (!universe) return [user ? 403 : 401, null];
+    return [null, universe];
+  }
+
+  /**
+   * 
+   * @param {*} user 
    * @param {*} authorId 
    * @returns 
    */
@@ -120,7 +144,7 @@ class APIGetMethods {
   }
 
   /**
-   * 
+   * base function for fetching universes from database
    * @param {*} user 
    * @param {*} conditions 
    * @param {number[]} acceptedPermissions array of acceptable permission levels
@@ -150,17 +174,24 @@ class APIGetMethods {
   }
   
   /**
-   * 
+   * base function for fetching items from database
    * @param {*} user 
-   * @param {*} conditions 
+   * @param {*} conditions
+   * @param {number[]} acceptedPermissions array of acceptable permission levels
    * @returns 
    */
-  async items(user, conditions) {
+  async items(user, conditions, acceptedPermissions=[3, 2, 1]) {
     try {
-      const usrQueryString = user ? ` OR (au.userId = ${user.id} AND au.permissionLevel <> 0)` : '';
+      const usrQueryString = user ? ` OR (au.userId = ${user.id} AND au.permissionLevel IN (${acceptedPermissions}))` : '';
       const conditionString = conditions ? ` AND ${conditions.strings.join(' AND ')}` : '';
       const queryString = `
-        SELECT * FROM items
+        SELECT 
+          items.*,
+          users.username as author,
+          universes.title as universe
+        FROM items
+        INNER JOIN users ON users.id = items.authorId
+        INNER JOIN universes ON universes.id = universeId
         WHERE items.universeId IN (
           SELECT au.universeId FROM authoruniverses as au
           INNER JOIN universes ON universes.id = au.universeId 

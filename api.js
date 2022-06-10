@@ -83,17 +83,20 @@ class APIGetMethods {
    * 
    * @param {*} user 
    * @param {*} id 
-   * @param {*} permissionRequired TODO
+   * @param {boolean} permissionRequired only return item if user has write access
    * @returns 
    */
-  async universeById(user, id, permissionRequired) {
-    const [errCode, data] = await api.get.universes(user, { 
+  async universeById(user, id, permissionRequired=1) {
+
+    const conditions = { 
       strings: [
         'universeId = ?',
       ], values: [
         id,
       ] 
-    });
+    };
+
+    const [errCode, data] = await api.get.universes(user, conditions, [3, 2, 1].filter(num => num >= permissionRequired));
     if (errCode) return [errCode, null];
     const universe = data[0];
     if (!universe) return [user ? 403 : 401, null];
@@ -120,11 +123,12 @@ class APIGetMethods {
    * 
    * @param {*} user 
    * @param {*} conditions 
+   * @param {number[]} acceptedPermissions array of acceptable permission levels
    * @returns 
    */
-  async universes(user, conditions) {
+  async universes(user, conditions, acceptedPermissions=[3, 2, 1]) {
     try {
-      const usrQueryString = user ? ` OR universeId IN (SELECT universeId FROM authoruniverses as a WHERE a.userId = ${user.id} AND a.permissionLevel <> 0)` : '';
+      const usrQueryString = user ? ` OR universeId IN (SELECT universeId FROM authoruniverses as a WHERE a.userId = ${user.id} AND a.permissionLevel IN (${acceptedPermissions}))` : '';
       const conditionString = conditions ? ` AND ${conditions.strings.join(' AND ')}` : '';
       const queryString = `
         SELECT

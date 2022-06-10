@@ -73,7 +73,7 @@ app.get(`${ADDR_PREFIX}/universes/:id`, async (req, res) => {
 app.get(`${ADDR_PREFIX}/universes/:id/edit`, async (req, res) => {
   const user = req.session.user;
   const username = user && user.username;
-  const [errCode1, universe] = await api.get.universeById(user, req.params.id);
+  const [errCode1, universe] = await api.get.universeById(user, req.params.id, 3);
   if (errCode1) {
     res.status(errCode1);
     return res.end(errorTemplate({ code: errCode1, username, ADDR_PREFIX }));

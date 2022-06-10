@@ -2,10 +2,19 @@ extends ../layout.pug
 
 block content
   h1.center #{item.title}
-  p #{item.universe}
+  p.center #{item.universe}
   p.center
     small Created by 
       a( href=`${ADDR_PREFIX}/users/${item.authorId}` ) #{item.author}
       |  #{formatDate(new Date(item.createdAt))}
       |  - Last updated #{formatDate(new Date(item.updatedAt))}
   hr
+  .group
+    each tabTuple in item.objData
+      h3 #{tabTuple[0]}
+      .itemTab
+        each keyTuple in tabTuple[1]
+          .itemKey
+            span #{keyTuple[0]}
+            hr
+            span #{keyTuple[1]}

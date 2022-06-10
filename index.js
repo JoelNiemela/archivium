@@ -22,6 +22,7 @@ const signupTemplate = pug.compileFile('templates/signup.pug');
 const universeTemplate = pug.compileFile('templates/view/universe.pug');
 const editUniverseTemplate = pug.compileFile('templates/edit/universe.pug');
 const universeListTemplate = pug.compileFile('templates/list/universe.pug');
+const itemTemplate = pug.compileFile('templates/view/item.pug');
 const editItemTemplate = pug.compileFile('templates/edit/item.pug');
 const itemListTemplate = pug.compileFile('templates/list/item.pug');
 const userTemplate = pug.compileFile('templates/view/user.pug');
@@ -126,7 +127,10 @@ app.get(`${ADDR_PREFIX}/items/:id`, async (req, res) => {
     res.status(errCode);
     return res.end(errorTemplate({ code: errCode, username, ADDR_PREFIX }));
   }
-  else return res.end(universeTemplate({ item, username, ADDR_PREFIX }));
+  else {
+    item.objData = JSON.parse(item.objData);
+    return res.end(itemTemplate({ item, username, ADDR_PREFIX }));
+  }
 });
 app.get(`${ADDR_PREFIX}/items/:id/edit`, async (req, res) => {
   const user = req.session.user;

@@ -178,6 +178,12 @@ app.get(`${ADDR_PREFIX}/api/items`, async (req, res) => {
   if (errCode) res.sendStatus(errCode);
   else res.json(result);
 });
+app.get(`${ADDR_PREFIX}/api/items/:id`, async (req, res) => {
+  const user = req.session.user;
+  const [errCode, item] = await api.get.itemById(user, req.params.id);
+  if (errCode) res.sendStatus(errCode);
+  else res.json(item);
+});
 
 app.get(`${ADDR_PREFIX}/api/users/:id`, async (req, res) => {
   const [errCode, user] = await api.get.user({ id: req.params.id });

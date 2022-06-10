@@ -6,8 +6,7 @@ const Auth = require('./middleware/auth');
 const pug = require('pug');
 const md5 = require('md5');
 
-const PORT = 3004;
-const { ADDR_PREFIX } = require('./config');
+const { PORT, ADDR_PREFIX, DEV_MODE } = require('./config');
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));
@@ -27,6 +26,14 @@ const userTemplate = pug.compileFile('templates/user.pug');
 const userListTemplate = pug.compileFile('templates/userList.pug');
 
 // const itemTemplate = pug.compileFile('templates/item.pug');
+
+// Logger if in Dev Mode
+if (DEV_MODE) {
+  app.use('/', (req, res, next) => {
+    console.log(req.method, req.path, req.body || '');
+    next();
+  })
+}
 
 // Serve static assets
 app.use(`${ADDR_PREFIX}/static`, express.static(path.join(__dirname, 'static/')));

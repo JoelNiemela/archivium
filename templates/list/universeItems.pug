@@ -15,7 +15,7 @@ block content
         tr
           td
             a( href=`${ADDR_PREFIX}/items/${item.id}` ) #{item.title}
-          td TODO
+          td #{capitalize(item.itemType)}
           td
             a( href=`${ADDR_PREFIX}/users/${item.authorId}` ) #{item.author}
           td #{formatDate(item.createdAt)}

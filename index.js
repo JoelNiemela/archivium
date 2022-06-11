@@ -68,31 +68,16 @@ app.get(`${ADDR_PREFIX}/universes`, async (req, res) => {
 });
 
 app.get(`${ADDR_PREFIX}/universes/:id`, async (req, res) => {
-  const [errCode1, universe] = await api.get.universeById(req.session.user, req.params.id);
-  if (errCode1) {
-    res.status(errCode1);
-    return res.end(errorTemplate({ code: errCode1, ...contextData(req) }));
+  const [errCode, universe] = await api.get.universeById(req.session.user, req.params.id);
+  if (errCode) {
+    res.status(errCode);
+    return res.end(errorTemplate({ code: errCode, ...contextData(req) }));
   }
-  const [errCode2, owner] = await api.get.user({ id: universe.authorId });
-  if (errCode2) {
-    res.status(errCode2);
-    return res.end(errorTemplate({ code: errCode2, ...contextData(req) }));
-  }
-  else return res.end(universeTemplate({ universe, owner, ...contextData(req) }));
+  else return res.end(universeTemplate({ universe, ...contextData(req) }));
 });
 
 app.get(`${ADDR_PREFIX}/universes/:id/edit`, async (req, res) => {
-  const [errCode1, universe] = await api.get.universeById(req.session.user, req.params.id, 3);
-  if (errCode1) {
-    res.status(errCode1);
-    return res.end(errorTemplate({ code: errCode1, ...contextData(req) }));
-  }
-  const [errCode2, owner] = await api.get.user({ id: universe.authorId });
-  if (errCode2) {
-    res.status(errCode2);
-    return res.end(errorTemplate({ code: errCode2, ...contextData(req) }));
-  }
-  else return res.end(editUniverseTemplate({ universe, owner, ...contextData(req) }));
+  return res.end(editUniverseTemplate({ ...contextData(req) }));
 });
 
 

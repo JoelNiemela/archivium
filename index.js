@@ -241,9 +241,9 @@ app.post(`${ADDR_PREFIX}/api/universes`, async (req, res) => {
   }
 });
 
-app.post(`${ADDR_PREFIX}/api/items`, async (req, res) => {
+app.post(`${ADDR_PREFIX}/api/universes/:universeId/items`, async (req, res) => {
   if (req.session.user) {
-    const [errCode, data] = await api.post.item(req.session.user, req.body, /* UNIVERSE ID */);
+    const [errCode, data] = await api.post.item(req.session.user, req.body, req.params.universeId);
     if (errCode) return res.sendStatus(errCode);
     console.log(data);
     return res.sendStatus(201);

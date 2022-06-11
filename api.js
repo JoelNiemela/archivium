@@ -296,16 +296,16 @@ class APIPostMethods {
    */
   async item(user, body, universeId) {
 
-    const [errCode, universe] = await api.get.universeById(req.session.user, req.params.id, true);
+    const [errCode, universe] = await api.get.universeById(user, universeId, true);
     if (errCode) return [errCode, null];
 
-    let queryString1 = `INSERT INTO universes SET ?`;
+    let queryString1 = `INSERT INTO items SET ?`;
     const data = await executeQuery(queryString1, {
       title: body.title,
       itemType: body.itemType,
       authorId: user.id,
       universeId: universeId,
-      authorId: body.parentId,
+      parentId: body.parentId,
       objData: body.objData,
       createdAt: new Date(),
       updatedAt: new Date(),

@@ -19,14 +19,21 @@ const errorTemplate = pug.compileFile('templates/error.pug');
 const homeTemplate = pug.compileFile('templates/home.pug');
 const loginTemplate = pug.compileFile('templates/login.pug');
 const signupTemplate = pug.compileFile('templates/signup.pug');
+
 const universeTemplate = pug.compileFile('templates/view/universe.pug');
 const editUniverseTemplate = pug.compileFile('templates/edit/universe.pug');
-const universeListTemplate = pug.compileFile('templates/list/universe.pug');
+const universeListTemplate = pug.compileFile('templates/list/universes.pug');
+
 const itemTemplate = pug.compileFile('templates/view/item.pug');
 const editItemTemplate = pug.compileFile('templates/edit/item.pug');
-const itemListTemplate = pug.compileFile('templates/list/item.pug');
+const itemListTemplate = pug.compileFile('templates/list/items.pug');
+
+const universeItemListTemplate = pug.compileFile('templates/list/universeItems.pug');
+
 const userTemplate = pug.compileFile('templates/view/user.pug');
-const userListTemplate = pug.compileFile('templates/list/user.pug');
+const userListTemplate = pug.compileFile('templates/list/users.pug');
+
+
 
 // const itemTemplate = pug.compileFile('templates/item.pug');
 
@@ -74,6 +81,35 @@ app.get(`${ADDR_PREFIX}/universes/:id`, async (req, res) => {
     return res.end(errorTemplate({ code: errCode, ...contextData(req) }));
   }
   else return res.end(universeTemplate({ universe, ...contextData(req) }));
+});
+
+app.get(`${ADDR_PREFIX}/universes/:id/items(/:type)?`, async (req, res) => {
+
+  const [errCode1, universe] = await api.get.universeById(req.session.user, req.params.id);
+  if (errCode1) {
+    res.status(errCode1);
+    return res.end(errorTemplate({ code: errCode1, ...contextData(req) }));
+  }
+
+  const conditions = { 
+    strings: [
+      'items.universeId = ?',
+    ], values: [
+      req.params.id,
+    ]
+  };
+
+  if (req.params.type) {
+    conditions.strings.push('items.type = ?');
+    conditions.values.push(req.params.type);
+  }
+
+  const [errCode2, items] = await api.get.items(req.session.user, conditions);
+  if (errCode2) {
+    res.status(errCode2);
+    return res.end(errorTemplate({ code: errCode2, ...contextData(req) }));
+  }
+  else return res.end(universeItemListTemplate({ items, universe, ...contextData(req) }));
 });
 
 app.get(`${ADDR_PREFIX}/universes/:id/edit`, async (req, res) => {

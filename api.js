@@ -158,10 +158,12 @@ class APIGetMethods {
         SELECT
           universes.*,
           JSON_OBJECTAGG(users.id, users.username) as authors,
-          JSON_OBJECTAGG(users.id, authoruniverses.permissionLevel) as authorPermissions
+          JSON_OBJECTAGG(users.id, authoruniverses.permissionLevel) as authorPermissions,
+          owners.username as owner
         FROM authoruniverses
-        INNER JOIN universes ON universes.id = universeId 
         INNER JOIN users ON users.id = userId
+        INNER JOIN universes ON universes.id = universeId 
+        INNER JOIN users as owners ON universes.authorId = owners.id
         WHERE (universes.public = 1${usrQueryString})
         ${conditionString}
         GROUP BY universeId;`;

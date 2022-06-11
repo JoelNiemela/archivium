@@ -37,10 +37,10 @@ async function dbImport() {
   // items
   const items = JSON.parse(await fsPromises.readFile(path.join(__dirname, 'export/items.json'), { encoding: 'utf8' }));
   for (const id in items) {
-    const { title, authorId, universeId, parentId, createdAt, updatedAt, objData } = items[id];
+    const { title, itemType, authorId, universeId, parentId, createdAt, updatedAt, objData } = items[id];
     await db.queryAsync(
-      'INSERT INTO items (id, title, authorId, universeId, parentId, createdAt, updatedAt, objData) VALUES (?,?,?,?,?,?,?,?);',
-      [id, title, authorId, universeId, parentId, new Date(createdAt), new Date(updatedAt), JSON.stringify(objData)]
+      'INSERT INTO items (id, title, itemType, authorId, universeId, parentId, createdAt, updatedAt, objData) VALUES (?,?,?,?,?,?,?,?,?);',
+      [id, title, itemType, authorId, universeId, parentId, new Date(createdAt), new Date(updatedAt), JSON.stringify(objData)]
     );
   }
 

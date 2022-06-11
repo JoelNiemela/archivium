@@ -114,6 +114,25 @@ app.get(`${ADDR_PREFIX}/universes/:id/items`, async (req, res) => {
   else return res.end(universeItemListTemplate({ items, universe, ...contextData(req) }));
 });
 
+app.get(`${ADDR_PREFIX}/universes/:universeId/items/:itemId`, async (req, res) => {
+  const [errCode, item] = await api.get.itemById(req.session.user, req.params.itemId);
+  if (errCode) {
+    res.status(errCode);
+    return res.end(errorTemplate({ code: errCode, ...contextData(req) }));
+  }
+  if (item.universeId != req.params.universeId) {
+    res.status(404);
+    return res.end(errorTemplate({
+      code: 404,
+      hint: 'Could this be the page you\'re looking for?',
+      hintLink: `${ADDR_PREFIX}/universes/${item.universeId}/items/${item.id}`,
+      ...contextData(req)
+    }));
+  }
+  item.objData = JSON.parse(item.objData);
+  return res.end(itemTemplate({ item, ...contextData(req) }));
+});
+
 app.get(`${ADDR_PREFIX}/universes/:id/edit`, async (req, res) => {
   return res.end(editUniverseTemplate({ ...contextData(req) }));
 });
@@ -143,35 +162,24 @@ app.get(`${ADDR_PREFIX}/users/:id`, async (req, res) => {
 
 
 
-app.get(`${ADDR_PREFIX}/items`, async (req, res) => {
-  const [errCode, items] = await api.get.items(req.session.user);
-  if (errCode) res.sendStatus(errCode);
-  else return res.end(itemListTemplate({ items, ...contextData(req) }));
-});
-
-app.get(`${ADDR_PREFIX}/items/:id`, async (req, res) => {
-  const [errCode, item] = await api.get.itemById(req.session.user, req.params.id);
+app.get(`${ADDR_PREFIX}/universes/:universeId/items/:itemId/edit`, async (req, res) => {
+  const [errCode, item] = await api.get.itemById(req.session.user, req.params.itemId);
   if (errCode) {
     res.status(errCode);
     return res.end(errorTemplate({ code: errCode, ...contextData(req) }));
   }
-  else {
-    item.objData = JSON.parse(item.objData);
-    return res.end(itemTemplate({ item, ...contextData(req) }));
+  if (item.universeId != req.params.universeId) {
+    res.status(404);
+    return res.end(errorTemplate({
+      code: 404,
+      hint: 'Could this be the page you\'re looking for?',
+      hintLink: `${ADDR_PREFIX}/universes/${item.universeId}/items/${item.id}`,
+      ...contextData(req)
+    }));
   }
-});
-
-app.get(`${ADDR_PREFIX}/items/:id/edit`, async (req, res) => {
-  const user = req.session.user;
-  const username = user && user.username;
-  // const [errCode, item] = await api.get.universeById(user, req.params.id, 3);
-  // if (errCode) {
-  //   res.status(errCode);
-  //   return res.end(errorTemplate({ code: errCode, ...contextData(req) }));
-  // }
-  // else return res.end(editUniverseTemplate({ universe, owner, ...contextData(req) }));
+  item.objData = JSON.parse(item.objData);
   
-  return res.end(editItemTemplate({ ...contextData(req) }));
+  return res.end(editItemTemplate({ item, ...contextData(req) }));
 });
 
 
@@ -194,15 +202,16 @@ app.get(`${ADDR_PREFIX}/api/universes/:id`, async (req, res) => {
 
 
 
-app.get(`${ADDR_PREFIX}/api/items`, async (req, res) => {
-  const [errCode, result] = await api.get.items(req.session.user);
+app.get(`${ADDR_PREFIX}/api/universes/:id/items`, async (req, res) => {
+  const [errCode, result] = await api.get.itemsByUniverseId(req.session.user, req.params.id);
   if (errCode) res.sendStatus(errCode);
   else res.json(result);
 });
 
-app.get(`${ADDR_PREFIX}/api/items/:id`, async (req, res) => {
-  const [errCode, item] = await api.get.itemById(req.session.user, req.params.id);
+app.get(`${ADDR_PREFIX}/api/universes/:universeId/items/:itemId`, async (req, res) => {
+  const [errCode, item] = await api.get.itemById(req.session.user, req.params.itemId);
   if (errCode) res.sendStatus(errCode);
+  if (item.universeId != req.params.universeId) res.sendStatus(404);
   else res.json(item);
 });
 

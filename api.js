@@ -122,9 +122,31 @@ class APIGetMethods {
 
     const [errCode, data] = await api.get.items(user, conditions, [3, 2, 1].filter(num => num >= permissionRequired));
     if (errCode) return [errCode, null];
-    const universe = data[0];
+    const item = data[0];
     if (!universe) return [user ? 403 : 401, null];
-    return [null, universe];
+    return [null, item];
+  }
+
+  /**
+   * 
+   * @param {*} user 
+   * @param {*} id 
+   * @param {boolean} permissionRequired only return items that user has write access to
+   * @returns 
+   */
+  async itemsByUniverseId(user, id, permissionRequired=1) {
+
+    const conditions = { 
+      strings: [
+        'items.universeId = ?',
+      ], values: [
+        id,
+      ]
+    };
+
+    const [errCode, items] = await api.get.items(user, conditions, [3, 2, 1].filter(num => num >= permissionRequired));
+    if (errCode) return [errCode, null];
+    return [null, items];
   }
 
   /**

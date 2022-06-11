@@ -83,7 +83,9 @@ app.get(`${ADDR_PREFIX}/universes/:id`, async (req, res) => {
   else return res.end(universeTemplate({ universe, ...contextData(req) }));
 });
 
-app.get(`${ADDR_PREFIX}/universes/:id/items(/:type)?`, async (req, res) => {
+app.get(`${ADDR_PREFIX}/universes/:id/items`, async (req, res) => {
+
+  console.log(req.query);
 
   const [errCode1, universe] = await api.get.universeById(req.session.user, req.params.id);
   if (errCode1) {
@@ -99,9 +101,9 @@ app.get(`${ADDR_PREFIX}/universes/:id/items(/:type)?`, async (req, res) => {
     ]
   };
 
-  if (req.params.type) {
-    conditions.strings.push('items.type = ?');
-    conditions.values.push(req.params.type);
+  if (req.query.type) {
+    conditions.strings.push('items.itemType = ?');
+    conditions.values.push(req.query.type);
   }
 
   const [errCode2, items] = await api.get.items(req.session.user, conditions);

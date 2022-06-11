@@ -10,3 +10,15 @@ mixin authorList(authors)
       a( href=`${ADDR_PREFIX}/users/${key}` )= val
       | #{suff}
       - i++;
+
+mixin typeCard(type, color)
+  .card
+    a.cardLink(href=`${ADDR_PREFIX}/${type}`)
+      div(style={ 'background-color': color })
+        br
+        h2(align='center')= `${capitalize(type)}s`
+        br
+    br
+    div
+      a.cardBtn &#x2795; New
+      a.cardBtn( href=`${ADDR_PREFIX}/users/${contextUser.id}/items?type=${type}` ) My #{type}s

@@ -1,4 +1,5 @@
 extends ../layout.pug
+include ../mixins.pug
 
 block content
   h1.center #{universe.title}
@@ -13,3 +14,15 @@ block content
     each username, id in universe.authors
       li
         a( href=`${ADDR_PREFIX}/users/${id}` )= username
+  .container(style={
+    width: '90%',
+    margin: '0 auto',
+  })
+    .cardContainer
+      +typeCard('character', '#F44336')
+      +typeCard('location', '#4CAF50')
+      +typeCard('event', '#9e9e9e')
+      +typeCard('archive', '#a1887f')
+      +typeCard('document', '#4d4d4d')
+      +typeCard('timeline', '#64B5F6')
+      +typeCard('item', '#ffc107')

@@ -265,6 +265,38 @@ class APIPostMethods {
   
     })];
   }
+
+  /**
+   * 
+   * @param {*} user 
+   * @param {*} body 
+   * @returns 
+   */
+  async item(user, body, universeId) {
+
+    const [errCode, universe] = await api.get.universeById(req.session.user, req.params.id, true);
+    if (errCode) return [errCode, null];
+
+    let queryString1 = `INSERT INTO universes SET ?`;
+    const data = await executeQuery(queryString1, {
+      title: body.title,
+      itemType: body.itemType,
+      authorId: user.id,
+      universeId: universeId,
+      authorId: body.parentId,
+      objData: body.objData,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    console.log(data.insertId);
+    const queryString2 = `INSERT INTO authoruniverses SET ?`;
+    return [null, [data, await executeQuery(queryString2, {
+      universeId: data.insertId,
+      userId: user.id,
+      permissionLevel: 3,
+  
+    })]];
+  }
 }
 
 class APIPutMethods {

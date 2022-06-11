@@ -192,16 +192,6 @@ app.get(`${ADDR_PREFIX}/api/universes/:id`, async (req, res) => {
   else res.json(universe);
 });
 
-app.post(`${ADDR_PREFIX}/api/universes`, async (req, res) => {
-  if (req.session.user) {
-    const data = await api.post.universe(req.session.user, req.body);
-    console.log(data);
-    res.sendStatus(201);
-  } else {
-    res.sendStatus(401);
-  }
-});
-
 
 
 app.get(`${ADDR_PREFIX}/api/items`, async (req, res) => {
@@ -230,6 +220,28 @@ app.get(`${ADDR_PREFIX}/api/users/:id/universes`, async (req, res) => {
   else res.json(universes);
 });
 
+
+
+app.post(`${ADDR_PREFIX}/api/universes`, async (req, res) => {
+  if (req.session.user) {
+    const data = await api.post.universe(req.session.user, req.body);
+    console.log(data);
+    return res.sendStatus(201);
+  } else {
+    return res.sendStatus(401);
+  }
+});
+
+app.post(`${ADDR_PREFIX}/api/items`, async (req, res) => {
+  if (req.session.user) {
+    const [errCode, data] = await api.post.item(req.session.user, req.body, /* UNIVERSE ID */);
+    if (errCode) return res.sendStatus(errCode);
+    console.log(data);
+    return res.sendStatus(201);
+  } else {
+    return res.sendStatus(401);
+  }
+});
 
 
 

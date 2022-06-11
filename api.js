@@ -123,7 +123,7 @@ class APIGetMethods {
     const [errCode, data] = await api.get.items(user, conditions, [3, 2, 1].filter(num => num >= permissionRequired));
     if (errCode) return [errCode, null];
     const item = data[0];
-    if (!universe) return [user ? 403 : 401, null];
+    if (!item) return [user ? 403 : 401, null];
     return [null, item];
   }
 

@@ -1,17 +1,16 @@
 extends layout.pug
 
-mixin typeTile(type, color)
-  .feild-frame
-    .card-container.card
-      a.link(href=`${ADDR_PREFIX}/${type}`)
-        div(style={ 'background-color': color })
-          br
-          h2(align='center')= capitalize(type)
-          br
-      br
-      div
-        a.btn.btn-sm.btn-margin-narrow.margin-side &#x2795; New
-        a.btn.btn-sm My #{type}
+mixin typeCard(type, color)
+  .card
+    a.cardLink(href=`${ADDR_PREFIX}/${type}`)
+      div(style={ 'background-color': color })
+        br
+        h2(align='center')= capitalize(type)
+        br
+    br
+    div
+      a.cardBtn &#x2795; New
+      a.cardBtn( href=`${ADDR_PREFIX}/users/${contextUser.id}/items?type=${type}` ) My #{type}
 
 
 block content
@@ -21,11 +20,11 @@ block content
   })
     h1(align='center') Welcome to Archivium
     br
-    .feild-frame-container
-      +typeTile('characters', '#F44336')
-      +typeTile('locations', '#4CAF50')
-      +typeTile('events', '#9e9e9e')
-      +typeTile('archives', '#a1887f')
-      +typeTile('documents', '#4d4d4d')
-      +typeTile('timelines', '#64B5F6')
-      +typeTile('items', '#ffc107')
+    .cardContainer
+      +typeCard('characters', '#F44336')
+      +typeCard('locations', '#4CAF50')
+      +typeCard('events', '#9e9e9e')
+      +typeCard('archives', '#a1887f')
+      +typeCard('documents', '#4d4d4d')
+      +typeCard('timelines', '#64B5F6')
+      +typeCard('items', '#ffc107')

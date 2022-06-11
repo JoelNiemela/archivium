@@ -2,5 +2,4 @@ extends ../layout.pug
 
 block content
   script( src=`${ADDR_PREFIX}/static/scripts/edititem.js` )
-  script
-    | Elm.Pages.EditItem.init();
+  script= `Elm.Pages.EditItem.init(${JSON.stringify({ item, ADDR_PREFIX })});`

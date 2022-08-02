@@ -122,9 +122,31 @@ class APIGetMethods {
 
     const [errCode, data] = await api.get.items(user, conditions, [3, 2, 1].filter(num => num >= permissionRequired));
     if (errCode) return [errCode, null];
-    const universe = data[0];
-    if (!universe) return [user ? 403 : 401, null];
-    return [null, universe];
+    const item = data[0];
+    if (!item) return [user ? 403 : 401, null];
+    return [null, item];
+  }
+
+  /**
+   * 
+   * @param {*} user 
+   * @param {*} id 
+   * @param {boolean} permissionRequired only return items that user has write access to
+   * @returns 
+   */
+  async itemsByUniverseId(user, id, permissionRequired=1) {
+
+    const conditions = { 
+      strings: [
+        'items.universeId = ?',
+      ], values: [
+        id,
+      ]
+    };
+
+    const [errCode, items] = await api.get.items(user, conditions, [3, 2, 1].filter(num => num >= permissionRequired));
+    if (errCode) return [errCode, null];
+    return [null, items];
   }
 
   /**
@@ -158,10 +180,12 @@ class APIGetMethods {
         SELECT
           universes.*,
           JSON_OBJECTAGG(users.id, users.username) as authors,
-          JSON_OBJECTAGG(users.id, authoruniverses.permissionLevel) as authorPermissions
+          JSON_OBJECTAGG(users.id, authoruniverses.permissionLevel) as authorPermissions,
+          owners.username as owner
         FROM authoruniverses
-        INNER JOIN universes ON universes.id = universeId 
         INNER JOIN users ON users.id = userId
+        INNER JOIN universes ON universes.id = universeId 
+        INNER JOIN users as owners ON universes.authorId = owners.id
         WHERE (universes.public = 1${usrQueryString})
         ${conditionString}
         GROUP BY universeId;`;
@@ -262,6 +286,38 @@ class APIPostMethods {
       permissionLevel: 3,
   
     })];
+  }
+
+  /**
+   * 
+   * @param {*} user 
+   * @param {*} body 
+   * @returns 
+   */
+  async item(user, body, universeId) {
+
+    const [errCode, universe] = await api.get.universeById(user, universeId, true);
+    if (errCode) return [errCode, null];
+
+    let queryString1 = `INSERT INTO items SET ?`;
+    const data = await executeQuery(queryString1, {
+      title: body.title,
+      itemType: body.itemType,
+      authorId: user.id,
+      universeId: universeId,
+      parentId: body.parentId,
+      objData: body.objData,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    console.log(data.insertId);
+    const queryString2 = `INSERT INTO authoruniverses SET ?`;
+    return [null, [data, await executeQuery(queryString2, {
+      universeId: data.insertId,
+      userId: user.id,
+      permissionLevel: 3,
+  
+    })]];
   }
 }
 

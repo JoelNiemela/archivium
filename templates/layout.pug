@@ -32,12 +32,10 @@ html(lang='en')
           a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/users`) Users
         li.navbarBtn
           a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/universes`) Universes
-        li.navbarBtn
-          a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/objects`) Objects
-      if username
+      if contextUser
         ul.navbarBtns
           li.navbarBtn
-            span.navbarText Logged in as #{username}
+            span.navbarText Logged in as #{contextUser.username}
           li.navbarBtn
             a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/logout`) Log Out
       else

@@ -2,7 +2,7 @@ extends ../layout.pug
 
 block content
   h1.center #{item.title}
-  p.center #{item.universe}
+  p.center #{capitalize(item.itemType)} of #{item.universe}
   p.center
     small Created by 
       a( href=`${ADDR_PREFIX}/users/${item.authorId}` ) #{item.author}

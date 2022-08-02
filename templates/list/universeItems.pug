@@ -1,0 +1,22 @@
+extends ../layout.pug
+
+block content
+  h1.center Items of #{universe.title}
+  hr
+  table
+    thead
+      th Name
+      th Type
+      th Author
+      th Created
+      th Updated
+    tbody
+      each item in items
+        tr
+          td
+            a( href=`${ADDR_PREFIX}/items/${item.id}` ) #{item.title}
+          td #{capitalize(item.itemType)}
+          td
+            a( href=`${ADDR_PREFIX}/users/${item.authorId}` ) #{item.author}
+          td #{formatDate(item.createdAt)}
+          td #{formatDate(item.updatedAt)}

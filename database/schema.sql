@@ -36,6 +36,7 @@ CREATE TABLE universes (
 CREATE TABLE items (
   id INT NOT NULL AUTO_INCREMENT,
   title VARCHAR(64),
+  itemType ENUM('character', 'location', 'event', 'archive', 'document', 'timeline', 'item') NOT NULL,
   authorId INT NOT NULL,
   universeId INT NOT NULL,
   parentId INT,

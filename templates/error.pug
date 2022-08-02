@@ -15,3 +15,9 @@ block content
       h1 Error #{code}
       img(src=`https://http.cat/${code}` style={ height: '90%', 'object-fit': 'contain' })
       p #{errorMsgTable[code] || defaultErrorMsg}
+      if hint
+        p.center
+          span #{hint}
+          if hintLink
+            br
+            a( href=hintLink ) #{hintLink}

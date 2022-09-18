@@ -1,0 +1,39 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Edit Item</title>
+	<script src="./elm.js"></script>
+</head>
+<body>
+	<div id="elm"></div>
+	<script>
+		Elm.Pages.EditItem.init({
+			node: document.getElementById('elm'),
+    		flags: `{
+				"item": {
+					"id": 1,
+					"title": "Test Item 1",
+					"authorId": 3,
+					"universeId": 2,
+					"parentId": null,
+					"createdAt": "2022-06-03T22:12:37.000Z",
+					"updatedAt": "2022-06-03T22:12:37.000Z",
+					"objData": [
+						["tab1", [
+							["a", "x"]
+						]], 
+						["tab2", [
+							["b", "y"],
+							["c", "z"]
+						]]
+					],
+					"author": "user",
+					"universe": "Test Universe"
+				},
+  				"ADDR_PREFIX": "string"
+			}`
+		});
+	</script>
+</body>
+</html>

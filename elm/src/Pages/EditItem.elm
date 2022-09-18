@@ -217,7 +217,7 @@ type Msg
     | MoveFieldUp Int Int           -- tabId fieldId
     | MoveFieldDown Int Int         -- tabId fieldId
     | Save
-    | Saved (Result Http.Error ())
+    | Saved (Result Http.Error String)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -406,15 +406,26 @@ update msg model =
                 request =
                     Http.request
                         { method = "PUT"
-                        , headers = []
-                        , url = "/archivium/api/items/1"
+                        , headers = [Http.header "Content-type" "application/json"]
+                        , url = "http://localhost:80/put"
                         , body = Http.jsonBody json
-                        , expect = Http.expectWhatever Saved
+                        , expect = Http.expectString Saved 
                         , timeout = Nothing
                         , tracker = Nothing
                         }
 
             in ( model, request )
+
+        Saved res ->
+            let
+                _ = case res of
+                    Ok val ->
+                        Debug.log "" val
+            
+                    _ ->
+                        ""
+            in
+            ( model, Cmd.none )
 
         _ ->
             ( model, Cmd.none )

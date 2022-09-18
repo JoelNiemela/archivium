@@ -6161,12 +6161,12 @@ var $elm$core$Basics$composeR = F3(
 		return g(
 			f(x));
 	});
-var $elm$http$Http$expectBytesResponse = F2(
+var $elm$http$Http$expectStringResponse = F2(
 	function (toMsg, toResult) {
 		return A3(
 			_Http_expect,
-			'arraybuffer',
-			_Http_toDataView,
+			'',
+			$elm$core$Basics$identity,
 			A2($elm$core$Basics$composeR, toResult, toMsg));
 	});
 var $elm$http$Http$BadBody = function (a) {
@@ -6214,14 +6214,11 @@ var $elm$http$Http$resolve = F2(
 					toResult(body));
 		}
 	});
-var $elm$http$Http$expectWhatever = function (toMsg) {
+var $elm$http$Http$expectString = function (toMsg) {
 	return A2(
-		$elm$http$Http$expectBytesResponse,
+		$elm$http$Http$expectStringResponse,
 		toMsg,
-		$elm$http$Http$resolve(
-			function (_v0) {
-				return $elm$core$Result$Ok(_Utils_Tuple0);
-			}));
+		$elm$http$Http$resolve($elm$core$Result$Ok));
 };
 var $elm$core$Maybe$andThen = F2(
 	function (callback, maybeValue) {
@@ -6289,6 +6286,11 @@ var $author$project$Pages$EditItem$getField = F3(
 			$author$project$Pages$EditItem$getTabField(fieldId),
 			A2($author$project$Pages$EditItem$getTab, tabId, model));
 	});
+var $elm$http$Http$Header = F2(
+	function (a, b) {
+		return {$: 'Header', a: a, b: b};
+	});
+var $elm$http$Http$header = $elm$http$Http$Header;
 var $elm$core$Elm$JsArray$appendN = _JsArray_appendN;
 var $elm$core$Elm$JsArray$slice = _JsArray_slice;
 var $elm$core$Array$appendHelpBuilder = F2(
@@ -6695,6 +6697,7 @@ var $elm$http$Http$jsonBody = function (value) {
 		'application/json',
 		A2($elm$json$Json$Encode$encode, 0, value));
 };
+var $elm$core$Debug$log = _Debug_log;
 var $elm_community$array_extra$Array$Extra$sliceFrom = F2(
 	function (lengthDropped, array) {
 		return A3(
@@ -7192,14 +7195,28 @@ var $author$project$Pages$EditItem$update = F2(
 				var request = $elm$http$Http$request(
 					{
 						body: $elm$http$Http$jsonBody(json),
-						expect: $elm$http$Http$expectWhatever($author$project$Pages$EditItem$Saved),
-						headers: _List_Nil,
+						expect: $elm$http$Http$expectString($author$project$Pages$EditItem$Saved),
+						headers: _List_fromArray(
+							[
+								A2($elm$http$Http$header, 'Content-type', 'application/json')
+							]),
 						method: 'PUT',
 						timeout: $elm$core$Maybe$Nothing,
 						tracker: $elm$core$Maybe$Nothing,
-						url: '/archivium/api/items/1'
+						url: 'http://localhost:80/put'
 					});
 				return _Utils_Tuple2(model, request);
+			case 'Saved':
+				var res = msg.a;
+				var _v10 = function () {
+					if (res.$ === 'Ok') {
+						var val = res.a;
+						return A2($elm$core$Debug$log, '', val);
+					} else {
+						return '';
+					}
+				}();
+				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 			default:
 				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 		}

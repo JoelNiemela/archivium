@@ -496,7 +496,7 @@ view model =
 nameView : String -> Html Msg
 nameView name =
     div []
-        [ label [ for "name" ] [ text "name" ]
+        [ label [ for "name" ] [ text "name " ]
         , input [ id "name", value name, onInput EditTitle ] []
         ]
 

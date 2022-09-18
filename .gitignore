@@ -5,3 +5,6 @@ database/config.js
 config.js
 
 database/export/
+
+elm/elm-stuff/
+static/scripts/

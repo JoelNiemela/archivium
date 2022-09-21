@@ -489,48 +489,48 @@ view model =
         , formView <|
             Array.toList model.data.tabs
         , br [] []
-        , button [ onClick Save, style "background" "lightblue" ] [ text "Save" ]
+        , button [ onClick Save, class "elmBtnPrimary" ] [ text "Save" ]
         ]
 
 
 nameView : String -> Html Msg
 nameView name =
     div []
-        [ label [ for "name" ] [ text "name" ]
+        [ label [ for "name" ] [ text "name " ]
         , input [ id "name", value name, onInput EditTitle ] []
         ]
 
 
 formView : List Tab -> Html Msg
 formView tabs =
-    div [ style "margin" "2px" ]
+    div [ class "elmTabList" ]
         [ div [] 
             <| List.indexedMap tabView tabs
-        , button [ onClick AddTab, style "background" "lightblue" ] [ text "Add Tab" ]
+        , button [ onClick AddTab, class "elmBtnPrimary" ] [ text "Add Tab" ]
         ]
 
 
 tabView : Int -> Tab -> Html Msg
 tabView tabId tab =
-    div [ style "margin" "4px" ]
+    div [ class "elmTab" ]
         [ input [ value tab.name, onInput (EditTabName tabId) ] []
         , div []
             <| List.indexedMap (fieldView tabId)
             <| Array.toList tab.fields
-        , button [ onClick (AddField tabId), style "background" "lightblue" ] [ text "Add Field" ]
-        , button [ onClick (DeleteTab tabId), style "background" "red" ] [ text "Delete" ]
-        , button [ onClick (MoveTabUp tabId), style "background" "white" ] [ text "↑" ]
-        , button [ onClick (MoveTabDown tabId), style "background" "white" ] [ text "↓" ]
+        , button [ onClick (AddField tabId), class "elmBtnPrimary" ] [ text "Add Field" ]
+        , button [ onClick (DeleteTab tabId), class "elmBtnDelete" ] [ text "Delete" ]
+        , button [ onClick (MoveTabUp tabId), class "elmBtn" ] [ text "↑" ]
+        , button [ onClick (MoveTabDown tabId), class "elmBtn" ] [ text "↓" ]
         ]
 
 fieldView : Int -> Int -> Field -> Html Msg
 fieldView tabId fieldId field =
     div []
-        [ button [ onClick (DeleteField tabId fieldId), style "background" "red" ] [ text "✕" ]
+        [ button [ onClick (DeleteField tabId fieldId), class "elmBtnDelete" ] [ text "✕" ]
         , input [ value field.name, onInput (EditFieldName tabId fieldId) ] []
         , input [ value (valueView field.value), onInput (EditField tabId fieldId) ] []
-        , button [ onClick (MoveFieldUp tabId fieldId), style "background" "white" ] [ text "↑" ]
-        , button [ onClick (MoveFieldDown tabId fieldId), style "background" "white" ] [ text "↓" ]
+        , button [ onClick (MoveFieldUp tabId fieldId), class "elmBtn" ] [ text "↑" ]
+        , button [ onClick (MoveFieldDown tabId fieldId), class "elmBtn" ] [ text "↓" ]
         ]
 
 

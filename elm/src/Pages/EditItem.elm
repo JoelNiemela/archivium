@@ -151,6 +151,9 @@ dataDecoder =
     |> Decode.field "item"
 
 
+-- INIT
+
+
 init : Flags -> ( Model, Cmd Msg )
 init flags =
     case Decode.decodeString dataDecoder flags of

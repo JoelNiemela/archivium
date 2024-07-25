@@ -301,8 +301,12 @@ app.post(`${ADDR_PREFIX}/login`, async (req, res) => {
         res.status(200);
         return res.redirect(`${ADDR_PREFIX}/`);
       } else {
+        res.status(401);
         return res.redirect(`${ADDR_PREFIX}/login`);
       }
+    } else {
+      res.status(401);
+      return res.redirect(`${ADDR_PREFIX}/login`);
     }
   } catch (err) {
     console.error(err);

@@ -17,6 +17,7 @@ CREATE TABLE session (
   id INT NOT NULL AUTO_INCREMENT,
   hash VARCHAR(64),
   user_id INT,
+  created_at TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES user (id),
   PRIMARY KEY (id)
 );

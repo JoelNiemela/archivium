@@ -11,5 +11,8 @@ block content
       input( id='password' type='password' name='password' )
     div
       input( type='submit' value='Login' )
+    if error
+      div
+        span( style={color: 'red', 'font-size': 'small'} )= error
   p
     a( href=`${ADDR_PREFIX}/signup` ) Create an Account

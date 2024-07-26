@@ -1,4 +1,4 @@
-const db = require('./database');
+const db = require('./db');
 const utils = require('./lib/hashUtils');
 const _ = require('lodash');
 

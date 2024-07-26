@@ -1,9 +1,10 @@
 const express = require('express');
 const path = require('path');
 const api = require('./api');
+const { render } = require('./templates');
+
 const CookieParser = require('./middleware/cookieParser');
 const Auth = require('./middleware/auth');
-const pug = require('pug');
 const md5 = require('md5');
 
 const { PORT, ADDR_PREFIX, DEV_MODE } = require('./config');
@@ -14,28 +15,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(CookieParser);
 app.use(Auth.createSession);
 
-// compile templates
-const errorTemplate = pug.compileFile('templates/error.pug');
-const homeTemplate = pug.compileFile('templates/home.pug');
-const loginTemplate = pug.compileFile('templates/login.pug');
-const signupTemplate = pug.compileFile('templates/signup.pug');
-
-const universeTemplate = pug.compileFile('templates/view/universe.pug');
-const editUniverseTemplate = pug.compileFile('templates/edit/universe.pug');
-const universeListTemplate = pug.compileFile('templates/list/universes.pug');
-
-const itemTemplate = pug.compileFile('templates/view/item.pug');
-const editItemTemplate = pug.compileFile('templates/edit/item.pug');
-const itemListTemplate = pug.compileFile('templates/list/items.pug');
-
-const universeItemListTemplate = pug.compileFile('templates/list/universeItems.pug');
-
-const userTemplate = pug.compileFile('templates/view/user.pug');
-const userListTemplate = pug.compileFile('templates/list/users.pug');
-
-
-
-// const itemTemplate = pug.compileFile('templates/item.pug');
 
 // Logger if in Dev Mode
 if (DEV_MODE) {
@@ -45,28 +24,11 @@ if (DEV_MODE) {
   })
 }
 
-// Basic context information to be sent to the templates
-function contextData(req) {
-  const user = req.session.user;
-  const contextUser = user ? { id: user.id, username: user.username } : null;
-  return {
-    contextUser,
-    ADDR_PREFIX,
-  };
-}
-
 // Serve static assets
 app.use(`${ADDR_PREFIX}/static`, express.static(path.join(__dirname, 'static/')));
 
-/*
-  VIEW ROUTES
-*/
-app.get(`${ADDR_PREFIX}/`, (req, res) => {
-  const html = homeTemplate({ ...contextData(req) });
-  res.end(html);
-});
-
-
+// Load view routes
+require('./views')(app);
 
 app.get(`${ADDR_PREFIX}/universes`, async (req, res) => {
   const [errCode, universes] = await api.get.universes(req.session.user);
@@ -257,32 +219,30 @@ app.post(`${ADDR_PREFIX}/api/universes/:universeId/items`, async (req, res) => {
 /* 
   ACCOUNT ROUTES
 */
+async function logout(req, res) {
+  await api.session.delete({ id: req.session.id })
+  res.clearCookie('archiviumuid', req.session.id);
+}
+
 app.get(`${ADDR_PREFIX}/login`, async (req, res) => {
-  const user = req.session.user;
-  const username = user && user.username;
-  if (user) {
+  if (req.session.user) {
     try {
-      await api.delete.session({ id: req.session.id })
-      res.clearCookie('archiviumuid', req.session.id);
-      res.end(loginTemplate({ ...contextData(req) }));
+      await logout(req, res);
     } catch (err) {
       console.error(err);
       res.sendStatus(500);
     }
   }
-  res.end(loginTemplate({ user, ADDR_PREFIX }));
+  res.end(render(req, 'login'));
 });
 
 app.get(`${ADDR_PREFIX}/signup`, (req, res) => {
-  const user = req.session.user;
-  const username = user && user.username;
-  res.end(signupTemplate({ ...contextData(req) }));
+  res.end(render(req, 'signup'));
 });
 
 app.get(`${ADDR_PREFIX}/logout`, async (req, res) => {
   try {
-    await api.delete.session({ id: req.session.id })
-    res.clearCookie('archiviumuid', req.session.id);
+    await logout(req, res);
     res.redirect(`${ADDR_PREFIX}/`);
   } catch (err) {
     console.error(err);
@@ -292,21 +252,21 @@ app.get(`${ADDR_PREFIX}/logout`, async (req, res) => {
 
 app.post(`${ADDR_PREFIX}/login`, async (req, res) => {
   try {  
-    const [errCode, user] = await api.get.user({ username: req.body.username }, true);
+    const [errCode, user] = await api.user.getOne({ username: req.body.username }, true);
     if (user) {
       req.loginId = user.id;
-      const isValidUser = api.validatePassword(req.body.password, user.password, user.salt);
-      if (isValidUser) {
-        await api.put.session({ id: req.session.id }, { userId: req.loginId });
+      const isCorrectLogin = api.user.validatePassword(req.body.password, user.password, user.salt);
+      if (isCorrectLogin) {
+        await api.session.put({ id: req.session.id }, { user_id: req.loginId });
         res.status(200);
         return res.redirect(`${ADDR_PREFIX}/`);
       } else {
         res.status(401);
-        return res.redirect(`${ADDR_PREFIX}/login`);
+        return res.end(render(req, 'login', { error: 'Username or password incorrect.' }));
       }
     } else {
       res.status(401);
-      return res.redirect(`${ADDR_PREFIX}/login`);
+      return res.end(render(req, 'login', { error: 'Username or password incorrect.' }));
     }
   } catch (err) {
     console.error(err);
@@ -316,9 +276,9 @@ app.post(`${ADDR_PREFIX}/login`, async (req, res) => {
 
 app.post(`${ADDR_PREFIX}/signup`, async (req, res) => {
   try {
-    const data = await api.post.user( req.body );
+    const data = await api.user.post( req.body );
     try {
-      await api.put.session({ id: req.session.id }, { userId: data.insertId });
+      await api.session.put({ id: req.session.id }, { userId: data.insertId });
       res.status(201);
       return res.redirect(`${ADDR_PREFIX}/`);
     } catch (err) {
@@ -333,10 +293,8 @@ app.post(`${ADDR_PREFIX}/signup`, async (req, res) => {
 
 // 404 errors
 app.use((req, res) => {
-  const user = req.session.user;
-  const username = user && user.username;
   res.status(404);
-  res.end(errorTemplate({ code: 404, ...contextData(req) }));
+  res.end(render(req, 'error', { code: 404 }));
 });
 
 app.listen(PORT, () => {

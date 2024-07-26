@@ -31,4 +31,20 @@ module.exports = function(app) {
       universes,
     }));
   });
+
+  /* Universe Pages */
+  app.get(`${ADDR_PREFIX}/universes`, async (req, res) => {
+    const [code, universes] = await api.universe.getMany(req.session.user);
+    if (code !== 200) res.sendStatus(code);
+    else return res.end(render(req, 'universeList', { universes }));
+  });
+  
+  app.get(`${ADDR_PREFIX}/universes/:shortname`, async (req, res) => {
+    const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
+    if (code !== 200) {
+      res.status(code);
+      return res.end(render(req, 'error', { code: code }));
+    }
+    else return res.end(render(req, 'universe', { universe }));
+  });
 }

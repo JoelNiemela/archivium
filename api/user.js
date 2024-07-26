@@ -11,7 +11,7 @@ async function getOne(options, includeAuth=false) {
   try {
     if (!options || Object.keys(options).length === 0) throw 'options required for api.get.user';
     const parsedOptions = parseData(options);
-    const queryString = `SELECT * FROM user WHERE ${parsedOptions.string.join(' AND ')} LIMIT 1;`;
+    const queryString = `SELECT * FROM user WHERE ${parsedOptions.strings.join(' AND ')} LIMIT 1;`;
     const user = (await executeQuery(queryString, parsedOptions.values))[0];
     if (!includeAuth) {
       delete user.password;
@@ -37,7 +37,7 @@ async function getMany(options) {
       SELECT 
         id, username, email, created_at
       FROM user 
-      WHERE ${parsedOptions.string.join(' AND ')};
+      WHERE ${parsedOptions.strings.join(' AND ')};
     `;
     else queryString = 'SELECT id, username, email, created_at, updated_at FROM user;';
     const users = await executeQuery(queryString, parsedOptions.values);

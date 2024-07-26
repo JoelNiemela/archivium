@@ -9,7 +9,7 @@ const apiUser = require('./user');
  */
 async function getOne(options) {
   const parsedOptions = parseData(options);
-  const queryString = `SELECT * FROM session WHERE ${parsedOptions.string.join(' AND ')} LIMIT 1;`;
+  const queryString = `SELECT * FROM session WHERE ${parsedOptions.strings.join(' AND ')} LIMIT 1;`;
   const data = await executeQuery(queryString, parsedOptions.values);
   const session = data[0];
   if (!session || !session.user_id) return session;
@@ -37,7 +37,7 @@ function post() {
  */
 function put(options, values) {
   const parsedOptions = parseData(options);
-  const queryString = `UPDATE session SET ? WHERE ${parsedOptions.string.join(' AND ')}`;
+  const queryString = `UPDATE session SET ? WHERE ${parsedOptions.strings.join(' AND ')}`;
   return executeQuery(queryString, Array.prototype.concat(values, parsedOptions.values));
 }
 
@@ -48,7 +48,7 @@ function put(options, values) {
  */
 function del(options) {
   const parsedOptions = parseData(options);
-  const queryString = `DELETE FROM session WHERE ${parsedOptions.string.join(' AND ')}`;
+  const queryString = `DELETE FROM session WHERE ${parsedOptions.strings.join(' AND ')}`;
   return executeQuery(queryString, parsedOptions.values);
 }
 

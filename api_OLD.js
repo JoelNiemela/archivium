@@ -22,7 +22,7 @@ class APIGetMethods {
    */
   async session(options) {
     const parsedOptions = parseData(options);
-    const queryString = `SELECT * FROM sessions WHERE ${parsedOptions.string.join(' AND ')} LIMIT 1;`;
+    const queryString = `SELECT * FROM sessions WHERE ${parsedOptions.strings.join(' AND ')} LIMIT 1;`;
     const data = await executeQuery(queryString, parsedOptions.values);
     const session = data[0];
     if (!session || !session.userId) return session;
@@ -41,7 +41,7 @@ class APIGetMethods {
     try {
       if (!options || Object.keys(options).length === 0) throw 'options required for api.get.user';
       const parsedOptions = parseData(options);
-      const queryString = `SELECT * FROM users WHERE ${parsedOptions.string.join(' AND ')} LIMIT 1;`;
+      const queryString = `SELECT * FROM users WHERE ${parsedOptions.strings.join(' AND ')} LIMIT 1;`;
       const user = (await executeQuery(queryString, parsedOptions.values))[0];
       if (!includeAuth) {
         delete user.password;
@@ -68,7 +68,7 @@ class APIGetMethods {
           id, username,
           createdAt, updatedAt
         FROM users 
-        WHERE ${parsedOptions.string.join(' AND ')};
+        WHERE ${parsedOptions.strings.join(' AND ')};
       `;
       else queryString = 'SELECT id, username, createdAt, updatedAt FROM users;';
       const users = await executeQuery(queryString, parsedOptions.values);
@@ -330,7 +330,7 @@ class APIPutMethods {
    */
   session(options, values) {
     const parsedOptions = parseData(options);
-    const queryString = `UPDATE sessions SET ? WHERE ${parsedOptions.string.join(' AND ')}`;
+    const queryString = `UPDATE sessions SET ? WHERE ${parsedOptions.strings.join(' AND ')}`;
     return executeQuery(queryString, Array.prototype.concat(values, parsedOptions.values));
   }
 }
@@ -343,7 +343,7 @@ class APIDeleteMethods {
    */
   session(options) {
     const parsedOptions = parseData(options);
-    const queryString = `DELETE FROM sessions WHERE ${parsedOptions.string.join(' AND ')}`;
+    const queryString = `DELETE FROM sessions WHERE ${parsedOptions.strings.join(' AND ')}`;
     return executeQuery(queryString, parsedOptions.values);
   }
 }

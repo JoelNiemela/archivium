@@ -18,6 +18,6 @@ block content
             a( href=`${ADDR_PREFIX}/universes/${universe.id}` ) #{universe.title}
           td
             +authorList(universe.authors)
-          td #{formatDate(universe.createdAt)}
-          td #{formatDate(universe.updatedAt)}
+          td #{formatDate(universe.created_at)}
+          td #{formatDate(universe.updated_at)}
           td #{universe.public ? 'Public' : 'Private'}

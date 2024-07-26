@@ -7,8 +7,8 @@ exports.executeQuery = (query, values) => {
 
 exports.parseData = (options) => {
   return _.reduce(options, (parsed, value, key) => {
-    parsed.string.push(`${key} = ?`);
+    parsed.strings.push(`${key} = ?`);
     parsed.values.push(value);
     return parsed;
-  }, { string: [], values: [] });
+  }, { strings: [], values: [] });
 };

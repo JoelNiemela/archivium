@@ -19,8 +19,8 @@ block content
   p.center
     small Created by 
       a( href=`${ADDR_PREFIX}/users/${universe.authorId}` ) #{universe.owner}
-      |  #{formatDate(new Date(universe.createdAt))}
-      |  - Last updated #{formatDate(new Date(universe.updatedAt))}
+      |  #{formatDate(new Date(universe.created_at))}
+      |  - Last updated #{formatDate(new Date(universe.updated_at))}
   hr
   h4 Authors
   ul
@@ -33,6 +33,7 @@ block content
     margin: '0 auto',
   })
     .cardContainer
+      +typeCard('article', 'articles', '#deddca')
       +typeCard('character', 'characters', '#F44336')
       +typeCard('location', 'locations', '#4CAF50')
       +typeCard('event', 'events', '#9e9e9e')

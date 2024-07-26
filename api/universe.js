@@ -7,6 +7,16 @@ const perms = {
   ADMIN: 3,
 };
 
+async function getOne(user, options, permissionLevel) {
+  const parsedOptions = parseData(options);
+
+  const [code, data] = await getMany(user, parsedOptions, permissionLevel);
+  if (code !== 200) return [code, null];
+  const universe = data[0];
+  if (!universe) return [user ? 403 : 401, null];
+  return [200, universe];
+}
+
 /**
  * base function for fetching universes from database
  * @param {*} user 
@@ -14,9 +24,9 @@ const perms = {
  * @param {number} permission_level
  * @returns 
  */
-async function getMany(user, conditions, permission_level=perms.READ) {
+async function getMany(user, conditions, permissionLevel=perms.READ) {
   try {
-    const usrQueryString = user ? ` OR universe_id IN (SELECT universe_id FROM authoruniverse as a WHERE a.user_id = ${user.id} AND a.permission_level >= ${permission_level})` : '';
+    const usrQueryString = user ? ` OR universe_id IN (SELECT universe_id FROM authoruniverse as a WHERE a.user_id = ${user.id} AND a.permission_level >= ${permissionLevel})` : '';
     const conditionString = conditions ? ` AND ${conditions.strings.join(' AND ')}` : '';
     const queryString = `
       SELECT
@@ -51,7 +61,7 @@ function getManyByAuthorId(user, authorId) {
 
 module.exports = {
   perms,
-  // getOne,
+  getOne,
   getMany,
   getManyByAuthorId,
 };

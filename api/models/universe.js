@@ -59,9 +59,36 @@ function getManyByAuthorId(user, authorId) {
   });
 }
 
+async function post(user, body) {
+  try {
+    const queryString1 = `INSERT INTO universe SET ?`;
+    const data = await executeQuery(queryString1, {
+      title: body.title,
+      shortname: body.shortname,
+      author_id: user.id,
+      public: body.public,
+      obj_data: body.obj_data,
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+    const queryString2 = `INSERT INTO authoruniverse SET ?`;
+    return [201, [data, await executeQuery(queryString2, {
+      universe_id: data.insertId,
+      user_id: user.id,
+      permission_level: 3,
+    })]];
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') return [400, 'universe.shortname must be unique.'];
+    if (err.code === 'ER_BAD_NULL_ERROR') return [400, 'Missing parameters.'];
+    console.error(err);
+    return [500];
+  }
+}
+
 module.exports = {
   perms,
   getOne,
   getMany,
   getManyByAuthorId,
+  post,
 };

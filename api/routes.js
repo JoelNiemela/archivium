@@ -20,6 +20,7 @@ module.exports = function(app) {
         const method = req.method.toUpperCase();
         if (method in this.methodFuncs) {
           const [status, data] = await this.methodFuncs[method](req);
+          res.status(status);
           if (data !== undefined) return res.json(data);
         } else {
           return res.sendStatus(405);
@@ -38,8 +39,16 @@ module.exports = function(app) {
   }
 
   const apiRoutes = new APIRoute('/api', {}, [
-    new APIRoute('/users', { GET: (req) => api.user.getMany() }, []),
-    new APIRoute('/universes', { GET: (req) => api.universe.getMany(req.session.user) }, []),
+    new APIRoute('/users', { GET: () => api.user.getMany() }, []),
+    new APIRoute('/universes', {
+      GET: (req) => api.universe.getMany(req.session.user),
+      POST: (req) => api.universe.post(req.session.user, req.body),
+    }, [
+      new APIRoute('/:universeShortName', {
+        GET: (req) => api.universe.getOne(req.session.user, { shortname: req.params.universeShortName }),
+      }, [
+      ])
+    ]),
   ]);
 
   apiRoutes.setup(ADDR_PREFIX);

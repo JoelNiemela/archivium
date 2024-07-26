@@ -10,6 +10,7 @@ const { PORT, ADDR_PREFIX, DEV_MODE } = require('./config');
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 app.use(CookieParser);
 app.use(Auth.createSession);
@@ -118,13 +119,6 @@ require('./api/routes')(app);
 /*
   API ROUTES
 */
-
-
-app.get(`${ADDR_PREFIX}/api/universes/:id`, async (req, res) => {
-  const [errCode, universe] = await api.get.universeById(req.session.user, req.params.id);
-  if (errCode) res.sendStatus(errCode);
-  else res.json(universe);
-});
 
 
 

@@ -11,7 +11,7 @@ module.exports = function(app) {
   });
 
   /* User Pages */
-  app.get(`${ADDR_PREFIX}/users`, Auth.verifySession, async (req, res) => {
+  app.get(`${ADDR_PREFIX}/users`, Auth.verifySessionOrRedirect, async (req, res) => {
     const [code, users] = await api.user.getMany();
     if (code !== 200) res.sendStatus(errCode);
     else return res.end(render(req, 'userList', { users }));

@@ -29,20 +29,7 @@ app.use(`${ADDR_PREFIX}/static`, express.static(path.join(__dirname, 'static/'))
 // Load view routes
 require('./views')(app);
 
-app.get(`${ADDR_PREFIX}/universes`, async (req, res) => {
-  const [errCode, universes] = await api.get.universes(req.session.user);
-  if (errCode) res.sendStatus(errCode);
-  else return res.end(universeListTemplate({ universes, ...contextData(req) }));
-});
 
-app.get(`${ADDR_PREFIX}/universes/:id`, async (req, res) => {
-  const [errCode, universe] = await api.get.universeById(req.session.user, req.params.id);
-  if (errCode) {
-    res.status(errCode);
-    return res.end(errorTemplate({ code: errCode, ...contextData(req) }));
-  }
-  else return res.end(universeTemplate({ universe, ...contextData(req) }));
-});
 
 app.get(`${ADDR_PREFIX}/universes/:id/items`, async (req, res) => {
 
@@ -258,7 +245,7 @@ app.post(`${ADDR_PREFIX}/signup`, async (req, res) => {
   try {
     const data = await api.user.post( req.body );
     try {
-      await api.session.put({ id: req.session.id }, { userId: data.insertId });
+      await api.session.put({ id: req.session.id }, { user_id: data.insertId });
       res.status(201);
       return res.redirect(`${ADDR_PREFIX}/`);
     } catch (err) {

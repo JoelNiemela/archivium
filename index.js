@@ -111,15 +111,14 @@ app.get(`${ADDR_PREFIX}/universes/:universeId/items/:itemId/edit`, async (req, r
 
 
 
+// Load api routes
+require('./api/routes')(app);
+
 
 /*
   API ROUTES
 */
-app.get(`${ADDR_PREFIX}/api/universes`, async (req, res) => {
-  const [errCode, universes] = await api.get.universes(req.session.user);
-  if (errCode) res.sendStatus(errCode);
-  else res.json(universes);
-});
+
 
 app.get(`${ADDR_PREFIX}/api/universes/:id`, async (req, res) => {
   const [errCode, universe] = await api.get.universeById(req.session.user, req.params.id);

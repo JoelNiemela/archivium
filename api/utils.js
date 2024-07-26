@@ -1,4 +1,4 @@
-const db = require('.');
+const db = require('../db');
 const _ = require('lodash');
 
 exports.executeQuery = (query, values) => {

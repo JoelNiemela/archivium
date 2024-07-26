@@ -1,4 +1,4 @@
-const { executeQuery, parseData } = require('../db/utils');
+const { executeQuery, parseData } = require('../utils');
 
 const perms = {
   NONE: 0,
@@ -11,9 +11,9 @@ async function getOne(user, options, permissionLevel) {
   const parsedOptions = parseData(options);
 
   const [code, data] = await getMany(user, parsedOptions, permissionLevel);
-  if (code !== 200) return [code, null];
+  if (code !== 200) return [code];
   const universe = data[0];
-  if (!universe) return [user ? 403 : 401, null];
+  if (!universe) return [user ? 403 : 401];
   return [200, universe];
 }
 
@@ -45,7 +45,7 @@ async function getMany(user, conditions, permissionLevel=perms.READ) {
     return [200, data];
   } catch (err) {
     console.error(err);
-    return [500, null];
+    return [500];
   }
 }
 

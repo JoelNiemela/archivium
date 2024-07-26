@@ -1,5 +1,5 @@
-const { executeQuery, parseData } = require('../db/utils');
-const utils = require('../lib/hashUtils');
+const { executeQuery, parseData } = require('../utils');
+const utils = require('../../lib/hashUtils');
 const apiUser = require('./user');
 
 /**

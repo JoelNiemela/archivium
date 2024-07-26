@@ -1,5 +1,5 @@
-const { executeQuery, parseData } = require('../db/utils');
-const utils = require('../lib/hashUtils');
+const { executeQuery, parseData } = require('../utils');
+const utils = require('../../lib/hashUtils');
 
 /**
    * returns a "safe" version of the user object with password data removed unless the includeAuth parameter is true
@@ -14,13 +14,14 @@ async function getOne(options, includeAuth=false) {
     const queryString = `SELECT * FROM user WHERE ${parsedOptions.strings.join(' AND ')} LIMIT 1;`;
     const user = (await executeQuery(queryString, parsedOptions.values))[0];
     if (!includeAuth) {
+      delete user.email;
       delete user.password;
       delete user.salt;
     }
     return [200, user];
   } catch (err) {
     console.error(err);
-    return [500, null];
+    return [500];
   }
 }
 
@@ -35,16 +36,16 @@ async function getMany(options) {
     let queryString;
     if (options) queryString = `
       SELECT 
-        id, username, email, created_at
+        id, username, created_at, updated_at
       FROM user 
       WHERE ${parsedOptions.strings.join(' AND ')};
     `;
-    else queryString = 'SELECT id, username, email, created_at, updated_at FROM user;';
+    else queryString = 'SELECT id, username, created_at, updated_at FROM user;';
     const users = await executeQuery(queryString, parsedOptions.values);
     return [200, users];
   } catch (err) {
     console.error(err);
-    return [500, null];
+    return [500];
   }
 }
 

@@ -101,6 +101,7 @@
   };
 
   const formatDate = (date) => {
+    if (!date) return;
     const now = new Date();
     const secondsAgo = (now - date) / 1000;
     if (secondsAgo < 60) return `${Math.round(secondsAgo)} seconds ago`;

@@ -39,7 +39,7 @@ async function getMany(options) {
       FROM user 
       WHERE ${parsedOptions.string.join(' AND ')};
     `;
-    else queryString = 'SELECT id, username, email, created_at FROM user;';
+    else queryString = 'SELECT id, username, email, created_at, updated_at FROM user;';
     const users = await executeQuery(queryString, parsedOptions.values);
     return [200, users];
   } catch (err) {

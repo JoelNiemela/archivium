@@ -9,6 +9,4 @@ fs.readdirSync(__dirname)
     api[file.substring(0, file.length - 3)] = require(join(__dirname, file))
   });
 
-console.log(api)
-
 module.exports = api;

@@ -73,8 +73,10 @@ module.exports.createSession = (req, res, next) => {
 // Add additional authentication middleware functions below
 /************************************************************/
 
-module.exports.verifySession = (req, res, next) => {
-  if (req.session.user) {
+module.exports.verifySession = async (req, res, next) => {
+  const user = req.session.user;
+  if (user) {
+    await api.user.put(user.id, user.id, { updated_at: new Date() });
     next();
   } else {
     res.redirect(`${ADDR_PREFIX}/login`);

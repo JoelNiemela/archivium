@@ -5,7 +5,6 @@ const { render } = require('./templates');
 
 const CookieParser = require('./middleware/cookieParser');
 const Auth = require('./middleware/auth');
-const md5 = require('md5');
 
 const { PORT, ADDR_PREFIX, DEV_MODE } = require('./config');
 
@@ -100,27 +99,6 @@ app.get(`${ADDR_PREFIX}/universes/:id/edit`, async (req, res) => {
 });
 
 
-
-app.get(`${ADDR_PREFIX}/users`, Auth.verifySession, async (req, res) => {
-  const [errCode, users] = await api.get.users();
-  if (errCode) res.sendStatus(errCode);
-  else return res.end(userListTemplate({ users, ...contextData(req) }));
-});
-
-app.get(`${ADDR_PREFIX}/users/:id`, async (req, res) => {
-  const [errCode1, user] = await api.get.user({ id: req.params.id });
-  const [errCode2, universes] = await api.get.universesByAuthorId(req.session.user, req.params.id);
-  if (errCode1) {
-    res.status(errCode1 || errCode2);
-    return res.end(errorTemplate({ code: errCode1 || errCode2, ...contextData(req) }));
-  }
-  else return res.end(userTemplate({ 
-    user,
-    gravatarLink: `http://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
-    universes,
-    ...contextData(req)
-  }));
-});
 
 
 
@@ -258,6 +236,8 @@ app.post(`${ADDR_PREFIX}/login`, async (req, res) => {
       const isCorrectLogin = api.user.validatePassword(req.body.password, user.password, user.salt);
       if (isCorrectLogin) {
         await api.session.put({ id: req.session.id }, { user_id: req.loginId });
+        // // Atypical use of user.put, normally the first argument should be req.session.user.id
+        // await api.user.put(user.id, user.id, { updated_at: new Date() });
         res.status(200);
         return res.redirect(`${ADDR_PREFIX}/`);
       } else {

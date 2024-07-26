@@ -25,6 +25,7 @@ CREATE TABLE session (
 CREATE TABLE universe (
   id INT NOT NULL AUTO_INCREMENT,
   title VARCHAR(64),
+  shortname VARCHAR(64) UNIQUE,
   author_id INT,
   created_at TIMESTAMP,
   updated_at TIMESTAMP,

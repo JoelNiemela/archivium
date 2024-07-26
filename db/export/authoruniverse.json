@@ -1,0 +1,42 @@
+{
+  "1": {
+    "universe_id": 1,
+    "user_id": 2,
+    "permission_level": 3
+  },
+  "2": {
+    "universe_id": 2,
+    "user_id": 2,
+    "permission_level": 3
+  },
+  "3": {
+    "universe_id": 3,
+    "user_id": 2,
+    "permission_level": 3
+  },
+  "4": {
+    "universe_id": 2,
+    "user_id": 1,
+    "permission_level": 2
+  },
+  "5": {
+    "universe_id": 4,
+    "user_id": 2,
+    "permission_level": 3
+  },
+  "6": {
+    "universe_id": 2,
+    "user_id": 3,
+    "permission_level": 2
+  },
+  "7": {
+    "universe_id": 4,
+    "user_id": 1,
+    "permission_level": 2
+  },
+  "8": {
+    "universe_id": 2,
+    "user_id": 2,
+    "permission_level": 3
+  }
+}

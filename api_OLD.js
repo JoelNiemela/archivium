@@ -39,62 +39,6 @@ class APIGetMethods {
     if (!item) return [user ? 403 : 401, null];
     return [null, item];
   }
-
-  /**
-   * 
-   * @param {*} user 
-   * @param {*} id 
-   * @param {boolean} permissionRequired only return items that user has write access to
-   * @returns 
-   */
-  async itemsByUniverseId(user, id, permissionRequired=1) {
-
-    const conditions = { 
-      strings: [
-        'items.universeId = ?',
-      ], values: [
-        id,
-      ]
-    };
-
-    const [errCode, items] = await api.get.items(user, conditions, [3, 2, 1].filter(num => num >= permissionRequired));
-    if (errCode) return [errCode, null];
-    return [null, items];
-  }
-  
-  /**
-   * base function for fetching items from database
-   * @param {*} user 
-   * @param {*} conditions
-   * @param {number[]} acceptedPermissions array of acceptable permission levels
-   * @returns 
-   */
-  async items(user, conditions, acceptedPermissions=[3, 2, 1]) {
-    try {
-      const usrQueryString = user ? ` OR (au.userId = ${user.id} AND au.permissionLevel IN (${acceptedPermissions}))` : '';
-      const conditionString = conditions ? ` AND ${conditions.strings.join(' AND ')}` : '';
-      const queryString = `
-        SELECT 
-          items.*,
-          users.username as author,
-          universes.title as universe
-        FROM items
-        INNER JOIN users ON users.id = items.authorId
-        INNER JOIN universes ON universes.id = universeId
-        WHERE items.universeId IN (
-          SELECT au.universeId FROM authoruniverses as au
-          INNER JOIN universes ON universes.id = au.universeId 
-          WHERE public = 1${usrQueryString}
-          GROUP BY au.universeId
-        )
-        ${conditionString};`;
-      const data = await executeQuery(queryString, conditions && conditions.values);
-      return [null, data];
-    } catch (err) {
-      console.error(err);
-      return [500, null];
-    }
-  }
 }
 
 class APIPostMethods {
@@ -151,38 +95,6 @@ class APIPostMethods {
       permissionLevel: 3,
   
     })];
-  }
-
-  /**
-   * 
-   * @param {*} user 
-   * @param {*} body 
-   * @returns 
-   */
-  async item(user, body, universeId) {
-
-    const [errCode, universe] = await api.get.universeById(user, universeId, true);
-    if (errCode) return [errCode, null];
-
-    let queryString1 = `INSERT INTO items SET ?`;
-    const data = await executeQuery(queryString1, {
-      title: body.title,
-      itemType: body.itemType,
-      authorId: user.id,
-      universeId: universeId,
-      parentId: body.parentId,
-      objData: body.objData,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-    console.log(data.insertId);
-    const queryString2 = `INSERT INTO authoruniverses SET ?`;
-    return [null, [data, await executeQuery(queryString2, {
-      universeId: data.insertId,
-      userId: user.id,
-      permissionLevel: 3,
-  
-    })]];
   }
 }
 

@@ -149,18 +149,6 @@ app.get(`${ADDR_PREFIX}/api/users/:id/universes`, async (req, res) => {
   else res.json(universes);
 });
 
-
-
-app.post(`${ADDR_PREFIX}/api/universes`, async (req, res) => {
-  if (req.session.user) {
-    const data = await api.post.universe(req.session.user, req.body);
-    console.log(data);
-    return res.sendStatus(201);
-  } else {
-    return res.sendStatus(401);
-  }
-});
-
 app.post(`${ADDR_PREFIX}/api/universes/:universeId/items`, async (req, res) => {
   if (req.session.user) {
     const [errCode, data] = await api.post.item(req.session.user, req.body, req.params.universeId);

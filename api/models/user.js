@@ -14,7 +14,6 @@ async function getOne(options, includeAuth=false) {
     const queryString = `SELECT * FROM user WHERE ${parsedOptions.strings.join(' AND ')} LIMIT 1;`;
     const user = (await executeQuery(queryString, parsedOptions.values))[0];
     if (!includeAuth) {
-      delete user.email;
       delete user.password;
       delete user.salt;
     }

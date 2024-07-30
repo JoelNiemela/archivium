@@ -1,11 +1,4 @@
-const { executeQuery, parseData } = require('../utils');
-
-const perms = {
-  NONE: 0,
-  READ: 1,
-  WRITE: 2,
-  ADMIN: 3,
-};
+const { executeQuery, parseData, perms } = require('../utils');
 
 async function getOne(user, options, permissionLevel) {
   const parsedOptions = parseData(options);
@@ -25,22 +18,25 @@ async function getOne(user, options, permissionLevel) {
  * @returns 
  */
 async function getMany(user, conditions, permissionLevel=perms.READ) {
+  if (!user) return [401];
   try {
-    const usrQueryString = user ? ` OR universe_id IN (SELECT universe_id FROM authoruniverse as a WHERE a.user_id = ${user.id} AND a.permission_level >= ${permissionLevel})` : '';
-    const conditionString = conditions ? ` AND ${conditions.strings.join(' AND ')}` : '';
+    const conditionString = conditions ? `WHERE ${conditions.strings.join(' AND ')}` : '';
     const queryString = `
-      SELECT
+      SELECT 
         universe.*,
         JSON_OBJECTAGG(user.id, user.username) as authors,
-        JSON_OBJECTAGG(user.id, authoruniverse.permission_level) as author_permissions,
+        JSON_OBJECTAGG(user.id, au.permission_level) as author_permissions,
         owner.username as owner
-      FROM authoruniverse
-      INNER JOIN user ON user.id = user_id
-      INNER JOIN universe ON universe.id = universe_id 
+      FROM universe
+      INNER JOIN authoruniverse as au_filter
+        ON universe.id = au_filter.universe_id AND (
+          universe.public = 1 OR (au_filter.user_id = ${user.id} AND au_filter.permission_level >= ${permissionLevel})
+        )
+      LEFT JOIN authoruniverse as au ON universe.id = au.universe_id
+      LEFT JOIN user ON user.id = au.user_id
       INNER JOIN user as owner ON universe.author_id = owner.id
-      WHERE (universe.public = 1${usrQueryString})
       ${conditionString}
-      GROUP BY universe_id;`;
+      GROUP BY universe.id;`;
     const data = await executeQuery(queryString, conditions && conditions.values);
     return [200, data];
   } catch (err) {
@@ -50,11 +46,33 @@ async function getMany(user, conditions, permissionLevel=perms.READ) {
 }
 
 function getManyByAuthorId(user, authorId) {
-  return getMany(user, { 
-    strings: [
-      'universe_id IN (SELECT universe_id FROM authoruniverse as au WHERE au.user_id = ? AND au.permission_level > 0)',
-    ], values: [
+  return getMany(user, {
+    strings: [`
+      EXISTS (
+        SELECT 1
+        FROM authoruniverse as au_check
+        WHERE au_check.universe_id = universe.id
+        AND (au_check.user_id = ? AND au_check.permission_level >= ?)
+      )
+    `], values: [
       authorId,
+      perms.READ,
+    ] 
+  });
+}
+
+function getManyByAuthorName(user, authorName) {
+  return getMany(user, {
+    strings: [`
+      EXISTS (
+        SELECT 1
+        FROM authoruniverse as au_check
+        WHERE au_check.universe_id = universe.id
+        AND (au_check.username = ? AND au_check.permission_level >= ?)
+      )
+    `], values: [
+      authorName,
+      perms.READ,
     ] 
   });
 }
@@ -90,5 +108,6 @@ module.exports = {
   getOne,
   getMany,
   getManyByAuthorId,
+  getManyByAuthorName,
   post,
 };

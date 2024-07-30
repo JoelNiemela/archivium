@@ -39,7 +39,17 @@ module.exports = function(app) {
   }
 
   const apiRoutes = new APIRoute('/api', {}, [
-    new APIRoute('/users', { GET: () => api.user.getMany() }, []),
+    new APIRoute('/users', { GET: () => api.user.getMany() }, [
+      new APIRoute('/:username', { GET: (req) => api.user.getOne({ username: req.params.username }) }, [
+        new APIRoute('/universes', {
+          GET: async (req) => {
+            const [code, user] = await api.user.getOne({ username: req.params.username });
+            if (code) return api.universe.getManyByAuthorId(req.session.user, user.id);
+            else return [code];
+          }
+        }),
+      ]),
+    ]),
     new APIRoute('/universes', {
       GET: (req) => api.universe.getMany(req.session.user),
       POST: (req) => api.universe.post(req.session.user, req.body),
@@ -47,6 +57,16 @@ module.exports = function(app) {
       new APIRoute('/:universeShortName', {
         GET: (req) => api.universe.getOne(req.session.user, { shortname: req.params.universeShortName }),
       }, [
+        new APIRoute('/items', {
+          GET: (req) => api.item.getByUniverseShortname(req.session.user, req.params.universeShortName),
+          POST: (req) => api.item.post(req.session.user, req.body, req.params.universeShortName),
+        }, [
+          new APIRoute('/:itemShortName', {
+            GET: async (req) => api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortName, req.params.itemShortName),
+          }, [
+            
+          ])
+        ])
       ])
     ]),
   ]);

@@ -21,7 +21,8 @@ module.exports = function(app) {
     const [code1, user] = await api.user.getOne({ username: req.params.username });
     const [code2, universes] = await api.universe.getManyByAuthorId(req.session.user, user.id);
     const code = code1 !== 200 ? code1 : code2;
-    if (code !== 200) {
+    console.log(user)
+    if (!user || !universes) {
       res.status(code);
       return res.end(render(req, 'error', { code: code }));
     }

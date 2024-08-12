@@ -1,5 +1,34 @@
 extends ../layout.pug
 
 block content
-  script( src=`${ADDR_PREFIX}/static/scripts/edititem.js` )
-  script!= `Elm.Pages.EditItem.init(${JSON.stringify({ item, ADDR_PREFIX })});`
+  script.
+    let obj_data = {};
+    function updateObjData(newState) {
+      obj_data = { ...obj_data, ...newState };
+      const objDataInput = document.getElementById('obj_data');
+      objDataInput.value = JSON.stringify(obj_data);
+    }
+  h2 Edit #{item.title}
+  form( method='POST' )
+
+    div
+      label( for='title' ) Title: 
+      input( id='title' type='text' name='title' value=`${item.title}` )
+
+    if item.item_type === 'article'
+      div.editor
+        textarea( id='articleBody' )
+      script.
+        const textarea = document.getElementById('articleBody');
+        textarea.onchange = () => {
+          updateObjData({ body: textarea.value });
+          console.log(textarea.value)
+        };
+
+    div
+      input( id='obj_data' type='hidden' name='obj_data' value='{}' )
+      input( type='submit' value='Save Changes' )
+
+    if error
+      div
+        span( style={color: 'red', 'font-size': 'small'} )= error

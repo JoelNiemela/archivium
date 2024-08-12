@@ -148,6 +148,22 @@ async function post(user, body, universeShortName) {
   }
 }
 
+async function put(user, universeShortname, itemShortname, changes) {
+  const { title, obj_data } = changes;
+
+  if (!title || !obj_data) return [400];
+  const [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE);
+  if (!item) return [code];
+  console.log(item, changes)
+
+  try {
+    return [200, await executeQuery(`UPDATE item SET ? WHERE id = ${item.id};`, { title, obj_data })];
+  } catch (err) {
+    console.error(err);
+    return [500];
+  }
+}
+
 module.exports = {
   getOne,
   getMany,
@@ -156,4 +172,5 @@ module.exports = {
   getByUniverseShortname,
   getByUniverseAndItemShortnames,
   post,
+  put,
 };

@@ -1,13 +1,15 @@
 const pug = require('pug');
 const { ADDR_PREFIX } = require('../config');
+const { perms } = require('../api/utils');
 
 // Basic context information to be sent to the templates
 function contextData(req) {
   const user = req.session.user;
-  const contextUser = user ? { username: user.username } : null;
+  const contextUser = user ? { id: user.id, username: user.username } : null;
   return {
     contextUser,
     ADDR_PREFIX,
+    perms,
   };
 }
 

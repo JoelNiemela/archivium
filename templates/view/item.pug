@@ -3,6 +3,9 @@ extends ../layout.pug
 block content
   h1.center #{item.title}
   p.center #{capitalize(item.item_type)} of #{item.universe}
+    if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE/* || item.author === contextUser.username*/)
+      |  - 
+      a( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}/edit` ) Edit
   p.center
     small Created by 
       a( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
@@ -18,3 +21,6 @@ block content
             span #{keyTuple[0]}
             hr
             span #{keyTuple[1]}
+
+  if item.item_type === 'article'
+    +mdText(item.obj_data.body)  

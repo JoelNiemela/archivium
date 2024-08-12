@@ -7,6 +7,11 @@
     }
     return prefixedItems;
   };
+  const parseInternLink = (link) => {
+    const [universe, item] = link.split('/');
+    if (!universe || !item) return `${ADDR_PREFIX}`;
+    return `${ADDR_PREFIX}/universes/${universe}/items/${item}`;
+  };
   class MarkdownTag {
     constructor(tagName, content, className, link, parent) {
       this.tagName = tagName;
@@ -28,7 +33,8 @@
       return newChild;
     }
     evaluate() {
-      return [this.tagName, this.content, this.className, this.link, this.subtags.map(tag => tag.evaluate())]
+      const link = this.link && this.link[0] === '@' ? parseInternLink(this.link.substring(1)) : this.link;
+      return [this.tagName, this.content, this.className, link, this.subtags.map(tag => tag.evaluate())];
     }
   }
   const parseMdText = (text) => {

@@ -157,7 +157,7 @@ async function put(user, universeShortname, itemShortname, changes) {
   if (!item) return [code];
 
   try {
-    return [200, await executeQuery(`UPDATE item SET ? WHERE id = ${item.id};`, { title, obj_data })];
+    return [200, await executeQuery(`UPDATE item SET ? WHERE id = ${item.id};`, { title, obj_data, updated_at: new Date() })];
   } catch (err) {
     console.error(err);
     return [500];

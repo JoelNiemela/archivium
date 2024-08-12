@@ -28,6 +28,7 @@ const templates = {
   item: pug.compileFile('templates/view/item.pug'),
   editItem: pug.compileFile('templates/edit/item.pug'),
   itemList: pug.compileFile('templates/list/items.pug'),
+  createItem: pug.compileFile('templates/create/item.pug'),
 
   universeItemList: pug.compileFile('templates/list/universeItems.pug'),
 

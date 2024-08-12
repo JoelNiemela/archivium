@@ -2,7 +2,8 @@ extends ../layout.pug
 
 block content
   h1.center #{item.title}
-  p.center #{capitalize(item.item_type)} of #{item.universe}
+  p.center #{capitalize(item.item_type)} of 
+    a( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{item.universe}
     if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE/* || item.author === contextUser.username*/)
       |  - 
       a( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}/edit` ) Edit

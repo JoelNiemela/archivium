@@ -74,6 +74,31 @@ module.exports = function(app) {
     }
     res.end(render(req, 'universeItemList', { items, universe }));
   });
+ 
+  app.get(`${ADDR_PREFIX}/universes/:shortname/items/create`, async (req, res) => {
+    const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
+    if (code !== 200) {
+      res.status(code);
+      return res.end(render(req, 'error', { code }));
+    }
+    res.end(render(req, 'createItem', { universe }));
+  });
+  app.post(`${ADDR_PREFIX}/universes/:shortname/items/create`, async (req, res) => {
+    const [code, data] = await api.item.post(req.session.user, {
+      ...req.body,
+    }, req.params.shortname);
+    res.status(code);
+    if (code === 201) {
+      res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}/items/${req.body.shortname}`);
+    } else {
+      const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
+      if (code !== 200) {
+        res.status(code);
+        return res.end(render(req, 'error', { code }));
+      }
+      res.end(render(req, 'createItem', { error: data, ...req.body, universe }));
+    }
+  });
 
   app.get(`${ADDR_PREFIX}/universes/:universeShortname/items/:itemShortname`, async (req, res) => {
     const [code1, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname);

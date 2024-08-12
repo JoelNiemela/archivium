@@ -11,7 +11,7 @@ mixin typeCard(type, localeTypePl, color)
     br
     div
       if contextUser
-        a.cardBtn &#x2795; New
+        a.cardBtn( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/create` ) &#x2795; New
         a.cardBtn( href=`${ADDR_PREFIX}/users/${contextUser.username}/items?type=${type}` ) My #{localeTypePl}
 
 block content

@@ -15,7 +15,7 @@ block content
       label( for='title' ) Title: 
       input( id='title' type='text' name='title' value=item.title )
 
-    if item.item_type === 'article'
+    if 'body' in item.obj_data
       div.editor
         textarea( id='articleBody' ) #{item.obj_data.body || ''}
       script.

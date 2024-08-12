@@ -120,6 +120,7 @@ async function post(user, body, universeShortName) {
 
   let universeId;
   try {
+    // TODO - ACTUALLY VALIDATE PERMISSIONS HERE!
     universeId = (await executeQuery('SELECT id FROM universe WHERE shortname = ?', [ universeShortName ]))[0]?.id;
     if (universeId === undefined) return [404];
   } catch (err) {
@@ -154,7 +155,6 @@ async function put(user, universeShortname, itemShortname, changes) {
   if (!title || !obj_data) return [400];
   const [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE);
   if (!item) return [code];
-  console.log(item, changes)
 
   try {
     return [200, await executeQuery(`UPDATE item SET ? WHERE id = ${item.id};`, { title, obj_data })];

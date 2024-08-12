@@ -7,13 +7,13 @@ mixin mdTag(parent, tag)
     each subtag in tag[4]
       +mdTag(tag, subtag)
   else
-    #{tag[0]}( class=tag[2] href=tag[3] ) #{tag[1]}
+    #{tag[0]}( class=tag[2] href=tag[3] )&attributes(tag[5]) #{tag[1]}
       each subtag in tag[4]
         +mdTag(tag, subtag)
 
 mixin mdText(text)
   - const tag = parseMdText(text || '')
-  #{tag[0]}( class=tag[2] href=tag[3] ) #{tag[1]}
+  #{tag[0]}( class=tag[2] href=tag[3] )&attributes(tag[5]) #{tag[1]}
     each subtag in tag[4]
       +mdTag(tag, subtag)
 

@@ -81,7 +81,7 @@ module.exports = function(app) {
       res.status(code);
       return res.end(render(req, 'error', { code }));
     }
-    res.end(render(req, 'createItem', { universe, item_type: req.query.type }));
+    res.end(render(req, 'createItem', { universe, item_type: req.query.type, shortname: req.query.shortname }));
   });
   app.post(`${ADDR_PREFIX}/universes/:shortname/items/create`, async (req, res) => {
     const [code, data] = await api.item.post(req.session.user, {
@@ -101,12 +101,23 @@ module.exports = function(app) {
   });
 
   app.get(`${ADDR_PREFIX}/universes/:universeShortname/items/:itemShortname`, async (req, res) => {
-    const [code1, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname);
-    const [code2, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.universeShortname });
-    const code = code1 !== 200 ? code1 : code2;
-    if (code !== 200) {
-      res.status(code);
-      return res.end(render(req, 'error', { code }));
+    const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.universeShortname });
+    const [code2, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname);
+    if (code1 !== 200) {
+      res.status(code1);
+      return res.end(render(req, 'error', { code: code1 }));
+    }
+    if (!item) {
+      if (universe.author_permissions[req.session.user.id] >= perms.READ) {
+        return res.end(render(req, 'error', {
+          code: 404,
+          hint: 'Looks like this item doesn\'t exist yet. Follow the link below to create it:',
+          hintLink: `${ADDR_PREFIX}/universes/${req.params.universeShortname}/items/create?shortname=${req.params.itemShortname}`,
+        }));
+      } else {
+        res.status(code2);
+        return res.end(render(req, 'error', { code: code2 }));
+      }
     }
     item.obj_data = JSON.parse(item.obj_data);
     res.end(render(req, 'item', { item, universe }));

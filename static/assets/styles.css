@@ -92,6 +92,10 @@ body {
   height: 70vh;
 }
 
+.color-error {
+  color: red;
+}
+
 .userIcon {
   border-radius: 50%;
 }

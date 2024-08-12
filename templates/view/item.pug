@@ -28,3 +28,19 @@ block content
   if 'body' in item.obj_data
     .sheet
       +mdText(item.obj_data.body)
+    script!= `window.ADDR_PREFIX = '${ADDR_PREFIX}'`
+    script.
+      window.onload = () => {
+        const links = [...document.querySelectorAll('.intern-link')];
+
+        for (const link of links) {
+          fetch(`${ADDR_PREFIX}/api/universes/${link.dataset.universe}/items/${link.dataset.item}`).then((response) => {
+            console.log(link.innerText, link.dataset.universe, link.dataset.item, response.status === 200)
+            if (response.status === 200) {
+
+            } else {
+              link.classList.add('color-error')
+            }
+          });
+        }
+      };

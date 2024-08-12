@@ -13,6 +13,6 @@ block content
       input( type='submit' value='Login' )
     if error
       div
-        span( style={color: 'red', 'font-size': 'small'} )= error
+        span( style={'font-size': 'small'} ).color-error= error
   p
     a( href=`${ADDR_PREFIX}/signup` ) Create an Account

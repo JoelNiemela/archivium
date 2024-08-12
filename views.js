@@ -81,7 +81,7 @@ module.exports = function(app) {
       res.status(code);
       return res.end(render(req, 'error', { code }));
     }
-    res.end(render(req, 'createItem', { universe }));
+    res.end(render(req, 'createItem', { universe, item_type: req.query.type }));
   });
   app.post(`${ADDR_PREFIX}/universes/:shortname/items/create`, async (req, res) => {
     const [code, data] = await api.item.post(req.session.user, {

@@ -25,6 +25,6 @@ block content
               hr
               span #{keyTuple[1]}
 
-  if item.item_type === 'article'
+  if 'body' in item.obj_data
     .sheet
       +mdText(item.obj_data.body)

@@ -56,6 +56,9 @@
         chunk += text[i+1];
         i++;
       } else if (char === '\n' && text[i+1] === '\n') {
+        if (['b', 'i'].includes(tagName)) {
+          tagName = 'p';
+        }
         curTag.addChild(tagName, chunk, className);
         curTag = tagTree;
         chunk = '';
@@ -98,12 +101,11 @@
           } else {
             curTag.addChild(tagName, linkText, className, chunk);
           }
-          curTag = curTag.parent;
           tagName = curTag.tagName;
           chunk = '';
         } else {
           tagName = curTag.tagName;
-          curTag = curTag.parent;
+          chunk = `[${chunk}]`;
         }
       } else if (char === '#') {
         chunk += char;
@@ -121,6 +123,7 @@
       }
     }
     curTag.addChild(tagName, chunk, className);
+    console.log(tagTree.print())
     return tagTree.evaluate();
   };
 

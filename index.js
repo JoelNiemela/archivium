@@ -32,37 +32,6 @@ require('./views')(app);
 
 
 
-app.get(`${ADDR_PREFIX}/universes/:id/items`, async (req, res) => {
-
-  console.log(req.query);
-
-  const [errCode1, universe] = await api.get.universeById(req.session.user, req.params.id);
-  if (errCode1) {
-    res.status(errCode1);
-    return res.end(errorTemplate({ code: errCode1, ...contextData(req) }));
-  }
-
-  const conditions = { 
-    strings: [
-      'items.universeId = ?',
-    ], values: [
-      req.params.id,
-    ]
-  };
-
-  if (req.query.type) {
-    conditions.strings.push('items.itemType = ?');
-    conditions.values.push(req.query.type);
-  }
-
-  const [errCode2, items] = await api.get.items(req.session.user, conditions);
-  if (errCode2) {
-    res.status(errCode2);
-    return res.end(errorTemplate({ code: errCode2, ...contextData(req) }));
-  }
-  else return res.end(universeItemListTemplate({ items, universe, ...contextData(req) }));
-});
-
 app.get(`${ADDR_PREFIX}/universes/:universeId/items/:itemId`, async (req, res) => {
   const [errCode, item] = await api.get.itemById(req.session.user, req.params.itemId);
   if (errCode) {

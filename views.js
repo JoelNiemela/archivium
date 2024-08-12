@@ -62,4 +62,22 @@ module.exports = function(app) {
     }
     else return res.end(render(req, 'universe', { universe }));
   });
+
+  app.get(`${ADDR_PREFIX}/universes/:shortname/items`, async (req, res) => {
+
+    console.log(req.query);
+  
+    const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
+    if (code1 !== 200) {
+      res.status(code1);
+      return res.end(render(req, 'error', { code: code1 }));
+    }
+  
+    const [code2, items] = await api.item.getByUniverseShortname(req.session.user, req.params.shortname, req.query.type);
+    if (code2 !== 200) {
+      res.status(code2);
+      return res.end(render(req, 'error', { code: code2 }));
+    }
+    else return res.end(render(req, 'universeItemList', { items, universe }));
+  });
 }

@@ -2,6 +2,7 @@ extends ../layout.pug
 
 block content
   h1.center Items of #{universe.title}
+  a( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) Back
   hr
   table
     thead
@@ -15,7 +16,7 @@ block content
         tr
           td
             a( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}` ) #{item.title}
-          td #{capitalize(item.itemType)}
+          td #{capitalize(item.item_type)}
           td
             a( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
           td #{formatDate(item.createdAt)}

@@ -77,7 +77,7 @@ async function getByUniverseAndItemIds(user, universeId, itemId, permissionsRequ
   return [200, item];
 }
 
-async function getByUniverseShortname(user, shortname, permissionsRequired=perms.READ) {
+async function getByUniverseShortname(user, shortname, type, permissionsRequired=perms.READ) {
 
   const conditions = { 
     strings: [
@@ -86,6 +86,11 @@ async function getByUniverseShortname(user, shortname, permissionsRequired=perms
       shortname,
     ]
   };
+
+  if (type) {
+    conditions.strings.push('item.item_type = ?');
+    conditions.values.push(type);
+  }
 
   const [errCode, items] = await getMany(user, conditions, permissionsRequired);
   if (!items) return [errCode];

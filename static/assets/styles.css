@@ -123,4 +123,13 @@ body {
 .editor textarea {
   min-width: 100%;
   height: 400px;
+  font-size: 16px;
+}
+
+.markdown {
+  font-size: 17px;
+  line-height: 1.33;
+}
+.markdown p {
+  text-indent: 32px;
 }

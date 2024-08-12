@@ -7,6 +7,3 @@ config.js
 db/export/
 
 elm/elm-stuff/
-
-static/scripts/
-!static/scripts/README.md

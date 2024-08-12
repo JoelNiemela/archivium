@@ -39,6 +39,20 @@ module.exports = function(app) {
     if (code !== 200) res.sendStatus(code);
     else return res.end(render(req, 'universeList', { universes }));
   });
+ 
+  app.get(`${ADDR_PREFIX}/universes/create`, async (req, res) => res.end(render(req, 'createUniverse')));
+  app.post(`${ADDR_PREFIX}/universes/create`, async (req, res) => {
+    const [code, data] = await api.universe.post(req.session.user, {
+      ...req.body,
+      public: req.body.visibility === 'public',
+    });
+    res.status(code);
+    if (code === 201) {
+      res.redirect(`${ADDR_PREFIX}/universes/${req.body.shortname}`);
+    } else {
+      res.end(render(req, 'createUniverse', { error: data, ...req.body }));
+    }
+  });
   
   app.get(`${ADDR_PREFIX}/universes/:shortname`, async (req, res) => {
     const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });

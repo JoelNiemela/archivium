@@ -79,13 +79,15 @@ function getManyByAuthorName(user, authorName) {
 
 async function post(user, body) {
   try {
+    const { title, shortname, public, obj_data } = body;
+    if (!(title && shortname)) return [400, 'Missing parameters.'];
     const queryString1 = `INSERT INTO universe SET ?`;
     const data = await executeQuery(queryString1, {
-      title: body.title,
-      shortname: body.shortname,
+      title,
+      shortname,
       author_id: user.id,
-      public: body.public,
-      obj_data: body.obj_data,
+      public,
+      obj_data,
       created_at: new Date(),
       updated_at: new Date(),
     });

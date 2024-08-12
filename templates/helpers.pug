@@ -131,13 +131,13 @@
     if (!date) return;
     const now = new Date();
     const secondsAgo = (now - date) / 1000;
-    if (secondsAgo < 60) return `${Math.round(secondsAgo)} seconds ago`;
+    if (secondsAgo < 60) return `${Math.round(secondsAgo)} second${Math.round(secondsAgo) === 1 ? '' : 's'} ago`;
     const minutesAgo = secondsAgo / 60;
-    if (minutesAgo < 60) return `${Math.round(minutesAgo)} minutes ago`;
+    if (minutesAgo < 60) return `${Math.round(minutesAgo)} minute${Math.round(minutesAgo) === 1 ? '' : 's'} ago`;
     const hoursAgo = minutesAgo / 60;
-    if (hoursAgo < 24) return `${Math.round(hoursAgo)} hours ago`;
+    if (hoursAgo < 24) return `${Math.round(hoursAgo)} hour${Math.round(hoursAgo) === 1 ? '' : 's'} ago`;
     const daysAgo = hoursAgo / 24;
-    if (daysAgo < 30) return `${Math.round(daysAgo)} days ago`;
+    if (daysAgo < 30) return `${Math.round(daysAgo)} day${Math.round(daysAgo) === 1 ? '' : 's'} ago`;
 
     return `on ${date.toDateString()} at ${date.toLocaleTimeString()}`;
   };

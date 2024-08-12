@@ -3,7 +3,7 @@ include ../mixins.pug
 
 mixin typeCard(type, localeTypePl, color)
   .card
-    a.cardLink(href=`${ADDR_PREFIX}/universes/${universe.id}/items?type=${type}`)
+    a.cardLink(href=`${ADDR_PREFIX}/universes/${universe.shortname}/items?type=${type}`)
       div(style={ 'background-color': color })
         br
         h2(align='center')= capitalize(localeTypePl)
@@ -12,7 +12,7 @@ mixin typeCard(type, localeTypePl, color)
     div
       if contextUser
         a.cardBtn &#x2795; New
-        a.cardBtn( href=`${ADDR_PREFIX}/users/${contextUser.id}/items?type=${type}` ) My #{localeTypePl}
+        a.cardBtn( href=`${ADDR_PREFIX}/users/${contextUser.username}/items?type=${type}` ) My #{localeTypePl}
 
 block content
   h1.center #{universe.title}

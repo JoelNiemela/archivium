@@ -4,7 +4,7 @@ const { ADDR_PREFIX } = require('../config');
 // Basic context information to be sent to the templates
 function contextData(req) {
   const user = req.session.user;
-  const contextUser = user ? { id: user.id, username: user.username } : null;
+  const contextUser = user ? { username: user.username } : null;
   return {
     contextUser,
     ADDR_PREFIX,
@@ -37,8 +37,7 @@ function render(req, template, context = {}) {
   if (template in templates) return templates[template]({ ...context, ...contextData(req) });
   else return templates.error({
     code: 404,
-    hint: 'Could this be the page you\'re looking for?',
-    hintLink: `${ADDR_PREFIX}/universes/${item.universeId}/items/${item.id}`,
+    hint: `Template ${template} not found.`,
     ...contextData(req)
   });
 }

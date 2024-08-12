@@ -16,7 +16,7 @@ block content
       each universe in universes
         tr
           td
-            a( href=`${ADDR_PREFIX}/universes/${universe.id}` ) #{universe.title}
+            a( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
           td
             +authorList(universe.authors)
           td #{formatDate(universe.created_at)}

@@ -14,9 +14,9 @@ block content
       each item in items
         tr
           td
-            a( href=`${ADDR_PREFIX}/universes/${universe.id}/items/${item.id}` ) #{item.title}
+            a( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}` ) #{item.title}
           td #{capitalize(item.itemType)}
           td
-            a( href=`${ADDR_PREFIX}/users/${item.authorId}` ) #{item.author}
+            a( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
           td #{formatDate(item.createdAt)}
           td #{formatDate(item.updatedAt)}

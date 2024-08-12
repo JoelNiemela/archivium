@@ -3,23 +3,24 @@ extends ../layout.pug
 block content
   h1.center Items
   hr
-  table
-    thead
-      th Name
-      th Type
-      th Universe
-      th Author
-      th Created
-      th Updated
-    tbody
-      each item in items
-        tr
-          td
-            a( href=`${ADDR_PREFIX}/items/${item.id}` ) #{item.title}
-          td #{capitalize(item.itemType)}
-          td
-            a( href=`${ADDR_PREFIX}/universes/${item.universeId}` ) #{item.universe}
-          td
-            a( href=`${ADDR_PREFIX}/users/${item.authorId}` ) #{item.author}
-          td #{formatDate(item.createdAt)}
-          td #{formatDate(item.updatedAt)}
+  p TODO this page needs to be fixed or deleted
+  //- table
+  //-   thead
+  //-     th Name
+  //-     th Type
+  //-     th Universe
+  //-     th Author
+  //-     th Created
+  //-     th Updated
+  //-   tbody
+  //-     each item in items
+  //-       tr
+  //-         td
+  //-           a( href=`${ADDR_PREFIX}/items/${item.shortname}` ) #{item.title}
+  //-         td #{capitalize(item.itemType)}
+  //-         td
+  //-           a( href=`${ADDR_PREFIX}/universes/${item.universeId}` ) #{item.universe}
+  //-         td
+  //-           a( href=`${ADDR_PREFIX}/users/${item.authorId}` ) #{item.author}
+  //-         td #{formatDate(item.createdAt)}
+  //-         td #{formatDate(item.updatedAt)}

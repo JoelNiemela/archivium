@@ -37,7 +37,7 @@ module.exports = function(app) {
   app.get(`${ADDR_PREFIX}/universes`, async (req, res) => {
     const [code, universes] = await api.universe.getMany(req.session.user);
     if (code !== 200) res.sendStatus(code);
-    else return res.end(render(req, 'universeList', { universes }));
+    else res.end(render(req, 'universeList', { universes }));
   });
  
   app.get(`${ADDR_PREFIX}/universes/create`, async (req, res) => res.end(render(req, 'createUniverse')));
@@ -58,26 +58,31 @@ module.exports = function(app) {
     const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
     if (code !== 200) {
       res.status(code);
-      return res.end(render(req, 'error', { code: code }));
+      return res.end(render(req, 'error', { code }));
     }
-    else return res.end(render(req, 'universe', { universe }));
+    res.end(render(req, 'universe', { universe }));
   });
 
   app.get(`${ADDR_PREFIX}/universes/:shortname/items`, async (req, res) => {
-
-    console.log(req.query);
-  
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
-    if (code1 !== 200) {
-      res.status(code1);
-      return res.end(render(req, 'error', { code: code1 }));
-    }
-  
     const [code2, items] = await api.item.getByUniverseShortname(req.session.user, req.params.shortname, req.query.type);
-    if (code2 !== 200) {
-      res.status(code2);
-      return res.end(render(req, 'error', { code: code2 }));
+    const code = code1 !== 200 ? code1 : code2;
+    if (code !== 200) {
+      res.status(code);
+      return res.end(render(req, 'error', { code }));
     }
-    else return res.end(render(req, 'universeItemList', { items, universe }));
+    res.end(render(req, 'universeItemList', { items, universe }));
+  });
+
+  app.get(`${ADDR_PREFIX}/universes/:universeShortname/items/:itemShortname`, async (req, res) => {
+    const [code1, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname);
+    const [code2, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.universeShortname });
+    const code = code1 !== 200 ? code1 : code2;
+    if (code !== 200) {
+      res.status(code);
+      return res.end(render(req, 'error', { code }));
+    }
+    item.obj_data = JSON.parse(item.obj_data);
+    res.end(render(req, 'item', { item, universe }));
   });
 }

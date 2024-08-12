@@ -32,31 +32,10 @@ require('./views')(app);
 
 
 
-app.get(`${ADDR_PREFIX}/universes/:universeId/items/:itemId`, async (req, res) => {
-  const [errCode, item] = await api.get.itemById(req.session.user, req.params.itemId);
-  if (errCode) {
-    res.status(errCode);
-    return res.end(errorTemplate({ code: errCode, ...contextData(req) }));
-  }
-  if (item.universeId != req.params.universeId) {
-    res.status(404);
-    return res.end(errorTemplate({
-      code: 404,
-      hint: 'Could this be the page you\'re looking for?',
-      hintLink: `${ADDR_PREFIX}/universes/${item.universeId}/items/${item.id}`,
-      ...contextData(req)
-    }));
-  }
-  item.objData = JSON.parse(item.objData);
-  return res.end(itemTemplate({ item, ...contextData(req) }));
-});
 
 app.get(`${ADDR_PREFIX}/universes/:id/edit`, async (req, res) => {
   return res.end(editUniverseTemplate({ ...contextData(req) }));
 });
-
-
-
 
 
 app.get(`${ADDR_PREFIX}/universes/:universeId/items/:itemId/edit`, async (req, res) => {

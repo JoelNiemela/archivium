@@ -18,7 +18,7 @@ block content
   h1.center #{universe.title}
   p.center
     small Created by 
-      a( href=`${ADDR_PREFIX}/users/${universe.authorId}` ) #{universe.owner}
+      a( href=`${ADDR_PREFIX}/users/${universe.owner}` ) #{universe.owner}
       |  #{formatDate(new Date(universe.created_at))}
       |  - Last updated #{formatDate(new Date(universe.updated_at))}
   hr
@@ -26,7 +26,7 @@ block content
   ul
     each username, id in universe.authors
       li
-        a( href=`${ADDR_PREFIX}/users/${id}` )= username
+        a( href=`${ADDR_PREFIX}/users/${username}` )= username
       
   .container(style={
     width: '90%',

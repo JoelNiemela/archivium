@@ -36,10 +36,17 @@
       const link = this.link && this.link[0] === '@' ? parseInternLink(this.link.substring(1)) : this.link;
       return [this.tagName, this.content, this.className, link, this.subtags.map(tag => tag.evaluate())];
     }
+    print(indent=0) {
+      let text = `${' '.repeat(indent)}${this.tagName}: ${this.content}`;
+      for (const tag of this.subtags) {
+        text += `\n${tag.print(indent+2)}`;
+      }
+      return text;
+    }
   }
   const parseMdText = (text) => {
-    let tagArray = [new MarkdownTag('p', '', 'text')];
-    let curTag = tagArray[0];
+    const tagTree = new MarkdownTag('div', '', 'markdown');
+    let curTag = tagTree;
     let chunk = '';
     let tagName = 'p';
     let className = 'text';
@@ -48,12 +55,12 @@
       if (char === '\\') {
         chunk += text[i+1];
         i++;
-      } else if (char === '\n') {
+      } else if (char === '\n' && text[i+1] === '\n') {
         curTag.addChild(tagName, chunk, className);
-        curTag = new MarkdownTag('p', '', className);
-        tagArray.push(curTag);
+        curTag = tagTree;
         chunk = '';
         tagName = 'p';
+        i++;
       } else if (char === '*' && text[i+1] === '*') {
         curTag = curTag.addChild(tagName, chunk, className);
         chunk = '';
@@ -98,12 +105,23 @@
           tagName = curTag.tagName;
           curTag = curTag.parent;
         }
+      } else if (char === '#') {
+        chunk += char;
+        while (i < text.length && text[i+1] === '#') {
+          chunk += text[i+1];
+          i++;
+        }
+        if (text[i+1] === ' ' && chunk.length < 6) {
+          tagName = `h${chunk.length}`;
+          chunk = '';
+          i++;
+        }
       } else {
         chunk += char;
       }
     }
-    tagArray = tagArray.map(tag => tag.evaluate());
-    return tagArray;
+    curTag.addChild(tagName, chunk, className);
+    return tagTree.evaluate();
   };
 
   const formatDate = (date) => {

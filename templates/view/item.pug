@@ -12,15 +12,18 @@ block content
       |  #{formatDate(new Date(item.created_at))}
       |  - Last updated #{formatDate(new Date(item.updated_at))}
   hr
-  .group
-    each tabTuple in item.obj_data
-      h3 #{tabTuple[0]}
-      .itemTab
-        each keyTuple in tabTuple[1]
-          .itemKey
-            span #{keyTuple[0]}
-            hr
-            span #{keyTuple[1]}
+
+  if 'tabs' in item.obj_data
+    .page
+      each tabTuple in item.obj_data.tabs
+        h3 #{tabTuple[0]}
+        .itemTab
+          each keyTuple in tabTuple[1]
+            .itemKey
+              span #{keyTuple[0]}
+              hr
+              span #{keyTuple[1]}
 
   if item.item_type === 'article'
-    +mdText(item.obj_data.body)  
+    .sheet
+      +mdText(item.obj_data.body)

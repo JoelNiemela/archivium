@@ -12,10 +12,10 @@ mixin mdTag(parent, tag)
         +mdTag(tag, subtag)
 
 mixin mdText(text)
-  each tag in parseMdText(text || '')
-    #{tag[0]}( class=tag[2] href=tag[3] ) #{tag[1]}
-      each subtag in tag[4]
-        +mdTag(tag, subtag)
+  - const tag = parseMdText(text || '')
+  #{tag[0]}( class=tag[2] href=tag[3] ) #{tag[1]}
+    each subtag in tag[4]
+      +mdTag(tag, subtag)
 
 
 doctype html

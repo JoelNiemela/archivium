@@ -105,6 +105,26 @@ async function post(user, body) {
   }
 }
 
+async function putPermissions(user, shortname, targetUser, permission_level) {
+  const [code, universe] = await getOne(user, { shortname });
+  if (!universe) return [code];
+
+  console.log(universe)
+  let query;
+  if (targetUser.id in universe.author_permissions) {
+    query = executeQuery(`UPDATE authoruniverse SET ? WHERE user_id = ${targetUser.id} AND universe_id = ${universe.id};`, { permission_level });
+  } else {
+    query = executeQuery(`INSERT INTO authoruniverse SET ?`, { permission_level, universe_id: universe.id, user_id: targetUser.id });
+  }
+
+  try {
+    return [200, await query];
+  } catch (err) {
+    console.error(err);
+    return [500];
+  }
+}
+
 module.exports = {
   perms,
   getOne,
@@ -112,4 +132,5 @@ module.exports = {
   getManyByAuthorId,
   getManyByAuthorName,
   post,
+  putPermissions,
 };

@@ -123,15 +123,13 @@ module.exports = function(app) {
     res.end(render(req, 'item', { item, universe }));
   });
   app.get(`${ADDR_PREFIX}/universes/:universeShortname/items/:itemShortname/edit`, async (req, res) => {
-    const [code1, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
-    const [code2, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.universeShortname });
-    const code = code1 !== 200 ? code1 : code2;
+    const [code, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
     if (code !== 200) {
       res.status(code);
       return res.end(render(req, 'error', { code }));
     }
     item.obj_data = JSON.parse(item.obj_data);
-    res.end(render(req, 'editItem', { item, universe }));
+    res.end(render(req, 'editItem', { item }));
   });
   app.post(`${ADDR_PREFIX}/universes/:universeShortname/items/:itemShortname/edit`, async (req, res) => {
     const [code, data] = await api.item.put(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
@@ -142,5 +140,22 @@ module.exports = function(app) {
       console.log(code, data)
       res.end(render(req, 'editItem', { error: data, ...req.body }));
     }
+  });
+
+  app.get(`${ADDR_PREFIX}/universes/:shortname/permissions`, async (req, res) => {
+    const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
+    const [code2, users] = await api.user.getMany();
+    const code = code1 !== 200 ? code1 : code2;
+    if (code !== 200) {
+      res.status(code);
+      return res.end(render(req, 'error', { code }));
+    }
+    res.end(render(req, 'editUniversePerms', { universe, users }));
+  });
+  app.post(`${ADDR_PREFIX}/universes/:shortname/permissions`, async (req, res) => {
+    const [_, user] = await api.user.getOne({ username: req.body.username });
+    // TODO do this properly. ADMIN PERMS SHOULD BE REQUIRED!!
+    const [code, data] = await api.universe.putPermissions(req.session.user, req.params.shortname, user, req.body.permission_level);
+    res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}/permissions`);
   });
 }

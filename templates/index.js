@@ -24,6 +24,7 @@ const templates = {
   editUniverse: pug.compileFile('templates/edit/universe.pug'),
   universeList: pug.compileFile('templates/list/universes.pug'),
   createUniverse: pug.compileFile('templates/create/universe.pug'),
+  editUniversePerms: pug.compileFile('templates/edit/universePerms.pug'),
 
   item: pug.compileFile('templates/view/item.pug'),
   editItem: pug.compileFile('templates/edit/item.pug'),

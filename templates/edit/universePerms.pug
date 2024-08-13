@@ -1,0 +1,22 @@
+extends ../layout.pug
+
+block content
+  h2 Update Permissions for #{universe.title}
+  form( method='POST' )
+    div
+      label( for='username' ) User: 
+      select( id='username' name='username' )
+        each user in users
+            option( value=(user.username) selected=(username === user.username) )= user.username
+    div
+      label( for='permission_level' ) Permissions Level: 
+      select( id='permission_level' name='permission_level' )
+        option( value=perms.NONE selected=(permission_level === perms.NONE) ) None
+        option( value=perms.READ selected=(permission_level === perms.READ) ) Read
+        option( value=perms.WRITE selected=(permission_level === perms.WRITE) ) Write
+        option( value=perms.ADMIN selected=(permission_level === perms.ADMIN) ) Admin
+    div
+      input( type='submit' value='Update' )
+    if error
+      div
+        span( style={'font-size': 'small'} ).color-error= error

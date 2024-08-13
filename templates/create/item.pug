@@ -12,7 +12,7 @@ block content
     div
       label( for='item_type' ) Type: 
       select( id='item_type' name='item_type' )
-        each type in ['article', 'character', 'location', 'event', 'archive', 'document', 'timeline', 'item']
+        each type in ['article', 'character', 'location', 'event', 'archive', 'document', 'timeline', 'item', 'organization']
             option( value=(type) selected=(item_type === type) )= capitalize(type)
     div
       input( type='hidden' name='obj_data' value=(JSON.stringify({ body: '' })) )

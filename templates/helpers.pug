@@ -121,6 +121,19 @@
           chunk = '';
           i++;
         }
+      } else if (char === '-' && text[i+1] === ' ') {
+        if (tagName === 'li') {
+
+        } else {
+          console.log(tagName, chunk)
+          curTag = curTag.addChild(tagName, chunk, className);
+          curTag = curTag.addChild('ul', '', className);
+          chunk = '';
+          tagName = 'li';
+        }
+      } else if (tagName === 'li' && char === '\n') {
+        curTag.addChild(tagName, chunk, className);
+        chunk = '';
       } else {
         chunk += char;
       }

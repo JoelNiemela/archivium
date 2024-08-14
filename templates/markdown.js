@@ -69,7 +69,9 @@ function parseInline(line) {
   let chunk = '';
   while (line.hasNext()) {
     const char = line.next();
-    if (char === '*' && line.peek() === '*') {
+    if (char === '\\') {
+      chunk += line.next();
+    } else if (char === '*' && line.peek() === '*') {
       nodes.push(new MarkdownNode('text', chunk));
       chunk = '';
       let boldChunk = '';
@@ -115,7 +117,7 @@ function parseInline(line) {
       const resetIndex = line.index;
       nodes.push(new MarkdownNode('text', chunk));
       chunk = '';
-      while (line.peek() !== ']' && line.hasNext()) {
+      while (!(line.peek() === ']' && line.peek(-1) !== '\\') && line.hasNext()) {
         chunk += line.next();
       }
       if (line.next() === ']' && line.next(1) === '(') {

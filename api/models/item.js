@@ -164,6 +164,18 @@ async function put(user, universeShortname, itemShortname, changes) {
   }
 }
 
+// TODO - how should permissions work on this?
+async function exists(universeShortname, itemShortname) {
+  const queryString = `
+    SELECT 1
+    FROM item
+    INNER JOIN universe ON universe.id = item.universe_id
+    WHERE universe.shortname = ? AND item.shortname = ?;
+  `;
+  const data = await executeQuery(queryString, [universeShortname, itemShortname]);
+  return data.length > 0;
+}
+
 module.exports = {
   getOne,
   getMany,
@@ -173,4 +185,5 @@ module.exports = {
   getByUniverseAndItemShortnames,
   post,
   put,
+  exists,
 };

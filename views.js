@@ -4,6 +4,7 @@ const api = require('./api');
 const md5 = require('md5');
 const { render } = require('./templates');
 const { perms } = require('./api/utils');
+const { parseMarkdown } = require('./templates/markdown');
 
 module.exports = function(app) {
   app.get(`${ADDR_PREFIX}/`, (req, res) => {
@@ -120,7 +121,9 @@ module.exports = function(app) {
       }
     }
     item.obj_data = JSON.parse(item.obj_data);
-    res.end(render(req, 'item', { item, universe }));
+    const parsedBody = 'body' in item.obj_data && (await parseMarkdown(item.obj_data.body || '').evaluate())
+    console.log(parsedBody)
+    res.end(render(req, 'item', { item, universe, parsedBody }));
   });
   app.get(`${ADDR_PREFIX}/universes/:universeShortname/items/:itemShortname/edit`, async (req, res) => {
     const [code, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);

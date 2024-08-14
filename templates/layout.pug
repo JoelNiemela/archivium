@@ -11,8 +11,7 @@ mixin mdTag(parent, tag)
       each subtag in tag[2]
         +mdTag(tag, subtag)
 
-mixin mdText(text)
-  - const tag = parseMarkdown(text || '').evaluate()
+mixin mdText(tag)
   #{tag[0]}&attributes(tag[3]) #{tag[1]}
     each subtag in tag[2]
       +mdTag(tag, subtag)

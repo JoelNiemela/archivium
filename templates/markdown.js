@@ -1,5 +1,6 @@
 
 const { ADDR_PREFIX } = require('../config');
+const api = require('../api');
 
 class MarkdownNode {
   constructor(type, content, attrs={}) {
@@ -30,14 +31,18 @@ class MarkdownNode {
     return this.hasChildren() ? this.children[this.children.length-1] : null;
   }
 
-  evaluate() {
+  async evaluate() {
     if ('href' in this.attrs && this.attrs.href[0] === '@') {
       const [universe, item] = this.attrs.href.substring(1).split('/');
       this.attrs.href = `${ADDR_PREFIX}/universes/${universe}/items/${item}`;
       this.attrs['data-universe'] = universe;
       this.attrs['data-item'] = item;
+      if (!(await api.item.exists(universe, item))) {
+        this.attrs.class = 'color-error';
+      }
+      console.log(this.attrs)
     }
-    return [this.type, this.content, this.children.map(tag => tag.evaluate()), this.attrs];
+    return [this.type, this.content, await Promise.all(this.children.map(tag => tag.evaluate())), this.attrs];
   }
 }
 

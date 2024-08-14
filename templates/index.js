@@ -1,7 +1,6 @@
 const pug = require('pug');
 const { ADDR_PREFIX } = require('../config');
 const { perms } = require('../api/utils');
-const { parseMarkdown } = require('./markdown');
 
 // Basic context information to be sent to the templates
 function contextData(req) {
@@ -11,7 +10,6 @@ function contextData(req) {
     contextUser,
     ADDR_PREFIX,
     perms,
-    parseMarkdown,
   };
 }
 

@@ -2,19 +2,19 @@
 include helpers.pug
 
 mixin mdTag(parent, tag)
-  if tag[0] === parent[0]
+  if tag[0] === 'text'
     | #{tag[1]}
-    each subtag in tag[4]
+    each subtag in tag[2]
       +mdTag(tag, subtag)
   else
-    #{tag[0]}( class=tag[2] href=tag[3] )&attributes(tag[5]) #{tag[1]}
-      each subtag in tag[4]
+    #{tag[0]}&attributes(tag[3]) #{tag[1]}
+      each subtag in tag[2]
         +mdTag(tag, subtag)
 
 mixin mdText(text)
-  - const tag = parseMdText(text || '')
-  #{tag[0]}( class=tag[2] href=tag[3] )&attributes(tag[5]) #{tag[1]}
-    each subtag in tag[4]
+  - const tag = parseMarkdown(text || '').evaluate()
+  #{tag[0]}&attributes(tag[3]) #{tag[1]}
+    each subtag in tag[2]
       +mdTag(tag, subtag)
 
 

@@ -16,11 +16,11 @@ block content
   //-     each item in items
   //-       tr
   //-         td
-  //-           a( href=`${ADDR_PREFIX}/items/${item.shortname}` ) #{item.title}
+  //-           a.link.link-animated( href=`${ADDR_PREFIX}/items/${item.shortname}` ) #{item.title}
   //-         td #{capitalize(item.itemType)}
   //-         td
-  //-           a( href=`${ADDR_PREFIX}/universes/${item.universeId}` ) #{item.universe}
+  //-           a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universeId}` ) #{item.universe}
   //-         td
-  //-           a( href=`${ADDR_PREFIX}/users/${item.authorId}` ) #{item.author}
+  //-           a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.authorId}` ) #{item.author}
   //-         td #{formatDate(item.createdAt)}
   //-         td #{formatDate(item.updatedAt)}

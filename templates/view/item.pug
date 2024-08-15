@@ -3,13 +3,13 @@ extends ../layout.pug
 block content
   h1.center #{item.title}
   p.center #{capitalize(item.item_type)} of 
-    a( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{item.universe}
+    a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{item.universe}
     if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE/* || item.author === contextUser.username*/)
       |  - 
-      a( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}/edit` ) Edit
+      a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}/edit` ) Edit
   p.center
     small Created by 
-      a( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
+      a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
       |  #{formatDate(new Date(item.created_at))}
       |  - Last updated #{formatDate(new Date(item.updated_at))}
   hr

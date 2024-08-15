@@ -7,6 +7,6 @@ mixin authorList(authors)
         if (i === Object.keys(authors).length - 1) suff = '';
         else if (i === Object.keys(authors).length - 2) suff = Object.keys(authors).length === 2 ? ' and ' : ', and ';
         else suff = ', ';
-      a( href=`${ADDR_PREFIX}/users/${key}` )= val
+      a.link.link-animated( href=`${ADDR_PREFIX}/users/${key}` )= val
       | #{suff}
       - i++;

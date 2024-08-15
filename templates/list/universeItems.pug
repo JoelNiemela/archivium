@@ -9,8 +9,9 @@ block content
     | of #{universe.title}
   if type
     h4.center
-      a( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items` ) List all item types
-  a( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) Back
+      a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items` ) List all item types
+  div
+    a.navbarBtnLink.navbarText( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) Back
   hr
   table
     thead
@@ -23,13 +24,14 @@ block content
       each item in items
         tr
           td
-            a( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}` ) #{item.title}
+            a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}` ) #{item.title}
           td
             if type
               | #{capitalize(item.item_type)}
             else
-              a( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items?type=${item.item_type}` title='Filter by type' ) #{capitalize(item.item_type)}
+              a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items?type=${item.item_type}` title='Filter by type' )
+                | #{capitalize(item.item_type)}
           td
-            a( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
+            a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
           td #{formatDate(item.created_at)}
           td #{formatDate(item.updated_at)}

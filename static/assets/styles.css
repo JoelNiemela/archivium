@@ -138,3 +138,64 @@ body {
 .markdown p {
   text-indent: 32px;
 }
+
+/* Fancy Links */
+.link {
+  position: relative;
+  text-decoration: none;
+  border: none;
+}
+.link.link-animated {
+  color: #069;
+}
+.link:not(.link-animated) {
+  color: black;
+}
+.link:focus, .link:hover {
+  outline: none;
+}
+.link:focus.link-broken, .link:hover.link-broken {
+  color: red;
+}
+.link:focus:not(.link-broken).link-animated, .link:hover:not(.link-broken).link-animated {
+  color: #069;
+}
+.link:focus:not(.link-broken):not(.link-animated), .link:hover:not(.link-broken):not(.link-animated) {
+  color: #666;
+}
+.link:after.link-broken {
+  color: red;
+}
+.link:after:not(.link-broken) {
+  color: #069;
+}
+.link-animated:after {
+  content: '';
+  height: 2px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0%;
+  background: #069;
+  transition: 0.2s;
+}
+.link-animated.link-broken:after {
+  background: red;
+}
+.link-animated:hover:after {
+  width: 100%;
+}
+.link-animated:focus:after {
+  width: 100%;
+}
+.link-background {
+  padding: 3px 10px 3px 10px;
+  border-radius: 50px;
+  background: lightgray;
+}
+.link-broken.link-animated {
+  color: red;
+}
+.link-broken:not(.link-animated) {
+  color: #c90b0b;
+}

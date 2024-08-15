@@ -3,7 +3,7 @@ include ../mixins.pug
 
 block content
   h1.center Universes
-  a( href=`${ADDR_PREFIX}/universes/create` ) Create New
+  a.link.link-animated( href=`${ADDR_PREFIX}/universes/create` ) Create New
   hr
   table
     thead
@@ -16,7 +16,7 @@ block content
       each universe in universes
         tr
           td
-            a( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
+            a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
           td
             +authorList(universe.authors)
           td #{formatDate(universe.created_at)}

@@ -87,7 +87,7 @@ module.exports = function(app) {
     const [code, data] = await api.universe.put(req.session.user, req.params.shortname, req.body);
     res.status(code);
     if (code === 200) {
-      res.redirect(`${ADDR_PREFIX}/universes/${req.params.universeShortname}`);
+      res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}`);
     } else {
       console.log(code, data)
       res.end(render(req, 'editUniverse', { error: data, ...req.body }));

@@ -141,7 +141,7 @@ module.exports = function(app) {
       return res.end(render(req, 'error', { code: code1 }));
     }
     if (!item) {
-      if (universe.author_permissions[req.session.user.id] >= perms.READ) {
+      if (universe.author_permissions[req.session.user?.id] >= perms.READ) {
         return res.end(render(req, 'error', {
           code: 404,
           hint: 'Looks like this item doesn\'t exist yet. Follow the link below to create it:',

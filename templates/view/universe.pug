@@ -21,6 +21,9 @@ block content
       a( href=`${ADDR_PREFIX}/users/${universe.owner}` ) #{universe.owner}
       |  #{formatDate(new Date(universe.created_at))}
       |  - Last updated #{formatDate(new Date(universe.updated_at))}
+      if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
+        |  - 
+        a( href=`${ADDR_PREFIX}/universes/${universe.shortname}/edit` ) Edit
   hr
   h4 Authors
   ul

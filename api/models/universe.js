@@ -105,6 +105,21 @@ async function post(user, body) {
   }
 }
 
+async function put(user, shortname, changes) {
+  const { title, public } = changes;
+
+  if (!title) return [400];
+  const [code, universe] = await getOne(user, { shortname }, perms.WRITE);
+  if (!universe) return [code];
+
+  try {
+    return [200, await executeQuery(`UPDATE universe SET ? WHERE id = ${universe.id};`, { title, public, updated_at: new Date() })];
+  } catch (err) {
+    console.error(err);
+    return [500];
+  }
+}
+
 async function putPermissions(user, shortname, targetUser, permission_level) {
   const [code, universe] = await getOne(user, { shortname });
   if (!universe) return [code];
@@ -132,5 +147,6 @@ module.exports = {
   getManyByAuthorId,
   getManyByAuthorName,
   post,
+  put,
   putPermissions,
 };

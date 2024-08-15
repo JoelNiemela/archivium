@@ -1,0 +1,22 @@
+extends ../layout.pug
+
+block content
+  h2 Edit #{universe.title}
+  form( method='POST' )
+
+    div
+      label( for='title' ) Title: 
+      input( id='title' type='text' name='title' value=universe.title )
+
+    div
+      label( for='visibility' ) Visibility: 
+      select( id='visibility' name='visibility' )
+        option( value='public' selected=(universe.public) ) Public
+        option( value='private' selected=(!universe.public) ) Private
+
+    div
+      input( type='submit' value='Save Changes' )
+
+    if error
+      div
+        span( style={color: 'red', 'font-size': 'small'} )= error

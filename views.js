@@ -70,6 +70,30 @@ module.exports = function(app) {
     res.end(render(req, 'universe', { universe }));
   });
 
+  app.get(`${ADDR_PREFIX}/universes/:shortname/edit`, async (req, res) => {
+    const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname }, perms.WRITE);
+    if (code !== 200) {
+      res.status(code);
+      return res.end(render(req, 'error', { code }));
+    }
+    res.end(render(req, 'editUniverse', { universe }));
+  });
+  app.post(`${ADDR_PREFIX}/universes/:shortname/edit`, async (req, res) => {
+    req.body = {
+      ...req.body,
+      public: req.body.visibility === 'public',
+    }
+    console.log(req.body)
+    const [code, data] = await api.universe.put(req.session.user, req.params.shortname, req.body);
+    res.status(code);
+    if (code === 200) {
+      res.redirect(`${ADDR_PREFIX}/universes/${req.params.universeShortname}`);
+    } else {
+      console.log(code, data)
+      res.end(render(req, 'editUniverse', { error: data, ...req.body }));
+    }
+  });
+
   app.get(`${ADDR_PREFIX}/universes/:shortname/items`, async (req, res) => {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
     const [code2, items] = await api.item.getByUniverseShortname(req.session.user, req.params.shortname, req.query.type);

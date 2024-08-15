@@ -153,7 +153,14 @@ module.exports = function(app) {
       }
     }
     item.obj_data = JSON.parse(item.obj_data);
-    const parsedBody = 'body' in item.obj_data && (await parseMarkdown(item.obj_data.body || '').evaluate())
+    const parsedBody = 'body' in item.obj_data && (await parseMarkdown(item.obj_data.body || '').evaluate(req.params.universeShortname))
+    if ('tabs' in item.obj_data) {
+      for (const tab in item.obj_data.tabs) {
+        for (const key in item.obj_data.tabs[tab]) {
+          item.obj_data.tabs[tab][key] = await parseMarkdown(item.obj_data.tabs[tab][key]).evaluate(req.params.universeShortname);
+        }
+      }
+    }
     res.end(render(req, 'item', { item, universe, parsedBody }));
   });
   app.get(`${ADDR_PREFIX}/universes/:universeShortname/items/:itemShortname/edit`, async (req, res) => {

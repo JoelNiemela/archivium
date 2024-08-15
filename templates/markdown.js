@@ -31,19 +31,24 @@ class MarkdownNode {
     return this.hasChildren() ? this.children[this.children.length-1] : null;
   }
 
-  async evaluate() {
+  async evaluate(currentUniverse) {
     if ('href' in this.attrs && this.attrs.href[0] === '@') {
-      const [universe, itemHash] = this.attrs.href.substring(1).split('/');
-      const [item, _] = itemHash.split('#');
-      this.attrs.href = `${ADDR_PREFIX}/universes/${universe}/items/${itemHash}`;
-      this.attrs['data-universe'] = universe;
-      this.attrs['data-item'] = item;
-      if (!(await api.item.exists(universe, item))) {
-        this.attrs.class = 'color-error';
+      let [universe, itemHash] = this.attrs.href.substring(1).split('/');
+      if (universe) {
+        if (!itemHash) {
+          itemHash = universe;
+          universe = currentUniverse;
+        }
+        const [item, _] = itemHash.split('#');
+        this.attrs.href = `${ADDR_PREFIX}/universes/${universe}/items/${itemHash}`;
+        this.attrs['data-universe'] = universe;
+        this.attrs['data-item'] = item;
+        if (!(await api.item.exists(universe, item))) {
+          this.attrs.class = 'color-error';
+        }
       }
-      // console.log(this.attrs)
     }
-    return [this.type, this.content, await Promise.all(this.children.map(tag => tag.evaluate())), this.attrs];
+    return [this.type, this.content, await Promise.all(this.children.map(tag => tag.evaluate(currentUniverse))), this.attrs];
   }
 }
 

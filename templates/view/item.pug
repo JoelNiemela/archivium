@@ -16,14 +16,14 @@ block content
 
   if 'tabs' in item.obj_data
     .page
-      each tabTuple in item.obj_data.tabs
-        h3 #{tabTuple[0]}
+      each tab, name in item.obj_data.tabs
+        h3 #{name}
         .itemTab
-          each keyTuple in tabTuple[1]
+          each val, key in tab
             .itemKey
-              span #{keyTuple[0]}
+              span #{key}
               hr
-              span #{keyTuple[1]}
+              span #{val}
 
   if parsedBody
     .sheet

@@ -15,7 +15,7 @@ block content
         each type in ['article', 'character', 'location', 'event', 'archive', 'document', 'timeline', 'item', 'organization']
             option( value=(type) selected=(item_type === type) )= capitalize(type)
     div
-      input( type='hidden' name='obj_data' value=(JSON.stringify({ body: '' })) )
+      input( type='hidden' name='obj_data' value='{}' )
       input( type='submit' value='Create Item' )
     if error
       div

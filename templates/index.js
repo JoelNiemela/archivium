@@ -34,7 +34,6 @@ function contextData(req) {
   const lang = 'en';
 
   function T(str) {
-    console.log(str, locale[lang][str])
     return locale[lang][str] ?? str;
   }
 

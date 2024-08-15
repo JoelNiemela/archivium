@@ -6,7 +6,7 @@ block content
     function updateObjData(newState) {
       obj_data = { ...obj_data, ...newState };
       const objDataInput = document.getElementById('obj_data');
-      objDataInput.value = JSON.stringify(obj_data);
+      objDataInput.value = encodeURIComponent(JSON.stringify(obj_data));
     }
   h2 Edit #{item.title}
   form( method='POST' )

@@ -33,14 +33,15 @@ class MarkdownNode {
 
   async evaluate() {
     if ('href' in this.attrs && this.attrs.href[0] === '@') {
-      const [universe, item] = this.attrs.href.substring(1).split('/');
-      this.attrs.href = `${ADDR_PREFIX}/universes/${universe}/items/${item}`;
+      const [universe, itemHash] = this.attrs.href.substring(1).split('/');
+      const [item, _] = itemHash.split('#');
+      this.attrs.href = `${ADDR_PREFIX}/universes/${universe}/items/${itemHash}`;
       this.attrs['data-universe'] = universe;
       this.attrs['data-item'] = item;
       if (!(await api.item.exists(universe, item))) {
         this.attrs.class = 'color-error';
       }
-      console.log(this.attrs)
+      // console.log(this.attrs)
     }
     return [this.type, this.content, await Promise.all(this.children.map(tag => tag.evaluate())), this.attrs];
   }
@@ -154,7 +155,7 @@ function parseInline(line) {
 }
 
 function parseMarkdown(text) {
-  const root = new MarkdownNode('div');
+  const root = new MarkdownNode('div', '', { class: 'markdown' });
   let curParagraph = new MarkdownNode('p');
   let curList = [null, -1];
 
@@ -165,9 +166,16 @@ function parseMarkdown(text) {
     if (line[0] === '#') {
       let i = 0;
       while (line[i] === '#') i++;
-      if (line[i] === ' ') {
-        const heading = root.addChild(new MarkdownNode(`h${i}`));
-        heading.addChildren(parseInline(new Line(line.substring(i+1))));
+      const attrs = {};
+      let j = i;
+      if (line[i] === '(') {
+        while (line[j] !== ')' && j < line.length) j++;
+        attrs.id = line.substring(i+1, j)
+        j++;
+      }
+      if (line[j] === ' ') {
+        const heading = root.addChild(new MarkdownNode(`h${i}`, '', attrs));
+        heading.addChildren(parseInline(new Line(line.substring(j+1))));
       }
     } else if (trimmedLine[0] === '-' && trimmedLine[1] === ' ') {
       const indent = (line.length - trimmedLine.length) / 2;
@@ -184,7 +192,7 @@ function parseMarkdown(text) {
       const [curListNode] = curList;
       curListNode.addChild(new MarkdownNode('li'));
       curListNode.lastChild().addChildren(parseInline(new Line(trimmedLine.substring(2))));
-    } else if (line === '') {
+    } else if (trimmedLine === '') {
       if (curParagraph.hasChildren()) root.addChild(curParagraph);
       curParagraph = new MarkdownNode('p');
       curList = [null, -1];

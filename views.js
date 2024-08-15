@@ -7,6 +7,11 @@ const { perms } = require('./api/utils');
 const { parseMarkdown } = require('./templates/markdown');
 
 module.exports = function(app) {
+  app.use((req, res, next) => {
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    next();
+  })
+
   app.get(`${ADDR_PREFIX}/`, (req, res) => {
     const html = render(req, 'home', {});
     res.end(html);
@@ -122,7 +127,6 @@ module.exports = function(app) {
     }
     item.obj_data = JSON.parse(item.obj_data);
     const parsedBody = 'body' in item.obj_data && (await parseMarkdown(item.obj_data.body || '').evaluate())
-    console.log(parsedBody)
     res.end(render(req, 'item', { item, universe, parsedBody }));
   });
   app.get(`${ADDR_PREFIX}/universes/:universeShortname/items/:itemShortname/edit`, async (req, res) => {
@@ -135,6 +139,11 @@ module.exports = function(app) {
     res.end(render(req, 'editItem', { item }));
   });
   app.post(`${ADDR_PREFIX}/universes/:universeShortname/items/:itemShortname/edit`, async (req, res) => {
+    console.log(req.body)
+    if (!('obj_data' in req.body)) {
+      return [400];
+    }
+    req.body.obj_data = decodeURIComponent(req.body.obj_data);
     const [code, data] = await api.item.put(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
     res.status(code);
     if (code === 200) {

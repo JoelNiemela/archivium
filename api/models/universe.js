@@ -18,8 +18,8 @@ async function getOne(user, options, permissionLevel) {
  * @returns 
  */
 async function getMany(user, conditions, permissionLevel=perms.READ) {
-  if (!user) return [401];
   try {
+    const usrQueryString = user ? ` OR (au_filter.user_id = ${user.id} AND au_filter.permission_level >= ${permissionLevel})` : '';
     const conditionString = conditions ? `WHERE ${conditions.strings.join(' AND ')}` : '';
     const queryString = `
       SELECT 
@@ -30,7 +30,7 @@ async function getMany(user, conditions, permissionLevel=perms.READ) {
       FROM universe
       INNER JOIN authoruniverse as au_filter
         ON universe.id = au_filter.universe_id AND (
-          universe.public = 1 OR (au_filter.user_id = ${user.id} AND au_filter.permission_level >= ${permissionLevel})
+          universe.public = 1${usrQueryString}
         )
       LEFT JOIN authoruniverse as au ON universe.id = au.universe_id
       LEFT JOIN user ON user.id = au.user_id

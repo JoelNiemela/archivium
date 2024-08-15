@@ -26,12 +26,15 @@ module.exports = function(app) {
 
   app.get(`${ADDR_PREFIX}/users/:username`, async (req, res) => {
     const [code1, user] = await api.user.getOne({ username: req.params.username });
+    if (!user) {
+      res.status(code1);
+      return res.end(render(req, 'error', { code: code1 }));
+    }
     const [code2, universes] = await api.universe.getManyByAuthorId(req.session.user, user.id);
-    const code = code1 !== 200 ? code1 : code2;
     console.log(user)
-    if (!user || !universes) {
-      res.status(code);
-      return res.end(render(req, 'error', { code: code }));
+    if (!universes) {
+      res.status(code2);
+      return res.end(render(req, 'error', { code: code2 }));
     }
     else return res.end(render(req, 'user', { 
       user,

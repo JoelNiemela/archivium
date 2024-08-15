@@ -1,7 +1,15 @@
 extends ../layout.pug
 
 block content
-  h1.center Items of #{universe.title}
+  h1.center 
+    if type
+      | #{capitalize(T(`${type}-pl`))} 
+    else
+      | Items 
+    | of #{universe.title}
+  if type
+    h4.center
+      a( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items` ) List all item types
   a( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) Back
   hr
   table
@@ -16,7 +24,11 @@ block content
         tr
           td
             a( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}` ) #{item.title}
-          td #{capitalize(item.item_type)}
+          td
+            if type
+              | #{capitalize(item.item_type)}
+            else
+              a( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items?type=${item.item_type}` title='Filter by type' ) #{capitalize(item.item_type)}
           td
             a( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
           td #{formatDate(item.created_at)}

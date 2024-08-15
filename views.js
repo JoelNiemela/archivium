@@ -102,7 +102,7 @@ module.exports = function(app) {
       res.status(code);
       return res.end(render(req, 'error', { code }));
     }
-    res.end(render(req, 'universeItemList', { items, universe }));
+    res.end(render(req, 'universeItemList', { items, universe, type: req.query.type }));
   });
  
   app.get(`${ADDR_PREFIX}/universes/:shortname/items/create`, async (req, res) => {

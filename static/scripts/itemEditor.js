@@ -53,7 +53,8 @@ function selectTab(name) {
 }
 
 
-function addTab(name, force=false) {
+function addTab(type, name, force=false) {
+  if (!('tabs' in obj_data)) obj_data.tabs = {};
   if (!name || (name in obj_data.tabs && !force)) return;
 
   const button = createElement('button', {
@@ -64,7 +65,7 @@ function addTab(name, force=false) {
     },
     dataset: { tabBtn: name },
   });
-  document.querySelector('#tabs .buttons').appendChild(button);
+  document.querySelector('#tabs .tabs-buttons').appendChild(button);
 
   const content = createElement('div', { classList: ['hidden'], dataset: { tab: name }, children: [
     createElement('h3', { attrs: { innerText: name } }),
@@ -77,9 +78,18 @@ function addTab(name, force=false) {
     } }),
     createElement('input', { attrs: { id: `${name}-new_key` } }),
   ] });
-  
-  document.querySelector('#tabs .content').appendChild(content);
-  selectTab(name);
+  document.querySelector('#tabs .tabs-content').appendChild(content);
+
+  if (!force) {
+    const newState = {...obj_data};
+    newState.tabs[name] = {};
+    updateObjData(newState);
+    selectTab(name);
+  }
+
+  if (type !== 'custom') {
+    document.querySelector(`#new_tab_type [value="${type}"]`).remove();
+  }
 }
 
 
@@ -109,12 +119,28 @@ function updateKeyValue(tabName, key) {
 
 
 function addKeyValuePair(tabName, key, startValue='', force=false) {
-  if (!key || !selectedTab || !(tabName in obj_data.tabs) || (key in obj_data.tabs[tabName] && !force)) return;
+  if (!key || !tabName || !(tabName in obj_data.tabs) || (key in obj_data.tabs[tabName] && !force)) return;
   const inputId = `tab-${tabName}-${key}`;
-  document.querySelector(`#tabs [data-tab="${selectedTab}"] .keyPairs`).appendChild(
+  document.querySelector(`#tabs [data-tab="${tabName}"] .keyPairs`).appendChild(
     createElement('div', { children: [
       createElement('label', { attrs: { innerText: key, for: inputId } }),
       createElement('input', { attrs: { id: inputId, name: inputId, value: startValue, onchange: () => updateKeyValue(tabName, key) } }),
     ] })
   );
+}
+
+
+function resetTabs() {
+  document.querySelector(`#tabs .tabs-buttons`).innerHTML = '';
+  document.querySelector(`#tabs .tabs-content`).innerHTML = '';
+  let firstTab = null;
+  for (const name in obj_data.tabs) {
+    if (!firstTab) firstTab = name;
+    addTab('custom', name, true);
+    for (const key in obj_data.tabs[name]) {
+      addKeyValuePair(name, key, obj_data.tabs[name][key], true);
+    }
+  }
+  selectedTab = null;
+  if (firstTab) selectTab(firstTab);
 }

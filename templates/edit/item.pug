@@ -1,88 +1,6 @@
 extends ../layout.pug
 
 block content
-  script.
-    let selectedTab = null;
-    let obj_data = {};
-    function updateObjData(newState) {
-      obj_data = { ...obj_data, ...newState };
-      const objDataInput = document.getElementById('obj_data');
-      objDataInput.value = encodeURIComponent(JSON.stringify(obj_data));
-    }
-    function bindDataValue(selector, setter) {
-      const el = document.querySelector('#body textarea');
-      el.onchange = () => {
-        setter(el.value);
-      };
-      el.onchange();
-    }
-    function createBody() {
-      updateObjData({ body: '' });
-      const textarea = document.createElement('textarea');
-      document.querySelector('#body').appendChild(textarea);
-      bindDataValue('#body textarea', (body) => updateObjData({ body }));
-      document.querySelector('#body button').remove();
-    }
-    function addTab() {
-      const name = document.querySelector('#new_tab').value;
-      if (!name) return;
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.innerText = name;
-      button.onclick = () => selectTab(name);
-      document.querySelector('#tabs .buttons').appendChild(button);
-      const content = document.createElement('div');
-      content.dataset.tab = name;
-      content.classList.add('hidden');
-      const heading = document.createElement('h3');
-      heading.innerText = name;
-      const keyPairs = document.createElement('div');
-      keyPairs.classList.add('keyPairs');
-      const addKeyBtn = document.createElement('button');
-      addKeyBtn.type = 'button';
-      addKeyBtn.innerText = 'Add New Key';
-      addKeyBtn.onclick = () => addKeyValuePair(name);
-      const addKeyInput = document.createElement('input');
-      addKeyInput.id = `${name}-new_key`;
-      content.appendChild(heading);
-      content.appendChild(keyPairs);
-      content.appendChild(addKeyBtn);
-      content.appendChild(addKeyInput);
-      document.querySelector('#tabs .content').appendChild(content);
-      selectTab(name);
-    }
-    function selectTab(name) {
-      console.log(selectedTab, name)
-      if (selectedTab) document.querySelector(`#tabs [data-tab="${selectedTab}"]`).classList.add('hidden');
-      document.querySelector(`#tabs [data-tab="${name}"]`).classList.remove('hidden');
-      selectedTab = name;
-    }
-    function updateKeyValue(tabName, key) {
-      const inputId = `tab-${tabName}-${key}`;
-      const value = document.getElementById(inputId).value;
-      const newState = {...obj_data};
-      if (!('tabs' in newState)) newState.tabs = {};
-      if (!(tabName in newState.tabs)) newState.tabs[tabName] = {};
-      if (!(key in newState.tabs[tabName])) newState.tabs[tabName][key] = value;
-      updateObjData(newState);
-    }
-    function addKeyValuePair(tabName) {
-      const key = document.getElementById(`${tabName}-new_key`).value;
-      if (!key) return;
-      const inputId = `tab-${tabName}-${key}`;
-      const keyPairList = document.querySelector(`#tabs [data-tab="${selectedTab}"] .keyPairs`);
-      const container = document.createElement('div');
-      const label = document.createElement('label');
-      label.innerText = key;
-      label.for = inputId;
-      const input = document.createElement('input');
-      input.id = inputId;
-      input.name = inputId;
-      input.onchange = () => updateKeyValue(tabName, key);
-      container.appendChild(label);
-      container.appendChild(input);
-      keyPairList.appendChild(container);
-    }
   h2 Edit #{item.title}
   form( method='POST' )
 
@@ -102,25 +20,10 @@ block content
 
     div#tabs
       div
-        button( type='button' onclick=`addTab()` ) New Tab
+        button( type='button' onclick=`addTab(getIdValue('new_tab'))` ) New Tab
         input( id='new_tab' type='text' )
       div.buttons
-        if 'tabs' in item.obj_data
-          each tab, name in item.obj_data.tabs
-            button( type='button' onclick=`selectTab(${name})` ) #{name}
       div.content
-        if 'tabs' in item.obj_data
-          each tab, name in item.obj_data.tabs
-            div( data-tab=name )
-              h3 #{name}
-              div.keyPairs
-                each val, key in tab
-                  div
-                    - const inputId = `tab-${name}-${key}`;
-                    label( for=inputId ) #{key}
-                    input( id=inputId name=inputId onchange=`updateKeyValue(${name}, ${key})` value=val )
-              button( type='button' onclick=`addKeyValuePair(${name})` ) Add New Key
-              input( id=`${name}-new_key` type='text' )
 
     div
       input( id='obj_data' type='hidden' name='obj_data' value='{}' )
@@ -129,3 +32,16 @@ block content
     if error
       div
         span( style={color: 'red', 'font-size': 'small'} )= error
+
+  script
+    include /static/scripts/itemEditor.js
+  script!= `updateObjData(${JSON.stringify(item.obj_data)});`
+  script.
+    if ('tabs' in obj_data) {
+      for (const name in obj_data.tabs) {
+        addTab(name, true);
+        for (const key in obj_data.tabs[name]) {
+          addKeyValuePair(name, key, obj_data.tabs[name][key], true);
+        }
+      }
+    }

@@ -1,6 +1,7 @@
 const pug = require('pug');
 const { ADDR_PREFIX } = require('../config');
 const { perms } = require('../api/utils');
+const path = require('path');
 
 const locale = {
   en: {
@@ -45,28 +46,36 @@ function contextData(req) {
   };
 }
 
+const pugOptions = {
+  basedir: path.join(__dirname, '..'),
+};
+
+function compile(file) {
+  return pug.compileFile(file, pugOptions);
+}
+
 // compile templates
 const templates = {
-  error: pug.compileFile('templates/error.pug'),
-  home: pug.compileFile('templates/home.pug'),
-  login: pug.compileFile('templates/login.pug'),
-  signup: pug.compileFile('templates/signup.pug'),
+  error: compile('templates/error.pug'),
+  home: compile('templates/home.pug'),
+  login: compile('templates/login.pug'),
+  signup: compile('templates/signup.pug'),
 
-  universe: pug.compileFile('templates/view/universe.pug'),
-  editUniverse: pug.compileFile('templates/edit/universe.pug'),
-  universeList: pug.compileFile('templates/list/universes.pug'),
-  createUniverse: pug.compileFile('templates/create/universe.pug'),
-  editUniversePerms: pug.compileFile('templates/edit/universePerms.pug'),
+  universe: compile('templates/view/universe.pug'),
+  editUniverse: compile('templates/edit/universe.pug'),
+  universeList: compile('templates/list/universes.pug'),
+  createUniverse: compile('templates/create/universe.pug'),
+  editUniversePerms: compile('templates/edit/universePerms.pug'),
 
-  item: pug.compileFile('templates/view/item.pug'),
-  editItem: pug.compileFile('templates/edit/item.pug'),
-  itemList: pug.compileFile('templates/list/items.pug'),
-  createItem: pug.compileFile('templates/create/item.pug'),
+  item: compile('templates/view/item.pug'),
+  editItem: compile('templates/edit/item.pug'),
+  itemList: compile('templates/list/items.pug'),
+  createItem: compile('templates/create/item.pug'),
 
-  universeItemList: pug.compileFile('templates/list/universeItems.pug'),
+  universeItemList: compile('templates/list/universeItems.pug'),
 
-  user: pug.compileFile('templates/view/user.pug'),
-  userList: pug.compileFile('templates/list/users.pug'),
+  user: compile('templates/view/user.pug'),
+  userList: compile('templates/list/users.pug'),
 };
 
 function render(req, template, context = {}) {

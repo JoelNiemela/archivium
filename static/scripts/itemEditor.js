@@ -1,5 +1,9 @@
 let obj_data = {};
+let itemMap = {};
 let selectedTab = null;
+
+if (!window.createElement) throw 'domUtils not loaded!';
+if (!window.createSearchableSelect) throw 'searchableSelect not loaded!';
 
 function getIdValue(id) {
   return document.getElementById(id).value;
@@ -17,24 +21,6 @@ function bindDataValue(selector, setter) {
     setter(el.value);
   };
   el.onchange();
-}
-
-function createElement(type, options) {
-  const { attrs, classList, dataset, children } = options;
-  const el = document.createElement(type);
-  for (const attr in attrs ?? {}) {
-    el[attr] = attrs[attr];
-  }
-  for (const key in dataset ?? {}) {
-    el.dataset[key] = dataset[key];
-  }
-  for (const cl of classList ?? []) {
-    el.classList.add(cl);
-  }
-  for (const child of children ?? []) {
-    el.appendChild(child);
-  }
-  return el;
 }
 
 
@@ -57,6 +43,16 @@ function addTab(type, name, force=false) {
   if (!('tabs' in obj_data)) obj_data.tabs = {};
   if (!name || (name in obj_data.tabs && !force)) return;
 
+  if (!force) {
+    const newState = {...obj_data};
+    if (type === 'custom') newState.tabs[name] = {};
+    else {
+      if (!(type in newState)) newState[type] = {};
+      newState[type].title = name;
+    }
+    updateObjData(newState);
+  }
+
   const button = createElement('button', {
     attrs: {
       type: 'button',
@@ -69,26 +65,116 @@ function addTab(type, name, force=false) {
 
   const content = createElement('div', { classList: ['hidden'], dataset: { tab: name }, children: [
     createElement('h3', { attrs: { innerText: name } }),
-    createElement('button', { attrs: { type: 'button', innerText: 'Delete Tab', onclick: () => removeTab(name) } }),
-    createElement('div', { classList: ['keyPairs'] }),
     createElement('button', { attrs: {
       type: 'button',
-      innerText: 'Add New Key',
-      onclick: () => addKeyValuePair(name, getIdValue(`${name}-new_key`)),
+      innerText: 'Delete Tab',
+      onclick: () => {
+        if (type !== 'custom') {
+          updateObjData({ [type]: {} });
+        }
+        removeTab(name);
+      },
     } }),
-    createElement('input', { attrs: { id: `${name}-new_key` } }),
+    type === 'custom' && createElement('div', { children: [
+      createElement('div', { classList: ['keyPairs'] }),
+      createElement('button', { attrs: {
+        type: 'button',
+        innerText: 'Add New Key',
+        onclick: () => addKeyValuePair(name, getIdValue(`${name}-new_key`)),
+      } }),
+      createElement('input', { attrs: { id: `${name}-new_key` } }),
+    ] }),
+    type === 'lineage' && createElement('div', { children: [
+      createElement('div', { classList: ['item-parents'], children: [
+        createElement('h4', { attrs: { innerText: 'Parents' } }),
+        ...Object.keys(obj_data.lineage.parents ?? {}).map((shortname) => (
+          createElement('div', { children: [
+            createElement('button', { attrs: {
+              type: 'button',
+              innerText: itemMap[shortname],
+              onclick: () => {
+                const newState = { ...obj_data };
+                delete newState.lineage.parents[shortname];
+                updateObjData(newState);
+                resetTabs(name);
+              },
+            } }),
+            obj_data.lineage.parents[shortname][0]
+              && createElement('span', { attrs: { innerText: obj_data.lineage.parents[shortname][0] } }),
+            obj_data.lineage.parents[shortname][1]
+              && createElement('span', { attrs: { innerText: obj_data.lineage.parents[shortname][1] } }),
+          ] })
+        )),
+      ] }),
+      createElement('div', { classList: ['item-children'], children: [
+        createElement('h4', { attrs: { innerText: 'Children' } }),
+        ...Object.keys(obj_data.lineage.children ?? {}).map((shortname) => (
+          createElement('div', { children: [
+            createElement('button', { attrs: {
+              type: 'button',
+              innerText: itemMap[shortname],
+              onclick: () => {
+                const newState = { ...obj_data };
+                delete newState.lineage.children;
+                updateObjData(newState);
+                resetTabs(name);
+              },
+            } }),
+            obj_data.lineage.children[shortname][0]
+              && createElement('span', { attrs: { innerText: obj_data.lineage.children[shortname][0] } }),
+            obj_data.lineage.children[shortname][1]
+              && createElement('span', { attrs: { innerText: obj_data.lineage.children[shortname][1] } }),
+          ] })
+        )),
+      ] }),
+      createElement('div', { children: [
+        createElement('button', { attrs: {
+          type: 'button',
+          innerText: 'Add New Parent',
+          onclick: () => {
+            const val = getIdValue('new_parent');
+            const data = [getIdValue('new_parent_self_data') || null, getIdValue('new_parent_other_data') || null];
+            if (!val) return;
+            const newState = { ...obj_data };
+            if (!('parents' in newState.lineage)) newState.lineage.parents = {};
+            newState.lineage.parents[val] = data;
+            updateObjData(newState);
+            resetTabs(name);
+          },
+        } }),
+        createSearchableSelect('new_parent', itemMap),
+        createElement('input', { attrs: { id: 'new_parent_self_data' } }),
+        createElement('input', { attrs: { id: 'new_parent_other_data' } }),
+      ] }),
+      createElement('div', { children: [
+        createElement('button', { attrs: {
+          type: 'button',
+          innerText: 'Add New Child',
+          onclick: () => {
+            const val = getIdValue('new_child');
+            const data = [getIdValue('new_child_self_data') || null, getIdValue('new_child_other_data') || null];
+            if (!val) return;
+            const newState = { ...obj_data };
+            if (!('children' in newState.lineage)) newState.lineage.children = {};
+            newState.lineage.children[val] = data;
+            updateObjData(newState);
+            resetTabs(name);
+          },
+        } }),
+        createSearchableSelect('new_child', itemMap),
+        createElement('input', { attrs: { id: 'new_child_self_data' } }),
+        createElement('input', { attrs: { id: 'new_child_other_data' } }),
+      ] }),
+    ] }),
   ] });
   document.querySelector('#tabs .tabs-content').appendChild(content);
 
   if (!force) {
-    const newState = {...obj_data};
-    newState.tabs[name] = {};
-    updateObjData(newState);
     selectTab(name);
   }
 
   if (type !== 'custom') {
-    document.querySelector(`#new_tab_type [value="${type}"]`).remove();
+    document.querySelector(`#new_tab_type [value="${type}"]`)?.remove();
   }
 }
 
@@ -110,10 +196,10 @@ function removeTab(name) {
 function updateKeyValue(tabName, key) {
   const inputId = `tab-${tabName}-${key}`;
   const value = document.getElementById(inputId).value;
-  const newState = {...obj_data};
+  const newState = { ...obj_data };
   if (!('tabs' in newState)) newState.tabs = {};
   if (!(tabName in newState.tabs)) newState.tabs[tabName] = {};
-  if (!(key in newState.tabs[tabName])) newState.tabs[tabName][key] = value;
+  newState.tabs[tabName][key] = value;
   updateObjData(newState);
 }
 
@@ -130,17 +216,24 @@ function addKeyValuePair(tabName, key, startValue='', force=false) {
 }
 
 
-function resetTabs() {
+function resetTabs(toSelect=null) {
   document.querySelector(`#tabs .tabs-buttons`).innerHTML = '';
   document.querySelector(`#tabs .tabs-content`).innerHTML = '';
   let firstTab = null;
-  for (const name in obj_data.tabs) {
-    if (!firstTab) firstTab = name;
-    addTab('custom', name, true);
-    for (const key in obj_data.tabs[name]) {
-      addKeyValuePair(name, key, obj_data.tabs[name][key], true);
+  for (const type of ['lineage', 'location', 'chronology']) {
+    if (type in obj_data) {
+      addTab(type, obj_data[type].title, true);
+    }
+  }
+  if ('tabs' in obj_data) {
+    for (const name in obj_data.tabs) {
+      if (!firstTab) firstTab = name;
+      addTab('custom', name, true);
+      for (const key in obj_data.tabs[name]) {
+        addKeyValuePair(name, key, obj_data.tabs[name][key], true);
+      }
     }
   }
   selectedTab = null;
-  if (firstTab) selectTab(firstTab);
+  if (firstTab || toSelect) selectTab(toSelect ?? firstTab);
 }

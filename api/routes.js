@@ -16,7 +16,8 @@ module.exports = function(app) {
         res.setHeader('Access-Control-Allow-Methods', Object.keys(this.methodFuncs).join(','));
         return res.end();
       });
-      app.all(path, Auth.verifySession, async (req, res) => {
+      // app.all(path, Auth.verifySession, async (req, res) => {
+      app.all(path, async (req, res) => {
         const method = req.method.toUpperCase();
         if (method in this.methodFuncs) {
           const [status, data] = await this.methodFuncs[method](req);
@@ -37,6 +38,11 @@ module.exports = function(app) {
     const [status, data] = await promise;
     return [status, callback(data)];
   }
+
+  app.use('/api', (req, res, next) => {
+    res.set('Content-Type', 'application/json; charset=utf-8');
+    next();
+  })
 
   const apiRoutes = new APIRoute('/api', {}, [
     new APIRoute('/users', { GET: () => api.user.getMany() }, [

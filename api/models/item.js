@@ -25,11 +25,25 @@ async function getMany(user, conditions, permissionsRequired=perms.READ) {
       SELECT 
         item.*,
         user.username as author,
-        universe.title as universe
+        universe.title as universe,
+        JSON_REMOVE(JSON_OBJECTAGG(
+          IFNULL(child_item.shortname, 'null__'),
+          JSON_ARRAY(lineage_child.child_title, lineage_child.parent_title)
+        ), '$.null__') as children,
+        JSON_REMOVE(JSON_OBJECTAGG(
+          IFNULL(parent_item.shortname, 'null__'),
+          JSON_ARRAY(lineage_parent.parent_title, lineage_parent.child_title)
+        ), '$.null__') as parents,
+        JSON_REMOVE(JSON_OBJECTAGG(IFNULL(child_item.shortname, 'null__'), child_item.title), '$.null__') as child_titles,
+        JSON_REMOVE(JSON_OBJECTAGG(IFNULL(parent_item.shortname, 'null__'), parent_item.title), '$.null__') as parent_titles
       FROM item
       INNER JOIN user ON user.id = item.author_id
       INNER JOIN universe ON universe.id = item.universe_id
       INNER JOIN authoruniverse as au_filter ON universe.id = au_filter.universe_id AND (universe.public = 1${usrQueryString})
+      LEFT JOIN lineage as lineage_child ON lineage_child.parent_id = item.id
+      LEFT JOIN lineage as lineage_parent ON lineage_parent.child_id = item.id
+      LEFT JOIN item as child_item ON child_item.id = lineage_child.child_id
+      LEFT JOIN item as parent_item ON parent_item.id = lineage_parent.parent_id
       ${conditionString}
       GROUP BY 
         item.id,
@@ -176,6 +190,30 @@ async function exists(universeShortname, itemShortname) {
   return data.length > 0;
 }
 
+
+/**
+ * NOT safe. Make sure user has permissions to the item in question before calling this!
+ * @param {*} itemShortname 
+ * @returns 
+ */
+async function putLineage(parent_id, child_id, parent_title, child_title) {
+  const queryString = `INSERT INTO lineage SET ?;`;
+  const data = await executeQuery(queryString, { parent_id, child_id, parent_title, child_title });
+  return [200, data];
+}
+
+
+/**
+ * NOT safe. Make sure user has permissions to the item in question before calling this!
+ * @param {*} itemShortname 
+ * @returns 
+ */
+async function delLineage(parent_id, child_id) {
+  const queryString = `DELETE FROM lineage WHERE parent_id = ? AND child_id = ?;`;
+  const data = await executeQuery(queryString, [ parent_id, child_id, ]);
+  return [200, data];
+}
+
 module.exports = {
   getOne,
   getMany,
@@ -186,4 +224,6 @@ module.exports = {
   post,
   put,
   exists,
+  putLineage,
+  delLineage,
 };

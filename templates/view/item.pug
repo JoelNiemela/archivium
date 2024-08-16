@@ -25,6 +25,23 @@ block content
               hr
               +mdText(val)
 
+  if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
+    .page
+        h3 Lineage 
+        .itemTab
+          each title, shortname in item.parents
+            .itemKey
+              span #{title[0] || T('Parent')}
+              hr
+              a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${shortname}` )
+                | #{item.parent_titles[shortname]}
+          each title, shortname in item.children
+            .itemKey
+              span #{title[0] || T('Child')}
+              hr
+              a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${shortname}` )
+                | #{item.child_titles[shortname]}
+
   if parsedBody
     .sheet
       +mdText(parsedBody)

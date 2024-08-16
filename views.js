@@ -164,21 +164,74 @@ module.exports = function(app) {
     res.end(render(req, 'item', { item, universe, parsedBody }));
   });
   app.get(`${ADDR_PREFIX}/universes/:universeShortname/items/:itemShortname/edit`, async (req, res) => {
-    const [code, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
+    const [code1, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
+    const [code2, itemList] = await api.item.getByUniverseId(req.session.user, item.universe_id);
+    const code = code1 !== 200 ? code1 : code2;
     if (code !== 200) {
       res.status(code);
       return res.end(render(req, 'error', { code }));
     }
     item.obj_data = JSON.parse(item.obj_data);
-    res.end(render(req, 'editItem', { item }));
+    if (Object.keys(item.parents).length > 0 || Object.keys(item.children).length > 0) {
+      item.obj_data.lineage = { ...item.obj_data.lineage };
+      item.obj_data.lineage.parents = item.parents;
+      item.obj_data.lineage.children = item.children;
+      
+    }
+    const itemMap = {};
+    itemList.forEach(item => itemMap[item.shortname] = item.title);
+    res.end(render(req, 'editItem', { item, itemMap }));
   });
   app.post(`${ADDR_PREFIX}/universes/:universeShortname/items/:itemShortname/edit`, async (req, res) => {
     console.log(req.body)
     if (!('obj_data' in req.body)) {
       return [400];
     }
-    req.body.obj_data = decodeURIComponent(req.body.obj_data);
-    const [code, data] = await api.item.put(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
+    req.body.obj_data = JSON.parse(decodeURIComponent(req.body.obj_data));
+    let lineage;
+    if ('lineage' in req.body.obj_data) {
+      lineage = req.body.obj_data.lineage;
+      req.body.obj_data.lineage = { title: lineage.title };
+    }
+    let code; let data;
+    req.body.obj_data = JSON.stringify(req.body.obj_data);
+    [code, data] = await api.item.put(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
+    if (code === 200) {
+      if (lineage) {
+        let item;
+        [code, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
+        // TODO more chances to return error here
+        const [newParents, newChildren] = [{}, {}];
+        for (const shortname in lineage.parents ?? {}) {
+          const [, parent] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, shortname, perms.WRITE);
+          if (!parent) throw 'bad item ' + shortname;
+          newParents[shortname] = true;
+          if (!(shortname in item.parents)) {
+            [code,] = await api.item.putLineage(parent.id, item.id, ...lineage.parents[shortname].reverse());
+          }
+        }
+        for (const shortname in lineage.children ?? {}) {
+          const [, child] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, shortname, perms.WRITE);
+          if (!child) throw 'bad item ' + shortname;
+          newChildren[shortname] = true;
+          if (!(shortname in item.children)) {
+            [code, ] = await api.item.putLineage(item.id, child.id, ...lineage.children[shortname]);
+          }
+        }
+        for (const shortname in item.parents) {
+          if (!newParents[shortname]) {
+            const [, parent] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, shortname, perms.WRITE);
+            api.item.delLineage(parent.id, item.id);
+          }
+        }
+        for (const shortname in item.children) {
+          if (!newChildren[shortname]) {
+            const [, child] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, shortname, perms.WRITE);
+            api.item.delLineage(item.id, child.id);
+          }
+        }
+      }
+    }
     res.status(code);
     if (code === 200) {
       res.redirect(`${ADDR_PREFIX}/universes/${req.params.universeShortname}/items/${req.params.itemShortname}`);

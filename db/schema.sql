@@ -53,6 +53,15 @@ CREATE TABLE item (
   PRIMARY KEY (id)
 );
 
+CREATE TABLE lineage (
+  parent_id INT NOT NULL,
+  child_id INT NOT NULL,
+  parent_title VARCHAR(64),
+  child_title VARCHAR(64),
+  FOREIGN KEY (parent_id) REFERENCES item (id),
+  FOREIGN KEY (child_id) REFERENCES item (id)
+);
+
 CREATE TABLE authoruniverse (
   id INT NOT NULL AUTO_INCREMENT,
   universe_id INT NOT NULL,

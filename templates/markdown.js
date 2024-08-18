@@ -31,7 +31,16 @@ class MarkdownNode {
     return this.hasChildren() ? this.children[this.children.length-1] : null;
   }
 
+  innerText() {
+    return `${this.content}${this.children.map(child => child.innerText()).join('')}`;
+  }
+
   async evaluate(currentUniverse) {
+    const classList = this.attrs?.class?.split(' ') ?? [];
+    if (this.type === 'a') {
+      classList.push('link');
+      classList.push('link-animated');
+    }
     if ('href' in this.attrs && this.attrs.href[0] === '@') {
       let [universe, itemHash] = this.attrs.href.substring(1).split('/');
       if (universe) {
@@ -44,10 +53,11 @@ class MarkdownNode {
         this.attrs['data-universe'] = universe;
         this.attrs['data-item'] = item;
         if (!(await api.item.exists(universe, item))) {
-          this.attrs.class = 'color-error';
+          classList.push('link-broken');
         }
       }
     }
+    this.attrs.class = classList.join(' ');
     return [this.type, this.content, await Promise.all(this.children.map(tag => tag.evaluate(currentUniverse))), this.attrs];
   }
 }
@@ -166,21 +176,26 @@ function parseMarkdown(text) {
 
   const lines = text.split('\n');
   for (const line of lines) {
-    console.log(line)
+    // console.log(line)
     const trimmedLine = line.trimStart();
     if (line[0] === '#') {
       let i = 0;
       while (line[i] === '#') i++;
       const attrs = {};
       let j = i;
+      let id;
       if (line[i] === '(') {
         while (line[j] !== ')' && j < line.length) j++;
-        attrs.id = line.substring(i+1, j)
+        id = line.substring(i+1, j);
+        attrs.id = id;
         j++;
       }
       if (line[j] === ' ') {
         const heading = root.addChild(new MarkdownNode(`h${i}`, '', attrs));
         heading.addChildren(parseInline(new Line(line.substring(j+1))));
+        if (!id) {
+          attrs.id = heading.innerText().toLowerCase().replaceAll(' ', '-');
+        }
       }
     } else if (trimmedLine[0] === '-' && trimmedLine[1] === ' ') {
       const indent = (line.length - trimmedLine.length) / 2;

@@ -32,7 +32,7 @@ class MarkdownNode {
   }
 
   innerText() {
-    return `${this.content}${this.children.map(child => child.innerText()).join('')}`;
+    return `${this.content ?? ''}${this.children.map(child => child.innerText()).join('')}`;
   }
 
   async evaluate(currentUniverse) {
@@ -171,31 +171,55 @@ function parseInline(line) {
 
 function parseMarkdown(text) {
   const root = new MarkdownNode('div', '', { class: 'markdown' });
+  let toc;
   let curParagraph = new MarkdownNode('p');
   let curList = [null, -1];
+  let curTocList = [null, -1];
 
   const lines = text.split('\n');
   for (const line of lines) {
     // console.log(line)
     const trimmedLine = line.trimStart();
     if (line[0] === '#') {
-      let i = 0;
-      while (line[i] === '#') i++;
-      const attrs = {};
-      let j = i;
+      let headingLvl = 0;
+      while (line[headingLvl] === '#') headingLvl++;
+      let j = headingLvl;
       let id;
-      if (line[i] === '(') {
+      if (line[headingLvl] === '(') {
         while (line[j] !== ')' && j < line.length) j++;
-        id = line.substring(i+1, j);
-        attrs.id = id;
+        id = line.substring(headingLvl+1, j);
         j++;
       }
       if (line[j] === ' ') {
-        const heading = root.addChild(new MarkdownNode(`h${i}`, '', attrs));
+        const heading = root.addChild(new MarkdownNode(`h${headingLvl}`));
         heading.addChildren(parseInline(new Line(line.substring(j+1))));
         if (!id) {
-          attrs.id = heading.innerText().toLowerCase().replaceAll(' ', '-');
+          id = heading.innerText().toLowerCase().replaceAll(' ', '-');
         }
+        heading.attrs.id = id;
+        if (!toc) continue;
+        const [lastListNode, lastHeadingLvl] = curTocList;
+        if (headingLvl > lastHeadingLvl) {
+          const lastListItem = lastListNode ? (lastListNode.lastChild() ?? lastListNode.addChild(new MarkdownNode('li'))) : null;
+          const newListNode = (lastListItem ?? toc).addChild(new MarkdownNode('ol'));
+          curTocList = [newListNode, headingLvl];
+        } else if (headingLvl < lastHeadingLvl) {
+          let newListNode = lastListNode;
+          for (i = 0; i < lastHeadingLvl - headingLvl; i++) newListNode = newListNode.parent.parent;
+          curTocList = [newListNode, headingLvl];
+        }
+        const [curListNode] = curTocList;
+        curListNode.addChild(new MarkdownNode('li'));
+        const tocLink = new MarkdownNode('a', '', { href: `#${id}` });
+        tocLink.addChildren(parseInline(new Line(line.substring(j+1))));
+        curListNode.lastChild().addChild(tocLink);
+      }
+    } else if (trimmedLine[0] === '@') {
+      const [cmd, ...args] = trimmedLine.substring(1).split(' ');
+      console.log(cmd, args)
+      if (cmd === 'toc') {
+        toc = root.addChild(new MarkdownNode('div', '', { id: 'toc' }));
+        toc.addChild(new MarkdownNode('h3', 'Table of Contents'));
       }
     } else if (trimmedLine[0] === '-' && trimmedLine[1] === ' ') {
       const indent = (line.length - trimmedLine.length) / 2;

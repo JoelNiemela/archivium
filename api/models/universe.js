@@ -120,8 +120,8 @@ async function put(user, shortname, changes) {
   }
 }
 
-async function putPermissions(user, shortname, targetUser, permission_level) {
-  const [code, universe] = await getOne(user, { shortname });
+async function putPermissions(user, shortname, targetUser, permission_level, permissionsRequired=perms.ADMIN) {
+  const [code, universe] = await getOne(user, { shortname }, permissionsRequired);
   if (!universe) return [code];
 
   console.log(universe)

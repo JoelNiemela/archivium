@@ -15,50 +15,65 @@ module.exports = function(app) {
     next();
   })
 
-  app.get(`${ADDR_PREFIX}/`, (_, res, next) => {
-    res.prepareRender('home');
-    next();
-  });
+  const doRender = (req, res) => {
+    try {
+      const [template, data] = res.templateData;
+      res.end(render(req, template, data));
+    } catch (err) {
+      console.error(`Error ${res.statusCode} rendered`);
+      res.end(render(req, 'error', { code: res.statusCode }));
+    }
+  };
+
+  function use(method, path, ...middleware) {
+    const handler = middleware.pop();
+    if (!(['get', 'post', 'put'].includes(method))) throw `Illegal method: ${method}`;
+    app[method](`${ADDR_PREFIX}${path}`, ...middleware, async (req, res, next) => {
+      await handler(req, res);
+      next();
+    }, doRender);
+  }
+  const get = (...args) => use('get', ...args);
+  const post = (...args) => use('post', ...args);
+  const put = (...args) => use('put', ...args);
+
+  get(`${ADDR_PREFIX}/`, (_, res) => res.prepareRender('home'));
 
   /* User Pages */
-  app.get(`${ADDR_PREFIX}/users`, Auth.verifySessionOrRedirect, async (_, res, next) => {
+  get('/users', Auth.verifySessionOrRedirect, async (_, res) => {
     const [code, users] = await api.user.getMany();
     res.status(code);
-    if (!users) return next();
+    if (!users) return;
     res.prepareRender('userList', { users });
-    next();
   });
 
-  app.get(`${ADDR_PREFIX}/users/:username`, async (req, res, next) => {
+  get('/users/:username', async (req, res) => {
     const [code1, user] = await api.user.getOne({ username: req.params.username });
     res.status(code1);
-    if (!user) return next();
+    if (!user) return;
     const [code2, universes] = await api.universe.getManyByAuthorId(req.session.user, user.id);
     console.log(user)
     res.status(code2);
-    if (!universes) return next();
+    if (!universes) return;
     res.prepareRender('user', { 
       user,
       gravatarLink: `http://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
       universes,
     });
-    next();
   });
 
   /* Universe Pages */
-  app.get(`${ADDR_PREFIX}/universes`, async (req, res, next) => {
+  get('/universes', async (req, res) => {
     const [code, universes] = await api.universe.getMany(req.session.user);
     res.status(code);
-    if (!universes) return next();
+    if (!universes) return;
     res.prepareRender('universeList', { universes });
-    next();
   });
  
-  app.get(`${ADDR_PREFIX}/universes/create`, async (_, res, next) => {
+  get('/universes/create', async (_, res) => {
     res.prepareRender('createUniverse');
-    next();
   });
-  app.post(`${ADDR_PREFIX}/universes/create`, async (req, res, next) => {
+  post('/universes/create', async (req, res) => {
     const [code, data] = await api.universe.post(req.session.user, {
       ...req.body,
       public: req.body.visibility === 'public',
@@ -66,25 +81,22 @@ module.exports = function(app) {
     res.status(code);
     if (code === 201) return res.redirect(`${ADDR_PREFIX}/universes/${req.body.shortname}`);
     res.prepareRender('createUniverse', { error: data, ...req.body });
-    next();
   });
   
-  app.get(`${ADDR_PREFIX}/universes/:shortname`, async (req, res, next) => {
+  get('/universes/:shortname', async (req, res) => {
     const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
     res.status(code);
-    if (!universe) return next();
+    if (!universe) return;
     res.prepareRender('universe', { universe });
-    next();
   });
 
-  app.get(`${ADDR_PREFIX}/universes/:shortname/edit`, async (req, res, next) => {
+  get('/universes/:shortname/edit', async (req, res) => {
     const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname }, perms.WRITE);
     res.status(code);
-    if (!universe) return next();
+    if (!universe) return;
     res.prepareRender('editUniverse', { universe });
-    next();
   });
-  app.post(`${ADDR_PREFIX}/universes/:shortname/edit`, async (req, res, next) => {
+  post('/universes/:shortname/edit', async (req, res) => {
     req.body = {
       ...req.body,
       public: req.body.visibility === 'public',
@@ -95,26 +107,24 @@ module.exports = function(app) {
     if (code === 200) return res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}`);
     console.log(code, data)
     res.prepareRender('editUniverse', { error: data, ...req.body });
-    next();
   });
 
-  app.get(`${ADDR_PREFIX}/universes/:shortname/items`, async (req, res, next) => {
+  get('/universes/:shortname/items', async (req, res) => {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
     const [code2, items] = await api.item.getByUniverseShortname(req.session.user, req.params.shortname, req.query.type);
     const code = code1 !== 200 ? code1 : code2;
     res.status(code);
-    if (code !== 200) return next();
+    if (code !== 200) return;
     res.prepareRender('universeItemList', { items, universe, type: req.query.type });
-    next();
   });
  
-  app.get(`${ADDR_PREFIX}/universes/:shortname/items/create`, async (req, res, next) => {
+  get('/universes/:shortname/items/create', async (req, res) => {
     const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
     res.status(code);
-    if (code !== 200) return next();
+    if (code !== 200) return;
     res.prepareRender('createItem', { universe, item_type: req.query.type, shortname: req.query.shortname });
   });
-  app.post(`${ADDR_PREFIX}/universes/:shortname/items/create`, async (req, res, next) => {
+  post('/universes/:shortname/items/create', async (req, res) => {
     const [userCode, data] = await api.item.post(req.session.user, {
       ...req.body,
     }, req.params.shortname);
@@ -122,15 +132,15 @@ module.exports = function(app) {
     if (userCode === 201) return res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}/items/${req.body.shortname}`);
     const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
     res.status(code);
-    if (code !== 200) return next();
+    if (code !== 200) return;
     res.prepareRender('createItem', { error: data, ...req.body, universe });
   });
 
-  app.get(`${ADDR_PREFIX}/universes/:universeShortname/items/:itemShortname`, async (req, res, next) => {
+  get('/universes/:universeShortname/items/:itemShortname', async (req, res) => {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.universeShortname });
     const [code2, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname);
     res.status(code1);
-    if (code1 !== 200) return next();
+    if (code1 !== 200) return;
     if (!item) {
       if (universe.author_permissions[req.session.user?.id] >= perms.READ) {
         res.prepareRender('error', {
@@ -141,7 +151,7 @@ module.exports = function(app) {
       } else {
         res.status(code2);
       }
-      return next();
+      return;
     }
     item.obj_data = JSON.parse(item.obj_data);
     const parsedBody = 'body' in item.obj_data && (await parseMarkdown(item.obj_data.body || '').evaluate(req.params.universeShortname))
@@ -153,14 +163,13 @@ module.exports = function(app) {
       }
     }
     res.prepareRender('item', { item, universe, parsedBody });
-    next();
   });
-  app.get(`${ADDR_PREFIX}/universes/:universeShortname/items/:itemShortname/edit`, async (req, res, next) => {
+  get('/universes/:universeShortname/items/:itemShortname/edit', async (req, res) => {
     const [code1, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
     const [code2, itemList] = await api.item.getByUniverseId(req.session.user, item.universe_id);
     const code = code1 !== 200 ? code1 : code2;
     res.status(code);
-    if (code !== 200) return next();
+    if (code !== 200) return;
     item.obj_data = JSON.parse(item.obj_data);
     if (Object.keys(item.parents).length > 0 || Object.keys(item.children).length > 0) {
       item.obj_data.lineage = { ...item.obj_data.lineage };
@@ -170,13 +179,12 @@ module.exports = function(app) {
     const itemMap = {};
     itemList.forEach(item => itemMap[item.shortname] = item.title);
     res.prepareRender('editItem', { item, itemMap });
-    next();
   });
-  app.post(`${ADDR_PREFIX}/universes/:universeShortname/items/:itemShortname/edit`, async (req, res, next) => {
+  post('/universes/:universeShortname/items/:itemShortname/edit', async (req, res) => {
     console.log(req.body)
     if (!('obj_data' in req.body)) {
       res.status(400);
-      return next(); // We should probably render an error on the edit page instead here.
+      return; // We should probably render an error on the edit page instead here.
     }
     req.body.obj_data = JSON.parse(decodeURIComponent(req.body.obj_data));
     let lineage;
@@ -191,10 +199,7 @@ module.exports = function(app) {
       next();
     }
     [code, data] = await api.item.put(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
-    if (code !== 200) {
-      res.prepareRender('editItem', { error: data, ...req.body });
-      return next();
-    }
+    if (code !== 200) return res.prepareRender('editItem', { error: data, ...req.body });
     if (lineage) {
       let item;
       [code, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
@@ -233,32 +238,20 @@ module.exports = function(app) {
     res.redirect(`${ADDR_PREFIX}/universes/${req.params.universeShortname}/items/${req.params.itemShortname}`);
   });
 
-  app.get(`${ADDR_PREFIX}/universes/:shortname/permissions`, async (req, res, next) => {
+  get('/universes/:shortname/permissions', async (req, res) => {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
     const [code2, users] = await api.user.getMany();
     const code = code1 !== 200 ? code1 : code2;
     res.status(code);
-    if (code !== 200) return next();
+    if (code !== 200) return;
     res.prepareRender('editUniversePerms', { universe, users });
   });
-  app.post(`${ADDR_PREFIX}/universes/:shortname/permissions`, async (req, res) => {
+  post('/universes/:shortname/permissions', async (req, res) => {
     const { session, params, body } = req;
     const [_, user] = await api.user.getOne({ username: req.body.username });
     const [code, data] = await api.universe.putPermissions(session.user, params.shortname, user, body.permission_level, perms.ADMIN);
     res.status(code);
-    if (code !== 200) return next();
+    if (code !== 200) return;
     res.redirect(`${ADDR_PREFIX}/universes/${params.shortname}/permissions`);
   });
-
-  app.use((req, res) => {
-    try {
-      const [template, data] = res.templateData;
-      res.end(render(req, template, data));
-    } catch (err) {
-      let code = res.statusCode;
-      if (code === 200) code = 404; // This is ugly...
-      console.error(`Error ${code} rendered`);
-      res.end(render(req, 'error', { code }));
-    }
-  })
 }

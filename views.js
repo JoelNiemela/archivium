@@ -153,6 +153,7 @@ module.exports = function(app) {
       }
     }
     res.prepareRender('item', { item, universe, parsedBody });
+    next();
   });
   app.get(`${ADDR_PREFIX}/universes/:universeShortname/items/:itemShortname/edit`, async (req, res, next) => {
     const [code1, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
@@ -254,8 +255,10 @@ module.exports = function(app) {
       const [template, data] = res.templateData;
       res.end(render(req, template, data));
     } catch (err) {
-      console.error(err);
-      res.end(render(req, 'error', { code: res.statusCode }));
+      let code = res.statusCode;
+      if (code === 200) code = 404; // This is ugly...
+      console.error(`Error ${code} rendered`);
+      res.end(render(req, 'error', { code }));
     }
   })
 }

@@ -64,7 +64,6 @@ function addTab(type, name, force=false) {
   document.querySelector('#tabs .tabs-buttons').appendChild(button);
 
   const content = createElement('div', { classList: ['hidden'], dataset: { tab: name }, children: [
-    createElement('h3', { attrs: { innerText: name } }),
     createElement('button', { attrs: {
       type: 'button',
       innerText: 'Delete Tab',
@@ -75,6 +74,7 @@ function addTab(type, name, force=false) {
         removeTab(name);
       },
     } }),
+    createElement('h3', { attrs: { innerText: name } }),
     type === 'custom' && createElement('div', { children: [
       createElement('div', { classList: ['keyPairs'] }),
       createElement('button', { attrs: {

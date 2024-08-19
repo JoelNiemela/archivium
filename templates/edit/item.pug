@@ -9,13 +9,14 @@ block content
   h2 Edit #{item.title}
   form( method='POST' )
 
-    div
+    div.inputGroup
       label( for='title' ) Title: 
       input( id='title' type='text' name='title' value=item.title )
 
-    div#body.editor
+    div#body.editor( data-replicated-value=item.obj_data.body || '' )
       if 'body' in item.obj_data
-        textarea #{item.obj_data.body || ''}
+        textarea( oninput="this.parentNode.dataset.replicatedValue = this.value" )
+          | #{item.obj_data.body || ''}
         script.
           window.onload = () => {
             bindDataValue('#body textarea', (body) => updateObjData({ body }));
@@ -52,7 +53,7 @@ block content
       
     div
       input( id='obj_data' type='hidden' name='obj_data' value='{}' )
-      input( type='submit' value='Save Changes' )
+      button( type='submit' ) Save Changes
 
     if error
       div

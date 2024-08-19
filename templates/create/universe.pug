@@ -3,20 +3,20 @@ extends ../layout.pug
 block content
   h2 New Universe
   form( method='POST' )
-    div
+    div.inputGroup
       label( for='title' ) Title: 
       input( id='title' type='text' name='title' value=`${title || ''}` )
-    div
+    div.inputGroup
       label( for='shortname' ) Shortname: 
       input( id='shortname' type='text' name='shortname' value=`${shortname || ''}` )
-    div
+    div.inputGroup
       label( for='visibility' ) Visibility: 
       select( id='visibility' name='visibility' )
         option( value='public' selected=(visibility === 'public') ) Public
         option( value='private' selected=(visibility === 'private') ) Private
     div
       input( type='hidden' name='obj_data' value='{}' )
-      input( type='submit' value='Create Universe' )
+      button( type='submit' ) Create Universe
     if error
       div
         span( style={'font-size': 'small'} ).color-error= error

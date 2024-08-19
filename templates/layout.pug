@@ -24,6 +24,14 @@ html(lang='en')
     link(rel='stylesheet' href=`${ADDR_PREFIX}/static/assets/styles.css`)
   body
     nav.navbar
+      script.
+        window.onscroll = () => {
+          if (document.body.scrollTop > 8 || document.documentElement.scrollTop > 8) {
+            document.querySelector('.navbar').classList.add('nav-fullwidth');
+          } else {
+            document.querySelector('.navbar').classList.remove('nav-fullwidth');
+          }
+        }
       ul.navbarBtns
         li.navbarBtn
           a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/`) Home

@@ -3,20 +3,20 @@ extends ../layout.pug
 block content
   h2 New Item for #{universe.title}
   form( method='POST' )
-    div
+    div.inputGroup
       label( for='title' ) Title: 
       input( id='title' type='text' name='title' value=`${title || ''}` )
-    div
+    div.inputGroup
       label( for='shortname' ) Shortname: 
       input( id='shortname' type='text' name='shortname' value=`${shortname || ''}` )
-    div
+    div.inputGroup
       label( for='item_type' ) Type: 
       select( id='item_type' name='item_type' )
         each type in ['article', 'character', 'location', 'event', 'archive', 'document', 'timeline', 'item', 'organization']
             option( value=(type) selected=(item_type === type) )= capitalize(type)
     div
       input( type='hidden' name='obj_data' value='{}' )
-      input( type='submit' value='Create Item' )
+      button( type='submit' ) Create Item
     if error
       div
         span( style={'font-size': 'small'} ).color-error= error

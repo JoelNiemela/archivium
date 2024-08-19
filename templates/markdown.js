@@ -210,8 +210,7 @@ function parseMarkdown(text) {
         }
         const [curListNode] = curTocList;
         curListNode.addChild(new MarkdownNode('li'));
-        const tocLink = new MarkdownNode('a', '', { href: `#${id}` });
-        tocLink.addChildren(parseInline(new Line(line.substring(j+1))));
+        const tocLink = new MarkdownNode('a', heading.innerText(), { href: `#${id}` });
         curListNode.lastChild().addChild(tocLink);
       }
     } else if (trimmedLine[0] === '@') {

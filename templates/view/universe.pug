@@ -3,12 +3,9 @@ include ../mixins.pug
 
 mixin typeCard(type, color)
   .card
-    a.cardLink.link(href=`${ADDR_PREFIX}/universes/${universe.shortname}/items?type=${type}`)
+    a.cardLink.link( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items?type=${type}` )
       div(style={ 'background-color': color })
-        br
         h2(align='center')= capitalize(T(`${type}-pl`))
-        br
-    br
     div
       if contextUser
         a.cardBtn.link( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/create?type=${type}` ) &#x2795; New
@@ -31,9 +28,7 @@ block content
       li
         a.link.link-animated( href=`${ADDR_PREFIX}/users/${username}` )= username
       
-  .container(style={
-    margin: '0 -8vw',
-  })
+  .container
     .cardContainer
       +typeCard('article', '#deddca')
       +typeCard('character', '#F44336')

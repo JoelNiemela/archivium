@@ -16,6 +16,7 @@ module.exports = function(app) {
   })
 
   const doRender = (req, res) => {
+    if (res.statusCode === 302) return; // We did a redirect, no need to render.
     try {
       const [template, data] = res.templateData;
       res.end(render(req, template, data));
@@ -194,20 +195,16 @@ module.exports = function(app) {
     }
     let code; let data;
     req.body.obj_data = JSON.stringify(req.body.obj_data);
-    function nextWithCode(code) {
-      res.status(code);
-      next();
-    }
     [code, data] = await api.item.put(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
     if (code !== 200) return res.prepareRender('editItem', { error: data, ...req.body });
     if (lineage) {
       let item;
       [code, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
-      if (code !== 200) return nextWithCode(code);
+      if (code !== 200) return res.status(code);
       const [newParents, newChildren] = [{}, {}];
       for (const shortname in lineage.parents ?? {}) {
         const [, parent] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, shortname, perms.WRITE);
-        if (!parent) return nextWithCode(400);
+        if (!parent) return res.status(400);
         newParents[shortname] = true;
         if (!(shortname in item.parents)) {
           [code,] = await api.item.putLineage(parent.id, item.id, ...lineage.parents[shortname].reverse());
@@ -215,7 +212,7 @@ module.exports = function(app) {
       }
       for (const shortname in lineage.children ?? {}) {
         const [, child] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, shortname, perms.WRITE);
-        if (!child) return nextWithCode(400);
+        if (!child) return res.status(400);
         newChildren[shortname] = true;
         if (!(shortname in item.children)) {
           [code, ] = await api.item.putLineage(item.id, child.id, ...lineage.children[shortname]);

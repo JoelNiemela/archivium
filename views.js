@@ -9,79 +9,82 @@ const { parseMarkdown } = require('./templates/markdown');
 module.exports = function(app) {
   app.use((req, res, next) => {
     res.set('Content-Type', 'text/html; charset=utf-8');
+    res.prepareRender = (template, data={}) => {
+      res.templateData = [template, data];
+    };
     next();
   })
 
-  app.get(`${ADDR_PREFIX}/`, (req, res) => {
-    const html = render(req, 'home', {});
-    res.end(html);
+  app.get(`${ADDR_PREFIX}/`, (_, res, next) => {
+    res.prepareRender('home');
+    next();
   });
 
   /* User Pages */
-  app.get(`${ADDR_PREFIX}/users`, Auth.verifySessionOrRedirect, async (req, res) => {
+  app.get(`${ADDR_PREFIX}/users`, Auth.verifySessionOrRedirect, async (_, res, next) => {
     const [code, users] = await api.user.getMany();
-    if (code !== 200) res.sendStatus(errCode);
-    else return res.end(render(req, 'userList', { users }));
+    res.status(code);
+    if (!users) return next();
+    res.prepareRender('userList', { users });
+    next();
   });
 
-  app.get(`${ADDR_PREFIX}/users/:username`, async (req, res) => {
+  app.get(`${ADDR_PREFIX}/users/:username`, async (req, res, next) => {
     const [code1, user] = await api.user.getOne({ username: req.params.username });
-    if (!user) {
-      res.status(code1);
-      return res.end(render(req, 'error', { code: code1 }));
-    }
+    res.status(code1);
+    if (!user) return next();
     const [code2, universes] = await api.universe.getManyByAuthorId(req.session.user, user.id);
     console.log(user)
-    if (!universes) {
-      res.status(code2);
-      return res.end(render(req, 'error', { code: code2 }));
-    }
-    else return res.end(render(req, 'user', { 
+    res.status(code2);
+    if (!universes) return next();
+    res.prepareRender('user', { 
       user,
       gravatarLink: `http://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
       universes,
-    }));
+    });
+    next();
   });
 
   /* Universe Pages */
-  app.get(`${ADDR_PREFIX}/universes`, async (req, res) => {
+  app.get(`${ADDR_PREFIX}/universes`, async (req, res, next) => {
     const [code, universes] = await api.universe.getMany(req.session.user);
-    if (code !== 200) res.sendStatus(code);
-    else res.end(render(req, 'universeList', { universes }));
+    res.status(code);
+    if (!universes) return next();
+    res.prepareRender('universeList', { universes });
+    next();
   });
  
-  app.get(`${ADDR_PREFIX}/universes/create`, async (req, res) => res.end(render(req, 'createUniverse')));
-  app.post(`${ADDR_PREFIX}/universes/create`, async (req, res) => {
+  app.get(`${ADDR_PREFIX}/universes/create`, async (_, res, next) => {
+    res.prepareRender('createUniverse');
+    next();
+  });
+  app.post(`${ADDR_PREFIX}/universes/create`, async (req, res, next) => {
     const [code, data] = await api.universe.post(req.session.user, {
       ...req.body,
       public: req.body.visibility === 'public',
     });
     res.status(code);
-    if (code === 201) {
-      res.redirect(`${ADDR_PREFIX}/universes/${req.body.shortname}`);
-    } else {
-      res.end(render(req, 'createUniverse', { error: data, ...req.body }));
-    }
+    if (code === 201) return res.redirect(`${ADDR_PREFIX}/universes/${req.body.shortname}`);
+    res.prepareRender('createUniverse', { error: data, ...req.body });
+    next();
   });
   
-  app.get(`${ADDR_PREFIX}/universes/:shortname`, async (req, res) => {
+  app.get(`${ADDR_PREFIX}/universes/:shortname`, async (req, res, next) => {
     const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
-    if (code !== 200) {
-      res.status(code);
-      return res.end(render(req, 'error', { code }));
-    }
-    res.end(render(req, 'universe', { universe }));
+    res.status(code);
+    if (!universe) return next();
+    res.prepareRender('universe', { universe });
+    next();
   });
 
-  app.get(`${ADDR_PREFIX}/universes/:shortname/edit`, async (req, res) => {
+  app.get(`${ADDR_PREFIX}/universes/:shortname/edit`, async (req, res, next) => {
     const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname }, perms.WRITE);
-    if (code !== 200) {
-      res.status(code);
-      return res.end(render(req, 'error', { code }));
-    }
-    res.end(render(req, 'editUniverse', { universe }));
+    res.status(code);
+    if (!universe) return next();
+    res.prepareRender('editUniverse', { universe });
+    next();
   });
-  app.post(`${ADDR_PREFIX}/universes/:shortname/edit`, async (req, res) => {
+  app.post(`${ADDR_PREFIX}/universes/:shortname/edit`, async (req, res, next) => {
     req.body = {
       ...req.body,
       public: req.body.visibility === 'public',
@@ -89,68 +92,56 @@ module.exports = function(app) {
     console.log(req.body)
     const [code, data] = await api.universe.put(req.session.user, req.params.shortname, req.body);
     res.status(code);
-    if (code === 200) {
-      res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}`);
-    } else {
-      console.log(code, data)
-      res.end(render(req, 'editUniverse', { error: data, ...req.body }));
-    }
+    if (code === 200) return res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}`);
+    console.log(code, data)
+    res.prepareRender('editUniverse', { error: data, ...req.body });
+    next();
   });
 
-  app.get(`${ADDR_PREFIX}/universes/:shortname/items`, async (req, res) => {
+  app.get(`${ADDR_PREFIX}/universes/:shortname/items`, async (req, res, next) => {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
     const [code2, items] = await api.item.getByUniverseShortname(req.session.user, req.params.shortname, req.query.type);
     const code = code1 !== 200 ? code1 : code2;
-    if (code !== 200) {
-      res.status(code);
-      return res.end(render(req, 'error', { code }));
-    }
-    res.end(render(req, 'universeItemList', { items, universe, type: req.query.type }));
+    res.status(code);
+    if (code !== 200) return next();
+    res.prepareRender('universeItemList', { items, universe, type: req.query.type });
+    next();
   });
  
-  app.get(`${ADDR_PREFIX}/universes/:shortname/items/create`, async (req, res) => {
+  app.get(`${ADDR_PREFIX}/universes/:shortname/items/create`, async (req, res, next) => {
     const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
-    if (code !== 200) {
-      res.status(code);
-      return res.end(render(req, 'error', { code }));
-    }
-    res.end(render(req, 'createItem', { universe, item_type: req.query.type, shortname: req.query.shortname }));
+    res.status(code);
+    if (code !== 200) return next();
+    res.prepareRender('createItem', { universe, item_type: req.query.type, shortname: req.query.shortname });
   });
-  app.post(`${ADDR_PREFIX}/universes/:shortname/items/create`, async (req, res) => {
-    const [code, data] = await api.item.post(req.session.user, {
+  app.post(`${ADDR_PREFIX}/universes/:shortname/items/create`, async (req, res, next) => {
+    const [userCode, data] = await api.item.post(req.session.user, {
       ...req.body,
     }, req.params.shortname);
+    res.status(userCode);
+    if (userCode === 201) return res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}/items/${req.body.shortname}`);
+    const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
     res.status(code);
-    if (code === 201) {
-      res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}/items/${req.body.shortname}`);
-    } else {
-      const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
-      if (code !== 200) {
-        res.status(code);
-        return res.end(render(req, 'error', { code }));
-      }
-      res.end(render(req, 'createItem', { error: data, ...req.body, universe }));
-    }
+    if (code !== 200) return next();
+    res.prepareRender('createItem', { error: data, ...req.body, universe });
   });
 
-  app.get(`${ADDR_PREFIX}/universes/:universeShortname/items/:itemShortname`, async (req, res) => {
+  app.get(`${ADDR_PREFIX}/universes/:universeShortname/items/:itemShortname`, async (req, res, next) => {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.universeShortname });
     const [code2, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname);
-    if (code1 !== 200) {
-      res.status(code1);
-      return res.end(render(req, 'error', { code: code1 }));
-    }
+    res.status(code1);
+    if (code1 !== 200) return next();
     if (!item) {
       if (universe.author_permissions[req.session.user?.id] >= perms.READ) {
-        return res.end(render(req, 'error', {
+        res.prepareRender('error', {
           code: 404,
           hint: 'Looks like this item doesn\'t exist yet. Follow the link below to create it:',
           hintLink: `${ADDR_PREFIX}/universes/${req.params.universeShortname}/items/create?shortname=${req.params.itemShortname}`,
-        }));
+        });
       } else {
         res.status(code2);
-        return res.end(render(req, 'error', { code: code2 }));
       }
+      return next();
     }
     item.obj_data = JSON.parse(item.obj_data);
     const parsedBody = 'body' in item.obj_data && (await parseMarkdown(item.obj_data.body || '').evaluate(req.params.universeShortname))
@@ -161,31 +152,30 @@ module.exports = function(app) {
         }
       }
     }
-    res.end(render(req, 'item', { item, universe, parsedBody }));
+    res.prepareRender('item', { item, universe, parsedBody });
   });
-  app.get(`${ADDR_PREFIX}/universes/:universeShortname/items/:itemShortname/edit`, async (req, res) => {
+  app.get(`${ADDR_PREFIX}/universes/:universeShortname/items/:itemShortname/edit`, async (req, res, next) => {
     const [code1, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
     const [code2, itemList] = await api.item.getByUniverseId(req.session.user, item.universe_id);
     const code = code1 !== 200 ? code1 : code2;
-    if (code !== 200) {
-      res.status(code);
-      return res.end(render(req, 'error', { code }));
-    }
+    res.status(code);
+    if (code !== 200) return next();
     item.obj_data = JSON.parse(item.obj_data);
     if (Object.keys(item.parents).length > 0 || Object.keys(item.children).length > 0) {
       item.obj_data.lineage = { ...item.obj_data.lineage };
       item.obj_data.lineage.parents = item.parents;
       item.obj_data.lineage.children = item.children;
-      
     }
     const itemMap = {};
     itemList.forEach(item => itemMap[item.shortname] = item.title);
-    res.end(render(req, 'editItem', { item, itemMap }));
+    res.prepareRender('editItem', { item, itemMap });
+    next();
   });
-  app.post(`${ADDR_PREFIX}/universes/:universeShortname/items/:itemShortname/edit`, async (req, res) => {
+  app.post(`${ADDR_PREFIX}/universes/:universeShortname/items/:itemShortname/edit`, async (req, res, next) => {
     console.log(req.body)
     if (!('obj_data' in req.body)) {
-      return [400];
+      res.status(400);
+      return next(); // We should probably render an error on the edit page instead here.
     }
     req.body.obj_data = JSON.parse(decodeURIComponent(req.body.obj_data));
     let lineage;
@@ -195,66 +185,77 @@ module.exports = function(app) {
     }
     let code; let data;
     req.body.obj_data = JSON.stringify(req.body.obj_data);
+    function nextWithCode(code) {
+      res.status(code);
+      next();
+    }
     [code, data] = await api.item.put(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
-    if (code === 200) {
-      if (lineage) {
-        let item;
-        [code, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
-        // TODO more chances to return error here
-        const [newParents, newChildren] = [{}, {}];
-        for (const shortname in lineage.parents ?? {}) {
+    if (code !== 200) {
+      res.prepareRender('editItem', { error: data, ...req.body });
+      return next();
+    }
+    if (lineage) {
+      let item;
+      [code, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
+      if (code !== 200) return nextWithCode(code);
+      const [newParents, newChildren] = [{}, {}];
+      for (const shortname in lineage.parents ?? {}) {
+        const [, parent] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, shortname, perms.WRITE);
+        if (!parent) return nextWithCode(400);
+        newParents[shortname] = true;
+        if (!(shortname in item.parents)) {
+          [code,] = await api.item.putLineage(parent.id, item.id, ...lineage.parents[shortname].reverse());
+        }
+      }
+      for (const shortname in lineage.children ?? {}) {
+        const [, child] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, shortname, perms.WRITE);
+        if (!child) return nextWithCode(400);
+        newChildren[shortname] = true;
+        if (!(shortname in item.children)) {
+          [code, ] = await api.item.putLineage(item.id, child.id, ...lineage.children[shortname]);
+        }
+      }
+      for (const shortname in item.parents) {
+        if (!newParents[shortname]) {
           const [, parent] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, shortname, perms.WRITE);
-          if (!parent) throw 'bad item ' + shortname;
-          newParents[shortname] = true;
-          if (!(shortname in item.parents)) {
-            [code,] = await api.item.putLineage(parent.id, item.id, ...lineage.parents[shortname].reverse());
-          }
+          api.item.delLineage(parent.id, item.id);
         }
-        for (const shortname in lineage.children ?? {}) {
+      }
+      for (const shortname in item.children) {
+        if (!newChildren[shortname]) {
           const [, child] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, shortname, perms.WRITE);
-          if (!child) throw 'bad item ' + shortname;
-          newChildren[shortname] = true;
-          if (!(shortname in item.children)) {
-            [code, ] = await api.item.putLineage(item.id, child.id, ...lineage.children[shortname]);
-          }
-        }
-        for (const shortname in item.parents) {
-          if (!newParents[shortname]) {
-            const [, parent] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, shortname, perms.WRITE);
-            api.item.delLineage(parent.id, item.id);
-          }
-        }
-        for (const shortname in item.children) {
-          if (!newChildren[shortname]) {
-            const [, child] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, shortname, perms.WRITE);
-            api.item.delLineage(item.id, child.id);
-          }
+          api.item.delLineage(item.id, child.id);
         }
       }
     }
     res.status(code);
-    if (code === 200) {
-      res.redirect(`${ADDR_PREFIX}/universes/${req.params.universeShortname}/items/${req.params.itemShortname}`);
-    } else {
-      console.log(code, data)
-      res.end(render(req, 'editItem', { error: data, ...req.body }));
-    }
+    res.redirect(`${ADDR_PREFIX}/universes/${req.params.universeShortname}/items/${req.params.itemShortname}`);
   });
 
-  app.get(`${ADDR_PREFIX}/universes/:shortname/permissions`, async (req, res) => {
+  app.get(`${ADDR_PREFIX}/universes/:shortname/permissions`, async (req, res, next) => {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
     const [code2, users] = await api.user.getMany();
     const code = code1 !== 200 ? code1 : code2;
-    if (code !== 200) {
-      res.status(code);
-      return res.end(render(req, 'error', { code }));
-    }
-    res.end(render(req, 'editUniversePerms', { universe, users }));
+    res.status(code);
+    if (code !== 200) return next();
+    res.prepareRender('editUniversePerms', { universe, users });
   });
   app.post(`${ADDR_PREFIX}/universes/:shortname/permissions`, async (req, res) => {
+    const { session, params, body } = req;
     const [_, user] = await api.user.getOne({ username: req.body.username });
-    // TODO do this properly. ADMIN PERMS SHOULD BE REQUIRED!!
-    const [code, data] = await api.universe.putPermissions(req.session.user, req.params.shortname, user, req.body.permission_level);
-    res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}/permissions`);
+    const [code, data] = await api.universe.putPermissions(session.user, params.shortname, user, body.permission_level, perms.ADMIN);
+    res.status(code);
+    if (code !== 200) return next();
+    res.redirect(`${ADDR_PREFIX}/universes/${params.shortname}/permissions`);
   });
+
+  app.use((req, res) => {
+    try {
+      const [template, data] = res.templateData;
+      res.end(render(req, template, data));
+    } catch (err) {
+      console.error(err);
+      res.end(render(req, 'error', { code: res.statusCode }));
+    }
+  })
 }

@@ -80,12 +80,14 @@ body {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  margin: 0 -8vw;
+  /* TODO we probably want to change these y-margins */
+  margin: 1rem -8vw 4rem;
 }
 
 @media only screen and (max-device-width: 480px) {
   .cardContainer {
-    margin: 0;
+    margin-right: 0;
+    margin-left: 0;
   }  
 }
 
@@ -97,6 +99,8 @@ body {
   transition: box-shadow 0.3s;
   display: flex;
   flex-direction: column;
+  border-radius: 0.25rem;
+  overflow: hidden;
 }
 
 .card:hover {
@@ -137,7 +141,7 @@ body {
   font-size: 0.75rem;
   border: 0.0625rem solid #c4c4c4;
   border-radius: 0.25rem;
-  box-shadow: 0px 0px 0.5rem #d9d9d9;
+  box-shadow: 0 0 0.5rem #d9d9d9;
 }
 
 .error {
@@ -203,7 +207,7 @@ button {
 }
 
 button:hover {
-  box-shadow: silver 0px 0px 0.25rem;
+  box-shadow: silver 0 0 0.25rem;
 }
 
 button:active {
@@ -262,7 +266,7 @@ button:active {
 
 /* .editor::after:focus, */
 .editor textarea:focus {
-  box-shadow: black 0px 0.125rem 0.3125rem 0px;
+  box-shadow: black 0 0.125rem 0.3125rem 0;
 }
 
 .markdown {

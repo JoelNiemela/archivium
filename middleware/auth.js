@@ -5,7 +5,7 @@ const { ADDR_PREFIX } = require('../config');
 module.exports.createSession = (req, res, next) => {
   // console.log('res cookie', res.cookie);
   if (req.cookies['archiviumuid']) {
-    api.get.session({hash: req.cookies['archiviumuid']})
+    api.session.getOne({hash: req.cookies['archiviumuid']})
       .then((session) => {
         if (session) {
           // console.log('session:', session.user);
@@ -24,9 +24,9 @@ module.exports.createSession = (req, res, next) => {
           // console.log('AUTH req session', req.session);
           next();
         } else {
-          api.post.session()
+          api.session.post()
             .then((data) => {
-              return api.get.session({ id: data.insertId });
+              return api.session.getOne({ id: data.insertId });
             })
             .then((session) => {
               // console.log('session:', session)
@@ -48,9 +48,9 @@ module.exports.createSession = (req, res, next) => {
         next();
       });
   } else {
-    api.post.session()
+    api.session.post()
     .then((data) => {
-      return api.get.session({ id: data.insertId });
+      return api.session.getOne({ id: data.insertId });
     })
     .then((session) => {
       // console.log('session:', session)
@@ -73,8 +73,24 @@ module.exports.createSession = (req, res, next) => {
 // Add additional authentication middleware functions below
 /************************************************************/
 
-module.exports.verifySession = (req, res, next) => {
-  if (req.session.user) {
+async function refreshSession(user) {
+  await api.user.put(user.id, user.id, { updated_at: new Date() });
+}
+
+module.exports.verifySession = async (req, res, next) => {
+  const user = req.session.user;
+  if (user) {
+    await refreshSession(user);
+    next();
+  } else {
+    res.sendStatus(401);
+  }
+}
+
+module.exports.verifySessionOrRedirect = async (req, res, next) => {
+  const user = req.session.user;
+  if (user) {
+    await refreshSession(user);
     next();
   } else {
     res.redirect(`${ADDR_PREFIX}/login`);

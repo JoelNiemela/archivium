@@ -13,6 +13,6 @@ block content
       each user in users
         tr
           td
-            a( href=`${ADDR_PREFIX}/users/${user.id}` ) #{user.username}
-          td #{formatDate(user.createdAt)}
-          td #{formatDate(user.updatedAt)}
+            a.link.link-animated( href=`${ADDR_PREFIX}/users/${user.username}` ) #{user.username}
+          td #{formatDate(user.created_at)}
+          td #{formatDate(user.updated_at)}

@@ -2,19 +2,46 @@ extends ../layout.pug
 
 block content
   h1.center #{item.title}
-  p.center #{capitalize(item.itemType)} of #{item.universe}
+  p.center #{capitalize(item.item_type)} of 
+    a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{item.universe}
+    if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE/* || item.author === contextUser.username*/)
+      |  - 
+      a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}/edit` ) Edit
   p.center
     small Created by 
-      a( href=`${ADDR_PREFIX}/users/${item.authorId}` ) #{item.author}
-      |  #{formatDate(new Date(item.createdAt))}
-      |  - Last updated #{formatDate(new Date(item.updatedAt))}
+      a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
+      |  #{formatDate(new Date(item.created_at))}
+      |  - Last updated #{formatDate(new Date(item.updated_at))}
   hr
-  .group
-    each tabTuple in item.objData
-      h3 #{tabTuple[0]}
-      .itemTab
-        each keyTuple in tabTuple[1]
-          .itemKey
-            span #{keyTuple[0]}
-            hr
-            span #{keyTuple[1]}
+
+  if 'tabs' in item.obj_data
+    .page
+      each tab, name in item.obj_data.tabs
+        h3 #{name}
+        .itemTab
+          each val, key in tab
+            .itemKey
+              span #{key}
+              hr
+              +mdText(val)
+
+  if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
+    .tabs
+        h3 Lineage 
+        .itemTab
+          each title, shortname in item.parents
+            .itemKey
+              span #{title[0] || T('Parent')}
+              hr
+              a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${shortname}` )
+                | #{item.parent_titles[shortname]}
+          each title, shortname in item.children
+            .itemKey
+              span #{title[0] || T('Child')}
+              hr
+              a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${shortname}` )
+                | #{item.child_titles[shortname]}
+
+  if parsedBody
+    .sheet
+      +mdText(parsedBody)

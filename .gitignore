@@ -4,9 +4,6 @@ package-lock.json
 database/config.js
 config.js
 
-database/export/
+db/export/
 
 elm/elm-stuff/
-
-static/scripts/
-!static/scripts/README.md

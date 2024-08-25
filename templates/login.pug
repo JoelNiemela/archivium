@@ -3,13 +3,16 @@ extends layout.pug
 block content
   h2 Login
   form( action=`${ADDR_PREFIX}/login`, method='post' )
-    div
+    div.inputGroup
       label( for='username' ) Username: 
       input( id='username' type='text' name='username' )
-    div
+    div.inputGroup
       label( for='password' ) Password: 
       input( id='password' type='password' name='password' )
     div
-      input( type='submit' value='Login' )
+      button( type='submit' ) Login
+    if error
+      div
+        span( style={'font-size': 'small'} ).color-error= error
   p
-    a( href=`${ADDR_PREFIX}/signup` ) Create an Account
+    a.link.link-animated( href=`${ADDR_PREFIX}/signup` ) Create an Account

@@ -7,8 +7,8 @@ block content
     img.userIcon( alt=user.username, src=gravatarLink )
   p.center
     small Joined
-      |  #{formatDate(new Date(user.createdAt))}
-      |  - Last seen #{formatDate(new Date(user.updatedAt))}
+      |  #{formatDate(new Date(user.created_at))}
+      |  - Last seen #{formatDate(new Date(user.updated_at))}
   hr
   h3 #{user.username}'s items
   table
@@ -31,8 +31,8 @@ block content
       each universe in universes
         tr
           td
-            a( href=`${ADDR_PREFIX}/universes/${universe.id}` ) #{universe.title}
+            a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
           td
             +authorList(universe.authors)
-          td #{formatDate(universe.createdAt)}
-          td #{formatDate(universe.updatedAt)}
+          td #{formatDate(universe.created_at)}
+          td #{formatDate(universe.updated_at)}

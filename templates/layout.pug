@@ -2,20 +2,19 @@
 include helpers.pug
 
 mixin mdTag(parent, tag)
-  if tag[0] === parent[0]
+  if tag[0] === 'text'
     | #{tag[1]}
-    each subtag in tag[4]
+    each subtag in tag[2]
       +mdTag(tag, subtag)
   else
-    #{tag[0]}( class=tag[2] href=tag[3] ) #{tag[1]}
-      each subtag in tag[4]
+    #{tag[0]}&attributes(tag[3]) #{tag[1]}
+      each subtag in tag[2]
         +mdTag(tag, subtag)
 
-mixin mdText(text)
-  each tag in parseMdText(text)
-    #{tag[0]}( class=tag[2] href=tag[3] ) #{tag[1]}
-      each subtag in tag[4]
-        +mdTag(tag, subtag)
+mixin mdText(tag)
+  #{tag[0]}&attributes(tag[3]) #{tag[1]}
+    each subtag in tag[2]
+      +mdTag(tag, subtag)
 
 
 doctype html
@@ -25,6 +24,14 @@ html(lang='en')
     link(rel='stylesheet' href=`${ADDR_PREFIX}/static/assets/styles.css`)
   body
     nav.navbar
+      script.
+        window.onscroll = () => {
+          if (document.body.scrollTop > 8 || document.documentElement.scrollTop > 8) {
+            document.querySelector('.navbar').classList.add('nav-fullwidth');
+          } else {
+            document.querySelector('.navbar').classList.remove('nav-fullwidth');
+          }
+        }
       ul.navbarBtns
         li.navbarBtn
           a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/`) Home

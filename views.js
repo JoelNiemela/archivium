@@ -188,8 +188,6 @@ module.exports = function(app) {
     res.prepareRender('editItem', { item, itemMap });
   });
   post('/universes/:universeShortname/items/:itemShortname/edit', async (req, res) => {
-    console.log(req.body)
-
     // Handle tags
     req.body.tags = req.body.tags?.split(' ') ?? [];
 

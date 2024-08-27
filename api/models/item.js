@@ -24,7 +24,7 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
   }
 
   if (options.tag) {
-    conditions.strings.push('tag.tag = ?');
+    conditions.strings.push('? IN (SELECT tag FROM tag WHERE item_id = item.id)');
     conditions.values.push(options.tag);
   }
 

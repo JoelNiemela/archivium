@@ -18,7 +18,7 @@ block content
 
     function filterByTag(tag) {
       const url = new URL(window.location);
-      if (url.searchParams.has('tag')) {
+      if (url.searchParams.has('tag') && url.searchParams.get('tag') === tag) {
         url.searchParams.delete('tag');
       } else {
         url.searchParams.set('tag', tag);

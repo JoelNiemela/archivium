@@ -112,10 +112,12 @@ module.exports = function(app) {
 
   get('/universes/:shortname/items', async (req, res) => {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
-    const [code2, items] = await api.item.getByUniverseShortname(req.session.user, req.params.shortname, req.query.type, perms.READ, true, {
+    const [code2, items] = await api.item.getByUniverseShortname(req.session.user, req.params.shortname, perms.READ, true, {
       sort: req.query.sort,
       sortDesc: req.query.sort_order === 'desc',
       limit: req.query.limit,
+      type: req.query.type,
+      tag: req.query.tag,
     });
     const code = code1 !== 200 ? code1 : code2;
     res.status(code);

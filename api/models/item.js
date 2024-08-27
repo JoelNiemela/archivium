@@ -18,6 +18,16 @@ async function getOne(user, id, permissionsRequired=perms.READ, basicOnly=false)
 }
 
 async function getMany(user, conditions, permissionsRequired=perms.READ, basicOnly=false, options={}) {
+  if (options.type) {
+    conditions.strings.push('item.item_type = ?');
+    conditions.values.push(options.type);
+  }
+
+  if (options.tag) {
+    conditions.strings.push('tag.tag = ?');
+    conditions.values.push(options.tag);
+  }
+
   try {
     const usrQueryString = user ? ` OR (au_filter.user_id = ${user.id} AND au_filter.permission_level >= ${permissionsRequired})` : '';
     const conditionString = conditions ? `WHERE ${conditions.strings.join(' AND ')}` : '';
@@ -107,7 +117,7 @@ async function getByUniverseAndItemIds(user, universeId, itemId, permissionsRequ
   return [200, item];
 }
 
-async function getByUniverseShortname(user, shortname, type, permissionsRequired=perms.READ, basicOnly=false, options) {
+async function getByUniverseShortname(user, shortname, permissionsRequired=perms.READ, basicOnly=false, options) {
 
   const conditions = { 
     strings: [
@@ -116,11 +126,6 @@ async function getByUniverseShortname(user, shortname, type, permissionsRequired
       shortname,
     ]
   };
-
-  if (type) {
-    conditions.strings.push('item.item_type = ?');
-    conditions.values.push(type);
-  }
 
   const [errCode, items] = await getMany(user, conditions, permissionsRequired, basicOnly, options);
   if (!items) return [errCode];

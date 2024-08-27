@@ -12,6 +12,10 @@ block content
       a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
       |  #{formatDate(new Date(item.created_at))}
       |  - Last updated #{formatDate(new Date(item.updated_at))}
+  p.center
+    small
+      each tag in item.tags
+        | ##{tag} 
   hr
 
   if 'tabs' in item.obj_data

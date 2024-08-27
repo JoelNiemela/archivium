@@ -70,7 +70,10 @@ module.exports = function(app) {
           new APIRoute('/:itemShortName', {
             GET: async (req) => api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortName, req.params.itemShortName),
           }, [
-            
+            new APIRoute('/tags', {
+              PUT: (req) => api.item.putTags(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body.tags),
+              DELETE: (req) => api.item.delTags(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body.tags),
+            }),
           ])
         ])
       ])

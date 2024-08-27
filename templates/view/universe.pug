@@ -21,6 +21,9 @@ block content
       if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
         |  - 
         a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/edit` ) Edit
+      if contextUser && (universe.author_permissions[contextUser.id] >= perms.ADMIN)
+        |  - 
+        a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/permissions` ) Set Permissions
   hr
   h4 Authors
   ul

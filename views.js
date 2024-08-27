@@ -112,11 +112,17 @@ module.exports = function(app) {
 
   get('/universes/:shortname/items', async (req, res) => {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
-    const [code2, items] = await api.item.getByUniverseShortname(req.session.user, req.params.shortname, req.query.type);
+    const [code2, items] = await api.item.getByUniverseShortname(req.session.user, req.params.shortname, perms.READ, true, {
+      sort: req.query.sort,
+      sortDesc: req.query.sort_order === 'desc',
+      limit: req.query.limit,
+      type: req.query.type,
+      tag: req.query.tag,
+    });
     const code = code1 !== 200 ? code1 : code2;
     res.status(code);
     if (code !== 200) return;
-    res.prepareRender('universeItemList', { items, universe, type: req.query.type });
+    res.prepareRender('universeItemList', { items, universe, type: req.query.type, tag: req.query.tag });
   });
  
   get('/universes/:shortname/items/create', async (req, res) => {
@@ -182,7 +188,10 @@ module.exports = function(app) {
     res.prepareRender('editItem', { item, itemMap });
   });
   post('/universes/:universeShortname/items/:itemShortname/edit', async (req, res) => {
-    console.log(req.body)
+    // Handle tags
+    req.body.tags = req.body.tags?.split(' ') ?? [];
+
+    // Handle obj_data
     if (!('obj_data' in req.body)) {
       res.status(400);
       return; // We should probably render an error on the edit page instead here.
@@ -195,8 +204,12 @@ module.exports = function(app) {
     }
     let code; let data;
     req.body.obj_data = JSON.stringify(req.body.obj_data);
+
+    // Actually save item
     [code, data] = await api.item.put(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
     if (code !== 200) return res.prepareRender('editItem', { error: data, ...req.body });
+
+    // Handle lineage data
     if (lineage) {
       let item;
       [code, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);

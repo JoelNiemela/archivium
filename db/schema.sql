@@ -71,3 +71,10 @@ CREATE TABLE authoruniverse (
   FOREIGN KEY (user_id) REFERENCES user (id),
   PRIMARY KEY (id)
 );
+
+CREATE TABLE tag (
+  item_id INT NOT NULL,
+  tag VARCHAR(32),
+  UNIQUE(item_id, tag),
+  FOREIGN KEY (item_id) REFERENCES item (id)
+);

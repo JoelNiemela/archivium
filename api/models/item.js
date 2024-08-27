@@ -242,6 +242,22 @@ async function putTags(user, universeShortname, itemShortname, tags) {
   }
 }
 
+async function delTags(user, universeShortname, itemShortname, tags) {
+  if (!tags || tags.length === 0) return [400];
+  const [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE, true);
+  if (!item) return [code];
+  try {
+    const whereString = tags.map(tag => `tag = "${tag}"`).join(' OR ');
+    if (!whereString) return [200];
+    const queryString = `DELETE FROM tag WHERE item_id = ${item.id} AND (${whereString});`;
+    const data = await executeQuery(queryString);
+    return [200, data];
+  } catch (e) {
+    console.error(e);
+    return [500];
+  }
+}
+
 module.exports = {
   getOne,
   getMany,
@@ -255,4 +271,5 @@ module.exports = {
   putLineage,
   delLineage,
   putTags,
+  delTags,
 };

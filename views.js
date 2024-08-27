@@ -122,7 +122,7 @@ module.exports = function(app) {
     const code = code1 !== 200 ? code1 : code2;
     res.status(code);
     if (code !== 200) return;
-    res.prepareRender('universeItemList', { items, universe, type: req.query.type });
+    res.prepareRender('universeItemList', { items, universe, type: req.query.type, tag: req.query.tag });
   });
  
   get('/universes/:shortname/items/create', async (req, res) => {

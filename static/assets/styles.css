@@ -183,6 +183,14 @@ body {
   border-radius: 0.25rem;
 }
 
+table td {
+  padding: 0.0625rem 0.375rem;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
 form {
   display: flex;
   flex-direction: column;
@@ -337,6 +345,12 @@ button:active {
 }
 .link-broken:not(.link-animated) {
   color: #c90b0b;
+}
+.link.link-selected {
+  color: #636363 !important;
+}
+.link-animated.link-selected:after {
+  background: #636363 !important;
 }
 
 /* Basic styling for the select dropdown */

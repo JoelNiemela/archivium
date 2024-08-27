@@ -205,7 +205,10 @@ function parseMarkdown(text) {
           curTocList = [newListNode, headingLvl];
         } else if (headingLvl < lastHeadingLvl) {
           let newListNode = lastListNode;
-          for (i = 0; i < lastHeadingLvl - headingLvl; i++) newListNode = newListNode.parent.parent;
+          for (i = 0; i < lastHeadingLvl - headingLvl; i++) {
+            if (newListNode.parent.parent.type === 'ol') newListNode = newListNode.parent.parent;
+            else break;
+          }
           curTocList = [newListNode, headingLvl];
         }
         const [curListNode] = curTocList;

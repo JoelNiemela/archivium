@@ -1,6 +1,9 @@
 extends ../layout.pug
 
 block content
+  script
+    include /static/scripts/table.js
+
   h1.center 
     if type
       | #{capitalize(T(`${type}-pl`))} 
@@ -15,25 +18,25 @@ block content
   hr
   table
     thead
-      th Name
-      th Type
-      th Author
-      th Created
-      th Updated
+      th.sortable Name
+      th.sortable Type
+      th.sortable Author
+      th.sortable Created
+      th.sortable Updated
       th Tags
     tbody
       each item in items
         tr
-          td
+          td( data-sort=item.title )
             a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}` ) #{item.title}
-          td
+          td( data-sort=item.item_type )
             if type
               | #{capitalize(item.item_type)}
             else
               a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items?type=${item.item_type}` title='Filter by type' )
                 | #{capitalize(item.item_type)}
-          td
+          td( data-sort=item.author )
             a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
-          td #{formatDate(item.created_at)}
-          td #{formatDate(item.updated_at)}
+          td( data-sort=item.created_at ) #{formatDate(item.created_at)}
+          td( data-sort=item.updated_at ) #{formatDate(item.updated_at)}
           td #{item.tags.join(',')}

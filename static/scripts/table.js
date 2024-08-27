@@ -17,9 +17,7 @@ function sortByCol(tbody, col, asc=true) {
 window.addEventListener('load', () => {
   document.querySelectorAll('table').forEach((table) => {
     const tbody = table.querySelector('tbody');
-    console.log(tbody)
     table.querySelectorAll('th.sortable').forEach((th, i) => {
-      console.log(th)
       th.onclick = () => {
         sortByCol(tbody, i, table.dataset.sortedCol != i+1);
         table.dataset.sortedCol = table.dataset.sortedCol != i+1 ? i+1 : `-${i+1}`;

@@ -1,8 +1,20 @@
 extends ../layout.pug
 
 block content
-  script
-    include /static/scripts/table.js
+  script.
+    window.addEventListener('load', () => {
+      document.querySelectorAll('table').forEach((table) => {
+        table.querySelectorAll('th[data-sort]').forEach((th, i) => {
+          th.onclick = () => {
+            const url = new URL(window.location);
+            url.searchParams.set('sort', th.dataset.sort);
+            url.searchParams.set('sort_order', url.searchParams.get('sort_order') == 'asc' ? 'desc' : 'asc');
+            history.pushState(null, '', url);
+            location.reload();
+          }
+        });
+      });
+    });
 
   h1.center 
     if type
@@ -18,11 +30,11 @@ block content
   hr
   table
     thead
-      th.sortable Name
-      th.sortable Type
-      th.sortable Author
-      th.sortable Created
-      th.sortable Updated
+      th( data-sort='title' ) Name
+      th( data-sort='item_type' ) Type
+      th( data-sort='author' ) Author
+      th( data-sort='created_at' ) Created
+      th( data-sort='updated_at' ) Updated
       th Tags
     tbody
       each item in items

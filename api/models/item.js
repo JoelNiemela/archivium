@@ -17,11 +17,12 @@ async function getOne(user, id, permissionsRequired=perms.READ, basicOnly=false)
   return [200, item];
 }
 
-async function getMany(user, conditions, permissionsRequired=perms.READ, basicOnly=false) {
+async function getMany(user, conditions, permissionsRequired=perms.READ, basicOnly=false, options={}) {
   try {
     const usrQueryString = user ? ` OR (au_filter.user_id = ${user.id} AND au_filter.permission_level >= ${permissionsRequired})` : '';
     const conditionString = conditions ? `WHERE ${conditions.strings.join(' AND ')}` : '';
     const selectString = basicOnly ? '' : `
+      item.obj_data,
       JSON_REMOVE(JSON_OBJECTAGG(
         IFNULL(child_item.shortname, 'null__'),
         JSON_ARRAY(lineage_child.child_title, lineage_child.parent_title)
@@ -41,7 +42,12 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
     `;
     const queryString = `
       SELECT 
-        item.*,
+        item.id,
+        item.title,
+        item.shortname,
+        item.item_type,
+        item.created_at,
+        item.updated_at,
         user.username as author,
         universe.title as universe,
         ${selectString}
@@ -56,7 +62,9 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
       GROUP BY 
         item.id,
         user.username,
-        universe.title;`;
+        universe.title
+      ${options.sort ? `ORDER BY ${options.sort} ${options.sortDesc ? 'DESC' : 'ASC'}` : ''}
+      ${options.limit ? `LIMIT ${options.limit}` : ''};`;
     const data = await executeQuery(queryString, conditions && conditions.values);
     return [200, data];
   } catch (err) {
@@ -99,7 +107,7 @@ async function getByUniverseAndItemIds(user, universeId, itemId, permissionsRequ
   return [200, item];
 }
 
-async function getByUniverseShortname(user, shortname, type, permissionsRequired=perms.READ, basicOnly=false) {
+async function getByUniverseShortname(user, shortname, type, permissionsRequired=perms.READ, basicOnly=false, options) {
 
   const conditions = { 
     strings: [
@@ -114,7 +122,7 @@ async function getByUniverseShortname(user, shortname, type, permissionsRequired
     conditions.values.push(type);
   }
 
-  const [errCode, items] = await getMany(user, conditions, permissionsRequired, basicOnly);
+  const [errCode, items] = await getMany(user, conditions, permissionsRequired, basicOnly, options);
   if (!items) return [errCode];
   return [200, items];
 }

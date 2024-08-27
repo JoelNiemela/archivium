@@ -20,6 +20,7 @@ block content
       th Author
       th Created
       th Updated
+      th Tags
     tbody
       each item in items
         tr
@@ -35,3 +36,4 @@ block content
             a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
           td #{formatDate(item.created_at)}
           td #{formatDate(item.updated_at)}
+          td #{item.tags.join(',')}

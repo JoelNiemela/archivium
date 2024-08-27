@@ -183,6 +183,11 @@ module.exports = function(app) {
   });
   post('/universes/:universeShortname/items/:itemShortname/edit', async (req, res) => {
     console.log(req.body)
+
+    // Handle tags
+    req.body.tags = req.body.tags?.split(' ') ?? [];
+
+    // Handle obj_data
     if (!('obj_data' in req.body)) {
       res.status(400);
       return; // We should probably render an error on the edit page instead here.
@@ -195,8 +200,12 @@ module.exports = function(app) {
     }
     let code; let data;
     req.body.obj_data = JSON.stringify(req.body.obj_data);
+
+    // Actually save item
     [code, data] = await api.item.put(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
     if (code !== 200) return res.prepareRender('editItem', { error: data, ...req.body });
+
+    // Handle lineage data
     if (lineage) {
       let item;
       [code, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);

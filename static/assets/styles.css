@@ -225,6 +225,7 @@ button:active {
 }
 
 .inputGroup input,
+.inputGroup textarea,
 .inputGroup select {
   grid-column: 3 / 3;
 }

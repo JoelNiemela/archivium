@@ -172,11 +172,24 @@ async function post(user, body, universeShortName) {
 }
 
 async function put(user, universeShortname, itemShortname, changes) {
-  const { title, obj_data } = changes;
+  const { title, obj_data, tags } = changes;
 
   if (!title || !obj_data) return [400];
   const [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE);
   if (!item) return [code];
+
+  if (tags) {
+    // If tags list is provided, we can just as well handle it here
+    putTags(user, universeShortname, itemShortname, tags);
+    const tagLookup = {};
+    item.tags.forEach(tag => {
+      tagLookup[tag] = true;
+    });
+    tags.forEach(tag => {
+      delete tagLookup[tag];
+    });
+    delTags(user, universeShortname, itemShortname, Object.keys(tagLookup));
+  }
 
   try {
     return [200, await executeQuery(`UPDATE item SET ? WHERE id = ${item.id};`, { title, obj_data, updated_at: new Date() })];

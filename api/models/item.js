@@ -50,7 +50,6 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
       LEFT JOIN item as child_item ON child_item.id = lineage_child.child_id
       LEFT JOIN item as parent_item ON parent_item.id = lineage_parent.parent_id
     `;
-    // LEFT JOIN tag ON tag.item_id = item.id
     const queryString = `
       SELECT
         item.id,

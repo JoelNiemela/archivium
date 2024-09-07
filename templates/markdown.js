@@ -172,6 +172,7 @@ function parseInline(line) {
 function parseMarkdown(text) {
   const root = new MarkdownNode('div', '', { class: 'markdown' });
   let toc;
+  let maxTocDepth;
   let curParagraph = new MarkdownNode('p');
   let curList = [null, -1];
   let curTocList = [null, -1];
@@ -198,6 +199,7 @@ function parseMarkdown(text) {
         }
         heading.attrs.id = id;
         if (!toc) continue;
+        if (maxTocDepth && headingLvl > maxTocDepth) continue;
         const [lastListNode, lastHeadingLvl] = curTocList;
         if (headingLvl > lastHeadingLvl) {
           const lastListItem = lastListNode ? (lastListNode.lastChild() ?? lastListNode.addChild(new MarkdownNode('li'))) : null;
@@ -222,6 +224,7 @@ function parseMarkdown(text) {
       if (cmd === 'toc') {
         toc = root.addChild(new MarkdownNode('div', '', { id: 'toc' }));
         toc.addChild(new MarkdownNode('h3', 'Table of Contents'));
+        if (args.length >= 1) maxTocDepth = args[0];
       }
     } else if (trimmedLine[0] === '-' && trimmedLine[1] === ' ') {
       const indent = (line.length - trimmedLine.length) / 2;

@@ -14,8 +14,9 @@ block content
       |  - Last updated #{formatDate(new Date(item.updated_at))}
   p.center
     small
-      each tag in item.tags
-        | ##{tag} 
+      if item.tags
+        each tag in item.tags
+          | ##{tag} 
   hr
 
   if 'tabs' in item.obj_data

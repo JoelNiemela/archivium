@@ -68,6 +68,6 @@ block content
           td.nowrap( data-sort=item.created_at ) #{formatDate(item.created_at)}
           td.nowrap( data-sort=item.updated_at ) #{formatDate(item.updated_at)}
           td
-            each itemTag in item.tags
-              if itemTag
+            if item.tags
+              each itemTag in item.tags
                 a.link.link-animated( class={ 'link-selected': itemTag == tag } onclick=`filterByTag('${itemTag}')` ) ##{itemTag} 

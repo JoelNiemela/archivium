@@ -200,7 +200,7 @@ async function put(user, universeShortname, itemShortname, changes) {
     // If tags list is provided, we can just as well handle it here
     putTags(user, universeShortname, itemShortname, tags);
     const tagLookup = {};
-    item.tags.forEach(tag => {
+    item.tags?.forEach(tag => {
       tagLookup[tag] = true;
     });
     tags.forEach(tag => {
@@ -259,7 +259,7 @@ async function putTags(user, universeShortname, itemShortname, tags) {
   if (!item) return [code];
   try {
     const tagLookup = {};
-    item.tags.forEach(tag => {
+    item.tags?.forEach(tag => {
       tagLookup[tag] = true;
     });
     const valueString = tags.filter(tag => !tagLookup[tag]).map(tag => `(${item.id}, "${tag}")`).join(',');

@@ -15,7 +15,7 @@ block content
 
     div.inputGroup
       label( for='tags' ) Tags: 
-      textarea( id='tags' name='tags' ) #{item.tags.join(' ')}
+      textarea( id='tags' name='tags' ) #{(item.tags || []).join(' ')}
 
     div#body.editor( data-replicated-value=item.obj_data.body || '' )
       if 'body' in item.obj_data

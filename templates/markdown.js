@@ -17,6 +17,11 @@ class MarkdownNode {
     return node;
   }
 
+  spliceChildren(index, deleteCount, ...nodes) {
+    nodes.forEach(node => node.parent = this);
+    return this.children.splice(index, deleteCount, ...nodes);
+  }
+
   addChildren(nodes) {
     for (const node of nodes) {
       this.addChild(node);
@@ -40,6 +45,9 @@ class MarkdownNode {
     if (this.type === 'a') {
       classList.push('link');
       classList.push('link-animated');
+    }
+    if (this.type === 'p' && this.children.length === 1 && this.children[0].type === 'img') {
+      return this.children[0].evaluate();
     }
     if ('href' in this.attrs && this.attrs.href[0] === '@') {
       let [universe, itemHash] = this.attrs.href.substring(1).split('/');
@@ -135,8 +143,10 @@ function parseInline(line) {
       nodes.push(italicsNode);
       italicsNode.addChildren(parseInline(new Line(italicsChunk)));
     } else if (char === '[') {
+      const isImage = line.peek(-2) === '!';
       const resetIndex = line.index;
-      nodes.push(new MarkdownNode('text', chunk));
+      if (isImage) chunk = chunk.substring(0, chunk.length - 1);
+      if (chunk) nodes.push(new MarkdownNode('text', chunk));
       chunk = '';
       while (!(line.peek() === ']' && line.peek(-1) !== '\\') && line.hasNext()) {
         chunk += line.next();
@@ -148,9 +158,10 @@ function parseInline(line) {
           chunk += line.next();
         }
         if (line.next() === ')') {
-          const linkNode = new MarkdownNode('a', '', { href: chunk });
+          const linkNode = new MarkdownNode(isImage ? 'img' : 'a', '', { [isImage ? 'src' : 'href']: chunk });
           nodes.push(linkNode);
-          linkNode.addChildren(lineNodes);
+          if (isImage) linkNode.attrs.alt = lineNodes.map(node => node.innerText()).join('');
+          else linkNode.addChildren(lineNodes);
           chunk = '';
         } else {
           chunk = '[';
@@ -164,7 +175,7 @@ function parseInline(line) {
       chunk += char;
     }
   }
-  nodes.push(new MarkdownNode('text', chunk));
+  if (chunk) nodes.push(new MarkdownNode('text', chunk));
 
   return nodes;
 }
@@ -176,6 +187,7 @@ function parseMarkdown(text) {
   let curParagraph = new MarkdownNode('p');
   let curList = [null, -1];
   let curTocList = [null, -1];
+  let asideStart = null;
 
   const lines = text.split('\n');
   for (const line of lines) {
@@ -225,6 +237,13 @@ function parseMarkdown(text) {
         toc = root.addChild(new MarkdownNode('div', '', { id: 'toc' }));
         toc.addChild(new MarkdownNode('h3', 'Table of Contents'));
         if (args.length >= 1) maxTocDepth = args[0];
+      } else if (cmd === 'aside') {
+        asideStart = root.children.length;
+      } else if (cmd === 'aside-end' && asideStart !== null) {
+        const boxNodes = root.spliceChildren(asideStart, root.children.length)
+        const box = new MarkdownNode('aside', '');
+        root.spliceChildren(asideStart, 0, box);
+        box.addChildren(boxNodes);
       }
     } else if (trimmedLine[0] === '-' && trimmedLine[1] === ' ') {
       const indent = (line.length - trimmedLine.length) / 2;

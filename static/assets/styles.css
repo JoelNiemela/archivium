@@ -284,6 +284,25 @@ button:active {
 }
 .markdown p {
   text-indent: 2rem;
+  padding: 0 0.75rem;
+}
+
+.markdown img {
+  max-width: 100%;
+}
+
+.markdown aside {
+  float: right;
+  width: 33%;
+  padding: 0.25rem;
+  margin: 0.5rem;
+  border: 0.05625rem solid silver;
+  border-radius: 1rem;
+}
+
+.markdown aside>img {
+  width: 100%;
+  border-radius: 0.875rem;
 }
 
 /* Fancy Links */

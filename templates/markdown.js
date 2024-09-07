@@ -47,7 +47,6 @@ class MarkdownNode {
       classList.push('link-animated');
     }
     if (this.type === 'p' && this.children.length === 1 && this.children[0].type === 'img') {
-      console.log(this.children)
       return this.children[0].evaluate();
     }
     if ('href' in this.attrs && this.attrs.href[0] === '@') {
@@ -270,8 +269,6 @@ function parseMarkdown(text) {
     }
   }
   root.addChild(curParagraph);
-
-  root.evaluate().then(r => console.log(JSON.stringify(r)))
 
   return root;
 }

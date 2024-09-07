@@ -238,7 +238,7 @@ function parseMarkdown(text) {
         toc = root.addChild(new MarkdownNode('div', '', { id: 'toc' }));
         toc.addChild(new MarkdownNode('h3', 'Table of Contents'));
         if (args.length >= 1) maxTocDepth = args[0];
-      } else if (cmd === 'aside-begin') {
+      } else if (cmd === 'aside') {
         asideStart = root.children.length;
       } else if (cmd === 'aside-end' && asideStart !== null) {
         const boxNodes = root.spliceChildren(asideStart, root.children.length)

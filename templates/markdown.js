@@ -140,7 +140,10 @@ function parseInline(line) {
       nodes.push(italicsNode);
       italicsNode.addChildren(parseInline(new Line(italicsChunk)));
     } else if (char === '[') {
+      console.log(line.peek(-2));
+      const isImage = line.peek(-2) === '!';
       const resetIndex = line.index;
+      if (isImage) chunk = chunk.substring(0, chunk.length - 1);
       nodes.push(new MarkdownNode('text', chunk));
       chunk = '';
       while (!(line.peek() === ']' && line.peek(-1) !== '\\') && line.hasNext()) {
@@ -153,9 +156,10 @@ function parseInline(line) {
           chunk += line.next();
         }
         if (line.next() === ')') {
-          const linkNode = new MarkdownNode('a', '', { href: chunk });
+          const linkNode = new MarkdownNode(isImage ? 'img' : 'a', '', { [isImage ? 'src' : 'href']: chunk });
           nodes.push(linkNode);
-          linkNode.addChildren(lineNodes);
+          if (isImage) linkNode.attrs.alt = lineNodes.map(node => node.innerText()).join('');
+          else linkNode.addChildren(lineNodes);
           chunk = '';
         } else {
           chunk = '[';

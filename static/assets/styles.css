@@ -295,6 +295,10 @@ button:active {
   border-radius: 1rem;
 }
 
+.markdown img {
+  max-width: 100%;
+}
+
 /* Fancy Links */
 .link {
   position: relative;

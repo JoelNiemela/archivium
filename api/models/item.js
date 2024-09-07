@@ -51,7 +51,7 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
       LEFT JOIN item as parent_item ON parent_item.id = lineage_parent.parent_id
     `;
     const queryString = `
-      SELECT 
+      SELECT
         item.id,
         item.title,
         item.shortname,
@@ -61,12 +61,16 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
         user.username as author,
         universe.title as universe,
         ${selectString}
-        JSON_ARRAYAGG(tag) as tags
+        tag.tags
       FROM item
       INNER JOIN user ON user.id = item.author_id
       INNER JOIN universe ON universe.id = item.universe_id
       INNER JOIN authoruniverse as au_filter ON universe.id = au_filter.universe_id AND (universe.public = 1${usrQueryString})
-      LEFT JOIN tag ON tag.item_id = item.id
+      LEFT JOIN (
+        SELECT item_id, JSON_ARRAYAGG(tag) as tags
+        FROM tag
+        GROUP BY item_id
+      ) tag ON tag.item_id = item.id
       ${joinString}
       ${conditionString}
       GROUP BY 
@@ -195,7 +199,7 @@ async function put(user, universeShortname, itemShortname, changes) {
     // If tags list is provided, we can just as well handle it here
     putTags(user, universeShortname, itemShortname, tags);
     const tagLookup = {};
-    item.tags.forEach(tag => {
+    item.tags?.forEach(tag => {
       tagLookup[tag] = true;
     });
     tags.forEach(tag => {
@@ -254,7 +258,7 @@ async function putTags(user, universeShortname, itemShortname, tags) {
   if (!item) return [code];
   try {
     const tagLookup = {};
-    item.tags.forEach(tag => {
+    item.tags?.forEach(tag => {
       tagLookup[tag] = true;
     });
     const valueString = tags.filter(tag => !tagLookup[tag]).map(tag => `(${item.id}, "${tag}")`).join(',');

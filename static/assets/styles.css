@@ -286,6 +286,15 @@ button:active {
   text-indent: 2rem;
 }
 
+.markdown aside {
+  float: right;
+  width: 33%;
+  padding: 1rem;
+  margin: 0.5rem;
+  border: 0.05625rem solid silver;
+  border-radius: 1rem;
+}
+
 /* Fancy Links */
 .link {
   position: relative;

@@ -46,6 +46,10 @@ class MarkdownNode {
       classList.push('link');
       classList.push('link-animated');
     }
+    if (this.type === 'p' && this.children.length === 1 && this.children[0].type === 'img') {
+      console.log(this.children)
+      return this.children[0].evaluate();
+    }
     if ('href' in this.attrs && this.attrs.href[0] === '@') {
       let [universe, itemHash] = this.attrs.href.substring(1).split('/');
       if (universe) {
@@ -140,11 +144,10 @@ function parseInline(line) {
       nodes.push(italicsNode);
       italicsNode.addChildren(parseInline(new Line(italicsChunk)));
     } else if (char === '[') {
-      console.log(line.peek(-2));
       const isImage = line.peek(-2) === '!';
       const resetIndex = line.index;
       if (isImage) chunk = chunk.substring(0, chunk.length - 1);
-      nodes.push(new MarkdownNode('text', chunk));
+      if (chunk) nodes.push(new MarkdownNode('text', chunk));
       chunk = '';
       while (!(line.peek() === ']' && line.peek(-1) !== '\\') && line.hasNext()) {
         chunk += line.next();
@@ -173,7 +176,7 @@ function parseInline(line) {
       chunk += char;
     }
   }
-  nodes.push(new MarkdownNode('text', chunk));
+  if (chunk) nodes.push(new MarkdownNode('text', chunk));
 
   return nodes;
 }
@@ -267,6 +270,8 @@ function parseMarkdown(text) {
     }
   }
   root.addChild(curParagraph);
+
+  root.evaluate().then(r => console.log(JSON.stringify(r)))
 
   return root;
 }

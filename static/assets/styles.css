@@ -62,12 +62,17 @@ body {
 }
 
 .navbarBtnLink {
-  /* border-radius: 0.5rem; */
   text-decoration: none;
+  transition: border-radius 0.25s;
 }
 
-.navbarBtnLink:hover, .navbarBtn.selected .navbarBtnLink {
+.navbarBtnLink:hover {
+  background-color: #e2e2e2;
+}
+
+.navbarBtn.selected .navbarBtnLink {
   background-color: #ddd;
+  border-radius: 0.5rem;
 }
 
 .navbarText {

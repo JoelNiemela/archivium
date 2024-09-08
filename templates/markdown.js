@@ -40,7 +40,7 @@ class MarkdownNode {
     return `${this.content ?? ''}${this.children.map(child => child.innerText()).join('')}`;
   }
 
-  async evaluate(currentUniverse, transform) {
+  async evaluate(currentUniverse, ctx, transform) {
     const classList = this.attrs?.class?.split(' ') ?? [];
     if (this.type === 'a') {
       classList.push('link');
@@ -67,7 +67,20 @@ class MarkdownNode {
     }
     this.attrs.class = classList.join(' ');
     if (transform) transform(this);
-    return [this.type, this.content, await Promise.all(this.children.map(tag => tag.evaluate(currentUniverse, transform))), this.attrs];
+    if (this.type === 'ctx') {
+      for (const lookup of this.attrs.lookups) {
+        let value = ctx;
+        for (const key of lookup) {
+          if (value && key in value) value = value[key];
+          else {
+            value = `${lookup.join('.')}: not found.`;
+            break;
+          }
+        }
+        this.content = this.content.replace('%', value);
+      }
+    }
+    return [this.type, this.content, await Promise.all(this.children.map(tag => tag.evaluate(currentUniverse, ctx, transform))), this.attrs];
   }
 }
 
@@ -92,6 +105,14 @@ class Line {
   reset(index) {
     this.index = index;
   }
+}
+
+function inlineCmds(cmd, args) {
+  if (cmd === 'tab') {
+    return [new MarkdownNode('ctx', `%`, { lookups: [['item', 'obj_data', 'tabs', ...args]] })];
+  }
+
+  return null;
 }
 
 function parseInline(line) {
@@ -172,6 +193,17 @@ function parseInline(line) {
         chunk = '[';
         line.reset(resetIndex);
       }
+    } else if (char === '@') {
+      if (chunk) nodes.push(new MarkdownNode('text', chunk));
+      chunk = '';
+      while (!(line.peek() === '@' && line.peek(-1) !== '\\') && line.hasNext()) {
+        chunk += line.next();
+      }
+      line.next();
+      const [cmd, ...args] = chunk.split(' ');
+      const cmdNodes = inlineCmds(cmd, args);
+      if (cmdNodes) cmdNodes.forEach(node => nodes.push(node));
+      chunk = '';
     } else {
       chunk += char;
     }

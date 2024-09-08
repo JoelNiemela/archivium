@@ -161,12 +161,13 @@ module.exports = function(app) {
       return;
     }
     item.obj_data = JSON.parse(item.obj_data);
-    const parsedBody = 'body' in item.obj_data && (await parseMarkdown(item.obj_data.body || '').evaluate(req.params.universeShortname))
+    const parsedBody = 'body' in item.obj_data && (await parseMarkdown(item.obj_data.body || '').evaluate(req.params.universeShortname, { item }))
     if ('tabs' in item.obj_data) {
       for (const tab in item.obj_data.tabs) {
         for (const key in item.obj_data.tabs[tab]) {
           item.obj_data.tabs[tab][key] = await parseMarkdown(item.obj_data.tabs[tab][key]).evaluate(
             req.params.universeShortname,
+            null,
             (tag) => {
               if (tag.type === 'div') tag.attrs.style = {'text-align': 'right'};
               if (tag.type === 'p') tag.type = 'span';
@@ -179,6 +180,7 @@ module.exports = function(app) {
       item.obj_data.gallery.imgs = await Promise.all((item.obj_data.gallery.imgs ?? []).map(
         async ({ url, label }) => ({ url, label: label && await parseMarkdown(label).evaluate(
           req.params.universeShortname,
+          null,
           (tag) => {
             if (tag.type === 'div') {
               tag.attrs.style = {'text-align': 'center'};

@@ -191,7 +191,7 @@ module.exports = function(app) {
     }
     const itemMap = {};
     itemList.forEach(item => itemMap[item.shortname] = item.title);
-    res.prepareRender('editItem', { item, itemMap });
+    res.prepareRender(req.query.mode === 'raw' ? 'editItemRaw' : 'editItem', { item, itemMap });
   });
   post('/universes/:universeShortname/items/:itemShortname/edit', async (req, res) => {
     // Handle tags
@@ -213,7 +213,10 @@ module.exports = function(app) {
 
     // Actually save item
     [code, data] = await api.item.put(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
-    if (code !== 200) return res.prepareRender('editItem', { error: data, ...req.body });
+    if (code !== 200) {
+      res.status(code);
+      return res.prepareRender('editItem', { error: data, ...req.body });
+    }
 
     // Handle lineage data
     if (lineage) {

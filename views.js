@@ -161,15 +161,37 @@ module.exports = function(app) {
       return;
     }
     item.obj_data = JSON.parse(item.obj_data);
-    const parsedBody = 'body' in item.obj_data && (await parseMarkdown(item.obj_data.body || '').evaluate(req.params.universeShortname))
+    const parsedBody = 'body' in item.obj_data && (await parseMarkdown(item.obj_data.body || '').evaluate(req.params.universeShortname, { item }))
     if ('tabs' in item.obj_data) {
       for (const tab in item.obj_data.tabs) {
         for (const key in item.obj_data.tabs[tab]) {
-          item.obj_data.tabs[tab][key] = await parseMarkdown(item.obj_data.tabs[tab][key]).evaluate(req.params.universeShortname);
+          item.obj_data.tabs[tab][key] = await parseMarkdown(item.obj_data.tabs[tab][key]).evaluate(
+            req.params.universeShortname,
+            null,
+            (tag) => {
+              if (tag.type === 'div') tag.attrs.style = {'text-align': 'right'};
+              if (tag.type === 'p') tag.type = 'span';
+            },
+          );
         }
       }
     }
-    res.prepareRender('item', { item, universe, parsedBody });
+    if ('gallery' in item.obj_data) {
+      item.obj_data.gallery.imgs = await Promise.all((item.obj_data.gallery.imgs ?? []).map(
+        async ({ url, label }) => ({ url, label: label && await parseMarkdown(label).evaluate(
+          req.params.universeShortname,
+          null,
+          (tag) => {
+            if (tag.type === 'div') {
+              tag.attrs.style = {'text-align': 'center'};
+              tag.attrs.class += ' label';
+            }
+            if (tag.type === 'p') tag.type = 'span';
+          },
+        ) })
+      ));
+    }
+    res.prepareRender('item', { item, universe, parsedBody, tab: req.query.tab });
   });
   get('/universes/:universeShortname/items/:itemShortname/edit', async (req, res) => {
     const [code1, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
@@ -185,7 +207,7 @@ module.exports = function(app) {
     }
     const itemMap = {};
     itemList.forEach(item => itemMap[item.shortname] = item.title);
-    res.prepareRender('editItem', { item, itemMap });
+    res.prepareRender(req.query.mode === 'raw' ? 'editItemRaw' : 'editItem', { item, itemMap });
   });
   post('/universes/:universeShortname/items/:itemShortname/edit', async (req, res) => {
     // Handle tags
@@ -207,7 +229,10 @@ module.exports = function(app) {
 
     // Actually save item
     [code, data] = await api.item.put(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
-    if (code !== 200) return res.prepareRender('editItem', { error: data, ...req.body });
+    if (code !== 200) {
+      res.status(code);
+      return res.prepareRender('editItem', { error: data, ...req.body });
+    }
 
     // Handle lineage data
     if (lineage) {

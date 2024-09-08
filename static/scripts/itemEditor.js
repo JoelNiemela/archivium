@@ -91,7 +91,7 @@ function addTab(type, name, force=false) {
           createElement('div', { children: [
             createElement('button', { attrs: {
               type: 'button',
-              innerText: itemMap[shortname],
+              innerText: itemMap[shortname] ?? shortname,
               onclick: () => {
                 const newState = { ...obj_data };
                 delete newState.lineage.parents[shortname];
@@ -115,7 +115,7 @@ function addTab(type, name, force=false) {
               innerText: itemMap[shortname],
               onclick: () => {
                 const newState = { ...obj_data };
-                delete newState.lineage.children;
+                delete newState.lineage.children[shortname];
                 updateObjData(newState);
                 resetTabs(name);
               },
@@ -165,6 +165,44 @@ function addTab(type, name, force=false) {
         createElement('input', { attrs: { id: 'new_child_self_data' } }),
         createElement('input', { attrs: { id: 'new_child_other_data' } }),
       ] }),
+    ] }),
+    type === 'gallery' && createElement('div', { children: [
+      createElement('div', { classList: ['item-gallery', 'd-flex', 'gap-4', 'flex-wrap'], children: [
+        ...(obj_data.gallery.imgs ?? []).map(({ url, label }, i) => (       
+          createElement('div', { classList: [], children: [
+            createElement('div', { classList: ['d-flex'], attrs: { style: 'height: 8rem;' }, children: [
+              createElement('button', { attrs: {
+                type: 'button',
+                innerText: T('Remove Image'),
+                onclick: () => {
+                  const newState = { ...obj_data };
+                  delete newState.gallery.imgs[i];
+                  updateObjData(newState);
+                  resetTabs(name);
+                },
+              } }),
+              createElement('img', { attrs: { src: url, alt: label, style: { height: '2rem' } } }),
+            ] }),
+            label && createElement('span', { attrs: { innerText: label } }),
+          ] })
+        )),
+      ] }),
+      createElement('button', { attrs: {
+        type: 'button',
+        innerText: 'Add New Key',
+        onclick: () => {
+          const url = getIdValue('new_gallery_image');
+          const label = getIdValue('new_gallery_image_label');
+          if (!url) return;
+          const newState = { ...obj_data };
+          if (!('imgs' in newState.gallery)) newState.gallery.imgs = [];
+          newState.gallery.imgs.push({ url, label });
+          updateObjData(newState);
+          resetTabs(name);
+        },
+      } }),
+      createElement('input', { attrs: { id: 'new_gallery_image', placeholder: T('Image URL') } }),
+      createElement('input', { attrs: { id: 'new_gallery_image_label', placeholder: `${T('Image Label')} (${T('Optional')})` } }),
     ] }),
   ] });
   document.querySelector('#tabs .tabs-content').appendChild(content);
@@ -220,7 +258,7 @@ function resetTabs(toSelect=null) {
   document.querySelector(`#tabs .tabs-buttons`).innerHTML = '';
   document.querySelector(`#tabs .tabs-content`).innerHTML = '';
   let firstTab = null;
-  for (const type of ['lineage', 'location', 'chronology']) {
+  for (const type of ['lineage', 'location', 'chronology', 'gallery']) {
     if (type in obj_data) {
       addTab(type, obj_data[type].title, true);
     }

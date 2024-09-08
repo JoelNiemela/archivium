@@ -19,21 +19,36 @@ block content
           | ##{tag} 
   hr
 
-  if 'tabs' in item.obj_data
-    .page
+  //- Tab buttons
+  ul.navbarBtns#tabBtns.gap-1
+    if parsedBody
+      li.navbarBtn#bodyBtn( data-tab='body' )
+        h3.navbarBtnLink.navbarText( onclick=`showTab('body')` ) Main Text
+    if 'tabs' in item.obj_data
       each tab, name in item.obj_data.tabs
-        h3 #{name}
-        .itemTab
+        li.navbarBtn( data-tab=name )
+          h3.navbarBtnLink.navbarText( onclick=`showTab('${name}')` ) #{name}
+    if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
+      li.navbarBtn( data-tab='lineage' )
+          h3.navbarBtnLink.navbarText( onclick=`showTab('lineage')` ) #{item.obj_data.lineage.title}
+    if 'gallery' in item.obj_data && 'title' in item.obj_data.gallery
+      li.navbarBtn( data-tab='gallery' )
+          h3.navbarBtnLink.navbarText( onclick=`showTab('gallery')` ) #{item.obj_data.gallery.title}
+
+
+
+  .tabs
+    if 'tabs' in item.obj_data
+      each tab, name in item.obj_data.tabs
+        .itemTab.hidden( data-tab=name )
           each val, key in tab
             .itemKey
               span #{key}
               hr
               +mdText(val)
 
-  if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
-    .tabs
-        h3 Lineage 
-        .itemTab
+    if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
+        .itemTab.hidden( data-tab='lineage' )
           each title, shortname in item.parents
             .itemKey
               span #{title[0] || T('Parent')}
@@ -47,6 +62,36 @@ block content
               a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${shortname}` )
                 | #{item.child_titles[shortname]}
 
-  if parsedBody
-    .sheet
-      +mdText(parsedBody)
+    if 'gallery' in item.obj_data && 'title' in item.obj_data.gallery
+        .itemTab.hidden.gallery( data-tab='gallery' )
+          each img in item.obj_data.gallery.imgs || []
+            .itemKey
+              img( src=img.url, alt=img.label )
+              if img.label
+                +mdText(img.label)
+
+    if parsedBody
+      .sheet.hidden( data-tab='body' )
+        +mdText(parsedBody)
+
+  script!= `const defaultTab = '${tab || ''}';`
+  script.
+    function showTab(tab) {
+      document.querySelectorAll('.tabs [data-tab]').forEach(tab => tab.classList.add('hidden'));
+      document.querySelectorAll('.navbarBtn[data-tab]').forEach(btn => btn.classList.remove('selected'));
+      document.querySelector(`.tabs [data-tab=${tab}]`)?.classList.remove('hidden');
+      document.querySelector(`.navbarBtn[data-tab=${tab}]`)?.classList.add('selected');
+      const query = new URLSearchParams(window.location.search);
+      query.set('tab', tab);
+      const newurl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?${query.toString()}`;
+      window.history.pushState({ path: newurl }, '', newurl);
+    }
+
+    const tabs = document.getElementById('tabBtns');
+    if (tabs.children.length > 0) {
+      showTab(defaultTab || tabs.children[0].dataset.tab)
+    }
+
+    if (tabs.children.length < 2) {
+      tabs.remove();
+    }

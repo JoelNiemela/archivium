@@ -22,18 +22,18 @@ block content
   //- Tab buttons
   ul.navbarBtns#tabBtns
     if parsedBody
-      li.navbarBtn#bodyBtn( data-tab='_body' )
-        h3.navbarBtnLink.navbarText( onclick=`showTab('_body')` ) Main Text
+      li.navbarBtn#bodyBtn( data-tab='body' )
+        h3.navbarBtnLink.navbarText( onclick=`showTab('body')` ) Main Text
     if 'tabs' in item.obj_data
       each tab, name in item.obj_data.tabs
         li.navbarBtn( data-tab=name )
           h3.navbarBtnLink.navbarText( onclick=`showTab('${name}')` ) #{name}
     if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
-      li.navbarBtn( data-tab='_lineage' )
-          h3.navbarBtnLink.navbarText( onclick=`showTab('_lineage')` ) #{item.obj_data.lineage.title}
+      li.navbarBtn( data-tab='lineage' )
+          h3.navbarBtnLink.navbarText( onclick=`showTab('lineage')` ) #{item.obj_data.lineage.title}
     if 'gallery' in item.obj_data && 'title' in item.obj_data.gallery
-      li.navbarBtn( data-tab='_gallery' )
-          h3.navbarBtnLink.navbarText( onclick=`showTab('_gallery')` ) #{item.obj_data.gallery.title}
+      li.navbarBtn( data-tab='gallery' )
+          h3.navbarBtnLink.navbarText( onclick=`showTab('gallery')` ) #{item.obj_data.gallery.title}
 
 
 
@@ -49,7 +49,7 @@ block content
 
     if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
         h3 #{T('Lineage')} 
-        .itemTab.hidden( data-tab='_lineage' )
+        .itemTab.hidden( data-tab='lineage' )
           each title, shortname in item.parents
             .itemKey
               span #{title[0] || T('Parent')}
@@ -65,7 +65,7 @@ block content
 
     if 'gallery' in item.obj_data && 'title' in item.obj_data.gallery
         h3 #{T('Gallery')}
-        .itemTab.hidden.gallery( data-tab='_gallery' )
+        .itemTab.hidden.gallery( data-tab='gallery' )
           each img in item.obj_data.gallery.imgs || []
             .itemKey
               img( src=img.url, alt=img.label )
@@ -73,18 +73,23 @@ block content
                 +mdText(img.label)
 
     if parsedBody
-      .sheet.hidden( data-tab='_body' )
+      .sheet.hidden( data-tab='body' )
         +mdText(parsedBody)
 
+  script!= `const defaultTab = '${tab || ''}';`
   script.
     function showTab(tab) {
       document.querySelectorAll('.tabs [data-tab]').forEach(tab => tab.classList.add('hidden'));
-      document.querySelector(`.tabs [data-tab=${tab}]`).classList.remove('hidden');
+      document.querySelector(`.tabs [data-tab=${tab}]`)?.classList.remove('hidden');
+      const query = new URLSearchParams(window.location.search);
+      query.set('tab', tab);
+      const newurl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?${query.toString()}`;
+      window.history.pushState({ path: newurl }, '', newurl);
     }
 
     const tabs = document.getElementById('tabBtns');
     if (tabs.children.length > 0) {
-      showTab(tabs.children[0].dataset.tab)
+      showTab(defaultTab || tabs.children[0].dataset.tab)
     }
 
     if (tabs.children.length < 2) {

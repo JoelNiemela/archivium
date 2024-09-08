@@ -189,7 +189,7 @@ module.exports = function(app) {
         ) })
       ));
     }
-    res.prepareRender('item', { item, universe, parsedBody });
+    res.prepareRender('item', { item, universe, parsedBody, tab: req.query.tab });
   });
   get('/universes/:universeShortname/items/:itemShortname/edit', async (req, res) => {
     const [code1, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);

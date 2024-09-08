@@ -30,7 +30,10 @@ block content
           h3.navbarBtnLink.navbarText( onclick=`showTab('${name}')` ) #{name}
     if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
       li.navbarBtn( data-tab='_lineage' )
-          h3.navbarBtnLink.navbarText( onclick=`showTab('_lineage')` ) Lineage
+          h3.navbarBtnLink.navbarText( onclick=`showTab('_lineage')` ) #{item.obj_data.lineage.title}
+    if 'gallery' in item.obj_data && 'title' in item.obj_data.gallery
+      li.navbarBtn( data-tab='_gallery' )
+          h3.navbarBtnLink.navbarText( onclick=`showTab('_gallery')` ) #{item.obj_data.gallery.title}
 
 
 
@@ -45,7 +48,7 @@ block content
               +mdText(val)
 
     if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
-        h3 Lineage 
+        h3 #{T('Lineage')} 
         .itemTab.hidden( data-tab='_lineage' )
           each title, shortname in item.parents
             .itemKey
@@ -59,6 +62,15 @@ block content
               hr
               a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${shortname}` )
                 | #{item.child_titles[shortname]}
+
+    if 'gallery' in item.obj_data && 'title' in item.obj_data.gallery
+        h3 #{T('Gallery')}
+        .itemTab.hidden.gallery( data-tab='_gallery' )
+          each img in item.obj_data.gallery.imgs || []
+            .itemKey
+              img( src=img.url, alt=img.label )
+              if img.label
+                +mdText(img.label)
 
     if parsedBody
       .sheet.hidden( data-tab='_body' )

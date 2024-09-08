@@ -22,6 +22,11 @@ html(lang='en')
   head
     title Archivium
     link(rel='stylesheet' href=`${ADDR_PREFIX}/static/assets/styles.css`)
+    script!= `const locale = JSON.parse('${JSON.stringify(locale)}');`
+    script.
+      function T(str) {
+        return locale[str] ?? str;
+      }
   body
     nav.navbar
       script.

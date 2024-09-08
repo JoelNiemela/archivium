@@ -42,6 +42,7 @@ function contextData(req) {
     contextUser,
     ADDR_PREFIX,
     perms,
+    locale: locale[lang],
     T,
   };
 }

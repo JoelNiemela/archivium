@@ -167,20 +167,22 @@ function addTab(type, name, force=false) {
       ] }),
     ] }),
     type === 'gallery' && createElement('div', { children: [
-      createElement('div', { classList: ['item-gallery', 'd-flex', 'gap-4'], children: [
-        ...(obj_data.gallery.imgs ?? []).map(({ url, label }, i) => (
-          createElement('div', { classList: ['d-flex'], attrs: { style: 'height: 8rem;' }, children: [
-            createElement('button', { attrs: {
-              type: 'button',
-              innerText: T('Remove Image'),
-              onclick: () => {
-                const newState = { ...obj_data };
-                delete newState.gallery.imgs[i];
-                updateObjData(newState);
-                resetTabs(name);
-              },
-            } }),
-            createElement('img', { attrs: { src: url, alt: label, style: { height: '2rem' } } }),
+      createElement('div', { classList: ['item-gallery', 'd-flex', 'gap-4', 'flex-wrap'], children: [
+        ...(obj_data.gallery.imgs ?? []).map(({ url, label }, i) => (       
+          createElement('div', { classList: [], children: [
+            createElement('div', { classList: ['d-flex'], attrs: { style: 'height: 8rem;' }, children: [
+              createElement('button', { attrs: {
+                type: 'button',
+                innerText: T('Remove Image'),
+                onclick: () => {
+                  const newState = { ...obj_data };
+                  delete newState.gallery.imgs[i];
+                  updateObjData(newState);
+                  resetTabs(name);
+                },
+              } }),
+              createElement('img', { attrs: { src: url, alt: label, style: { height: '2rem' } } }),
+            ] }),
             label && createElement('span', { attrs: { innerText: label } }),
           ] })
         )),

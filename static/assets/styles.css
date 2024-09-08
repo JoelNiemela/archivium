@@ -436,6 +436,10 @@ button:active {
   flex-direction: column;
 }
 
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
 .gap-1 {
   gap: 0.25rem;
 }

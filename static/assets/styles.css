@@ -62,7 +62,12 @@ body {
 }
 
 .navbarBtnLink {
+  /* border-radius: 0.5rem; */
   text-decoration: none;
+}
+
+.navbarBtnLink:hover, .navbarBtn.selected .navbarBtnLink {
+  background-color: #ddd;
 }
 
 .navbarText {
@@ -70,10 +75,6 @@ body {
   color: #666;
   text-align: center;
   padding: 0.875rem 1rem;
-}
-
-.navbarBtnLink:hover {
-  background-color: #ddd;
 }
 
 .cardContainer {

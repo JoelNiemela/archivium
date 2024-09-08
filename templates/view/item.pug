@@ -48,7 +48,6 @@ block content
               +mdText(val)
 
     if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
-        h3 #{T('Lineage')} 
         .itemTab.hidden( data-tab='lineage' )
           each title, shortname in item.parents
             .itemKey
@@ -64,7 +63,6 @@ block content
                 | #{item.child_titles[shortname]}
 
     if 'gallery' in item.obj_data && 'title' in item.obj_data.gallery
-        h3 #{T('Gallery')}
         .itemTab.hidden.gallery( data-tab='gallery' )
           each img in item.obj_data.gallery.imgs || []
             .itemKey
@@ -80,7 +78,9 @@ block content
   script.
     function showTab(tab) {
       document.querySelectorAll('.tabs [data-tab]').forEach(tab => tab.classList.add('hidden'));
+      document.querySelectorAll('.navbarBtn[data-tab]').forEach(btn => btn.classList.remove('selected'));
       document.querySelector(`.tabs [data-tab=${tab}]`)?.classList.remove('hidden');
+      document.querySelector(`.navbarBtn[data-tab=${tab}]`)?.classList.add('selected');
       const query = new URLSearchParams(window.location.search);
       query.set('tab', tab);
       const newurl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?${query.toString()}`;

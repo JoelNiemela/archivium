@@ -187,17 +187,17 @@ body {
 .gallery .itemKey {
   display: flex;
   flex-direction: column;
+  padding: 0;
 }
 
 .gallery img {
   border: 3px inset silver;
   border-radius: 0.25rem;
-  margin: -1rem;
+  object-fit: contain;
 }
 
 .gallery .label {
-  margin-top: 1.5rem;
-  margin-bottom: -0.5rem;
+  padding: 0.5rem;
 }
 
 table td {

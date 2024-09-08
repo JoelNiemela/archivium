@@ -165,7 +165,13 @@ module.exports = function(app) {
     if ('tabs' in item.obj_data) {
       for (const tab in item.obj_data.tabs) {
         for (const key in item.obj_data.tabs[tab]) {
-          item.obj_data.tabs[tab][key] = await parseMarkdown(item.obj_data.tabs[tab][key]).evaluate(req.params.universeShortname);
+          item.obj_data.tabs[tab][key] = await parseMarkdown(item.obj_data.tabs[tab][key]).evaluate(
+            req.params.universeShortname,
+            (tag) => {
+              if (tag.type === 'div') tag.attrs.style = {'text-align': 'right'};
+              if (tag.type === 'p') tag.type = 'span';
+            },
+          );
         }
       }
     }

@@ -40,7 +40,7 @@ class MarkdownNode {
     return `${this.content ?? ''}${this.children.map(child => child.innerText()).join('')}`;
   }
 
-  async evaluate(currentUniverse) {
+  async evaluate(currentUniverse, transform) {
     const classList = this.attrs?.class?.split(' ') ?? [];
     if (this.type === 'a') {
       classList.push('link');
@@ -66,7 +66,8 @@ class MarkdownNode {
       }
     }
     this.attrs.class = classList.join(' ');
-    return [this.type, this.content, await Promise.all(this.children.map(tag => tag.evaluate(currentUniverse))), this.attrs];
+    if (transform) transform(this);
+    return [this.type, this.content, await Promise.all(this.children.map(tag => tag.evaluate(currentUniverse, transform))), this.attrs];
   }
 }
 

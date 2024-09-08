@@ -175,7 +175,7 @@ body {
 }
 
 .itemKey {
-  width: 350px;
+  min-width: 8rem;
   padding: 1rem;
   margin: 0.25rem;
   background-color: white;

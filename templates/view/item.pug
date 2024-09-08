@@ -19,21 +19,34 @@ block content
           | ##{tag} 
   hr
 
-  if 'tabs' in item.obj_data
-    .page
+  //- Tab buttons
+  ul.navbarBtns#tabBtns
+    if parsedBody
+      li.navbarBtn#bodyBtn( data-tab='_body' )
+        h3.navbarBtnLink.navbarText( onclick=`showTab('_body')` ) Main Text
+    if 'tabs' in item.obj_data
       each tab, name in item.obj_data.tabs
-        h3 #{name}
-        .itemTab
+        li.navbarBtn( data-tab=name )
+          h3.navbarBtnLink.navbarText( onclick=`showTab('${name}')` ) #{name}
+    if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
+      li.navbarBtn( data-tab='_lineage' )
+          h3.navbarBtnLink.navbarText( onclick=`showTab('_lineage')` ) Lineage
+
+
+
+  .tabs
+    if 'tabs' in item.obj_data
+      each tab, name in item.obj_data.tabs
+        .itemTab.hidden( data-tab=name )
           each val, key in tab
             .itemKey
               span #{key}
               hr
               +mdText(val)
 
-  if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
-    .tabs
+    if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
         h3 Lineage 
-        .itemTab
+        .itemTab.hidden( data-tab='_lineage' )
           each title, shortname in item.parents
             .itemKey
               span #{title[0] || T('Parent')}
@@ -47,6 +60,21 @@ block content
               a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${shortname}` )
                 | #{item.child_titles[shortname]}
 
-  if parsedBody
-    .sheet
-      +mdText(parsedBody)
+    if parsedBody
+      .sheet.hidden( data-tab='_body' )
+        +mdText(parsedBody)
+
+  script.
+    function showTab(tab) {
+      document.querySelectorAll('.tabs [data-tab]').forEach(tab => tab.classList.add('hidden'));
+      document.querySelector(`.tabs [data-tab=${tab}]`).classList.remove('hidden');
+    }
+
+    const tabs = document.getElementById('tabBtns');
+    if (tabs.children.length > 0) {
+      showTab(tabs.children[0].dataset.tab)
+    }
+
+    if (tabs.children.length < 2) {
+      tabs.remove();
+    }

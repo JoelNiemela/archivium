@@ -177,7 +177,7 @@ module.exports = function(app) {
       }
     }
     if ('gallery' in item.obj_data) {
-      item.obj_data.gallery.imgs = await Promise.all((item.obj_data.gallery.imgs ?? []).map(
+      item.obj_data.gallery.imgs = await Promise.all((item.obj_data.gallery.imgs ?? []).filter(img => img).map(
         async ({ url, label }) => ({ url, label: label && await parseMarkdown(label).evaluate(
           req.params.universeShortname,
           null,

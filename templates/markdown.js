@@ -95,6 +95,7 @@ class CtxLookup {
 
   default(def) {
     this.def = def;
+    return this;
   }
 
   getValue(ctx) {
@@ -106,7 +107,7 @@ class CtxLookup {
         break;
       }
     }
-    return value;
+    return value ?? this.def;
   }
 }
 
@@ -139,15 +140,16 @@ function inlineCmds(cmd, args) {
   } else if (cmd === 'tab') {
     return [new MarkdownNode('ctx', `%`, { lookups: [new CtxLookup('item', 'obj_data', 'tabs', ...args)] })];
   } else if (cmd === 'img') {
-    const [src, alt] = args;
-    return [new MarkdownNode(
-      'img', '', {
-        ctx: {
-          src: isNaN(Number(src)) ? src : new CtxLookup('item', 'obj_data', 'gallery', 'imgs', src, 'url'),
-          alt: isNaN(Number(src)) ? alt : new CtxLookup('item', 'obj_data', 'gallery', 'imgs', src, 'label').default(alt),
-        },
-      }
-    )];
+    const [src, alt, height, width] = args;
+    const attrs = {
+      ctx: {
+        src: isNaN(Number(src)) ? src : new CtxLookup('item', 'obj_data', 'gallery', 'imgs', src, 'url'),
+        alt: alt || new CtxLookup('item', 'obj_data', 'gallery', 'imgs', src, 'label').default(alt),
+      },
+    };
+    if (height) attrs.height = height;
+    if (width) attrs.width = width;
+    return [new MarkdownNode('img', '', attrs)];
   }
 
   return null;
@@ -238,7 +240,7 @@ function parseInline(line) {
         chunk += line.next();
       }
       line.next();
-      const [cmd, ...args] = chunk.split(' ');
+      const [cmd, ...args] = splitIgnoringQuotes(chunk);
       const cmdNodes = inlineCmds(cmd, args);
       if (cmdNodes) cmdNodes.forEach(node => nodes.push(node));
       chunk = '';
@@ -249,6 +251,12 @@ function parseInline(line) {
   if (chunk) nodes.push(new MarkdownNode('text', chunk));
 
   return nodes;
+}
+
+function splitIgnoringQuotes(str) {
+  const regex = /(?:[^\s"']+|"[^"]*"|'[^']*')+/g;
+  const matches = str.match(regex);
+  return matches ? matches.map(match => match.replace(/^["']|["']$/g, '')) : [];
 }
 
 function parseMarkdown(text) {
@@ -303,7 +311,7 @@ function parseMarkdown(text) {
       }
     } else if (trimmedLine[0] === '@') {
       const lineEnd = trimmedLine.length - (trimmedLine[trimmedLine.length - 1] === '@' ? 1 : 0)
-      const [cmd, ...args] = trimmedLine.substring(1, lineEnd).split(' ');
+      const [cmd, ...args] = splitIgnoringQuotes(trimmedLine.substring(1, lineEnd));
       console.log(cmd, args)
       if (cmd === 'toc') {
         toc = root.addChild(new MarkdownNode('div', '', { id: 'toc' }));

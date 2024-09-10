@@ -17,17 +17,6 @@ block content
       label( for='tags' ) Tags: 
       textarea( id='tags' name='tags' ) #{(item.tags || []).join(' ')}
 
-    div#body.editor( data-replicated-value=item.obj_data.body || '' )
-      if 'body' in item.obj_data
-        textarea( oninput="this.parentNode.dataset.replicatedValue = this.value" )
-          | #{item.obj_data.body || ''}
-        script.
-          window.onload = () => {
-            bindDataValue('#body textarea', (body) => updateObjData({ body }));
-          };
-      else
-        button( type='button' onclick='createBody()' ) Add Body Text
-
     div#tabs
       div
         script.
@@ -54,6 +43,17 @@ block content
         input( id='new_tab' type='text' placeholder='Tab Name' ).hidden
       div.tabs-buttons
       div.tabs-content
+
+    div#body.editor( data-replicated-value=item.obj_data.body || '' )
+      if 'body' in item.obj_data
+        textarea( oninput="this.parentNode.dataset.replicatedValue = this.value" )
+          | #{item.obj_data.body || ''}
+        script.
+          window.onload = () => {
+            bindDataValue('#body textarea', (body) => updateObjData({ body }));
+          };
+      else
+        button( type='button' onclick='createBody()' ) Add Body Text
       
     div
       input( id='obj_data' type='hidden' name='obj_data' value='{}' )

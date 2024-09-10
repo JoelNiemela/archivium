@@ -69,18 +69,44 @@ class MarkdownNode {
     if (transform) transform(this);
     if (this.type === 'ctx') {
       for (const lookup of this.attrs.lookups) {
-        let value = ctx;
-        for (const key of lookup) {
-          if (value && key in value) value = value[key];
-          else {
-            value = `${lookup.join('.')}: not found.`;
-            break;
-          }
-        }
+        const value = lookup.getValue(ctx);
         this.content = this.content.replace('%', value);
       }
     }
+    if (this.attrs.ctx) {
+      for (const attr in this.attrs.ctx) {
+        let value = this.attrs.ctx[attr];
+        if (value instanceof CtxLookup) {
+          value = value.getValue(ctx);
+        }
+        this.attrs[attr] = value;
+      }
+      delete this.attrs.ctx;
+    }
     return [this.type, this.content, await Promise.all(this.children.map(tag => tag.evaluate(currentUniverse, ctx, transform))), this.attrs];
+  }
+}
+
+class CtxLookup {
+  constructor(...lookup) {
+    this.lookup = lookup;
+    this.def;
+  }
+
+  default(def) {
+    this.def = def;
+  }
+
+  getValue(ctx) {
+    let value = ctx;
+    for (const key of this.lookup) {
+      if (value && (key in value || (value instanceof Array && Number(key) < value.length))) value = value[key];
+      else {
+        value = this.def ?? `${this.lookup.join('.')}: not found.`;
+        break;
+      }
+    }
+    return value;
   }
 }
 
@@ -108,8 +134,20 @@ class Line {
 }
 
 function inlineCmds(cmd, args) {
-  if (cmd === 'tab') {
-    return [new MarkdownNode('ctx', `%`, { lookups: [['item', 'obj_data', 'tabs', ...args]] })];
+  if (cmd === 'data') {
+    return [new MarkdownNode('ctx', `%`, { lookups: [new CtxLookup('item', 'obj_data', ...args)] })];
+  } else if (cmd === 'tab') {
+    return [new MarkdownNode('ctx', `%`, { lookups: [new CtxLookup('item', 'obj_data', 'tabs', ...args)] })];
+  } else if (cmd === 'img') {
+    const [src, alt] = args;
+    return [new MarkdownNode(
+      'img', '', {
+        ctx: {
+          src: isNaN(Number(src)) ? src : new CtxLookup('item', 'obj_data', 'gallery', 'imgs', src, 'url'),
+          alt: isNaN(Number(src)) ? alt : new CtxLookup('item', 'obj_data', 'gallery', 'imgs', src, 'label').default(alt),
+        },
+      }
+    )];
   }
 
   return null;
@@ -264,7 +302,8 @@ function parseMarkdown(text) {
         curListNode.lastChild().addChild(tocLink);
       }
     } else if (trimmedLine[0] === '@') {
-      const [cmd, ...args] = trimmedLine.substring(1).split(' ');
+      const lineEnd = trimmedLine.length - (trimmedLine[trimmedLine.length - 1] === '@' ? 1 : 0)
+      const [cmd, ...args] = trimmedLine.substring(1, lineEnd).split(' ');
       console.log(cmd, args)
       if (cmd === 'toc') {
         toc = root.addChild(new MarkdownNode('div', '', { id: 'toc' }));
@@ -277,6 +316,11 @@ function parseMarkdown(text) {
         const box = new MarkdownNode('aside', '');
         root.spliceChildren(asideStart, 0, box);
         box.addChildren(boxNodes);
+      } else {
+        const cmdNodes = inlineCmds(cmd, args);
+        if (cmdNodes) {
+          root.addChildren(cmdNodes);
+        }
       }
     } else if (trimmedLine[0] === '-' && trimmedLine[1] === ' ') {
       const indent = (line.length - trimmedLine.length) / 2;

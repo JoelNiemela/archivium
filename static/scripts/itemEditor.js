@@ -101,8 +101,6 @@ function addTab(type, name, force=false) {
             } }),
             obj_data.lineage.parents[shortname][0]
               && createElement('span', { attrs: { innerText: obj_data.lineage.parents[shortname][0] } }),
-            obj_data.lineage.parents[shortname][1]
-              && createElement('span', { attrs: { innerText: obj_data.lineage.parents[shortname][1] } }),
           ] })
         )),
       ] }),
@@ -122,8 +120,6 @@ function addTab(type, name, force=false) {
             } }),
             obj_data.lineage.children[shortname][0]
               && createElement('span', { attrs: { innerText: obj_data.lineage.children[shortname][0] } }),
-            obj_data.lineage.children[shortname][1]
-              && createElement('span', { attrs: { innerText: obj_data.lineage.children[shortname][1] } }),
           ] })
         )),
       ] }),
@@ -133,7 +129,7 @@ function addTab(type, name, force=false) {
           innerText: 'Add New Parent',
           onclick: () => {
             const val = getIdValue('new_parent');
-            const data = [getIdValue('new_parent_self_data') || null, getIdValue('new_parent_other_data') || null];
+            const data = [getIdValue('new_parent_other_data') || null, getIdValue('new_parent_self_data') || null];
             if (!val) return;
             const newState = { ...obj_data };
             if (!('parents' in newState.lineage)) newState.lineage.parents = {};
@@ -143,8 +139,8 @@ function addTab(type, name, force=false) {
           },
         } }),
         createSearchableSelect('new_parent', itemMap),
-        createElement('input', { attrs: { id: 'new_parent_self_data' } }),
-        createElement('input', { attrs: { id: 'new_parent_other_data' } }),
+        createElement('input', { attrs: { id: 'new_parent_self_data', placeholder: T('Child Title') } }),
+        createElement('input', { attrs: { id: 'new_parent_other_data', placeholder: T('Parent Title') } }),
       ] }),
       createElement('div', { children: [
         createElement('button', { attrs: {
@@ -152,7 +148,7 @@ function addTab(type, name, force=false) {
           innerText: 'Add New Child',
           onclick: () => {
             const val = getIdValue('new_child');
-            const data = [getIdValue('new_child_self_data') || null, getIdValue('new_child_other_data') || null];
+            const data = [getIdValue('new_child_other_data') || null, getIdValue('new_child_self_data') || null];
             if (!val) return;
             const newState = { ...obj_data };
             if (!('children' in newState.lineage)) newState.lineage.children = {};
@@ -162,8 +158,8 @@ function addTab(type, name, force=false) {
           },
         } }),
         createSearchableSelect('new_child', itemMap),
-        createElement('input', { attrs: { id: 'new_child_self_data' } }),
-        createElement('input', { attrs: { id: 'new_child_other_data' } }),
+        createElement('input', { attrs: { id: 'new_child_self_data', placeholder: T('Parent Title') } }),
+        createElement('input', { attrs: { id: 'new_child_other_data', placeholder: T('Child Title') } }),
       ] }),
     ] }),
     type === 'gallery' && createElement('div', { children: [

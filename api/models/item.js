@@ -58,6 +58,7 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
         item.item_type,
         item.created_at,
         item.updated_at,
+        item.universe_id,
         user.username as author,
         universe.title as universe,
         ${selectString}
@@ -87,7 +88,7 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
   }
 }
 
-async function getByUniverseId(user, universeId, permissionsRequired=perms.READ) {
+async function getByUniverseId(user, universeId, permissionsRequired, basicOnly, options) {
 
   const conditions = { 
     strings: [
@@ -97,7 +98,7 @@ async function getByUniverseId(user, universeId, permissionsRequired=perms.READ)
     ]
   };
 
-  const [errCode, items] = await getMany(user, conditions, permissionsRequired);
+  const [errCode, items] = await getMany(user, conditions, permissionsRequired, basicOnly, options);
   if (!items) return [errCode];
   return [200, items];
 }

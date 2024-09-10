@@ -195,7 +195,7 @@ module.exports = function(app) {
   });
   get('/universes/:universeShortname/items/:itemShortname/edit', async (req, res) => {
     const [code1, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
-    const [code2, itemList] = await api.item.getByUniverseId(req.session.user, item.universe_id);
+    const [code2, itemList] = await api.item.getByUniverseId(req.session.user, item.universe_id, perms.READ, true, { type: 'character' });
     const code = code1 !== 200 ? code1 : code2;
     res.status(code);
     if (code !== 200) return;
@@ -245,7 +245,7 @@ module.exports = function(app) {
         if (!parent) return res.status(400);
         newParents[shortname] = true;
         if (!(shortname in item.parents)) {
-          [code,] = await api.item.putLineage(parent.id, item.id, ...lineage.parents[shortname].reverse());
+          [code,] = await api.item.putLineage(parent.id, item.id, ...lineage.parents[shortname]);
         }
       }
       for (const shortname in lineage.children ?? {}) {
@@ -253,7 +253,7 @@ module.exports = function(app) {
         if (!child) return res.status(400);
         newChildren[shortname] = true;
         if (!(shortname in item.children)) {
-          [code, ] = await api.item.putLineage(item.id, child.id, ...lineage.children[shortname]);
+          [code, ] = await api.item.putLineage(item.id, child.id, ...lineage.children[shortname].reverse());
         }
       }
       for (const shortname in item.parents) {

@@ -87,11 +87,12 @@ const templates = {
 };
 
 function render(req, template, context = {}) {
-  if (template in templates) return templates[template]({ ...context, ...contextData(req) });
+  if (template in templates) return templates[template]({ ...context, ...contextData(req), curTemplate: template });
   else return templates.error({
     code: 404,
     hint: `Template ${template} not found.`,
     ...contextData(req),
+    curTemplate: template,
   });
 }
 

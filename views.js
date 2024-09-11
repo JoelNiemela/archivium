@@ -178,17 +178,24 @@ module.exports = function(app) {
     }
     if ('gallery' in item.obj_data) {
       item.obj_data.gallery.imgs = await Promise.all((item.obj_data.gallery.imgs ?? []).filter(img => img).map(
-        async ({ url, label }) => ({ url, label: label && await parseMarkdown(label).evaluate(
-          req.params.universeShortname,
-          null,
-          (tag) => {
-            if (tag.type === 'div') {
-              tag.attrs.style = {'text-align': 'center'};
-              tag.attrs.class += ' label';
-            }
-            if (tag.type === 'p') tag.type = 'span';
-          },
-        ) })
+        async ({ url, label }) => {
+          const parsedLabel = label && parseMarkdown(label);
+          return { 
+            url, 
+            label: parsedLabel && parsedLabel.innerText(),
+            mdLabel: parsedLabel && await parsedLabel.evaluate(
+              req.params.universeShortname,
+              null,
+              (tag) => {
+                if (tag.type === 'div') {
+                  tag.attrs.style = {'text-align': 'center'};
+                  tag.attrs.class += ' label';
+                }
+                if (tag.type === 'p') tag.type = 'span';
+              },
+            ),
+          }
+        }
       ));
     }
     res.prepareRender('item', { item, universe, parsedBody, tab: req.query.tab });

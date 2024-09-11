@@ -321,7 +321,6 @@ function parseMarkdown(text) {
     } else if (trimmedLine[0] === '@') {
       const lineEnd = trimmedLine.length - (trimmedLine[trimmedLine.length - 1] === '@' ? 1 : 0)
       const [cmd, ...args] = splitIgnoringQuotes(trimmedLine.substring(1, lineEnd));
-      console.log(cmd, args)
       if (cmd === 'toc') {
         toc = root.addChild(new MarkdownNode('div', '', { id: 'toc' }));
         toc.addChild(new MarkdownNode('h3', 'Table of Contents'));

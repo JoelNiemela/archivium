@@ -52,8 +52,8 @@ block content
           each img in item.obj_data.gallery.imgs || []
             .itemKey
               img( src=img.url, alt=img.label )
-              if img.label
-                +mdText(img.label)
+              if img.mdLabel
+                +mdText(img.mdLabel)
 
     if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
         .itemTab.hidden( data-tab='lineage' )

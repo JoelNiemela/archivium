@@ -95,3 +95,29 @@ block content
     if (tabs.children.length < 2) {
       tabs.remove();
     }
+
+  script.
+    (function() {
+      const galleryModalState = {}
+      const galleryItems = document.querySelectorAll('.gallery .itemKey');
+      galleryItems.forEach((itemKey, i) => {
+        galleryModalState[i] = false;
+        const img = itemKey.querySelector('img');
+
+        img.onclick = (e) => {
+          e.stopPropagation();
+          if (!galleryModalState[i]) {
+            itemKey.classList.add('modal');
+            console.log(itemKey)
+            galleryModalState[i] = true;
+          }
+        };
+
+        itemKey.onclick = () => {
+          if (galleryModalState[i]) {
+            itemKey.classList.remove('modal');
+            galleryModalState[i] = false;
+          }
+        };
+      });
+    })();

@@ -93,6 +93,10 @@ module.exports.verifySessionOrRedirect = async (req, res, next) => {
     await refreshSession(user);
     next();
   } else {
-    res.redirect(`${ADDR_PREFIX}/login`);
+    const searchQueries = new URLSearchParams(req.query);
+    const pageQuery = new URLSearchParams();
+    pageQuery.append('page', req.path)
+    if (searchQueries.toString()) pageQuery.append('search', searchQueries.toString())
+    res.redirect(`${ADDR_PREFIX}/login?${pageQuery.toString()}`);
   }
 }

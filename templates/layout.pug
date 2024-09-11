@@ -53,9 +53,9 @@ html(lang='en')
       else
         ul.navbarBtns
           li.navbarBtn
-            a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/login`) Login
+            a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/login?${encodedPath}`) Login
           li.navbarBtn
-            a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/signup`) Sign Up
+            a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/signup?${encodedPath}`) Sign Up
 
 
     .page

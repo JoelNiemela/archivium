@@ -2,7 +2,7 @@ extends layout.pug
 
 block content
   h2 Login
-  form( action=`${ADDR_PREFIX}/login`, method='post' )
+  form( method='post' )
     div.inputGroup
       label( for='username' ) Username: 
       input( id='username' type='text' name='username' )

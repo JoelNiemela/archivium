@@ -38,9 +38,15 @@ function contextData(req) {
     return locale[lang][str] ?? str;
   }
 
+  const searchQueries = new URLSearchParams(req.query);
+  const pageQuery = new URLSearchParams();
+  pageQuery.append('page', req.path)
+  if (searchQueries.toString()) pageQuery.append('search', searchQueries.toString())
+
   return {
     contextUser,
     ADDR_PREFIX,
+    encodedPath: pageQuery.toString(),
     perms,
     locale: locale[lang],
     T,
@@ -85,7 +91,7 @@ function render(req, template, context = {}) {
   else return templates.error({
     code: 404,
     hint: `Template ${template} not found.`,
-    ...contextData(req)
+    ...contextData(req),
   });
 }
 

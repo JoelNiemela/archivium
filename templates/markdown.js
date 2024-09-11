@@ -11,6 +11,17 @@ class MarkdownNode {
     this.parent = null;
   }
 
+  addClass(cls) {
+    const classList = this.attrs?.class?.split(' ') ?? [];
+    classList.push(cls);
+    const dups = {};
+    this.attrs.class = classList.filter(c => {
+      const isDup = dups[c];
+      dups[c] = true;
+      return !isDup;
+    }).join(' ');
+  }
+
   addChild(node) {
     this.children.push(node);
     node.parent = this;
@@ -41,10 +52,9 @@ class MarkdownNode {
   }
 
   async evaluate(currentUniverse, ctx, transform) {
-    const classList = this.attrs?.class?.split(' ') ?? [];
     if (this.type === 'a') {
-      classList.push('link');
-      classList.push('link-animated');
+      this.addClass('link');
+      this.addClass('link-animated');
     }
     if (this.type === 'p' && this.children.length === 1 && this.children[0].type === 'img') {
       return this.children[0].evaluate();
@@ -61,11 +71,10 @@ class MarkdownNode {
         this.attrs['data-universe'] = universe;
         this.attrs['data-item'] = item;
         if (!(await api.item.exists(universe, item))) {
-          classList.push('link-broken');
+          this.addClass('link-broken');
         }
       }
     }
-    this.attrs.class = classList.join(' ');
     if (transform) transform(this);
     if (this.type === 'ctx') {
       for (const lookup of this.attrs.lookups) {
@@ -333,6 +342,12 @@ function parseMarkdown(text) {
     } else if (trimmedLine[0] === '-' && trimmedLine[1] === ' ') {
       const indent = (line.length - trimmedLine.length) / 2;
       const [lastListNode, lastIndent] = curList;
+      if (lastIndent === -1 && curParagraph.hasChildren()) {
+        curParagraph.type = 'span';
+        curParagraph.addClass('list-label');
+        root.addChild(curParagraph);
+        curParagraph = new MarkdownNode('p');
+      }
       if (indent > lastIndent) {
         const lastListItem = lastListNode ? (lastListNode.lastChild() ?? lastListNode.addChild(new MarkdownNode('li'))) : null;
         const newListNode = (lastListItem ?? root).addChild(new MarkdownNode('ul'));

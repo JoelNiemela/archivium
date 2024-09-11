@@ -368,6 +368,12 @@ button:active {
   flex-direction: column;
 }
 
+@media only screen and (max-device-width: 480px) {
+  .markdown aside {
+    width: 50%;
+  }
+}
+
 .markdown aside>img {
   width: 100%;
   border-radius: 0.875rem;

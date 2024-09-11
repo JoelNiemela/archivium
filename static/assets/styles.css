@@ -182,12 +182,30 @@ body {
 
 .itemKey {
   min-width: 8rem;
-  max-width: calc(50% - 0.5rem);
+  max-width: calc(25% - 0.5rem);
   padding: 1rem;
   margin: 0.25rem;
   background-color: white;
   border: 0.0625rem solid #e3e3e3;
   border-radius: 0.25rem;
+}
+
+@media only screen and (max-width: 1300px) {
+  .itemKey {
+    max-width: calc(33.333% - 0.5rem);
+  }
+}
+
+@media only screen and (max-width: 1080px) {
+  .itemKey {
+    max-width: calc(50% - 0.5rem);
+  }
+}
+
+@media only screen and (max-width: 512px) {
+  .itemKey {
+    max-width: 100%;
+  }
 }
 
 .gallery .itemKey {

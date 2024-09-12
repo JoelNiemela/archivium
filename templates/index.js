@@ -38,9 +38,15 @@ function contextData(req) {
     return locale[lang][str] ?? str;
   }
 
+  const searchQueries = new URLSearchParams(req.query);
+  const pageQuery = new URLSearchParams();
+  pageQuery.append('page', req.path)
+  if (searchQueries.toString()) pageQuery.append('search', searchQueries.toString())
+
   return {
     contextUser,
     ADDR_PREFIX,
+    encodedPath: pageQuery.toString(),
     perms,
     locale: locale[lang],
     T,
@@ -81,11 +87,12 @@ const templates = {
 };
 
 function render(req, template, context = {}) {
-  if (template in templates) return templates[template]({ ...context, ...contextData(req) });
+  if (template in templates) return templates[template]({ ...context, ...contextData(req), curTemplate: template });
   else return templates.error({
     code: 404,
     hint: `Template ${template} not found.`,
-    ...contextData(req)
+    ...contextData(req),
+    curTemplate: template,
   });
 }
 

@@ -79,7 +79,7 @@ app.post(`${ADDR_PREFIX}/login`, async (req, res) => {
         // // Atypical use of user.put, normally the first argument should be req.session.user.id
         // await api.user.put(user.id, user.id, { updated_at: new Date() });
         res.status(200);
-        return res.redirect(`${ADDR_PREFIX}/`);
+        return res.redirect(`${ADDR_PREFIX}${req.query.page || '/'}${req.query.search ? `?${req.query.search}` : ''}`);
       } else {
         res.status(401);
         return res.end(render(req, 'login', { error: 'Username or password incorrect.' }));
@@ -100,7 +100,7 @@ app.post(`${ADDR_PREFIX}/signup`, async (req, res) => {
     try {
       await api.session.put({ id: req.session.id }, { user_id: data.insertId });
       res.status(201);
-      return res.redirect(`${ADDR_PREFIX}/`);
+      return res.redirect(`${ADDR_PREFIX}${req.query.page || '/'}${req.query.search ? `?${req.query.search}` : ''}`);
     } catch (err) {
       console.error(err);
       return res.sendStatus(500);

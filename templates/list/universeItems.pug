@@ -10,6 +10,10 @@ block breadcrumbs
   span #{T('Items')}
 
 block content
+  script
+    include /static/scripts/cardUtils.js
+    include /static/scripts/listUtils.js
+
   script.
     window.addEventListener('load', () => {
       document.querySelectorAll('table').forEach((table) => {
@@ -25,28 +29,6 @@ block content
       });
     });
 
-    function filterByTag(tag) {
-      const url = new URL(window.location);
-      if (url.searchParams.has('tag') && url.searchParams.get('tag') === tag) {
-        url.searchParams.delete('tag');
-      } else {
-        url.searchParams.set('tag', tag);
-      }
-      history.pushState(null, '', url);
-      location.reload();
-    }
-
-    function filterByType(type) {
-      const url = new URL(window.location);
-      if (url.searchParams.has('type') && url.searchParams.get('type') === type) {
-        url.searchParams.delete('type');
-      } else {
-        url.searchParams.set('type', type);
-      }
-      history.pushState(null, '', url);
-      location.reload();
-    }
-
   h1.center 
     if type
       | #{capitalize(T(`${type}-pl`))} 
@@ -56,13 +38,17 @@ block content
   hr
   .card-list
     each item in items
-      .card.sheet.gap-4.align-start
+      .card.sheet.gap-4.align-start( onclick=`goTo('${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}')` )
         .d-flex.flex-col.grow-1
           h3.ma-0
             a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}` ) #{item.title}
           .d-flex.gap-1
-            a.link.link-animated( class={ 'link-selected': item.item_type == type } onclick=`filterByType('${item.item_type}')` title='Filter by type' )
-              | #{capitalize(item.item_type)}
+            a.filter.link.link-animated(
+              class={ 'link-selected': item.item_type == type }
+              data-filter-key='type'
+              data-filter-value=item.item_type
+              title='Filter by type'
+            ) #{capitalize(item.item_type)}
 
         .d-flex.flex-col.grow-3
             span 
@@ -78,4 +64,4 @@ block content
         .d-flex.flex-wrap.gap-1.grow-4
           if item.tags
             each itemTag in item.tags
-              a.link.link-animated( class={ 'link-selected': itemTag == tag } onclick=`filterByTag('${itemTag}')` ) ##{itemTag} 
+              a.filter.link.link-animated( class={ 'link-selected': itemTag == tag } data-filter-key='tag' data-filter-value=itemTag ) ##{itemTag} 

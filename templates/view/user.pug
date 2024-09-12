@@ -2,6 +2,8 @@ extends ../layout.pug
 include ../mixins.pug
 
 block breadcrumbs
+  a.link.link-animated( href=`${ADDR_PREFIX}` ) #{T('Home')}
+  |  / 
   a.link.link-animated( href=`${ADDR_PREFIX}/users` ) #{T('Users')}
   |  / 
   span #{user.username}

@@ -14,27 +14,24 @@ block content
     include /static/scripts/cardUtils.js
     include /static/scripts/listUtils.js
 
-  script.
-    window.addEventListener('load', () => {
-      document.querySelectorAll('table').forEach((table) => {
-        table.querySelectorAll('th[data-sort]').forEach((th, i) => {
-          th.onclick = () => {
-            const url = new URL(window.location);
-            url.searchParams.set('sort', th.dataset.sort);
-            url.searchParams.set('sort_order', url.searchParams.get('sort_order') == 'asc' ? 'desc' : 'asc');
-            history.pushState(null, '', url);
-            location.reload();
-          }
-        });
-      });
-    });
-
   h1.center 
     if type
       | #{capitalize(T(`${type}-pl`))} 
     else
       | Items 
     | of #{universe.title}
+  div
+    label( for='sort' )
+      b #{T('Sort by')}: 
+    select( id='sort' name='sort' )
+      option( value='created_at' ) Created
+      option( value='updated_at' ) Updated
+      option( value='item_type' ) Type
+      option( value='title' ) Title
+      option( value='author' ) Author
+    select( id='sort_order' name='sort_order' )
+      option( value='asc' ) Ascending
+      option( value='desc' ) Descending
   hr
   .card-list
     each item in items

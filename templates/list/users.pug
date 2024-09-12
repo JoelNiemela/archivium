@@ -7,15 +7,16 @@ block breadcrumbs
 block content
   h1.center Users
   hr
-  table
-    thead
-      th Name
-      th Joined
-      th Last seen
-    tbody
-      each user in users
-        tr
-          td
+  .card-list
+    each user in users
+      .card.sheet.gap-4.align-start
+        img.userIcon( alt=user.username, src=user.gravatarLink )
+        .d-flex.flex-col.grow-1
+          h2.ma-0
             a.link.link-animated( href=`${ADDR_PREFIX}/users/${user.username}` ) #{user.username}
-          td #{formatDate(user.created_at)}
-          td #{formatDate(user.updated_at)}
+          span
+            b #{T('Joined')}: 
+            | #{formatDate(user.created_at)}
+          span 
+            b #{T('Last seen')}: 
+            | #{formatDate(user.updated_at)}

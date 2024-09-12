@@ -29,17 +29,17 @@ async function getOne(options, includeAuth=false) {
  * @param {*} options
  * @returns {Promise<[status, data]>}
  */
-async function getMany(options) {
+async function getMany(options, includeEmail=false) {
   try {
     const parsedOptions = parseData(options);
     let queryString;
     if (options) queryString = `
       SELECT 
-        id, username, created_at, updated_at
+        id, username, created_at, updated_at ${includeEmail ? ', email' : ''}
       FROM user 
       WHERE ${parsedOptions.strings.join(' AND ')};
     `;
-    else queryString = 'SELECT id, username, created_at, updated_at FROM user;';
+    else queryString = `SELECT id, username, created_at, updated_at ${includeEmail ? ', email' : ''} FROM user;`;
     const users = await executeQuery(queryString, parsedOptions.values);
     return [200, users];
   } catch (err) {

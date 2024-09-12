@@ -182,25 +182,32 @@ module.exports = function(app) {
       }
     }
     if ('gallery' in item.obj_data) {
-      item.obj_data.gallery.imgs = await Promise.all((item.obj_data.gallery.imgs ?? []).map(
-        async ({ url, label }) => ({ url, label: label && await parseMarkdown(label).evaluate(
-          req.params.universeShortname,
-          null,
-          (tag) => {
-            if (tag.type === 'div') {
-              tag.attrs.style = {'text-align': 'center'};
-              tag.attrs.class += ' label';
-            }
-            if (tag.type === 'p') tag.type = 'span';
-          },
-        ) })
+      item.obj_data.gallery.imgs = await Promise.all((item.obj_data.gallery.imgs ?? []).filter(img => img).map(
+        async ({ url, label }) => {
+          const parsedLabel = label && parseMarkdown(label);
+          return { 
+            url, 
+            label: parsedLabel && parsedLabel.innerText(),
+            mdLabel: parsedLabel && await parsedLabel.evaluate(
+              req.params.universeShortname,
+              null,
+              (tag) => {
+                if (tag.type === 'div') {
+                  tag.attrs.style = {'text-align': 'center'};
+                  tag.attrs.class += ' label';
+                }
+                if (tag.type === 'p') tag.type = 'span';
+              },
+            ),
+          }
+        }
       ));
     }
     res.prepareRender('item', { item, universe, parsedBody, tab: req.query.tab });
   });
   get('/universes/:universeShortname/items/:itemShortname/edit', async (req, res) => {
     const [code1, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
-    const [code2, itemList] = await api.item.getByUniverseId(req.session.user, item.universe_id);
+    const [code2, itemList] = await api.item.getByUniverseId(req.session.user, item.universe_id, perms.READ, true, { type: 'character' });
     const code = code1 !== 200 ? code1 : code2;
     res.status(code);
     if (code !== 200) return;
@@ -250,7 +257,7 @@ module.exports = function(app) {
         if (!parent) return res.status(400);
         newParents[shortname] = true;
         if (!(shortname in item.parents)) {
-          [code,] = await api.item.putLineage(parent.id, item.id, ...lineage.parents[shortname].reverse());
+          [code,] = await api.item.putLineage(parent.id, item.id, ...lineage.parents[shortname]);
         }
       }
       for (const shortname in lineage.children ?? {}) {
@@ -258,7 +265,7 @@ module.exports = function(app) {
         if (!child) return res.status(400);
         newChildren[shortname] = true;
         if (!(shortname in item.children)) {
-          [code, ] = await api.item.putLineage(item.id, child.id, ...lineage.children[shortname]);
+          [code, ] = await api.item.putLineage(item.id, child.id, ...lineage.children[shortname].reverse());
         }
       }
       for (const shortname in item.parents) {

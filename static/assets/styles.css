@@ -194,12 +194,30 @@ body {
 
 .itemKey {
   min-width: 8rem;
-  max-width: calc(50% - 0.5rem);
+  max-width: calc(25% - 0.5rem);
   padding: 1rem;
   margin: 0.25rem;
   background-color: white;
   border: 0.0625rem solid #e3e3e3;
   border-radius: 0.25rem;
+}
+
+@media only screen and (max-width: 1300px) {
+  .itemKey {
+    max-width: calc(33.333% - 0.5rem);
+  }
+}
+
+@media only screen and (max-width: 1080px) {
+  .itemKey {
+    max-width: calc(50% - 0.5rem);
+  }
+}
+
+@media only screen and (max-width: 512px) {
+  .itemKey {
+    max-width: 100%;
+  }
 }
 
 .gallery .itemKey {
@@ -216,6 +234,31 @@ body {
 
 .gallery .label {
   padding: 0.5rem;
+  background-color: white;
+  border-radius: 0.25rem;
+}
+
+.gallery .itemKey.modal {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  background-color: #0007;
+  margin: 0;
+  max-width: 100vw;
+  justify-content: center;
+  align-items: center;
+}
+
+.gallery .itemKey.modal img {
+  max-height: calc(95vh - 1rem);
+  max-width: 95vw;
+}
+
+.gallery .itemKey.modal .label {
+  margin-top: 0.5rem;
 }
 
 table td {
@@ -333,11 +376,32 @@ button:active {
   margin: 0.5rem;
   border: 0.05625rem solid silver;
   border-radius: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+@media only screen and (max-device-width: 480px) {
+  .markdown aside {
+    width: 50%;
+  }
 }
 
 .markdown aside>img {
   width: 100%;
   border-radius: 0.875rem;
+}
+
+.markdown ul {
+  margin-top: 0;
+}
+
+.markdown .list-label {
+  margin: 10px 0 0;
+  display: block;
+}
+
+h4, h5 {
+  margin-bottom: 0.25rem;
 }
 
 /* Fancy Links */

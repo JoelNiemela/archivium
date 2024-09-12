@@ -11,6 +11,17 @@ class MarkdownNode {
     this.parent = null;
   }
 
+  addClass(cls) {
+    const classList = this.attrs?.class?.split(' ') ?? [];
+    classList.push(cls);
+    const dups = {};
+    this.attrs.class = classList.filter(c => {
+      const isDup = dups[c];
+      dups[c] = true;
+      return !isDup;
+    }).join(' ');
+  }
+
   addChild(node) {
     this.children.push(node);
     node.parent = this;
@@ -41,10 +52,9 @@ class MarkdownNode {
   }
 
   async evaluate(currentUniverse, ctx, transform) {
-    const classList = this.attrs?.class?.split(' ') ?? [];
     if (this.type === 'a') {
-      classList.push('link');
-      classList.push('link-animated');
+      this.addClass('link');
+      this.addClass('link-animated');
     }
     if (this.type === 'p' && this.children.length === 1 && this.children[0].type === 'img') {
       return this.children[0].evaluate();
@@ -61,26 +71,52 @@ class MarkdownNode {
         this.attrs['data-universe'] = universe;
         this.attrs['data-item'] = item;
         if (!(await api.item.exists(universe, item))) {
-          classList.push('link-broken');
+          this.addClass('link-broken');
         }
       }
     }
-    this.attrs.class = classList.join(' ');
     if (transform) transform(this);
     if (this.type === 'ctx') {
       for (const lookup of this.attrs.lookups) {
-        let value = ctx;
-        for (const key of lookup) {
-          if (value && key in value) value = value[key];
-          else {
-            value = `${lookup.join('.')}: not found.`;
-            break;
-          }
-        }
+        const value = lookup.getValue(ctx);
         this.content = this.content.replace('%', value);
       }
     }
+    if (this.attrs.ctx) {
+      for (const attr in this.attrs.ctx) {
+        let value = this.attrs.ctx[attr];
+        if (value instanceof CtxLookup) {
+          value = value.getValue(ctx);
+        }
+        this.attrs[attr] = value;
+      }
+      delete this.attrs.ctx;
+    }
     return [this.type, this.content, await Promise.all(this.children.map(tag => tag.evaluate(currentUniverse, ctx, transform))), this.attrs];
+  }
+}
+
+class CtxLookup {
+  constructor(...lookup) {
+    this.lookup = lookup;
+    this.def;
+  }
+
+  default(def) {
+    this.def = def;
+    return this;
+  }
+
+  getValue(ctx) {
+    let value = ctx;
+    for (const key of this.lookup) {
+      if (value && (key in value || (value instanceof Array && Number(key) < value.length))) value = value[key];
+      else {
+        value = this.def ?? `${this.lookup.join('.')}: not found.`;
+        break;
+      }
+    }
+    return value ?? this.def;
   }
 }
 
@@ -108,8 +144,21 @@ class Line {
 }
 
 function inlineCmds(cmd, args) {
-  if (cmd === 'tab') {
-    return [new MarkdownNode('ctx', `%`, { lookups: [['item', 'obj_data', 'tabs', ...args]] })];
+  if (cmd === 'data') {
+    return [new MarkdownNode('ctx', `%`, { lookups: [new CtxLookup('item', 'obj_data', ...args)] })];
+  } else if (cmd === 'tab') {
+    return [new MarkdownNode('ctx', `%`, { lookups: [new CtxLookup('item', 'obj_data', 'tabs', ...args)] })];
+  } else if (cmd === 'img') {
+    const [src, alt, height, width] = args;
+    const attrs = {
+      ctx: {
+        src: isNaN(Number(src)) ? src : new CtxLookup('item', 'obj_data', 'gallery', 'imgs', src, 'url'),
+        alt: alt || new CtxLookup('item', 'obj_data', 'gallery', 'imgs', src, 'label').default(alt),
+      },
+    };
+    if (height) attrs.height = height;
+    if (width) attrs.width = width;
+    return [new MarkdownNode('img', '', attrs)];
   }
 
   return null;
@@ -200,7 +249,7 @@ function parseInline(line) {
         chunk += line.next();
       }
       line.next();
-      const [cmd, ...args] = chunk.split(' ');
+      const [cmd, ...args] = splitIgnoringQuotes(chunk);
       const cmdNodes = inlineCmds(cmd, args);
       if (cmdNodes) cmdNodes.forEach(node => nodes.push(node));
       chunk = '';
@@ -211,6 +260,12 @@ function parseInline(line) {
   if (chunk) nodes.push(new MarkdownNode('text', chunk));
 
   return nodes;
+}
+
+function splitIgnoringQuotes(str) {
+  const regex = /(?:[^\s"']+|"[^"]*"|'[^']*')+/g;
+  const matches = str.match(regex);
+  return matches ? matches.map(match => match.replace(/^["']|["']$/g, '')) : [];
 }
 
 function parseMarkdown(text) {
@@ -264,8 +319,8 @@ function parseMarkdown(text) {
         curListNode.lastChild().addChild(tocLink);
       }
     } else if (trimmedLine[0] === '@') {
-      const [cmd, ...args] = trimmedLine.substring(1).split(' ');
-      console.log(cmd, args)
+      const lineEnd = trimmedLine.length - (trimmedLine[trimmedLine.length - 1] === '@' ? 1 : 0)
+      const [cmd, ...args] = splitIgnoringQuotes(trimmedLine.substring(1, lineEnd));
       if (cmd === 'toc') {
         toc = root.addChild(new MarkdownNode('div', '', { id: 'toc' }));
         toc.addChild(new MarkdownNode('h3', 'Table of Contents'));
@@ -277,10 +332,21 @@ function parseMarkdown(text) {
         const box = new MarkdownNode('aside', '');
         root.spliceChildren(asideStart, 0, box);
         box.addChildren(boxNodes);
+      } else {
+        const cmdNodes = inlineCmds(cmd, args);
+        if (cmdNodes) {
+          root.addChildren(cmdNodes);
+        }
       }
     } else if (trimmedLine[0] === '-' && trimmedLine[1] === ' ') {
       const indent = (line.length - trimmedLine.length) / 2;
       const [lastListNode, lastIndent] = curList;
+      if (lastIndent === -1 && curParagraph.hasChildren()) {
+        curParagraph.type = 'span';
+        curParagraph.addClass('list-label');
+        root.addChild(curParagraph);
+        curParagraph = new MarkdownNode('p');
+      }
       if (indent > lastIndent) {
         const lastListItem = lastListNode ? (lastListNode.lastChild() ?? lastListNode.addChild(new MarkdownNode('li'))) : null;
         const newListNode = (lastListItem ?? root).addChild(new MarkdownNode('ul'));

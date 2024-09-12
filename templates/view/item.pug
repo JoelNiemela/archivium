@@ -39,12 +39,12 @@ block content
       each tab, name in item.obj_data.tabs
         li.navbarBtn( data-tab=name )
           h3.navbarBtnLink.navbarText( onclick=`showTab('${name}')` ) #{name}
-    if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
-      li.navbarBtn( data-tab='lineage' )
-          h3.navbarBtnLink.navbarText( onclick=`showTab('lineage')` ) #{item.obj_data.lineage.title}
     if 'gallery' in item.obj_data && 'title' in item.obj_data.gallery
       li.navbarBtn( data-tab='gallery' )
           h3.navbarBtnLink.navbarText( onclick=`showTab('gallery')` ) #{item.obj_data.gallery.title}
+    if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
+      li.navbarBtn( data-tab='lineage' )
+          h3.navbarBtnLink.navbarText( onclick=`showTab('lineage')` ) #{item.obj_data.lineage.title}
 
 
 
@@ -57,6 +57,14 @@ block content
               span #{key}
               hr
               +mdText(val)
+
+    if 'gallery' in item.obj_data && 'title' in item.obj_data.gallery
+        .itemTab.hidden.gallery( data-tab='gallery' )
+          each img in item.obj_data.gallery.imgs || []
+            .itemKey
+              img( src=img.url, alt=img.label )
+              if img.mdLabel
+                +mdText(img.mdLabel)
 
     if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
         .itemTab.hidden( data-tab='lineage' )
@@ -72,14 +80,6 @@ block content
               hr
               a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${shortname}` )
                 | #{item.child_titles[shortname]}
-
-    if 'gallery' in item.obj_data && 'title' in item.obj_data.gallery
-        .itemTab.hidden.gallery( data-tab='gallery' )
-          each img in item.obj_data.gallery.imgs || []
-            .itemKey
-              img( src=img.url, alt=img.label )
-              if img.label
-                +mdText(img.label)
 
     if parsedBody
       .sheet.hidden( data-tab='body' )
@@ -106,3 +106,29 @@ block content
     if (tabs.children.length < 2) {
       tabs.remove();
     }
+
+  script.
+    (function() {
+      const galleryModalState = {}
+      const galleryItems = document.querySelectorAll('.gallery .itemKey');
+      galleryItems.forEach((itemKey, i) => {
+        galleryModalState[i] = false;
+        const img = itemKey.querySelector('img');
+
+        img.onclick = (e) => {
+          e.stopPropagation();
+          if (!galleryModalState[i]) {
+            itemKey.classList.add('modal');
+            console.log(itemKey)
+            galleryModalState[i] = true;
+          }
+        };
+
+        itemKey.onclick = () => {
+          if (galleryModalState[i]) {
+            itemKey.classList.remove('modal');
+            galleryModalState[i] = false;
+          }
+        };
+      });
+    })();

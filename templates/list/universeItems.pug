@@ -63,10 +63,15 @@ block content
               | #{capitalize(item.item_type)}
 
         .d-flex.flex-col.grow-3
-            span #{T('Author')}: 
+            span 
+              b #{T('Author')}: 
               a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
-            span #{T('Created')}: #{formatDate(item.created_at)}
-            span #{T('Updated')}: #{formatDate(item.updated_at)}
+            span 
+              b #{T('Created')}: 
+              | #{formatDate(item.created_at)}
+            span 
+              b #{T('Updated')}: 
+              | #{formatDate(item.updated_at)}
 
         .d-flex.flex-wrap.gap-1.grow-4
           if item.tags

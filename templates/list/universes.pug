@@ -8,20 +8,25 @@ block content
   h1.center Universes
   a.link.link-animated( href=`${ADDR_PREFIX}/universes/create` ) Create New
   hr
-  table
-    thead
-      th Name
-      th Authors
-      th Created
-      th Updated
-      th Visibility
-    tbody
-      each universe in universes
-        tr
-          td
+  .card-list
+    each universe in universes
+      .card.sheet.gap-4.align-start
+        .d-flex.flex-col.grow-1
+          h3.ma-0
             a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
-          td
-            +authorList(universe.authors)
-          td #{formatDate(universe.created_at)}
-          td #{formatDate(universe.updated_at)}
-          td #{universe.public ? 'Public' : 'Private'}
+          .d-flex.gap-1
+
+        .d-flex.flex-col.grow-3
+            span 
+              b #{T('Authors')}: 
+              +authorList(universe.authors)
+            .d-flex.gap-2
+              span
+                b #{T('Created')}: 
+                | #{formatDate(universe.created_at)}
+              | — 
+              span 
+                b #{T('Updated')}: 
+                | #{formatDate(universe.updated_at)}
+              | —
+              span #{universe.public ? 'Public' : 'Private'}

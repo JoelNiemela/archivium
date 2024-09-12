@@ -46,7 +46,6 @@ module.exports = function(app) {
     const [code, users] = await api.user.getMany(undefined, true);
     res.status(code);
     if (!users) return;
-    console.log(users)
     res.prepareRender('userList', {
       users: users.map(user => ({
         ...user,
@@ -60,7 +59,6 @@ module.exports = function(app) {
     res.status(code1);
     if (!user) return;
     const [code2, universes] = await api.universe.getManyByAuthorId(req.session.user, user.id);
-    console.log(user)
     res.status(code2);
     if (!universes) return;
     res.prepareRender('user', { 

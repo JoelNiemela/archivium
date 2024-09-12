@@ -2,7 +2,7 @@ extends ../layout.pug
 include ../mixins.pug
 
 mixin typeCard(type, color)
-  .card
+  .card.item-type
     a.cardLink.link( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items?type=${type}` )
       div(style={ 'background-color': color })
         h2(align='center')= capitalize(T(`${type}-pl`))
@@ -37,7 +37,7 @@ block content
         a.link.link-animated( href=`${ADDR_PREFIX}/users/${username}` )= username
       
   .container
-    .cardContainer
+    .type-card-container
       +typeCard('article', '#deddca')
       +typeCard('character', '#F44336')
       +typeCard('location', '#4CAF50')

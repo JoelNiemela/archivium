@@ -99,21 +99,24 @@ body {
 }
 
 .card-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 2fr 1.5fr;
   gap: 0.625rem;
 }
 
 .card {
   box-shadow: 0 0.25rem 0.5rem 0 rgb(0 0 0 / 20%);
   transition: box-shadow 0.3s;
-  display: flex;
+  display: grid;
+  grid-template-columns: inherit;
+  grid-column: 1 / 4;
   border-radius: 0.25rem;
 }
 
 .card.item-type {
   width: 20.625rem;
   height: 10rem;
+  display: flex;
   flex-direction: column;
   overflow: hidden;
 }

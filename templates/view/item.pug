@@ -1,5 +1,14 @@
 extends ../layout.pug
 
+block breadcrumbs
+  a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
+  |  / 
+  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
+  |  / 
+  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items` ) #{T('Items')}
+  |  / 
+  span #{item.title}
+
 block content
   h1.center #{item.title}
   p.center #{capitalize(item.item_type)} of 

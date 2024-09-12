@@ -1,6 +1,9 @@
 extends ../layout.pug
 include ../mixins.pug
 
+block breadcrumbs
+  span #{T('Universes')}
+
 block content
   h1.center Universes
   a.link.link-animated( href=`${ADDR_PREFIX}/universes/create` ) Create New

@@ -11,6 +11,11 @@ mixin typeCard(type, color)
         a.cardBtn.link( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/create?type=${type}` ) &#x2795; New
         a.cardBtn.link( href=`${ADDR_PREFIX}/users/${contextUser.username}/items?type=${type}` ) My #{T(`${type}-pl`)}
 
+block breadcrumbs
+  a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
+  |  / 
+  span #{universe.title}
+
 block content
   h1.center #{universe.title}
   p.center

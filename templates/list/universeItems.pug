@@ -1,5 +1,12 @@
 extends ../layout.pug
 
+block breadcrumbs
+  a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
+  |  / 
+  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
+  |  / 
+  span #{T('Items')}
+
 block content
   script.
     window.addEventListener('load', () => {
@@ -44,30 +51,28 @@ block content
     else
       | Items 
     | of #{universe.title}
-  div
-    a.navbarBtnLink.navbarText( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) Back
   hr
-  table
-    thead
-      th( data-sort='title' ) Name
-      th( data-sort='item_type' ) Type
-      th( data-sort='author' ) Author
-      th( data-sort='created_at' ) Created
-      th( data-sort='updated_at' ) Updated
-      th Tags
-    tbody
-      each item in items
-        tr
-          td( data-sort=item.title )
-            a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}` ) #{item.title}
-          td( data-sort=item.item_type )
-            a.link.link-animated( onclick=`filterByType('${item.item_type}')` title='Filter by type' )
-              | #{capitalize(item.item_type)}
-          td( data-sort=item.author )
-            a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
-          td.nowrap( data-sort=item.created_at ) #{formatDate(item.created_at)}
-          td.nowrap( data-sort=item.updated_at ) #{formatDate(item.updated_at)}
-          td
-            if item.tags
-              each itemTag in item.tags
-                a.link.link-animated( class={ 'link-selected': itemTag == tag } onclick=`filterByTag('${itemTag}')` ) ##{itemTag} 
+  //- table
+  //-   thead
+  //-     th( data-sort='title' ) Name
+  //-     th( data-sort='item_type' ) Type
+  //-     th( data-sort='author' ) Author
+  //-     th( data-sort='created_at' ) Created
+  //-     th( data-sort='updated_at' ) Updated
+  //-     th Tags
+  div
+    each item in items
+      tr
+        td( data-sort=item.title )
+          a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}` ) #{item.title}
+        td( data-sort=item.item_type )
+          a.link.link-animated( onclick=`filterByType('${item.item_type}')` title='Filter by type' )
+            | #{capitalize(item.item_type)}
+        td( data-sort=item.author )
+          a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
+        td.nowrap( data-sort=item.created_at ) #{formatDate(item.created_at)}
+        td.nowrap( data-sort=item.updated_at ) #{formatDate(item.updated_at)}
+        td
+          if item.tags
+            each itemTag in item.tags
+              a.link.link-animated( class={ 'link-selected': itemTag == tag } onclick=`filterByTag('${itemTag}')` ) ##{itemTag} 

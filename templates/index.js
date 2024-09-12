@@ -25,6 +25,10 @@ const locale = {
     'item-pl': 'item',
     organization: 'organization',
     'organization-pl': 'organization',
+    [`perms_${perms.NONE}`]: 'None',
+    [`perms_${perms.READ}`]: 'Read',
+    [`perms_${perms.WRITE}`]: 'Write',
+    [`perms_${perms.ADMIN}`]: 'Admin',
   }
 };
 

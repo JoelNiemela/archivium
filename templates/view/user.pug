@@ -1,6 +1,13 @@
 extends ../layout.pug
 include ../mixins.pug
 
+block breadcrumbs
+  a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
+  |  / 
+  a.link.link-animated( href=`${ADDR_PREFIX}/users` ) #{T('Users')}
+  |  / 
+  span #{user.username}
+
 block content
   h1.center Welcome to #{user.username}'s page
   div( align='center' )

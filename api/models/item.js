@@ -28,6 +28,13 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
     conditions.values.push(options.tag);
   }
 
+  if (options.sort) {
+    const validSorts = { 'title': true, 'created_at': true, 'updated_at': true, 'author': true, 'item_type': true };
+    if (!validSorts[options.sort]) {
+      delete options.sort;
+    }
+  }
+
   try {
     const usrQueryString = user ? ` OR (au_filter.user_id = ${user.id} AND au_filter.permission_level >= ${permissionsRequired})` : '';
     const conditionString = conditions ? `WHERE ${conditions.strings.join(' AND ')}` : '';

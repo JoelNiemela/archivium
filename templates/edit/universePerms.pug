@@ -1,5 +1,14 @@
 extends ../layout.pug
 
+block breadcrumbs
+  a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
+  |  / 
+  a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
+  |  / 
+  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
+  |  / 
+  span #{T('Set Permissions')}
+
 block content
   h2 Update Permissions for #{universe.title}
   form( method='POST' )
@@ -11,12 +20,22 @@ block content
     div
       label( for='permission_level' ) Permissions Level: 
       select( id='permission_level' name='permission_level' )
-        option( value=perms.NONE selected=(permission_level === perms.NONE) ) None
-        option( value=perms.READ selected=(permission_level === perms.READ) ) Read
-        option( value=perms.WRITE selected=(permission_level === perms.WRITE) ) Write
-        option( value=perms.ADMIN selected=(permission_level === perms.ADMIN) ) Admin
+        each perm in perms
+          option( value=perm selected=(permission_level === perm) ) #{T(`perms_${perm}`)}
+        //- option( value=perms.NONE selected=(permission_level === perms.NONE) ) None
+        //- option( value=perms.READ selected=(permission_level === perms.READ) ) Read
+        //- option( value=perms.WRITE selected=(permission_level === perms.WRITE) ) Write
+        //- option( value=perms.ADMIN selected=(permission_level === perms.ADMIN) ) Admin
     div
       input( type='submit' value='Update' )
     if error
       div
         span( style={'font-size': 'small'} ).color-error= error
+
+  h3 Current Permissions
+  .d-flex.flex-col.gap-1
+    each perm, aid in universe.author_permissions
+      span
+        b #{universe.authors[aid]}: 
+        | #{T(`perms_${perm}`)}
+

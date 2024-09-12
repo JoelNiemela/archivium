@@ -5,6 +5,7 @@ const md5 = require('md5');
 const { render } = require('./templates');
 const { perms } = require('./api/utils');
 const { parseMarkdown } = require('./templates/markdown');
+const { user } = require('./db/config');
 
 module.exports = function(app) {
   app.use((req, res, next) => {
@@ -42,10 +43,15 @@ module.exports = function(app) {
 
   /* User Pages */
   get('/users', Auth.verifySessionOrRedirect, async (_, res) => {
-    const [code, users] = await api.user.getMany();
+    const [code, users] = await api.user.getMany(undefined, true);
     res.status(code);
     if (!users) return;
-    res.prepareRender('userList', { users });
+    res.prepareRender('userList', {
+      users: users.map(user => ({
+        ...user,
+        gravatarLink: `http://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
+      })),
+    });
   });
 
   get('/users/:username', async (req, res) => {
@@ -53,7 +59,6 @@ module.exports = function(app) {
     res.status(code1);
     if (!user) return;
     const [code2, universes] = await api.universe.getManyByAuthorId(req.session.user, user.id);
-    console.log(user)
     res.status(code2);
     if (!universes) return;
     res.prepareRender('user', { 

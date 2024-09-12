@@ -1,42 +1,18 @@
 extends ../layout.pug
 
+block breadcrumbs
+  a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
+  |  / 
+  a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
+  |  / 
+  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
+  |  / 
+  span #{T('Items')}
+
 block content
-  script.
-    window.addEventListener('load', () => {
-      document.querySelectorAll('table').forEach((table) => {
-        table.querySelectorAll('th[data-sort]').forEach((th, i) => {
-          th.onclick = () => {
-            const url = new URL(window.location);
-            url.searchParams.set('sort', th.dataset.sort);
-            url.searchParams.set('sort_order', url.searchParams.get('sort_order') == 'asc' ? 'desc' : 'asc');
-            history.pushState(null, '', url);
-            location.reload();
-          }
-        });
-      });
-    });
-
-    function filterByTag(tag) {
-      const url = new URL(window.location);
-      if (url.searchParams.has('tag') && url.searchParams.get('tag') === tag) {
-        url.searchParams.delete('tag');
-      } else {
-        url.searchParams.set('tag', tag);
-      }
-      history.pushState(null, '', url);
-      location.reload();
-    }
-
-    function filterByType(type) {
-      const url = new URL(window.location);
-      if (url.searchParams.has('type') && url.searchParams.get('type') === type) {
-        url.searchParams.delete('type');
-      } else {
-        url.searchParams.set('type', type);
-      }
-      history.pushState(null, '', url);
-      location.reload();
-    }
+  script
+    include /static/scripts/cardUtils.js
+    include /static/scripts/listUtils.js
 
   h1.center 
     if type
@@ -45,29 +21,44 @@ block content
       | Items 
     | of #{universe.title}
   div
-    a.navbarBtnLink.navbarText( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) Back
+    label( for='sort' )
+      b #{T('Sort by')}: 
+    select( id='sort' name='sort' )
+      option( value='created_at' ) Created
+      option( value='updated_at' ) Updated
+      option( value='item_type' ) Type
+      option( value='title' ) Title
+      option( value='author' ) Author
+    select( id='sort_order' name='sort_order' )
+      option( value='asc' ) Ascending
+      option( value='desc' ) Descending
   hr
-  table
-    thead
-      th( data-sort='title' ) Name
-      th( data-sort='item_type' ) Type
-      th( data-sort='author' ) Author
-      th( data-sort='created_at' ) Created
-      th( data-sort='updated_at' ) Updated
-      th Tags
-    tbody
-      each item in items
-        tr
-          td( data-sort=item.title )
+  .card-list
+    each item in items
+      .card.sheet.gap-4.align-start( onclick=`goTo('${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}')` )
+        .d-flex.flex-col.grow-1
+          h3.ma-0
             a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}` ) #{item.title}
-          td( data-sort=item.item_type )
-            a.link.link-animated( onclick=`filterByType('${item.item_type}')` title='Filter by type' )
-              | #{capitalize(item.item_type)}
-          td( data-sort=item.author )
-            a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
-          td.nowrap( data-sort=item.created_at ) #{formatDate(item.created_at)}
-          td.nowrap( data-sort=item.updated_at ) #{formatDate(item.updated_at)}
-          td
-            if item.tags
-              each itemTag in item.tags
-                a.link.link-animated( class={ 'link-selected': itemTag == tag } onclick=`filterByTag('${itemTag}')` ) ##{itemTag} 
+          .d-flex.gap-1
+            a.filter.link.link-animated(
+              class={ 'link-selected': item.item_type == type }
+              data-filter-key='type'
+              data-filter-value=item.item_type
+              title='Filter by type'
+            ) #{capitalize(item.item_type)}
+
+        .d-flex.flex-col.grow-3
+            span 
+              b #{T('Author')}: 
+              a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
+            span 
+              b #{T('Created')}: 
+              | #{formatDate(item.created_at)}
+            span 
+              b #{T('Updated')}: 
+              | #{formatDate(item.updated_at)}
+
+        .d-flex.flex-wrap.gap-1.grow-4
+          if item.tags
+            each itemTag in item.tags
+              a.filter.link.link-animated( class={ 'link-selected': itemTag == tag } data-filter-key='tag' data-filter-value=itemTag ) ##{itemTag} 

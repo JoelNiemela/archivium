@@ -82,30 +82,42 @@ body {
   padding: 0.875rem 1rem;
 }
 
-.cardContainer {
+.type-card-container {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  gap: 0.625rem;
   /* TODO we probably want to change these y-margins */
   margin: 1rem -8vw 4rem;
 }
 
 @media only screen and (max-device-width: 480px) {
-  .cardContainer {
+  .type-card-container {
     margin-right: 0;
     margin-left: 0;
   }  
 }
 
+.card-list {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1.5fr;
+  gap: 0.625rem;
+}
+
 .card {
-  width: 20.625rem;
-  height: 10rem;
-  margin: 0.3125rem;
   box-shadow: 0 0.25rem 0.5rem 0 rgb(0 0 0 / 20%);
   transition: box-shadow 0.3s;
+  display: grid;
+  grid-template-columns: inherit;
+  grid-column: 1 / 4;
+  border-radius: 0.25rem;
+}
+
+.card.item-type {
+  width: 20.625rem;
+  height: 10rem;
   display: flex;
   flex-direction: column;
-  border-radius: 0.25rem;
   overflow: hidden;
 }
 
@@ -113,7 +125,7 @@ body {
   box-shadow: 0 0.5rem 1rem 0 rgb(0 0 0 / 30%);
 }
 
-.card div {
+.card.item-type div {
   height: 2.75rem;
   padding: 0.5rem;
   display: flex;
@@ -130,7 +142,7 @@ body {
   color: #666;
 }
 
-.cardLink div {
+.item-type .cardLink div {
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -446,18 +458,36 @@ button:active {
   flex-wrap: wrap;
 }
 
+.align-start {
+  align-items: start;
+}
+
+.grow-1 {
+  flex-grow: 1;
+}
+.grow-2 {
+  flex-grow: 2;
+}
+.grow-3 {
+  flex-grow: 3;
+}
+.grow-4 {
+  flex-grow: 4;
+}
+
 .gap-1 {
   gap: 0.25rem;
 }
-
 .gap-2 {
   gap: 0.5rem;
 }
-
 .gap-3 {
   gap: 0.75rem;
 }
-
 .gap-4 {
   gap: 1rem;
+}
+
+.ma-0 {
+  margin: 0;
 }

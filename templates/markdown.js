@@ -79,7 +79,10 @@ class MarkdownNode {
     if (this.type === 'ctx') {
       for (const lookup of this.attrs.lookups) {
         const value = lookup.getValue(ctx);
-        this.content = this.content.replace('%', value);
+        const content = this.content.replace('%', value);
+        this.content = '';
+        const nodes = parseInline(new Line(content));
+        this.addChildren(nodes);
       }
     }
     if (this.attrs.ctx) {

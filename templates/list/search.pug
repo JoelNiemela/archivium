@@ -1,4 +1,5 @@
 extends ../layout.pug
+include ../mixins.pug
 
 block breadcrumbs
   a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
@@ -23,6 +24,9 @@ block content
     input( id='search', name='search', value=search )
     button( onclick='search()' ) &#x1F50E;&#xFE0E;
   hr
+  if search
+    p
+      i #{universes.length + items.length} result(s)
   .card-list
     each universe in universes
       .card.sheet.gap-4.align-start( onclick=`goTo('${ADDR_PREFIX}/universes/${universe.shortname}')` )
@@ -50,8 +54,9 @@ block content
         .d-flex.flex-col.grow-1
           h3.ma-0
             a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}` ) #{item.title}
-          .d-flex.gap-1
-            span #{capitalize(item.item_type)}
+          span #{capitalize(item.item_type)}
+          div
+            a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}` ) #{item.universe}
 
         .d-flex.flex-col.grow-3
             span 

@@ -305,7 +305,7 @@ module.exports = function(app) {
   get('/search', async (req, res) => {
     const search = req.query.search;
     if (search) {
-      const [code1, universes] = await api.universe.getMany(req.session.user, { strings: ['title LIKE ?', 'shortname LIKE ?'], values: [search, search] });
+      const [code1, universes] = await api.universe.getMany(req.session.user, { strings: ['title LIKE ?'], values: [`%${search}%`] });
       const [code2, items] = await api.item.getMany(req.session.user, null, perms.READ, true, { search });
       const code = code1 !== 200 ? code1 : code2;
       res.status(code);

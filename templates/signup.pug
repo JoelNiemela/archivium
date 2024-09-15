@@ -15,4 +15,4 @@ block content
     div
       button( type='submit' ) Sign Up
   p
-    a.link.link-animated( href=`${ADDR_PREFIX}/login` ) Login to your account
+    a.link.link-animated( href=`${ADDR_PREFIX}/login${searchQueries ? `?${searchQueries}`: ''}` ) Login to your account

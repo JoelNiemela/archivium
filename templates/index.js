@@ -51,6 +51,7 @@ function contextData(req) {
     contextUser,
     ADDR_PREFIX,
     encodedPath: pageQuery.toString(),
+    searchQueries: searchQueries.toString(),
     perms,
     locale: locale[lang],
     T,

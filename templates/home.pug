@@ -4,3 +4,18 @@ extends layout.pug
 block content
   h1(align='center') Welcome to Archivium
   br
+  if !contextUser
+    .sheet.big-text.ma-auto.p-indent( style={'max-width': '60rem'} )
+      p
+        | Archivium is a worldbuilding tool, allowing you to organize everything about your world in one place. 
+        | It's designed for creators who want to keep track of all the details that make their worlds unique — from characters and histories to maps and cultures.
+        | Whether you're developing a novel, designing a game, or just exploring new ideas, 
+        | Archivium offers a flexible space to collect, connect, and expand on your world’s elements at your own pace.
+        | You can work privately or collaborate with others, bringing your imaginative landscapes and stories to life.
+      .d-flex.flex-col.align-center.gap-1
+        h3.navbarBtn
+          a.navbarBtnLink.navbarText( href=`${ADDR_PREFIX}/signup?page=%2Funiverses%2Fcreate` ) Create Account
+        small
+          i or
+        h3.navbarBtn
+          a.navbarBtnLink.navbarText( href=`${ADDR_PREFIX}/login` ) Log In

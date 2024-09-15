@@ -44,9 +44,9 @@ module.exports = function(app) {
       const [code, universes] = await api.universe.getMany(req.session.user);
       res.status(code);
       if (!universes) return;
-      if (universes.length === 1) {
-        res.redirect(`${ADDR_PREFIX}/universes/${universes[0].shortname}`);
-      }
+      // if (universes.length === 1) {
+      //   res.redirect(`${ADDR_PREFIX}/universes/${universes[0].shortname}`);
+      // }
     }
     res.prepareRender('home')
   });

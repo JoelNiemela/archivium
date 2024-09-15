@@ -39,7 +39,17 @@ module.exports = function(app) {
   const post = (...args) => use('post', ...args);
   const put = (...args) => use('put', ...args);
 
-  get(`${ADDR_PREFIX}/`, (_, res) => res.prepareRender('home'));
+  get(`${ADDR_PREFIX}/`, async (req, res) => {
+    if (req.session.user) {
+      const [code, universes] = await api.universe.getMany(req.session.user);
+      res.status(code);
+      if (!universes) return;
+      if (universes.length === 1) {
+        res.redirect(`${ADDR_PREFIX}/universes/${universes[0].shortname}`);
+      }
+    }
+    res.prepareRender('home')
+  });
 
   /* User Pages */
   get('/users', Auth.verifySessionOrRedirect, async (_, res) => {

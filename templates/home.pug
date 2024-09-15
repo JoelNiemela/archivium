@@ -19,3 +19,9 @@ block content
           i or
         h3.navbarBtn
           a.navbarBtnLink.navbarText( href=`${ADDR_PREFIX}/login` ) Log In
+  else if universes.length === 0
+    .sheet.big-text.ma-auto.center( style={'max-width': '40rem'} )
+      p
+        | Hello #{contextUser.username}! Looks like there's nothing here yet — go ahead and 
+        a.link.link-animated( href=`${ADDR_PREFIX}/universes/create` ) create a new universe 
+        | to get started!

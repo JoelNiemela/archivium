@@ -47,8 +47,9 @@ module.exports = function(app) {
       // if (universes.length === 1) {
       //   res.redirect(`${ADDR_PREFIX}/universes/${universes[0].shortname}`);
       // }
+      return res.prepareRender('home', { universes });
     }
-    res.prepareRender('home')
+    res.prepareRender('home', { universes: [] })
   });
 
   /* User Pages */

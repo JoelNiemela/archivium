@@ -301,4 +301,19 @@ module.exports = function(app) {
     if (code !== 200) return;
     res.redirect(`${ADDR_PREFIX}/universes/${params.shortname}/permissions`);
   });
+
+  get('/search', async (req, res) => {
+    const search = req.query.search;
+    if (search) {
+      const [code1, universes] = await api.universe.getMany(req.session.user, { strings: ['title LIKE ?', 'shortname LIKE ?'], values: [search, search] });
+      const [code2, items] = await api.item.getMany(req.session.user, null, perms.READ, true, { search });
+      const code = code1 !== 200 ? code1 : code2;
+      res.status(code);
+      if (code !== 200) return;
+      res.prepareRender('search', { items, universes, search });
+    } else {
+      res.prepareRender('search', { items: [], universes: [], search: '' });
+    }
+    
+  });
 }

@@ -17,13 +17,48 @@ async function getOne(user, id, permissionsRequired=perms.READ, basicOnly=false)
   return [200, item];
 }
 
+function getQuery(selectString='', usrQueryString='', joinString='', conditionString='', options={}) {
+  return `
+      SELECT
+        item.id,
+        item.title,
+        item.shortname,
+        item.item_type,
+        item.created_at,
+        item.updated_at,
+        item.universe_id,
+        user.username as author,
+        universe.title as universe,
+        ${selectString}
+        tag.tags
+      FROM item
+      INNER JOIN user ON user.id = item.author_id
+      INNER JOIN universe ON universe.id = item.universe_id
+      INNER JOIN authoruniverse as au_filter ON universe.id = au_filter.universe_id AND (universe.public = 1${usrQueryString})
+      LEFT JOIN (
+        SELECT item_id, JSON_ARRAYAGG(tag) as tags
+        FROM tag
+        GROUP BY item_id
+      ) tag ON tag.item_id = item.id
+      ${joinString}
+      ${conditionString}
+      GROUP BY 
+        item.id,
+        user.username,
+        universe.title
+      ${options.sort ? `ORDER BY ${options.sort} ${options.sortDesc ? 'DESC' : 'ASC'}` : ''}
+      ${options.limit ? `LIMIT ${options.limit}` : ''}`;
+}
+
 async function getMany(user, conditions, permissionsRequired=perms.READ, basicOnly=false, options={}) {
   if (options.type) {
+    if (!conditions) conditions = { strings: [], values: [] };
     conditions.strings.push('item.item_type = ?');
     conditions.values.push(options.type);
   }
 
   if (options.tag) {
+    if (!conditions) conditions = { strings: [], values: [] };
     conditions.strings.push('? IN (SELECT tag FROM tag WHERE item_id = item.id)');
     conditions.values.push(options.tag);
   }
@@ -57,36 +92,46 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
       LEFT JOIN item as child_item ON child_item.id = lineage_child.child_id
       LEFT JOIN item as parent_item ON parent_item.id = lineage_parent.parent_id
     `;
-    const queryString = `
-      SELECT
-        item.id,
-        item.title,
-        item.shortname,
-        item.item_type,
-        item.created_at,
-        item.updated_at,
-        item.universe_id,
-        user.username as author,
-        universe.title as universe,
-        ${selectString}
-        tag.tags
-      FROM item
-      INNER JOIN user ON user.id = item.author_id
-      INNER JOIN universe ON universe.id = item.universe_id
-      INNER JOIN authoruniverse as au_filter ON universe.id = au_filter.universe_id AND (universe.public = 1${usrQueryString})
-      LEFT JOIN (
-        SELECT item_id, JSON_ARRAYAGG(tag) as tags
-        FROM tag
-        GROUP BY item_id
-      ) tag ON tag.item_id = item.id
-      ${joinString}
-      ${conditionString}
-      GROUP BY 
-        item.id,
-        user.username,
-        universe.title
-      ${options.sort ? `ORDER BY ${options.sort} ${options.sortDesc ? 'DESC' : 'ASC'}` : ''}
-      ${options.limit ? `LIMIT ${options.limit}` : ''};`;
+    let queryString;
+    if (options.search) {
+      const condPref = conditionString ? ' AND ' : 'WHERE ';
+      const extraSelects = 'universe.shortname as universe_short,';
+      queryString = `
+        ${getQuery(
+          extraSelects + selectString,
+          usrQueryString,
+          joinString,
+          conditionString + condPref + `item.title LIKE '%${options.search}%'`,
+          options,
+        )}
+        UNION
+        ${getQuery(
+          extraSelects + selectString,
+          usrQueryString,
+          joinString,
+          conditionString + condPref + `item.shortname LIKE '%${options.search}%'`,
+          options,
+        )}
+        UNION
+        ${getQuery(
+          extraSelects + selectString,
+          usrQueryString,
+          joinString + ' INNER JOIN tag as search_tag ON search_tag.item_id = item.id',
+          conditionString + condPref + `search_tag.tag = '%${options.search}%'`,
+          options,
+        )}
+        UNION
+        ${getQuery(
+          extraSelects + selectString,
+          usrQueryString,
+          joinString + ' INNER JOIN tag as search_tag ON search_tag.item_id = item.id',
+          conditionString + condPref + `search_tag.tag LIKE '%${options.search}%'`,
+          options,
+        )}
+      `;
+    } else {
+      queryString = getQuery(selectString, usrQueryString, joinString, conditionString, options);
+    }
     const data = await executeQuery(queryString, conditions && conditions.values);
     return [200, data];
   } catch (err) {

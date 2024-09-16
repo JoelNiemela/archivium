@@ -59,7 +59,8 @@ module.exports = function(app) {
       const [code3, oldestUpdated] = await api.item.getMany(user, null, perms.READ, true, {
         sort: 'updated_at',
         sortDesc: false,
-        limit: 5,
+        limit: 10,
+        where: 'item.snoozed_until < NOW() OR item.snoozed_until IS NULL'
       });
       res.status(code3);
       if (!oldestUpdated) return;

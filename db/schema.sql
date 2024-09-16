@@ -46,6 +46,7 @@ CREATE TABLE item (
   parent_id INT,
   created_at TIMESTAMP NOT NULL,
   updated_at TIMESTAMP NOT NULL,
+  snoozed_until TIMESTAMP,
   last_updated_by INT,
   obj_data TEXT NOT NULL,
   FOREIGN KEY (author_id) REFERENCES user (id),

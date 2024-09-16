@@ -2,6 +2,12 @@ extends layout.pug
 include mixins.pug
 
 block content
+  script.
+    async function snooze(universe, item) {
+      await fetch(`/api/universes/${universe}/items/${item}/snooze`, { method: 'PUT' });
+      window.location.reload();
+    }
+
   h1(align='center') Welcome to Archivium
   br
   if !contextUser
@@ -47,8 +53,8 @@ block content
           each item in oldestUpdated
             li.big-text
               .d-flex.gap-1
-                //- button.pa-1
-                //-   small Dismiss
+                button.pa-1( onclick=`snooze('${item.universe_short}', '${item.shortname}')` )
+                  small Snooze
                 a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}` ) #{item.title}
       .grow-1.sheet
         h2 My Universes

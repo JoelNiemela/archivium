@@ -73,7 +73,9 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
 
   try {
     const usrQueryString = user ? ` OR (au_filter.user_id = ${user.id} AND au_filter.permission_level >= ${permissionsRequired})` : '';
-    const conditionString = conditions ? `WHERE ${conditions.strings.join(' AND ')}` : '';
+    const conditionString = (
+      conditions ? `WHERE ${conditions.strings.join(' AND ')}` : ''
+    ) + (options.where ? (conditions ? ' AND ' : 'WHERE ') + options.where : '');
     const selectString = (basicOnly ? '' : `
       item.obj_data,
       JSON_REMOVE(JSON_OBJECTAGG(
@@ -357,6 +359,21 @@ async function delTags(user, universeShortname, itemShortname, tags) {
   }
 }
 
+async function snoozeUntil(user, universeShortname, itemShortname) {
+  const [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE);
+  if (!item) return [code];
+
+  const now = new Date();
+  const snoozeTime = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
+
+  try {
+    return [200, await executeQuery(`UPDATE item SET ? WHERE id = ${item.id};`, { snoozed_until: snoozeTime })];
+  } catch (err) {
+    console.error(err);
+    return [500];
+  }
+}
+
 module.exports = {
   getOne,
   getMany,
@@ -372,4 +389,5 @@ module.exports = {
   delLineage,
   putTags,
   delTags,
+  snoozeUntil,
 };

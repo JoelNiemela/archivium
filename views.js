@@ -61,7 +61,7 @@ module.exports = function(app) {
         sortDesc: false,
         limit: 16,
         join: `LEFT JOIN snooze ON snooze.item_id = item.id AND snooze.snoozed_by = ${user.id}`,
-        where: 'snooze.snoozed_until < NOW() OR snooze.snoozed_until IS NULL',
+        where: '(snooze.snoozed_until < NOW() OR snooze.snoozed_until IS NULL) AND item.updated_at < DATE_SUB(NOW(), INTERVAL 2 DAY)',
       });
       res.status(code3);
       if (!oldestUpdated) return;

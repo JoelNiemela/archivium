@@ -366,7 +366,7 @@ async function snoozeUntil(user, universeShortname, itemShortname) {
   const snooze = (await executeQuery(`SELECT * FROM snooze WHERE item_id = ${item.id} AND snoozed_by = ${user.id};`))[0];
 
   const now = new Date();
-  const snoozeTime = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
+  const snoozeTime = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
 
   try {
     if (snooze) {

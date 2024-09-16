@@ -40,14 +40,33 @@ module.exports = function(app) {
   const put = (...args) => use('put', ...args);
 
   get(`${ADDR_PREFIX}/`, async (req, res) => {
-    if (req.session.user) {
-      const [code, universes] = await api.universe.getMany(req.session.user);
-      res.status(code);
+    const user = req.session.user;
+    if (user) {
+      const [code1, universes] = await api.universe.getMany(user);
+      res.status(code1);
       if (!universes) return;
+      const [code2, recentlyUpdated] = await api.item.getMany(user, {
+        strings: ['lub.id <> ? OR item.last_updated_by IS NULL', 'item.author_id <> ?'],
+        values: [user.id, user.id],
+      }, perms.READ, true, {
+        sort: 'updated_at',
+        sortDesc: true,
+        limit: 5,
+        select: 'lub.username as last_updated_by,',
+        join: 'LEFT JOIN user AS lub ON lub.id = item.last_updated_by'
+      });
+      res.status(code2);
+      const [code3, oldestUpdated] = await api.item.getMany(user, null, perms.READ, true, {
+        sort: 'updated_at',
+        sortDesc: false,
+        limit: 5,
+      });
+      res.status(code3);
+      if (!oldestUpdated) return;
       // if (universes.length === 1) {
       //   res.redirect(`${ADDR_PREFIX}/universes/${universes[0].shortname}`);
       // }
-      return res.prepareRender('home', { universes });
+      return res.prepareRender('home', { universes, recentlyUpdated, oldestUpdated });
     }
     res.prepareRender('home', { universes: [] })
   });

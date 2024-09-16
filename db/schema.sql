@@ -46,10 +46,12 @@ CREATE TABLE item (
   parent_id INT,
   created_at TIMESTAMP NOT NULL,
   updated_at TIMESTAMP NOT NULL,
+  last_updated_by INT,
   obj_data TEXT NOT NULL,
   FOREIGN KEY (author_id) REFERENCES user (id),
   FOREIGN KEY (universe_id) REFERENCES universe (id),
   FOREIGN KEY (parent_id) REFERENCES item (id),
+  FOREIGN KEY (last_updated_by) REFERENCES user (id),
   PRIMARY KEY (id)
 );
 

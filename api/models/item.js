@@ -29,6 +29,7 @@ function getQuery(selectString='', usrQueryString='', joinString='', conditionSt
         item.universe_id,
         user.username as author,
         universe.title as universe,
+        universe.shortname as universe_short,
         ${selectString}
         tag.tags
       FROM item
@@ -73,7 +74,7 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
   try {
     const usrQueryString = user ? ` OR (au_filter.user_id = ${user.id} AND au_filter.permission_level >= ${permissionsRequired})` : '';
     const conditionString = conditions ? `WHERE ${conditions.strings.join(' AND ')}` : '';
-    const selectString = basicOnly ? '' : `
+    const selectString = (basicOnly ? '' : `
       item.obj_data,
       JSON_REMOVE(JSON_OBJECTAGG(
         IFNULL(child_item.shortname, 'null__'),
@@ -85,13 +86,13 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
       ), '$.null__') as parents,
       JSON_REMOVE(JSON_OBJECTAGG(IFNULL(child_item.shortname, 'null__'), child_item.title), '$.null__') as child_titles,
       JSON_REMOVE(JSON_OBJECTAGG(IFNULL(parent_item.shortname, 'null__'), parent_item.title), '$.null__') as parent_titles,
-    `;
-    const joinString = basicOnly ? '' : `
+    `) + (options.select ?? '');
+    const joinString = (basicOnly ? '' : `
       LEFT JOIN lineage as lineage_child ON lineage_child.parent_id = item.id
       LEFT JOIN lineage as lineage_parent ON lineage_parent.child_id = item.id
       LEFT JOIN item as child_item ON child_item.id = lineage_child.child_id
       LEFT JOIN item as parent_item ON parent_item.id = lineage_parent.parent_id
-    `;
+    `) + (options.join ?? '');
     let queryString;
     if (options.search) {
       const condPref = conditionString ? ' AND ' : 'WHERE ';
@@ -138,6 +139,21 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
     console.error(err);
     return [500];
   }
+}
+
+async function getByAuthorUsername(user, username, permissionsRequired, basicOnly, options) {
+
+  const conditions = { 
+    strings: [
+      'user.username = ?',
+    ], values: [
+      username,
+    ]
+  };
+
+  const [errCode, items] = await getMany(user, conditions, permissionsRequired, basicOnly, options);
+  if (!items) return [errCode];
+  return [200, items];
 }
 
 async function getByUniverseId(user, universeId, permissionsRequired, basicOnly, options) {
@@ -262,7 +278,7 @@ async function put(user, universeShortname, itemShortname, changes) {
   }
 
   try {
-    return [200, await executeQuery(`UPDATE item SET ? WHERE id = ${item.id};`, { title, obj_data, updated_at: new Date() })];
+    return [200, await executeQuery(`UPDATE item SET ? WHERE id = ${item.id};`, { title, obj_data, updated_at: new Date(), last_updated_by: user.id })];
   } catch (err) {
     console.error(err);
     return [500];
@@ -344,6 +360,7 @@ async function delTags(user, universeShortname, itemShortname, tags) {
 module.exports = {
   getOne,
   getMany,
+  getByAuthorUsername,
   getByUniverseId,
   getByUniverseAndItemIds,
   getByUniverseShortname,

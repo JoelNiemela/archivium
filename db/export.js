@@ -9,9 +9,11 @@ async function dbExport() {
   const tables = (await db.queryAsync('SHOW TABLES;'))[0].map(item => item['Tables_in_archivium']);
   
   for (const table of tables) {
+    console.log(table)
+    if (table === 'session') continue;
     const types = {};
     const typeArray = (await db.queryAsync(`DESCRIBE ${table};`))[0].map(item => types[item.Field] = item.Type);
-    console.log(types)
+    // console.log(types)
 
     const itemArray = await db.queryAsync(`SELECT * FROM ${table};`);
     const items = {};

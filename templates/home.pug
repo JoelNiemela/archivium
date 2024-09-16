@@ -1,5 +1,5 @@
 extends layout.pug
-
+include mixins.pug
 
 block content
   h1(align='center') Welcome to Archivium
@@ -25,3 +25,34 @@ block content
         | Hello #{contextUser.username}! Looks like there's nothing here yet — go ahead and 
         a.link.link-animated( href=`${ADDR_PREFIX}/universes/create` ) create a new universe 
         | to get started!
+  else
+    .d-flex.gap-1.flex-wrap.align-start
+      .grow-3.sheet
+        h2 Recent Updates by Others
+        ul
+          each item in recentlyUpdated
+            li
+              .d-flex.align-center.gap-2
+                a.big-text.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}` ) #{item.title}
+                small (
+                  if item.last_updated_by
+                    | Updated by 
+                    a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.last_updated_by}` ) #{item.last_updated_by}
+                  else
+                    | Created by 
+                    a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
+                  |  #{formatDate(new Date(item.updated_at))})
+        h2 May Need Review
+        ul
+          each item in oldestUpdated
+            li.big-text
+              .d-flex.gap-1
+                //- button.pa-1
+                //-   small Dismiss
+                a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}` ) #{item.title}
+      .grow-1.sheet
+        h2 My Universes
+        ul
+          each universe in universes
+            li.big-text
+              a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}

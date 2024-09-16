@@ -363,11 +363,17 @@ async function snoozeUntil(user, universeShortname, itemShortname) {
   const [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE);
   if (!item) return [code];
 
+  const snooze = (await executeQuery(`SELECT * FROM snooze WHERE item_id = ${item.id} AND snoozed_by = ${user.id};`))[0];
+
   const now = new Date();
   const snoozeTime = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
 
   try {
-    return [200, await executeQuery(`UPDATE item SET ? WHERE id = ${item.id};`, { snoozed_until: snoozeTime })];
+    if (snooze) {
+      return [200, await executeQuery(`UPDATE snooze SET ? WHERE item_id = ${item.id} AND snoozed_by = ${user.id};`, { snoozed_until: snoozeTime })];
+    } else {
+      return [200, await executeQuery(`INSERT INTO snooze (item_id, snoozed_until, snoozed_by) VALUES (?, ?, ?);`, [item.id, snoozeTime, user.id])];
+    }
   } catch (err) {
     console.error(err);
     return [500];

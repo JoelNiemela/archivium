@@ -30,6 +30,7 @@ async function dbImport() {
     try {
       const data = JSON.parse(await fsPromises.readFile(path.join(__dirname, `export/${table}.json`), { encoding: 'utf8' }));
       for (const id in data.items) {
+        if (table === 'item') delete data.items[id].snoozed_until;
         const keys = Object.keys(data.items[id]);
         for (const key of keys) {
           data.items[id][key] = formatTypes(data.types[key], data.items[id][key]);

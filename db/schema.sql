@@ -46,7 +46,6 @@ CREATE TABLE item (
   parent_id INT,
   created_at TIMESTAMP NOT NULL,
   updated_at TIMESTAMP NOT NULL,
-  snoozed_until TIMESTAMP,
   last_updated_by INT,
   obj_data TEXT NOT NULL,
   FOREIGN KEY (author_id) REFERENCES user (id),
@@ -54,6 +53,14 @@ CREATE TABLE item (
   FOREIGN KEY (parent_id) REFERENCES item (id),
   FOREIGN KEY (last_updated_by) REFERENCES user (id),
   PRIMARY KEY (id)
+);
+
+CREATE TABLE snooze (
+  snoozed_until TIMESTAMP NOT NULL,
+  snoozed_by INT NOT NULL,
+  item_id INT NOT NULL,
+  FOREIGN KEY (snoozed_by) REFERENCES user (id),
+  FOREIGN KEY (item_id) REFERENCES item (id)
 );
 
 CREATE TABLE lineage (

@@ -51,7 +51,7 @@ module.exports = function(app) {
       }, perms.READ, true, {
         sort: 'updated_at',
         sortDesc: true,
-        limit: 5,
+        limit: 8,
         select: 'lub.username as last_updated_by,',
         join: 'LEFT JOIN user AS lub ON lub.id = item.last_updated_by',
       });
@@ -59,7 +59,7 @@ module.exports = function(app) {
       const [code3, oldestUpdated] = await api.item.getMany(user, null, perms.READ, true, {
         sort: 'updated_at',
         sortDesc: false,
-        limit: 10,
+        limit: 16,
         join: `LEFT JOIN snooze ON snooze.item_id = item.id AND snooze.snoozed_by = ${user.id}`,
         where: 'snooze.snoozed_until < NOW() OR snooze.snoozed_until IS NULL',
       });

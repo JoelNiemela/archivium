@@ -33,32 +33,4 @@ block content
       option( value='asc' ) Ascending
       option( value='desc' ) Descending
   hr
-  .card-list
-    each item in items
-      .card.sheet.gap-4.align-start( onclick=`goTo('${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}')` )
-        .d-flex.flex-col.grow-1
-          h3.ma-0
-            a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}` ) #{item.title}
-          .d-flex.gap-1
-            a.filter.link.link-animated(
-              class={ 'link-selected': item.item_type == type }
-              data-filter-key='type'
-              data-filter-value=item.item_type
-              title='Filter by type'
-            ) #{capitalize(item.item_type)}
-
-        .d-flex.flex-col.grow-3
-            span 
-              b #{T('Author')}: 
-              a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
-            span 
-              b #{T('Created')}: 
-              | #{formatDate(item.created_at)}
-            span 
-              b #{T('Updated')}: 
-              | #{formatDate(item.updated_at)}
-
-        .d-flex.flex-wrap.gap-1.grow-4
-          if item.tags
-            each itemTag in item.tags
-              a.filter.link.link-animated( class={ 'link-selected': itemTag == tag } data-filter-key='tag' data-filter-value=itemTag ) ##{itemTag} 
+  include ../components/itemList.pug

@@ -91,6 +91,10 @@ module.exports = function(app) {
     const [code2, universes] = await api.universe.getManyByAuthorId(req.session.user, user.id);
     res.status(code2);
     if (!universes) return;
+    const [code3, contact] = await api.contact.getOne(req.session.user, user.id);
+    res.status(code3);
+    if (code3 !== 200) return;
+    user.isContact = contact !== undefined;
     res.prepareRender('user', { 
       user,
       gravatarLink: `http://www.gravatar.com/avatar/${md5(user.email)}.jpg`,

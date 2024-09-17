@@ -56,7 +56,10 @@ module.exports = function(app) {
         }),
       ]),
     ]),
-    new APIRoute('/contacts', { GET: (req) => api.contact.getAll(req.session.user) }, [
+    new APIRoute('/contacts', {
+      GET: (req) => api.contact.getAll(req.session.user),
+      POST: (req) => api.contact.post(req.session.user, req.body.username),
+    }, [
       new APIRoute('/accepted', { GET: (req) => api.contact.getAll(req.session.user, false) }),
       new APIRoute('/pending', { GET: (req) => api.contact.getAll(req.session.user, true, false) }),
     ]),

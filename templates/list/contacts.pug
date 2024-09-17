@@ -4,15 +4,19 @@ include ../mixins.pug
 block breadcrumbs
   a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
   |  / 
-  span #{T('Users')}
+  span #{T('Contacts')}
 
 block content
   script
     include /static/scripts/cardUtils.js
+    include /static/scripts/contacts.js
   
   h1.center Contacts
   hr
-  h2 Accepted
+  .d-flex
+    input( id='username' name='username' placeholder=T('Username') )
+    button( onclick="addContact(document.getElementById('username').value)" ) #{T('Add Contact')}
+  h2 All (#{contacts.length})
   .card-list
     each user in contacts
       .card.sheet.gap-4.align-start( onclick=`goTo('${ADDR_PREFIX}/users/${user.username}')` )
@@ -26,12 +30,12 @@ block content
           span 
             b #{T('Last seen')}: 
             | #{formatDate(user.updated_at)}
-  h2 Pending
+  h2 Pending (#{pending.length})
   .card-list
     each user in pending
       .card.sheet.gap-4.align-start( onclick=`goTo('${ADDR_PREFIX}/users/${user.username}')` )
         img.userIcon( alt=user.username, src=user.gravatarLink )
-        .d-flex.flex-col.grow-1
+        .d-flex.flex-col
           h2.ma-0
             a.link.link-animated( href=`${ADDR_PREFIX}/users/${user.username}` ) #{user.username}
           span
@@ -40,3 +44,9 @@ block content
           span 
             b #{T('Last seen')}: 
             | #{formatDate(user.updated_at)}
+        .d-flex.gap-1.justify-end
+          if user.is_request
+            button Accept
+            button Reject
+          else
+            span Pending

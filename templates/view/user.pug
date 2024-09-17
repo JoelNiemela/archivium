@@ -9,6 +9,9 @@ block breadcrumbs
   span #{user.username}
 
 block content
+  script
+    include /static/scripts/contacts.js
+
   h1.center Welcome to #{user.username}'s page
   div( align='center' )
     img.userIcon( alt=user.username, src=gravatarLink )
@@ -16,6 +19,9 @@ block content
     small Joined
       |  #{formatDate(new Date(user.created_at))}
       |  - Last seen #{formatDate(new Date(user.updated_at))}
+      if !user.isContact
+        |  - 
+        a.link.link-animated( onclick=`addContact('${user.username}')` ) #{T('Add to contacts')}
   hr
   h3 #{user.username}'s items
   table

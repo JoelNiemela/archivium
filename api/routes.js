@@ -56,6 +56,10 @@ module.exports = function(app) {
         }),
       ]),
     ]),
+    new APIRoute('/contacts', { GET: (req) => api.contact.getAll(req.session.user) }, [
+      new APIRoute('/accepted', { GET: (req) => api.contact.getAll(req.session.user, false) }),
+      new APIRoute('/pending', { GET: (req) => api.contact.getAll(req.session.user, true, false) }),
+    ]),
     new APIRoute('/universes', {
       GET: (req) => api.universe.getMany(req.session.user),
       POST: (req) => api.universe.post(req.session.user, req.body),

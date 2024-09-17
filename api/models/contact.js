@@ -9,7 +9,7 @@ async function getAll(user, includePending=true, includeAccepted=true) {
   try {
     const queryString = `
       SELECT 
-        user.id, user.username, contact.accepted
+        user.id, user.username, user.created_at, user.updated_at, contact.accepted
       FROM contact
       INNER JOIN user
       WHERE 

@@ -74,15 +74,13 @@ module.exports = function(app) {
   });
 
   /* User Pages */
-  get('/users', Auth.verifySessionOrRedirect, async (_, res) => {
-    const [code, users] = await api.user.getMany(undefined, true);
+  get('/contacts', Auth.verifySessionOrRedirect, async (req, res) => {
+    const [code, contacts] = await api.contact.getAll(req.session.user);
     res.status(code);
-    if (!users) return;
-    res.prepareRender('userList', {
-      users: users.map(user => ({
-        ...user,
-        gravatarLink: `http://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
-      })),
+    if (!contacts) return;
+    res.prepareRender('contactList', {
+      contacts: contacts.filter(contact => contact.accepted),
+      pending: contacts.filter(contact => !contact.accepted),
     });
   });
 

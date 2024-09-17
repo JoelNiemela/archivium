@@ -74,6 +74,7 @@ function compile(file) {
 // compile templates
 const templates = {
   error: compile('templates/error.pug'),
+  docs: compile('templates/displayMd.pug'),
   home: compile('templates/home.pug'),
   login: compile('templates/login.pug'),
   signup: compile('templates/signup.pug'),

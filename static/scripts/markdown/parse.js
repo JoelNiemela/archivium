@@ -189,6 +189,10 @@ if (!window.getJSON) throw 'fetchUtils.js not loaded!';
       return this.index < this.text.length;
     }
 
+    hasPrevious() {
+      return this.index - 1 > 0;
+    }
+
     reset(index) {
       this.index = index;
     }
@@ -297,7 +301,7 @@ if (!window.getJSON) throw 'fetchUtils.js not loaded!';
           chunk = '[';
           line.reset(resetIndex);
         }
-      } else if (char === '@') {
+      } else if (char === '@' && (line.peek(-2) === ' ' || !line.hasPrevious())) {
         if (chunk) nodes.push(new MarkdownNode('text', chunk));
         chunk = '';
         while (!(line.peek() === '@' && line.peek(-1) !== '\\') && line.hasNext()) {

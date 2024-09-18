@@ -1,5 +1,6 @@
 const { executeQuery, parseData } = require('../utils');
 const utils = require('../../lib/hashUtils');
+const universeapi = require('./universe');
 
 /**
    * returns a "safe" version of the user object with password data removed unless the includeAuth parameter is true
@@ -41,6 +42,34 @@ async function getMany(options, includeEmail=false) {
     `;
     else queryString = `SELECT id, username, created_at, updated_at ${includeEmail ? ', email' : ''} FROM user;`;
     const users = await executeQuery(queryString, parsedOptions.values);
+    return [200, users];
+  } catch (err) {
+    console.error(err);
+    return [500];
+  }
+}
+
+async function getByUniverseShortname(user, shortname) {
+
+  const [code, universe] = await universeapi.getOne(user, { shortname });
+  if (!universe) return [code];
+
+  try {
+    const queryString = `
+      SELECT 
+        user.id,
+        user.username,
+        user.created_at,
+        user.updated_at,
+        user.email,
+        COUNT(item.id) AS items_authored
+      FROM user
+      INNER JOIN authoruniverse AS au ON au.user_id = user.id
+      LEFT JOIN item ON item.universe_id = au.universe_id AND item.author_id = user.id
+      WHERE au.universe_id = ?
+      GROUP BY user.id;
+    `;
+    const users = await executeQuery(queryString, [universe.id]);
     return [200, users];
   } catch (err) {
     console.error(err);
@@ -143,6 +172,7 @@ async function del(req) {
 module.exports = {
   getOne,
   getMany,
+  getByUniverseShortname,
   post,
   validatePassword,
   put,

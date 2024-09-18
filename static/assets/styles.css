@@ -544,6 +544,12 @@ h4, h5 {
 .align-center {
   align-items: center;
 }
+.align-end {
+  align-items: end;
+}
+.align-self-end {
+  align-self: end;
+}
 
 .justify-start {
   justify-content: start;

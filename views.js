@@ -128,10 +128,21 @@ module.exports = function(app) {
   });
   
   get('/universes/:shortname', async (req, res) => {
-    const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
-    res.status(code);
+    const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
+    res.status(code1);
     if (!universe) return;
-    res.prepareRender('universe', { universe });
+    const [code2, authors] = await api.user.getByUniverseShortname(req.session.user, universe.shortname);
+    res.status(code2);
+    if (!authors) return;
+    const authorMap = {};
+    authors.forEach(author => {
+      authorMap[author.id] = {
+        ...author,
+        gravatarLink: `http://www.gravatar.com/avatar/${md5(author.email)}.jpg`,
+      };
+    });
+    console.log(authorMap)
+    res.prepareRender('universe', { universe, authors: authorMap });
   });
 
   get('/universes/:shortname/edit', Auth.verifySessionOrRedirect, async (req, res) => {
@@ -241,7 +252,7 @@ module.exports = function(app) {
         }
       ));
     }
-    res.prepareRender('item', { item, universe, parsedBody, tab: req.query.tab });
+    res.prepareRender('item', { item, universe, parsedBody });
   });
   get('/universes/:universeShortname/items/:itemShortname/edit', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code1, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);

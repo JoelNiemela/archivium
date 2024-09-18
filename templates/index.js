@@ -88,6 +88,8 @@ const templates = {
 
   user: compile('templates/view/user.pug'),
   userList: compile('templates/list/users.pug'),
+
+  search: compile('templates/list/search.pug'),
 };
 
 function render(req, template, context = {}) {

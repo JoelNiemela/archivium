@@ -94,7 +94,8 @@ block content
       document.querySelector(`.navbarBtn[data-tab=${tab}]`)?.classList.add('selected');
       const query = new URLSearchParams(window.location.search);
       query.set('tab', tab);
-      const newurl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?${query.toString()}`;
+      const { protocol, host, pathname, hash } = window.location;
+      const newurl = `${protocol}//${host}${pathname}?${query.toString()}${hash}`;
       window.history.pushState({ path: newurl }, '', newurl);
     }
 

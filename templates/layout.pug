@@ -22,6 +22,7 @@ html(lang='en')
   head
     title Archivium
     link(rel='stylesheet' href=`${ADDR_PREFIX}/static/assets/styles.css`)
+    link(rel='icon' type='image/x-icon' href=`${ADDR_PREFIX}/static/assets/icons/archivium.ico`)
     script!= `const locale = JSON.parse('${JSON.stringify(locale)}');`
     script.
       function T(str) {
@@ -44,6 +45,8 @@ html(lang='en')
           a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/users`) Users
         li.navbarBtn
           a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/universes`) Universes
+        li.navbarBtn
+          a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/search`) Search
       if contextUser
         ul.navbarBtns
           li.navbarBtn

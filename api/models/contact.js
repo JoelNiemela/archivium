@@ -7,6 +7,7 @@ async function getOne(sessionUser, targetID) {
       SELECT 
         user.id,
         user.username,
+        user.email,
         user.created_at,
         user.updated_at,
         contact.accepted,
@@ -43,7 +44,7 @@ async function getAll(user, includePending=true, includeAccepted=true) {
   try {
     const queryString = `
       SELECT 
-        user.id, user.username, user.created_at, user.updated_at, contact.accepted, (contact.accepting_user = ?) AS is_request
+        user.id, user.username, user.email, user.created_at, user.updated_at, contact.accepted, (contact.accepting_user = ?) AS is_request
       FROM contact
       INNER JOIN user
       WHERE 

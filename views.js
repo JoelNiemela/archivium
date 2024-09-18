@@ -78,9 +78,13 @@ module.exports = function(app) {
     const [code, contacts] = await api.contact.getAll(req.session.user);
     res.status(code);
     if (!contacts) return;
+    const gravatarContacts = contacts.map(user => ({
+      ...user,
+      gravatarLink: `http://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
+    }));
     res.prepareRender('contactList', {
-      contacts: contacts.filter(contact => contact.accepted),
-      pending: contacts.filter(contact => !contact.accepted),
+      contacts: gravatarContacts.filter(contact => contact.accepted),
+      pending: gravatarContacts.filter(contact => !contact.accepted),
     });
   });
 

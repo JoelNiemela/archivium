@@ -41,17 +41,17 @@ html(lang='en')
               document.querySelector('.navbar').classList.remove('nav-fullwidth');
             }
           }
-      ul.navbarBtns
-        li.navbarBtn
-          a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/`) Home
-        li.navbarBtn
-          a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/contacts`) Contacts
-        li.navbarBtn
-          a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/universes`) Universes
-        li.navbarBtn
-          a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/search`) Search
-      ul.navbarBtns
-        block save
+        ul.navbarBtns
+          li.navbarBtn
+            a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/`) Home
+          li.navbarBtn
+            a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/contacts`) Contacts
+          li.navbarBtn
+            a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/universes`) Universes
+          li.navbarBtn
+            a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/search`) Search
+        ul.navbarBtns
+          block save
         if contextUser
           li.navbarBtn( style={ position: 'relative' } )
             script.

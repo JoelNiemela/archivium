@@ -44,9 +44,9 @@ block content
           span 
             b #{T('Last seen')}: 
             | #{formatDate(user.updated_at)}
-        .d-flex.gap-1.justify-end
+        .d-flex.gap-1.justify-end( data-user=user.username )
           if user.is_request
-            button Accept
-            button Reject
+            button.contact-accept Accept
+            button.contact-reject Reject
           else
             span Pending

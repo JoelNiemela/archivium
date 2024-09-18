@@ -120,6 +120,7 @@ module.exports = function(app) {
   post('/universes/create', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code, data] = await api.universe.post(req.session.user, {
       ...req.body,
+      obj_data: decodeURIComponent(req.body.obj_data),
       public: req.body.visibility === 'public',
     });
     res.status(code);

@@ -5,6 +5,7 @@ block content
     include /static/scripts/domUtils.js
     include /static/scripts/searchableSelect.js
     include /static/scripts/itemEditor.js
+    include /static/scripts/universes.js
 
   h2 Edit #{universe.title}
   form( method='POST' )
@@ -90,29 +91,10 @@ block content
         onclick: (e) => {
           e.preventDefault();
           setDefaultCats();
+          updateCats();
         },
       } }));
     }
 
-    function setDefaultCats() {
-      const defaultCats = [
-        ['article', '#deddca'],
-        ['character', '#F44336'],
-        ['location', '#4CAF50'],
-        ['event', '#9e9e9e'],
-        ['archive', '#a1887f'],
-        ['document', '#4d4d4d'],
-        ['timeline', '#64B5F6'],
-        ['item', '#ffc107'],
-        ['organization', '#9262df'],
-      ];
-      const cats = {};
-      for (const [cat, color] of defaultCats) {
-        cats[cat] = [T(cat), T(`${cat}s`), color];
-      }
-      updateObjData({ cats });
-      updateCats();
-    }
-
     if (!('cats' in obj_data)) setDefaultCats();
-    else updateCats();
+    updateCats();

@@ -41,23 +41,15 @@ html(lang='en')
               document.querySelector('.navbar').classList.remove('nav-fullwidth');
             }
           }
-      ul.navbarBtns
-        li.navbarBtn
-          a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/`) Home
-        li.navbarBtn
-          a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/contacts`) Contacts
-        li.navbarBtn
-          a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/universes`) Universes
-        li.navbarBtn
-          a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/search`) Search
-      if contextUser
         ul.navbarBtns
           li.navbarBtn
             a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/`) Home
           li.navbarBtn
-            a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/users`) Users
+            a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/contacts`) Contacts
           li.navbarBtn
             a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/universes`) Universes
+          li.navbarBtn
+            a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/search`) Search
         if contextUser
           ul.navbarBtns
             li.navbarBtn

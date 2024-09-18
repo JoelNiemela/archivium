@@ -39,7 +39,39 @@ module.exports = function(app) {
   const post = (...args) => use('post', ...args);
   const put = (...args) => use('put', ...args);
 
-  get(`${ADDR_PREFIX}/`, (_, res) => res.prepareRender('home'));
+  get(`${ADDR_PREFIX}/`, async (req, res) => {
+    const user = req.session.user;
+    if (user) {
+      const [code1, universes] = await api.universe.getMany(user);
+      res.status(code1);
+      if (!universes) return;
+      const [code2, recentlyUpdated] = await api.item.getMany(user, {
+        strings: ['lub.id <> ? OR item.last_updated_by IS NULL', 'item.author_id <> ?'],
+        values: [user.id, user.id],
+      }, perms.READ, true, {
+        sort: 'updated_at',
+        sortDesc: true,
+        limit: 8,
+        select: 'lub.username as last_updated_by,',
+        join: 'LEFT JOIN user AS lub ON lub.id = item.last_updated_by',
+      });
+      res.status(code2);
+      const [code3, oldestUpdated] = await api.item.getMany(user, null, perms.READ, true, {
+        sort: 'updated_at',
+        sortDesc: false,
+        limit: 16,
+        join: `LEFT JOIN snooze ON snooze.item_id = item.id AND snooze.snoozed_by = ${user.id}`,
+        where: '(snooze.snoozed_until < NOW() OR snooze.snoozed_until IS NULL) AND item.updated_at < DATE_SUB(NOW(), INTERVAL 2 DAY)',
+      });
+      res.status(code3);
+      if (!oldestUpdated) return;
+      // if (universes.length === 1) {
+      //   res.redirect(`${ADDR_PREFIX}/universes/${universes[0].shortname}`);
+      // }
+      return res.prepareRender('home', { universes, recentlyUpdated, oldestUpdated });
+    }
+    res.prepareRender('home', { universes: [] })
+  });
 
   /* User Pages */
   get('/users', Auth.verifySessionOrRedirect, async (_, res) => {
@@ -76,10 +108,10 @@ module.exports = function(app) {
     res.prepareRender('universeList', { universes });
   });
  
-  get('/universes/create', async (_, res) => {
+  get('/universes/create', Auth.verifySessionOrRedirect, async (_, res) => {
     res.prepareRender('createUniverse');
   });
-  post('/universes/create', async (req, res) => {
+  post('/universes/create', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code, data] = await api.universe.post(req.session.user, {
       ...req.body,
       public: req.body.visibility === 'public',
@@ -96,13 +128,13 @@ module.exports = function(app) {
     res.prepareRender('universe', { universe });
   });
 
-  get('/universes/:shortname/edit', async (req, res) => {
+  get('/universes/:shortname/edit', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname }, perms.WRITE);
     res.status(code);
     if (!universe) return;
     res.prepareRender('editUniverse', { universe });
   });
-  post('/universes/:shortname/edit', async (req, res) => {
+  post('/universes/:shortname/edit', Auth.verifySessionOrRedirect, async (req, res) => {
     req.body = {
       ...req.body,
       public: req.body.visibility === 'public',
@@ -130,13 +162,13 @@ module.exports = function(app) {
     res.prepareRender('universeItemList', { items, universe, type: req.query.type, tag: req.query.tag });
   });
  
-  get('/universes/:shortname/items/create', async (req, res) => {
+  get('/universes/:shortname/items/create', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
     res.status(code);
     if (code !== 200) return;
     res.prepareRender('createItem', { universe, item_type: req.query.type, shortname: req.query.shortname });
   });
-  post('/universes/:shortname/items/create', async (req, res) => {
+  post('/universes/:shortname/items/create', Auth.verifySessionOrRedirect, async (req, res) => {
     const [userCode, data] = await api.item.post(req.session.user, {
       ...req.body,
     }, req.params.shortname);
@@ -205,7 +237,7 @@ module.exports = function(app) {
     }
     res.prepareRender('item', { item, universe, parsedBody, tab: req.query.tab });
   });
-  get('/universes/:universeShortname/items/:itemShortname/edit', async (req, res) => {
+  get('/universes/:universeShortname/items/:itemShortname/edit', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code1, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
     const [code2, itemList] = await api.item.getByUniverseId(req.session.user, item.universe_id, perms.READ, true, { type: 'character' });
     const code = code1 !== 200 ? code1 : code2;
@@ -221,7 +253,7 @@ module.exports = function(app) {
     itemList.forEach(item => itemMap[item.shortname] = item.title);
     res.prepareRender(req.query.mode === 'raw' ? 'editItemRaw' : 'editItem', { item, itemMap });
   });
-  post('/universes/:universeShortname/items/:itemShortname/edit', async (req, res) => {
+  post('/universes/:universeShortname/items/:itemShortname/edit', Auth.verifySessionOrRedirect, async (req, res) => {
     // Handle tags
     req.body.tags = req.body.tags?.split(' ') ?? [];
 
@@ -285,7 +317,7 @@ module.exports = function(app) {
     res.redirect(`${ADDR_PREFIX}/universes/${req.params.universeShortname}/items/${req.params.itemShortname}`);
   });
 
-  get('/universes/:shortname/permissions', async (req, res) => {
+  get('/universes/:shortname/permissions', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
     const [code2, users] = await api.user.getMany();
     const code = code1 !== 200 ? code1 : code2;
@@ -293,7 +325,7 @@ module.exports = function(app) {
     if (code !== 200) return;
     res.prepareRender('editUniversePerms', { universe, users });
   });
-  post('/universes/:shortname/permissions', async (req, res) => {
+  post('/universes/:shortname/permissions', Auth.verifySessionOrRedirect, async (req, res) => {
     const { session, params, body } = req;
     const [_, user] = await api.user.getOne({ username: req.body.username });
     const [code, data] = await api.universe.putPermissions(session.user, params.shortname, user, body.permission_level, perms.ADMIN);

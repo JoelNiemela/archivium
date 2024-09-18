@@ -1,10 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
 * {
   box-sizing: border-box;
 }
 
+h1, h2, h3, h4, h5, h6, .lora {
+  font-family: 'Lora', serif;
+}
+
 body {
   background-color: #e9e9e9;
-  font-family: 'Lato', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   margin: 0;
 }
 
@@ -28,6 +35,14 @@ body {
   .page {
     padding: 0 2vw;
   }
+}
+
+.big-text {
+  font-size: 1.25rem;
+}
+
+.p-indent p, p.p-indent {
+  text-indent: 2rem;
 }
 
 .navbar {
@@ -59,6 +74,7 @@ body {
 
 .navbarBtn {
   display: inline-block;
+  margin: 0;
 }
 
 .navbarBtnLink {
@@ -525,6 +541,9 @@ h4, h5 {
 .align-start {
   align-items: start;
 }
+.align-center {
+  align-items: center;
+}
 
 .grow-1 {
   flex-grow: 1;
@@ -552,9 +571,19 @@ h4, h5 {
   gap: 1rem;
 }
 
+.ma-auto {
+  margin: auto;
+}
 .ma-0 {
   margin: 0;
 }
 .ma-1 {
   margin: 0.25rem;
+}
+
+.pa-0 {
+  padding: 0;
+}
+.pa-1 {
+  padding: 0.25rem;
 }

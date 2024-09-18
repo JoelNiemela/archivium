@@ -1,6 +1,5 @@
 const { executeQuery, parseData } = require('../utils');
 const userapi = require('./user');
-const utils = require('../../lib/hashUtils');
 
 async function getOne(sessionUser, targetID) {
   try {
@@ -83,10 +82,8 @@ async function post(user, username) {
 async function put(user, username, accepted) {
   
   const [code, target] = await userapi.getOne({ username });
-  console.log(target)
   if (!target) return [code];
   const [_, contact] = await getOne(user, target.id);
-  console.log(contact)
   if (!contact) return [404];
 
   if (accepted) {

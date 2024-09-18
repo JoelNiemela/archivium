@@ -322,9 +322,17 @@ module.exports = function(app) {
   get('/universes/:shortname/permissions', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
     const [code2, users] = await api.user.getMany();
-    const code = code1 !== 200 ? code1 : code2;
+    const [code3, contacts] = await api.contact.getAll(req.session.user);
+    console.log(contacts, universe)
+    const code = code1 !== 200 ? code1 : (code2 !== 200 ? code2 : code3);
     res.status(code);
     if (code !== 200) return;
+    contacts.forEach(contact => {
+      if (!(contact.id in universe.authors)) {
+        universe.authors[contact.id] = contact.username;
+        universe.author_permissions[contact.id] = perms.NONE;
+      }
+    });
     res.prepareRender('editUniversePerms', { universe, users });
   });
   post('/universes/:shortname/permissions', Auth.verifySessionOrRedirect, async (req, res) => {

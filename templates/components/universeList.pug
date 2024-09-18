@@ -10,7 +10,7 @@
           span 
             b #{T('Authors')}: 
             +authorList(universe.authors)
-          .d-flex.gap-2
+          .d-flex.gap-2.flex-wrap
             span
               b #{T('Created')}: 
               | #{formatDate(universe.created_at)}

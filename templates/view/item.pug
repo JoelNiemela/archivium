@@ -16,7 +16,7 @@ block content
     include /static/scripts/tabs.js
 
   h1.center #{item.title}
-  p.center #{capitalize(item.itemTypeName)} of 
+  p.center #{capitalize(T(item.itemTypeName))} of 
     a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{item.universe}
     if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE/* || item.author === contextUser.username*/)
       |  - 

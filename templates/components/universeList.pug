@@ -6,7 +6,7 @@
           a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
         .d-flex.gap-1
 
-      .d-flex.flex-col.grow-3
+      .d-flex.flex-col.grow-3( style='grid-column: 2 / 4;' )
           span 
             b #{T('Authors')}: 
             +authorList(universe.authors)

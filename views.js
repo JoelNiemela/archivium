@@ -177,7 +177,7 @@ module.exports = function(app) {
     res.status(code);
     if (code !== 200) return;
     res.prepareRender('universeItemList', {
-      items: items.map(item => ({ ...item, itemTypeName: universe.obj_data.cats[item.item_type][0] })),
+      items: items.map(item => ({ ...item, itemTypeName: ((universe.obj_data.cats ?? {})[item.item_type] ?? ['missing_cat'])[0] })),
       universe,
       type: req.query.type,
       tag: req.query.tag,
@@ -220,7 +220,7 @@ module.exports = function(app) {
       return;
     }
     item.obj_data = JSON.parse(item.obj_data);
-    item.itemTypeName = universe.obj_data.cats[item.item_type][0];
+    item.itemTypeName = ((universe.obj_data.cats ?? {})[item.item_type] ?? ['missing_cat'])[0];
     const parsedBody = 'body' in item.obj_data && (await parseMarkdown(item.obj_data.body || '').evaluate(req.params.universeShortname, { item }))
     if ('tabs' in item.obj_data) {
       for (const tab in item.obj_data.tabs) {

@@ -141,7 +141,6 @@ module.exports = function(app) {
         gravatarLink: `http://www.gravatar.com/avatar/${md5(author.email)}.jpg`,
       };
     });
-    console.log(authorMap)
     res.prepareRender('universe', { universe, authors: authorMap });
   });
 
@@ -154,6 +153,7 @@ module.exports = function(app) {
   post('/universes/:shortname/edit', Auth.verifySessionOrRedirect, async (req, res) => {
     req.body = {
       ...req.body,
+      obj_data: decodeURIComponent(req.body.obj_data),
       public: req.body.visibility === 'public',
     }
     console.log(req.body)
@@ -176,7 +176,12 @@ module.exports = function(app) {
     const code = code1 !== 200 ? code1 : code2;
     res.status(code);
     if (code !== 200) return;
-    res.prepareRender('universeItemList', { items, universe, type: req.query.type, tag: req.query.tag });
+    res.prepareRender('universeItemList', {
+      items: items.map(item => ({ ...item, itemTypeName: universe.obj_data.cats[item.item_type][0] })),
+      universe,
+      type: req.query.type,
+      tag: req.query.tag,
+    });
   });
  
   get('/universes/:shortname/items/create', Auth.verifySessionOrRedirect, async (req, res) => {
@@ -215,6 +220,7 @@ module.exports = function(app) {
       return;
     }
     item.obj_data = JSON.parse(item.obj_data);
+    item.itemTypeName = universe.obj_data.cats[item.item_type][0];
     const parsedBody = 'body' in item.obj_data && (await parseMarkdown(item.obj_data.body || '').evaluate(req.params.universeShortname, { item }))
     if ('tabs' in item.obj_data) {
       for (const tab in item.obj_data.tabs) {

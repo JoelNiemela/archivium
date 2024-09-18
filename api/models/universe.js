@@ -7,6 +7,7 @@ async function getOne(user, options, permissionLevel) {
   if (code !== 200) return [code];
   const universe = data[0];
   if (!universe) return [user ? 403 : 401];
+  universe.obj_data = JSON.parse(universe.obj_data);
   return [200, universe];
 }
 
@@ -106,14 +107,14 @@ async function post(user, body) {
 }
 
 async function put(user, shortname, changes) {
-  const { title, public } = changes;
+  const { title, public, obj_data } = changes;
 
   if (!title) return [400];
   const [code, universe] = await getOne(user, { shortname }, perms.WRITE);
   if (!universe) return [code];
 
   try {
-    return [200, await executeQuery(`UPDATE universe SET ? WHERE id = ${universe.id};`, { title, public, updated_at: new Date() })];
+    return [200, await executeQuery(`UPDATE universe SET ? WHERE id = ${universe.id};`, { title, public, obj_data, updated_at: new Date() })];
   } catch (err) {
     console.error(err);
     return [500];

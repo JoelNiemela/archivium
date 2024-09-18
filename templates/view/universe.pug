@@ -1,15 +1,15 @@
 extends ../layout.pug
 include ../mixins.pug
 
-mixin typeCard(type, color)
+mixin typeCard(shortname, category)
   .card.item-type
-    a.cardLink.link( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items?type=${type}` )
-      div(style={ 'background-color': color })
-        h2(align='center')= capitalize(T(`${type}-pl`))
+    a.cardLink.link( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items?type=${shortname}` )
+      div(style={ 'background-color': category[2] })
+        h2(align='center')= capitalize(category[1])
     div
       if contextUser
-        a.cardBtn.link( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/create?type=${type}` ) &#x2795; New
-        a.cardBtn.link( href=`${ADDR_PREFIX}/users/${contextUser.username}/items?type=${type}` ) My #{T(`${type}-pl`)}
+        a.cardBtn.link( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/create?type=${shortname}` ) &#x2795; New
+        a.cardBtn.link( href=`${ADDR_PREFIX}/users/${contextUser.username}/items?type=${shortname}` ) My #{category[1]}
 
 block breadcrumbs
   a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
@@ -51,15 +51,8 @@ block content
   .tabs
     .container.hidden( data-tab='items' )
       .type-card-container
-        +typeCard('article', '#deddca')
-        +typeCard('character', '#F44336')
-        +typeCard('location', '#4CAF50')
-        +typeCard('event', '#9e9e9e')
-        +typeCard('archive', '#a1887f')
-        +typeCard('document', '#4d4d4d')
-        +typeCard('timeline', '#64B5F6')
-        +typeCard('item', '#ffc107')
-        +typeCard('organization', '#9262df')
+        each category, shortname in universe.obj_data.cats
+          +typeCard(shortname, category)
     
     .card-list.hidden( data-tab='authors' )
       each username, id in universe.authors

@@ -1,6 +1,11 @@
 extends ../layout.pug
 
 block content
+  script
+    include /static/scripts/domUtils.js
+    include /static/scripts/searchableSelect.js
+    include /static/scripts/itemEditor.js
+
   h2 Edit #{universe.title}
   form( method='POST' )
 
@@ -14,9 +19,100 @@ block content
         option( value='public' selected=(universe.public) ) Public
         option( value='private' selected=(!universe.public) ) Private
 
+    h3 Categories
+    #cats
+
     div
+      input( id='obj_data' type='hidden' name='obj_data' value='{}' )
       button( type='submit' ) Save Changes
 
     if error
       div
         span( style={color: 'red', 'font-size': 'small'} )= error
+
+  script!= `updateObjData(${JSON.stringify(universe.obj_data)});`
+  script.
+    function updateCats() {
+      const catsList = document.getElementById('cats');
+      catsList.innerHTML = '';
+      for (const catShortname in obj_data.cats) {
+        const [catTitle, catTitlePl, catColor] = obj_data.cats[catShortname];
+        const catForm = createElement('form', { children: [
+          createElement('h4', { attrs: { innerText: catShortname } }),
+          createElement('div', { classList: ['d-flex', 'align-stretch', 'flex-wrap'], children: [
+            createElement('input', { attrs: { name: 'title', value: catTitle } }),
+            createElement('input', { attrs: { name: 'titlePl', value: catTitlePl } }),
+            createElement('input', { attrs: { name: 'color', value: catColor, type: 'color', style: 'height: auto; padding: 0; min-width: 3rem;' } }),
+            createElement('button', { attrs: {
+              innerText: T('Remove'),
+              onclick: (e) => {
+                e.preventDefault();
+                const newState = { ...obj_data.cats };
+                delete newState[catShortname];
+                updateObjData({ cats: newState });
+                updateCats();
+              },
+            } }),
+          ] }),
+        ] });
+        catForm.onchange = () => {
+          let [title, titlePl, color] = catForm;
+          [title, titlePl, color] = [title, titlePl, color].map(i => i.value);
+          const newState = { ...obj_data.cats };
+          newState[catShortname] = [title.toLowerCase(), titlePl.toLowerCase(), color];
+          updateObjData({ cats: newState });
+        };
+        catsList.appendChild(catForm);
+      }
+
+      const addBtn = createElement('button', { attrs: { innerText: T('Add Category') } });
+      const addForm = createElement('form', { children: [
+        createElement('div', { classList: ['d-flex', 'align-stretch', 'flex-wrap'], children: [
+          addBtn,
+          createElement('input', { attrs: { name: 'title', placeholder: T('Title') } }),
+          createElement('input', { attrs: { name: 'titlePl', placeholder: T('Title (Plural)') } }),
+        ] }),
+      ] });
+      addBtn.onclick = (e) => {
+        e.preventDefault();
+        let { title, titlePl } = addForm;
+        [title, titlePl] = [title, titlePl].map(i => i.value);
+        console.log(title, titlePl)
+        const newState = { ...obj_data.cats };
+        newState[title.toLowerCase()] = [title.toLowerCase(), titlePl.toLowerCase(), '#ffffff'];
+        updateObjData({ cats: newState });
+        updateCats();
+      };
+      catsList.appendChild(addForm);
+      
+      catsList.appendChild(createElement('button', { attrs: {
+        innerText: 'Reset to default categories',
+        onclick: (e) => {
+          e.preventDefault();
+          setDefaultCats();
+        },
+      } }));
+    }
+
+    function setDefaultCats() {
+      const defaultCats = [
+        ['article', '#deddca'],
+        ['character', '#F44336'],
+        ['location', '#4CAF50'],
+        ['event', '#9e9e9e'],
+        ['archive', '#a1887f'],
+        ['document', '#4d4d4d'],
+        ['timeline', '#64B5F6'],
+        ['item', '#ffc107'],
+        ['organization', '#9262df'],
+      ];
+      const cats = {};
+      for (const [cat, color] of defaultCats) {
+        cats[cat] = [T(cat), T(`${cat}-pl`), color];
+      }
+      updateObjData({ cats });
+      updateCats();
+    }
+
+    if (!('cats' in obj_data)) setDefaultCats();
+    else updateCats();

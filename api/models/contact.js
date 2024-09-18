@@ -120,10 +120,18 @@ async function del(user, targetID) {
   }
 }
 
+async function delByUsername(user, username) {
+  const [code, target] = await userapi.getOne({ username });
+  if (!target) return [code];
+
+  return await del(user, target.id);
+}
+
 module.exports = {
   getOne,
   getAll,
   post,
   put,
   del,
+  delByUsername,
 };

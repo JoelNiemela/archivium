@@ -30,6 +30,9 @@ block content
           span 
             b #{T('Last seen')}: 
             | #{formatDate(user.updated_at)}
+        .d-flex.gap-1.justify-end( data-user=user.username )
+          button.contact-delete Remove
+  
   h2 Pending (#{pending.length})
   .card-list
     each user in pending

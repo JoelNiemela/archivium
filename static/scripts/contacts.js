@@ -20,6 +20,17 @@ async function respondContact(username, accepted) {
   window.location.reload();
 }
 
+async function deleteContact(username) {
+  await fetch('/api/contacts', {
+      method: 'DELETE',
+      headers: {
+      'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username }),
+  });
+  window.location.reload();
+}
+
 window.addEventListener('load', () => {
   document.querySelectorAll('.contact-accept').forEach((btn) => {
     const username = btn.parentElement.dataset.user;
@@ -34,6 +45,14 @@ window.addEventListener('load', () => {
     btn.onclick = (e) => {
       e.stopPropagation();
       respondContact(username, false);
+    }
+  });
+
+  document.querySelectorAll('.contact-delete').forEach((btn) => {
+    const username = btn.parentElement.dataset.user;
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      deleteContact(username);
     }
   });
 });

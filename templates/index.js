@@ -88,7 +88,7 @@ const templates = {
   universeItemList: compile('templates/list/universeItems.pug'),
 
   user: compile('templates/view/user.pug'),
-  userList: compile('templates/list/users.pug'),
+  contactList: compile('templates/list/contacts.pug'),
 
   search: compile('templates/list/search.pug'),
 };

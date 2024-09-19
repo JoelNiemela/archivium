@@ -545,6 +545,16 @@ h4, h5 {
   align-items: center;
 }
 
+.justify-start {
+  justify-content: start;
+}
+.justify-end {
+  justify-content: end;
+}
+.justify-between {
+  justify-content: space-between;
+}
+
 .grow-1 {
   flex-grow: 1;
 }
@@ -569,6 +579,13 @@ h4, h5 {
 }
 .gap-4 {
   gap: 1rem;
+}
+
+.grid {
+  display: grid;
+}
+.grid-inherit {
+  grid-template-columns: inherit;
 }
 
 .ma-auto {

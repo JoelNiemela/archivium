@@ -22,6 +22,14 @@ CREATE TABLE session (
   PRIMARY KEY (id)
 );
 
+CREATE TABLE contact (
+  requesting_user INT NOT NULL,
+  accepting_user INT NOT NULL,
+  accepted BOOLEAN,
+  FOREIGN KEY (requesting_user) REFERENCES user (id),
+  FOREIGN KEY (accepting_user) REFERENCES user (id)
+);
+
 CREATE TABLE universe (
   id INT NOT NULL AUTO_INCREMENT,
   title VARCHAR(64) NOT NULL,

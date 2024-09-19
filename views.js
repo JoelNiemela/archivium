@@ -74,15 +74,17 @@ module.exports = function(app) {
   });
 
   /* User Pages */
-  get('/users', Auth.verifySessionOrRedirect, async (_, res) => {
-    const [code, users] = await api.user.getMany(undefined, true);
+  get('/contacts', Auth.verifySessionOrRedirect, async (req, res) => {
+    const [code, contacts] = await api.contact.getAll(req.session.user);
     res.status(code);
-    if (!users) return;
-    res.prepareRender('userList', {
-      users: users.map(user => ({
-        ...user,
-        gravatarLink: `http://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
-      })),
+    if (!contacts) return;
+    const gravatarContacts = contacts.map(user => ({
+      ...user,
+      gravatarLink: `http://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
+    }));
+    res.prepareRender('contactList', {
+      contacts: gravatarContacts.filter(contact => contact.accepted),
+      pending: gravatarContacts.filter(contact => !contact.accepted),
     });
   });
 
@@ -93,6 +95,10 @@ module.exports = function(app) {
     const [code2, universes] = await api.universe.getManyByAuthorId(req.session.user, user.id);
     res.status(code2);
     if (!universes) return;
+    const [code3, contact] = await api.contact.getOne(req.session.user, user.id);
+    res.status(code3);
+    if (code3 !== 200) return;
+    user.isContact = contact !== undefined;
     res.prepareRender('user', { 
       user,
       gravatarLink: `http://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
@@ -320,9 +326,16 @@ module.exports = function(app) {
   get('/universes/:shortname/permissions', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
     const [code2, users] = await api.user.getMany();
-    const code = code1 !== 200 ? code1 : code2;
+    const [code3, contacts] = await api.contact.getAll(req.session.user);
+    const code = code1 !== 200 ? code1 : (code2 !== 200 ? code2 : code3);
     res.status(code);
     if (code !== 200) return;
+    contacts.forEach(contact => {
+      if (!(contact.id in universe.authors)) {
+        universe.authors[contact.id] = contact.username;
+        universe.author_permissions[contact.id] = perms.NONE;
+      }
+    });
     res.prepareRender('editUniversePerms', { universe, users });
   });
   post('/universes/:shortname/permissions', Auth.verifySessionOrRedirect, async (req, res) => {

@@ -13,21 +13,26 @@ block breadcrumbs
 
 block content
   h2 New Item for #{universe.title}
-  form( method='POST' )
-    div.inputGroup
-      label( for='title' ) Title: 
-      input( id='title' type='text' name='title' value=`${title || ''}` )
-    div.inputGroup
-      label( for='shortname' ) Shortname: 
-      input( id='shortname' type='text' name='shortname' value=`${shortname || ''}` )
-    div.inputGroup
-      label( for='item_type' ) Type: 
-      select( id='item_type' name='item_type' )
-        each type in ['article', 'character', 'location', 'event', 'archive', 'document', 'timeline', 'item', 'organization']
-            option( value=(type) selected=(item_type === type) )= capitalize(type)
-    div
-      input( type='hidden' name='obj_data' value='{}' )
-      button( type='submit' ) Create Item
-    if error
+  if universe.obj_data.cats
+    form( method='POST' )
+      div.inputGroup
+        label( for='title' ) Title: 
+        input( id='title' type='text' name='title' value=`${title || ''}` )
+      div.inputGroup
+        label( for='shortname' ) Shortname: 
+        input( id='shortname' type='text' name='shortname' value=`${shortname || ''}` )
+      div.inputGroup
+        label( for='item_type' ) Type: 
+        select( id='item_type' name='item_type' )
+          each type, shortname in universe.obj_data.cats
+              option( value=(shortname) selected=(item_type === shortname) )= capitalize(type[0])
       div
-        span( style={'font-size': 'small'} ).color-error= error
+        input( type='hidden' name='obj_data' value='{}' )
+        button( type='submit' ) Create Item
+      if error
+        div
+          span( style={'font-size': 'small'} ).color-error= error
+  else
+    p No item types have been defined for #{universe.title} yet — go to the 
+      a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/edit` ) edit universe
+      |  page to add some.

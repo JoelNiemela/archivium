@@ -20,7 +20,7 @@ block content
         option( value='public' selected=(universe.public) ) Public
         option( value='private' selected=(!universe.public) ) Private
 
-    h3 Categories
+    h3 Item Types
     #cats
 
     div
@@ -87,7 +87,7 @@ block content
       catsList.appendChild(addForm);
       
       catsList.appendChild(createElement('button', { attrs: {
-        innerText: 'Reset to default categories',
+        innerText: 'Reset to default types',
         onclick: (e) => {
           e.preventDefault();
           setDefaultCats();

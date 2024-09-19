@@ -35,6 +35,8 @@ block content
       if contextUser && (universe.author_permissions[contextUser.id] >= perms.ADMIN)
         |  - 
         a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/permissions` ) Set Permissions
+        |  - 
+        a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/delete` ) Delete
 
   hr
 

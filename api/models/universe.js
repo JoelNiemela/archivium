@@ -140,6 +140,22 @@ async function putPermissions(user, shortname, targetUser, permission_level) {
   }
 }
 
+async function del(user, shortname) {
+  const [code, universe] = await getOne(user, { shortname }, perms.ADMIN);
+  if (!universe) return [code];
+
+  console.log(universe)
+
+  try {
+    await executeQuery(`DELETE FROM authoruniverse WHERE universe_id = ?;`, [universe.id]);
+    await executeQuery(`DELETE FROM universe WHERE id = ?;`, [universe.id]);
+    return [200];
+  } catch (err) {
+    console.error(err);
+    return [500];
+  }
+}
+
 module.exports = {
   perms,
   getOne,
@@ -149,4 +165,5 @@ module.exports = {
   post,
   put,
   putPermissions,
+  del,
 };

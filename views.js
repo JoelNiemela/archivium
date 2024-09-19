@@ -145,6 +145,13 @@ module.exports = function(app) {
     res.prepareRender('universe', { universe, authors: authorMap });
   });
 
+  get('/universes/:shortname/delete', Auth.verifySessionOrRedirect, async (req, res) => {
+    const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname }, perms.ADMIN);
+    res.status(code);
+    if (!universe) return res.redirect(`${ADDR_PREFIX}/universes`);
+    res.prepareRender('deleteUniverse', { universe });
+  });
+
   get('/universes/:shortname/edit', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname }, perms.WRITE);
     res.status(code);

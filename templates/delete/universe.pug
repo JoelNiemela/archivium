@@ -1,0 +1,35 @@
+extends ../layout.pug
+
+block content
+  script!= `const universeShortname = '${universe.shortname}'`
+  script.
+    async function deleteUniverse() {
+      const shortname = document.getElementById('shortname').value;
+      if (shortname !== universeShortname) return;
+      await fetch(`/api/universes/${universeShortname}`, { method: 'DELETE' });
+      window.location.reload();
+    }
+
+  h2 Delete #{universe.title}
+  .d-flex.flex-col
+
+    .big-text
+      p Are you want to delete #{universe.title}? This action is 
+        b( style={color: 'red'} ) irreversible!
+
+      p A universe can only be deleted if it contains no items.
+
+      p If you are 
+        i absolutely sure
+        |  you want to delete #{universe.title}, please type in its shortname below.
+
+    div.inputGroup
+      label( for='title' ) Universe shortname: 
+      input( id='shortname' type='text' name='shortname' )
+    
+    div
+      button( onclick='deleteUniverse()' ) Delete Universe
+
+    if error
+      div
+        span( style={color: 'red', 'font-size': 'small'} )= error

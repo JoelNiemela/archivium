@@ -74,6 +74,7 @@ const templates = {
 
   universe: compile('templates/view/universe.pug'),
   editUniverse: compile('templates/edit/universe.pug'),
+  deleteUniverse: compile('templates/delete/universe.pug'),
   universeList: compile('templates/list/universes.pug'),
   createUniverse: compile('templates/create/universe.pug'),
   editUniversePerms: compile('templates/edit/universePerms.pug'),

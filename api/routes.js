@@ -71,6 +71,7 @@ module.exports = function(app) {
     }, [
       new APIRoute('/:universeShortName', {
         GET: (req) => api.universe.getOne(req.session.user, { shortname: req.params.universeShortName }),
+        DELETE: (req) => api.universe.del(req.session.user, req.params.universeShortName),
       }, [
         new APIRoute('/items', {
           GET: (req) => api.item.getByUniverseShortname(req.session.user, req.params.universeShortName),

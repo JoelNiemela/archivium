@@ -376,6 +376,13 @@ button:active {
   font-size: 1.0625rem;
   line-height: 1.33;
 }
+
+.markdown::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+
 .markdown p {
   text-indent: 2rem;
   padding: 0 0.75rem;

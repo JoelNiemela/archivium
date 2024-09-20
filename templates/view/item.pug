@@ -14,6 +14,9 @@ block breadcrumbs
 block content
   script
     include /static/scripts/tabs.js
+    include /static/scripts/domUtils.js
+    include /static/scripts/searchableSelect.js
+    include /static/scripts/richEditor/index.js
 
   h1.center #{item.title}
   p.center #{capitalize(T(item.itemTypeName))} of 
@@ -86,7 +89,11 @@ block content
 
     if parsedBody
       .sheet.hidden( data-tab='body' )
-        +mdText(parsedBody)
+        if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE/* || item.author === contextUser.username*/)
+          #richEditor
+          script!= `loadRichEditor(${JSON.stringify(parsedBody)})`
+        else
+          +mdText(parsedBody)
 
   script.
     (function() {

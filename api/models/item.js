@@ -286,6 +286,68 @@ async function post(user, body, universeShortName) {
   }
 }
 
+async function save(user, universeShortname, itemShortname, body) {
+  // Handle tags
+  body.tags = body.tags?.split(' ') ?? [];
+
+  // Handle obj_data
+  if (!('obj_data' in body)) {
+    return [400]; // We should probably render an error on the edit page instead here.
+  }
+  body.obj_data = JSON.parse(decodeURIComponent(body.obj_data));
+  let lineage;
+  if ('lineage' in body.obj_data) {
+    lineage = body.obj_data.lineage;
+    body.obj_data.lineage = { title: lineage.title };
+  }
+  let code; let data;
+  body.obj_data = JSON.stringify(body.obj_data);
+
+  // Actually save item
+  [code, data] = await api.item.put(user, universeShortname, itemShortname, body);
+  if (code !== 200) {
+    return [code, data];
+  }
+
+  // Handle lineage data
+  if (lineage) {
+    let item;
+    [code, item] = await api.item.getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE);
+    if (code !== 200) return [code];
+    const [newParents, newChildren] = [{}, {}];
+    for (const shortname in lineage.parents ?? {}) {
+      const [, parent] = await api.item.getByUniverseAndItemShortnames(user, universeShortname, shortname, perms.WRITE);
+      if (!parent) return [400];
+      newParents[shortname] = true;
+      if (!(shortname in item.parents)) {
+        [code,] = await api.item.putLineage(parent.id, item.id, ...lineage.parents[shortname]);
+      }
+    }
+    for (const shortname in lineage.children ?? {}) {
+      const [, child] = await api.item.getByUniverseAndItemShortnames(user, universeShortname, shortname, perms.WRITE);
+      if (!child) return [400];
+      newChildren[shortname] = true;
+      if (!(shortname in item.children)) {
+        [code, ] = await api.item.putLineage(item.id, child.id, ...lineage.children[shortname].reverse());
+      }
+    }
+    for (const shortname in item.parents) {
+      if (!newParents[shortname]) {
+        const [, parent] = await api.item.getByUniverseAndItemShortnames(user, universeShortname, shortname, perms.WRITE);
+        api.item.delLineage(parent.id, item.id);
+      }
+    }
+    for (const shortname in item.children) {
+      if (!newChildren[shortname]) {
+        const [, child] = await api.item.getByUniverseAndItemShortnames(user, universeShortname, shortname, perms.WRITE);
+        api.item.delLineage(item.id, child.id);
+      }
+    }
+  }
+
+  return [200];
+}
+
 async function put(user, universeShortname, itemShortname, changes) {
   const { title, obj_data, tags } = changes;
 
@@ -427,6 +489,7 @@ module.exports = {
   getByUniverseShortname,
   getByUniverseAndItemShortnames,
   post,
+  save,
   put,
   exists,
   putLineage,

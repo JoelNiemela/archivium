@@ -60,17 +60,23 @@ block content
         .itemTab.hidden( data-tab=name )
           each val, key in tab
             .itemKey
-              span #{key}
-              hr
-              +mdText(val)
+              if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
+                .editableKey.rich-editor( data-key=key data-tab-name=name data-val=val )
+              else
+                span #{key}
+                hr
+                +mdText(val)
 
     if 'gallery' in item.obj_data && 'title' in item.obj_data.gallery
         .itemTab.hidden.gallery( data-tab='gallery' )
-          each img in item.obj_data.gallery.imgs || []
+          each img, index in item.obj_data.gallery.imgs || []
             .itemKey
               img( src=img.url, alt=img.label )
-              if img.mdLabel
-                +mdText(img.mdLabel)
+              if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
+                .editableLabel.rich-editor( data-index=index data-label=img.mdLabel )
+              else
+                if img.mdLabel
+                  +mdText(img.mdLabel)
 
     if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
         .itemTab.hidden( data-tab='lineage' )
@@ -89,8 +95,8 @@ block content
 
     if parsedBody
       .sheet.hidden( data-tab='body' )
-        if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE/* || item.author === contextUser.username*/)
-          #richEditor
+        if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
+          #editor.rich-editor
           script!= `window.item = ${JSON.stringify(item)};`
           script!= `loadRichEditor('${universe.shortname}', ${JSON.stringify(parsedBody)});`
         else

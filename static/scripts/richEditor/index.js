@@ -235,32 +235,94 @@ class Node {
 
 function loadRichEditor(universe, data) {
 
-  function save() {
-    console.log('SAVE');
-    const markdown = nodes.export().trim();
-    window.item.obj_data.body = markdown;
-  }
-
   window.universe = universe;
-  const editor = document.getElementById('richEditor');
+  const editor = document.getElementById('editor');
   if (!editor) throw new Error('Editor div not found!');
   editor.classList.add('markdown');
   const nodes = new Node({ getElement: () => editor, save }, data);
   nodes.render();
 
-  editor.addEventListener(
-    'focusin',
-    (e) => {
-      e.target.classList.add('selected');
-    },
-    true,
-  );
-  editor.addEventListener(
-    'focusout',
-    (e) => {
-      e.target.classList.remove('selected');
-      e.target.ondeselect && e.target.ondeselect();
-    },
-    true,
-  );
+  function addFocusHandlers(editor) {
+    editor.addEventListener(
+      'focusin',
+      (e) => {
+        e.target.classList.add('selected');
+      },
+      true,
+    );
+    editor.addEventListener(
+      'focusout',
+      (e) => {
+        e.target.classList.remove('selected');
+        e.target.ondeselect && e.target.ondeselect();
+      },
+      true,
+    );
+  }
+  addFocusHandlers(editor);
+
+  const saves = [];
+
+  document.querySelectorAll('.editableKey').forEach(container => {
+    const { tabName, key, val } = container.dataset;
+    const keyEditor = createElement('div');
+    const valEditor = createElement('div');
+    container.appendChild(keyEditor);
+    container.appendChild(createElement('hr'));
+    container.appendChild(valEditor);
+    saves.push(() => {
+      console.log(window.item.obj_data.tabs)
+      if (window.item.obj_data.tabs[tabName] && window.item.obj_data.tabs[tabName][key]) {
+        const newKey = keyNodes.export().trim();
+        delete window.item.obj_data.tabs[tabName][key];
+        window.item.obj_data.tabs[tabName][newKey] = valNodes.export().trim();
+      }
+    });
+    const keyNodes = new Node({ getElement: () => keyEditor, save }, ['span', key, [], {}]);
+    const valNodes = new Node({ getElement: () => valEditor, save }, JSON.parse(val));
+    keyNodes.render();
+    valNodes.render();
+    addFocusHandlers(keyEditor);
+    addFocusHandlers(valEditor);
+  });
+  document.querySelectorAll('.editableLabel').forEach(container => {
+    const { index, label } = container.dataset;
+    const labelEditor = createElement('div');
+    container.appendChild(labelEditor);
+    saves.push(() => {
+      if (window.item.obj_data.gallery?.imgs[index]) {
+        window.item.obj_data.gallery.imgs[index].label = labelNodes.export().trim();
+      }
+    });
+    const labelNodes = new Node(
+      {
+        getElement: () => labelEditor,
+        save,
+      },
+      ['div', '', [label ? JSON.parse(label) : ['span', '', [], {}]], { class: 'label' }],
+    );
+    labelNodes.render();
+    addFocusHandlers(labelEditor);
+  });
+
+  async function save(submit=true) {
+    for (const f of saves) {
+      f();
+    }
+
+    const markdown = nodes.export().trim();
+    window.item.obj_data.body = markdown;
+
+    if (submit) {
+      // await fetch(`/api/universes/${universe}/items/${window.item.shortname}`, {
+      //   method: 'PUT',
+      //   headers: {
+      //   'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({ ...window.item }),
+      // });
+    }
+  }
+
+  save(false);
 }

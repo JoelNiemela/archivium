@@ -150,9 +150,9 @@ class Line {
 
 function inlineCmds(cmd, args) {
   if (cmd === 'data') {
-    return [new MarkdownNode('ctx', `%`, { lookups: [new CtxLookup('item', 'obj_data', ...args)] })];
+    return [new MarkdownNode('ctx', `%`, { lookups: [new CtxLookup('item', 'obj_data', ...args)], raw: { args } })];
   } else if (cmd === 'tab') {
-    return [new MarkdownNode('ctx', `%`, { lookups: [new CtxLookup('item', 'obj_data', 'tabs', ...args)] })];
+    return [new MarkdownNode('ctx', `%`, { lookups: [new CtxLookup('item', 'obj_data', 'tabs', ...args)], raw: { args } })];
   } else if (cmd === 'img') {
     const [src, alt, height, width] = args;
     const attrs = {
@@ -160,6 +160,7 @@ function inlineCmds(cmd, args) {
         src: isNaN(Number(src)) ? src : new CtxLookup('item', 'obj_data', 'gallery', 'imgs', src, 'url'),
         alt: alt || new CtxLookup('item', 'obj_data', 'gallery', 'imgs', src, 'label').default(alt),
       },
+      raw: { args },
     };
     if (height) attrs.height = height;
     if (width) attrs.width = width;

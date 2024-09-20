@@ -79,7 +79,7 @@ module.exports = function(app) {
         }, [
           new APIRoute('/:itemShortName', {
             GET: async (req) => api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortName, req.params.itemShortName),
-            PUT: async (req) => api.item.put(req.session.user, req.params.universeShortName, req.params.itemShortName),
+            PUT: async (req) => api.item.save(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body, true),
           }, [
             new APIRoute('/tags', {
               PUT: (req) => api.item.putTags(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body.tags),

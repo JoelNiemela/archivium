@@ -288,7 +288,7 @@ module.exports = function(app) {
     res.prepareRender(req.query.mode === 'raw' ? 'editItemRaw' : 'editItem', { item, itemMap });
   });
   post('/universes/:universeShortname/items/:itemShortname/edit', Auth.verifySessionOrRedirect, async (req, res) => {
-    const [code, err] = api.item.save(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
+    const [code, err] = await api.item.save(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
     res.status(code);
     if (err) {
       return res.prepareRender('editItem', { error: err, ...body });

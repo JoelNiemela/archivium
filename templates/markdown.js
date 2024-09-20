@@ -57,7 +57,9 @@ class MarkdownNode {
       this.addClass('link-animated');
     }
     if (this.type === 'p' && this.children.length === 1 && this.children[0].type === 'img') {
-      return this.children[0].evaluate();
+      this.type = 'div';
+      this.addClass('img-container');
+      // return this.children[0].evaluate();
     }
     if ('href' in this.attrs && this.attrs.href[0] === '@') {
       let [universe, itemHash] = this.attrs.href.substring(1).split('/');
@@ -161,7 +163,10 @@ function inlineCmds(cmd, args) {
     };
     if (height) attrs.height = height;
     if (width) attrs.width = width;
-    return [new MarkdownNode('img', '', attrs)];
+    const node = new MarkdownNode('div', '');
+    node.addClass('img-container');
+    node.addChild(new MarkdownNode('img', '', attrs));
+    return [node];
   }
 
   return null;

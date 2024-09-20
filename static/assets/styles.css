@@ -377,7 +377,7 @@ button:active {
   line-height: 1.33;
 }
 #richEditor {
-  padding: 0 1rem 0 1.75rem;
+  padding: 0 1.75rem 0 2.5rem;
 }
 #richEditor .selected {
   box-shadow: 2px 2px 8px 1px rgb(0, 0, 0, 0.25);
@@ -418,6 +418,7 @@ button:active {
 .markdown p {
   text-indent: 2rem;
   padding: 0 0.75rem;
+  min-height: 2rem;
 }
 
 .markdown img {
@@ -442,9 +443,9 @@ button:active {
   }
 }
 
-.markdown aside>img {
+.markdown aside>.img-container, .markdown aside>.img-container>img {
   width: 100%;
-  border-radius: 0.875rem;
+  border-radius: 0.875rem !important;
 }
 
 .markdown ul {

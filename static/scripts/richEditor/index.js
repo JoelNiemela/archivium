@@ -13,12 +13,28 @@ class Node {
 
     this.content = content;
     this.children = children.map(child => new Node(this, child, { ...meta }));
+
     if ('class' in this.attrs) {
       this.classes = this.attrs.class.split(' ');
       delete this.attrs.class;
+    } else {
+      this.classes = [];
     }
 
     this.element = null;
+  }
+
+  move(steps) {
+    const index = this.parent.children.indexOf(this);
+    this.parent.children.splice(index, 1);
+    this.parent.children.splice(index + steps, 0, this);
+    this.parent.render();
+  }
+
+  addBelow() {
+    const index = this.parent.children.indexOf(this);
+    this.parent.children.splice(index + 1, 0, new Node(this.parent, ['p', '', [], {}], { ...this.meta }));
+    this.parent.render();
   }
 
   getHandle() {
@@ -26,6 +42,7 @@ class Node {
       p: true,
       li: true,
       aside: true,
+      div: true,
       h1: true,
       h2: true,
       h3: true,
@@ -37,15 +54,20 @@ class Node {
     hasHandle |= this.attrs.id === 'toc';
     hasHandle &= !this.meta.isToc;
 
+    if (this.type === 'div' && this.attrs.id !== 'toc') {
+      hasHandle &= this.classes.includes('img-container');
+    }
+
     const offset = (
       this.type === 'li'
-    ) ? '-3.5rem' : '-2.5rem';
+    ) ? '-4.25rem' : '-3.25rem';
     const offsetType = this.type === 'aside' ? 'flex-direction: row-reverse; right': 'left';
 
     if (hasHandle) {
       const innerDiv = createElement('div', { children: [
-        createElement('button', { attrs: { innerText: '↓' } }),
-        createElement('button', { attrs: { innerText: '↑' } }),
+        createElement('button', { attrs: { innerText: '+', onclick: this.addBelow.bind(this) } }),
+        createElement('button', { attrs: { innerText: '↑', onclick: this.move.bind(this, -1) } }),
+        createElement('button', { attrs: { innerText: '↓', onclick: this.move.bind(this, 1) } }),
       ]});
       const el = createElement('div', {
         attrs: { style: `${offsetType}: ${offset};` },
@@ -54,11 +76,9 @@ class Node {
       });
 
       innerDiv.onmouseenter = (e) => {
-        console.log('hover')
         this.element?.classList.add('selected');
       };
       innerDiv.onmouseleave = (e) => {
-        console.log('hover-end')
         this.element?.classList.remove('selected');
       };
 
@@ -79,8 +99,11 @@ class Node {
   }
 
   render() {
-    this.parent.innerHtml = '';
-    this.parent.appendChild(this.getElement());
+    const prevEl = this.element;
+    console.log()
+    if (prevEl) this.parent.element.replaceChild(this.getElement(), prevEl);
+    else this.parent.element.appendChild(this.getElement());
+    console.log(prevEl, this.element)
   }
 }
 
@@ -88,6 +111,6 @@ function loadRichEditor(data) {
   const editor = document.getElementById('richEditor');
   if (!editor) throw new Error('Editor div not found!');
   editor.classList.add('markdown');
-  const nodes = new Node(editor, data);
+  const nodes = new Node({ element: editor }, data);
   nodes.render();
 }

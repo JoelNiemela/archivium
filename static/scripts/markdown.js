@@ -1,6 +1,4 @@
-
-const { ADDR_PREFIX } = require('../config');
-const api = require('../api');
+if (!window.getJSON) throw 'fetchUtils.js not loaded!';
 
 class MarkdownNode {
   constructor(type, content, attrs={}) {
@@ -69,10 +67,11 @@ class MarkdownNode {
           universe = currentUniverse;
         }
         const [item, _] = itemHash.split('#');
-        this.attrs.href = `${ADDR_PREFIX}/universes/${universe}/items/${itemHash}`;
+        this.attrs.href = `/universes/${universe}/items/${itemHash}`;
         this.attrs['data-universe'] = universe;
         this.attrs['data-item'] = item;
-        if (!(await api.item.exists(universe, item))) {
+        console.log(universe)
+        if (!(await getJSON(`/api/universes/${universe}/items/${item}/exists`))) {
           this.addClass('link-broken');
         }
       }
@@ -97,7 +96,7 @@ class MarkdownNode {
       }
       delete this.attrs.ctx;
     }
-    return [this.type, this.content, await Promise.all(this.children.map(tag => tag.evaluate(currentUniverse, ctx, transform))), this.attrs];
+    return [this.type, this.content ?? '', await Promise.all(this.children.map(tag => tag.evaluate(currentUniverse, ctx, transform))), this.attrs];
   }
 }
 
@@ -380,7 +379,3 @@ function parseMarkdown(text) {
 
   return root;
 }
-
-module.exports = {
-  parseMarkdown,
-};

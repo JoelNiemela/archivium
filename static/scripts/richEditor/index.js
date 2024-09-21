@@ -1,5 +1,6 @@
-if (!window.createElement) throw 'domUtils not loaded!';
-if (!window.createSearchableSelect) throw 'searchableSelect not loaded!';
+if (!window.createElement) throw 'domUtils.js not loaded!';
+if (!window.createSearchableSelect) throw 'searchableSelect.js not loaded!';
+if (!window.parseMarkdown) throw 'markdown.js not loaded!';
 
 const ELEMENT_NODE = 1;
 function serializeElement(element) {
@@ -99,7 +100,7 @@ class Node {
   getHref() {
     if (!this.attrs.href) return '';
     if ('universe' in this.dataset && 'item' in this.dataset) {
-      if (this.dataset.universe === window.universe) return `@${this.dataset.item}`;
+      if (this.dataset.universe === window.contextUniverse.shortname) return `@${this.dataset.item}`;
       else return `@${this.dataset.universe}/${this.dataset.item}`;
     } else {
       return this.attrs.href;
@@ -271,7 +272,7 @@ class Node {
               href: `@${cmd}`,
               innerText: cmd,
             }, dataset: {
-              universe,
+              universe: window.contextUniverse.shortname,
               item: cmd,
             }}));
             cmdMode = false;
@@ -318,9 +319,14 @@ class Node {
   }
 }
 
-function loadRichEditor(universe, data) {
+async function loadRichEditor(universe, body) {
 
-  window.universe = universe;
+  console.log(body)
+
+  const data = await parseMarkdown(body).evaluate(universe.shortname, { item: window.item });
+  console.log(data)
+
+  window.contextUniverse = universe;
   const editor = document.getElementById('editor');
   if (!editor) throw new Error('Editor div not found!');
   editor.classList.add('markdown');

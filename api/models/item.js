@@ -386,7 +386,7 @@ async function put(user, universeShortname, itemShortname, changes) {
 }
 
 // TODO - how should permissions work on this?
-async function exists(universeShortname, itemShortname) {
+async function exists(user, universeShortname, itemShortname) {
   const queryString = `
     SELECT 1
     FROM item
@@ -394,7 +394,7 @@ async function exists(universeShortname, itemShortname) {
     WHERE universe.shortname = ? AND item.shortname = ?;
   `;
   const data = await executeQuery(queryString, [universeShortname, itemShortname]);
-  return data.length > 0;
+  return [200, data.length > 0];
 }
 
 

@@ -1,14 +1,20 @@
 if (!window.createElement) throw 'domUtils not loaded!';
 if (!window.createSearchableSelect) throw 'searchableSelect not loaded!';
 
+const ELEMENT_NODE = 1;
 function serializeElement(element) {
 
-  if (element.nodeType === 1) {
+  if (element.nodeType === ELEMENT_NODE) {
     const children = [];
+    const dataset = {};
     const attrs = {};
 
-    for (let attr of element.attributes) {
+    for (const attr of element.attributes) {
       attrs[attr.name] = attr.value;
+    }
+
+    for (const key in element.dataset) {
+      dataset[key] = element.dataset[key];
     }
 
     for (const child of element.childNodes) {
@@ -22,6 +28,38 @@ function serializeElement(element) {
 
 }
 
+function selectTextBehindCaret(charsBehind) {
+  let selection = window.getSelection();
+
+  if (selection.rangeCount > 0) {
+    let range = selection.getRangeAt(0);
+    let startOffset = range.startOffset;
+    let newOffset = Math.max(startOffset - charsBehind, 0);
+    
+    range.setStart(range.startContainer, newOffset);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  } else {
+    console.log('No selection found.');
+  }
+}
+
+function replaceSelectionWithEl(el) {
+  let selection = window.getSelection();
+
+  if (selection.rangeCount > 0) {
+    let range = selection.getRangeAt(0);
+
+    range.deleteContents();
+    range.insertNode(el);
+
+    let newRange = document.createRange();
+    newRange.setStartAfter(el);
+    selection.removeAllRanges();
+    selection.addRange(newRange);
+  }
+}
+
 class Node {
   constructor(parent, data, meta={}) {
     this.parent = parent;
@@ -31,6 +69,13 @@ class Node {
   update([type, content, children, attrs], meta={}) {
     this.type = type;
     this.attrs = attrs ?? {};
+    this.dataset = {};
+    for (const key in this.attrs) {
+      if (key.startsWith('data-')) {
+        this.dataset[key.replace('data-', '')] = this.attrs[key];
+        delete this.attrs[key];
+      }
+    }
     this.meta = { ...meta };
 
     if (this.type === 'text') this.type = 'span';
@@ -53,11 +98,11 @@ class Node {
 
   getHref() {
     if (!this.attrs.href) return '';
-    if ('data-universe' in this.attrs) {
-      if ('data-item' in this.attrs) {
-        if (this.attrs['data-universe'] === window.universe) return `@${this.attrs['data-item']}`;
-        else return `@${this.attrs['data-universe']}/${this.attrs['data-item']}`;
-      }
+    if ('universe' in this.dataset && 'item' in this.dataset) {
+      if (this.dataset.universe === window.universe) return `@${this.dataset.item}`;
+      else return `@${this.dataset.universe}/${this.dataset.item}`;
+    } else {
+      return this.attrs.href;
     }
   }
 
@@ -74,7 +119,9 @@ class Node {
       const content = this.children.map(child => child.export()).join('') + (this.content ?? '');
       const surround = {
         b: '**',
-        i: '*',
+        strong: '**',
+        i: '_',
+        em: '_',
       }[this.type] ?? '';
       const pref = {
         ul: '\n',
@@ -184,20 +231,58 @@ class Node {
     const children = this.children.map(child => child.makeElement());
     const handle = this.getHandle();
     const innerEl = createElement(this.type, {
-      attrs: { ...this.attrs, innerText: this.content, contentEditable: this.isEditable()/* && 'plaintext-only'*/ },
+      attrs: { ...this.attrs, innerText: this.content, contentEditable: this.isEditable() },
+      dataset: this.dataset,
       children,
       classList: this.classes,
     });
 
     if (this.isEditable()) {
       innerEl.ondeselect = () => {
-        this.parent.render();
+        // this.parent.render();
         this.save();
       };
 
       innerEl.oninput = () => {
         this.update(serializeElement(innerEl), this.meta);
-        console.log(this)
+      };
+
+      let cmdMode = false;
+      let cmd = '';
+      innerEl.onkeydown = (e) => {
+        if (e.ctrlKey) {
+          if (e.key === 'b') {
+            e.preventDefault();
+            document.execCommand('bold');
+            this.innerEl.oninput();
+          } else if (e.key === 'i') {
+            e.preventDefault();
+            document.execCommand('italic');
+            this.innerEl.oninput();
+          }
+        }
+        if (cmdMode) {
+          if (e.code === 'Backspace') {
+            cmd = cmd.substring(0, cmd.length - 1);
+          } else if (e.code === 'Space') {
+            selectTextBehindCaret(cmd.length + 1);
+            e.preventDefault();
+            replaceSelectionWithEl(createElement('a', { classList: ['link', 'link-animated'], attrs: {
+              href: `@${cmd}`,
+              innerText: cmd,
+            }, dataset: {
+              universe,
+              item: cmd,
+            }}));
+            cmdMode = false;
+            this.innerEl.oninput();
+          } else {
+            cmd += e.key;
+          }
+        } else if (e.key === '@') {
+          cmdMode = true;
+          cmd = '';
+        }
       };
     }
 
@@ -271,7 +356,6 @@ function loadRichEditor(universe, data) {
     container.appendChild(createElement('hr'));
     container.appendChild(valEditor);
     saves.push(() => {
-      console.log(window.item.obj_data.tabs)
       if (window.item.obj_data.tabs[tabName] && window.item.obj_data.tabs[tabName][key]) {
         const newKey = keyNodes.export().trim();
         delete window.item.obj_data.tabs[tabName][key];
@@ -303,6 +387,7 @@ function loadRichEditor(universe, data) {
     );
     labelNodes.render();
     addFocusHandlers(labelEditor);
+    delete window.item.obj_data.gallery.imgs[index].mdLabel;
   });
 
   async function save(submit=true) {
@@ -312,6 +397,8 @@ function loadRichEditor(universe, data) {
 
     const markdown = nodes.export().trim();
     window.item.obj_data.body = markdown;
+
+    console.log(JSON.stringify(item, null, 1).replaceAll('\\n', '\n'));
 
     if (submit) {
       // await fetch(`/api/universes/${universe}/items/${window.item.shortname}`, {

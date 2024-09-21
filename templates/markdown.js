@@ -200,14 +200,14 @@ function parseInline(line) {
       );
       nodes.push(boldNode);
       boldNode.addChildren(parseInline(new Line(boldChunk)));
-    } else if (char === '*') {
+    } else if (char === '*' || char === '_') {
       nodes.push(new MarkdownNode('text', chunk));
       chunk = '';
       let italicsChunk = '';
       let stars = 1;
       while (stars > 0 && line.hasNext()) {
-        if (line.peek() === '*') {
-          if (line.peek(1) === '*' && stars === 1) {
+        if (line.peek() === '*' || line.peek() === '_') {
+          if (line.peek() !== '_' && line.peek(1) === '*' && stars === 1) {
             stars += 2;
             italicsChunk += line.next();
           }

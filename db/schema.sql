@@ -47,7 +47,7 @@ CREATE TABLE item (
   id INT NOT NULL AUTO_INCREMENT,
   title VARCHAR(64) NOT NULL,
   shortname VARCHAR(64) NOT NULL,
-  item_type ENUM('article', 'character', 'location', 'event', 'archive', 'document', 'timeline', 'item', 'organization') NOT NULL,
+  item_type VARCHAR(16) NOT NULL,
   author_id INT NOT NULL,
   universe_id INT NOT NULL,
   UNIQUE(shortname, universe_id),

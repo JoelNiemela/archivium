@@ -530,6 +530,9 @@ h4, h5 {
   display: flex;
 }
 
+.flex-row {
+  flex-direction: row;
+}
 .flex-col {
   flex-direction: column;
 }
@@ -543,6 +546,15 @@ h4, h5 {
 }
 .align-center {
   align-items: center;
+}
+.align-stretch {
+  align-items: stretch;
+}
+.align-end {
+  align-items: end;
+}
+.align-self-end {
+  align-self: end;
 }
 
 .justify-start {
@@ -568,6 +580,9 @@ h4, h5 {
   flex-grow: 4;
 }
 
+.gap-0 {
+  gap: 0;
+}
 .gap-1 {
   gap: 0.25rem;
 }

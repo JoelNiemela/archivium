@@ -1,15 +1,15 @@
 extends ../layout.pug
 include ../mixins.pug
 
-mixin typeCard(type, color)
+mixin typeCard(shortname, category)
   .card.item-type
-    a.cardLink.link( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items?type=${type}` )
-      div(style={ 'background-color': color })
-        h2(align='center')= capitalize(T(`${type}-pl`))
+    a.cardLink.link( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items?type=${shortname}` )
+      div(style={ 'background-color': category[2] })
+        h2(align='center')= capitalize(category[1])
     div
       if contextUser
-        a.cardBtn.link( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/create?type=${type}` ) &#x2795; New
-        a.cardBtn.link( href=`${ADDR_PREFIX}/users/${contextUser.username}/items?type=${type}` ) My #{T(`${type}-pl`)}
+        a.cardBtn.link( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/create?type=${shortname}` ) &#x2795; New
+        a.cardBtn.link( href=`${ADDR_PREFIX}/users/${contextUser.username}/items?type=${shortname}` ) My #{category[1]}
 
 block breadcrumbs
   a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
@@ -19,6 +19,10 @@ block breadcrumbs
   span #{universe.title}
 
 block content
+  script
+    include /static/scripts/tabs.js
+    include /static/scripts/cardUtils.js
+
   h1.center #{universe.title}
   p.center
     small Created by 
@@ -31,21 +35,66 @@ block content
       if contextUser && (universe.author_permissions[contextUser.id] >= perms.ADMIN)
         |  - 
         a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/permissions` ) Set Permissions
+        |  - 
+        a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/delete` ) Delete
+
   hr
-  h4 Authors
-  ul
-    each username, id in universe.authors
-      li
-        a.link.link-animated( href=`${ADDR_PREFIX}/users/${username}` )= username
-      
-  .container
-    .type-card-container
-      +typeCard('article', '#deddca')
-      +typeCard('character', '#F44336')
-      +typeCard('location', '#4CAF50')
-      +typeCard('event', '#9e9e9e')
-      +typeCard('archive', '#a1887f')
-      +typeCard('document', '#4d4d4d')
-      +typeCard('timeline', '#64B5F6')
-      +typeCard('item', '#ffc107')
-      +typeCard('organization', '#9262df')
+
+  //- Tab buttons
+  ul.navbarBtns#tabBtns.gap-1
+    li.navbarBtn#bodyBtn( data-tab='items' )
+      h3.navbarBtnLink.navbarText( onclick=`showTab('items')` ) Items
+    li.navbarBtn#bodyBtn( data-tab='authors' )
+      h3.navbarBtnLink.navbarText( onclick=`showTab('authors')` ) Authors
+    if !universe.public
+      li.navbarBtn#bodyBtn( data-tab='viewers' )
+        h3.navbarBtnLink.navbarText( onclick=`showTab('viewers')` ) Viewers
+
+  .tabs
+    .container.hidden( data-tab='items' )
+      if universe.obj_data.cats
+        .type-card-container
+          each category, shortname in universe.obj_data.cats
+            +typeCard(shortname, category)
+      else
+        p No item types have been defined yet — go to the 
+          a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/edit` ) edit
+          |  page to add some.
+    
+    .card-list.hidden( data-tab='authors' )
+      each username, id in universe.authors
+        if universe.author_permissions[id] > perms.READ
+          .card.sheet.gap-4( onclick=`goTo('${ADDR_PREFIX}/users/${username}')` )
+            img.userIcon( alt=username, src=authors[id].gravatarLink )
+            .d-flex.flex-col.grow-1
+              h2.ma-0
+                a.link.link-animated( href=`${ADDR_PREFIX}/users/${username}` ) #{username}
+              span
+                b #{T('Joined')}: 
+                | #{formatDate(authors[id].created_at)}
+              span 
+                b #{T('Last seen')}: 
+                | #{formatDate(authors[id].updated_at)}
+              span
+                b #{T('Items Owned')}: 
+                | #{authors[id].items_authored}
+            .d-flex.flex-col.grow-1
+              span.align-self-end.grow-1
+                if universe.author_permissions[id] === perms.ADMIN
+                  | Admin
+    
+    .card-list.hidden( data-tab='viewers' )
+      each username, id in universe.authors
+        if universe.author_permissions[id] === perms.READ
+          .card.sheet.gap-4( onclick=`goTo('${ADDR_PREFIX}/users/${username}')` )
+            img.userIcon( alt=username, src=authors[id].gravatarLink )
+            .d-flex.flex-col.grow-1
+              h2.ma-0
+                a.link.link-animated( href=`${ADDR_PREFIX}/users/${username}` ) #{username}
+              span
+                b #{T('Joined')}: 
+                | #{formatDate(authors[id].created_at)}
+              span 
+                b #{T('Last seen')}: 
+                | #{formatDate(authors[id].updated_at)}
+        

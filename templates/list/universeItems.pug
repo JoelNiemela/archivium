@@ -16,7 +16,7 @@ block content
 
   h1.center 
     if type
-      | #{capitalize(T(`${type}-pl`))} 
+      | #{capitalize(T(`${((universe.obj_data.cats || {})[type] || [, 'Missing type items'])[1]}`))} 
     else
       | Items 
     | of #{universe.title}

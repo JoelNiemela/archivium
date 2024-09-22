@@ -12,8 +12,11 @@ block breadcrumbs
   span #{item.title}
 
 block content
+  script
+    include /static/scripts/tabs.js
+
   h1.center #{item.title}
-  p.center #{capitalize(item.item_type)} of 
+  p.center #{capitalize(T(item.itemTypeName))} of 
     a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{item.universe}
     if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE/* || item.author === contextUser.username*/)
       |  - 
@@ -84,29 +87,6 @@ block content
     if parsedBody
       .sheet.hidden( data-tab='body' )
         +mdText(parsedBody)
-
-  script!= `const defaultTab = '${tab || ''}';`
-  script.
-    function showTab(tab) {
-      document.querySelectorAll('.tabs [data-tab]').forEach(tab => tab.classList.add('hidden'));
-      document.querySelectorAll('.navbarBtn[data-tab]').forEach(btn => btn.classList.remove('selected'));
-      document.querySelector(`.tabs [data-tab=${tab}]`)?.classList.remove('hidden');
-      document.querySelector(`.navbarBtn[data-tab=${tab}]`)?.classList.add('selected');
-      const query = new URLSearchParams(window.location.search);
-      query.set('tab', tab);
-      const { protocol, host, pathname, hash } = window.location;
-      const newurl = `${protocol}//${host}${pathname}?${query.toString()}${hash}`;
-      window.history.pushState({ path: newurl }, '', newurl);
-    }
-
-    const tabs = document.getElementById('tabBtns');
-    if (tabs.children.length > 0) {
-      showTab(defaultTab || tabs.children[0].dataset.tab)
-    }
-
-    if (tabs.children.length < 2) {
-      tabs.remove();
-    }
 
   script.
     (function() {

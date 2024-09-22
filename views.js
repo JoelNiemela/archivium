@@ -120,6 +120,7 @@ module.exports = function(app) {
   post('/universes/create', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code, data] = await api.universe.post(req.session.user, {
       ...req.body,
+      obj_data: decodeURIComponent(req.body.obj_data),
       public: req.body.visibility === 'public',
     });
     res.status(code);
@@ -128,10 +129,27 @@ module.exports = function(app) {
   });
   
   get('/universes/:shortname', async (req, res) => {
-    const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
-    res.status(code);
+    const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
+    res.status(code1);
     if (!universe) return;
-    res.prepareRender('universe', { universe });
+    const [code2, authors] = await api.user.getByUniverseShortname(req.session.user, universe.shortname);
+    res.status(code2);
+    if (!authors) return;
+    const authorMap = {};
+    authors.forEach(author => {
+      authorMap[author.id] = {
+        ...author,
+        gravatarLink: `http://www.gravatar.com/avatar/${md5(author.email)}.jpg`,
+      };
+    });
+    res.prepareRender('universe', { universe, authors: authorMap });
+  });
+
+  get('/universes/:shortname/delete', Auth.verifySessionOrRedirect, async (req, res) => {
+    const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname }, perms.ADMIN);
+    res.status(code);
+    if (!universe) return res.redirect(`${ADDR_PREFIX}/universes`);
+    res.prepareRender('deleteUniverse', { universe });
   });
 
   get('/universes/:shortname/edit', Auth.verifySessionOrRedirect, async (req, res) => {
@@ -143,6 +161,7 @@ module.exports = function(app) {
   post('/universes/:shortname/edit', Auth.verifySessionOrRedirect, async (req, res) => {
     req.body = {
       ...req.body,
+      obj_data: decodeURIComponent(req.body.obj_data),
       public: req.body.visibility === 'public',
     }
     console.log(req.body)
@@ -165,7 +184,12 @@ module.exports = function(app) {
     const code = code1 !== 200 ? code1 : code2;
     res.status(code);
     if (code !== 200) return;
-    res.prepareRender('universeItemList', { items, universe, type: req.query.type, tag: req.query.tag });
+    res.prepareRender('universeItemList', {
+      items: items.map(item => ({ ...item, itemTypeName: ((universe.obj_data.cats ?? {})[item.item_type] ?? ['missing_cat'])[0] })),
+      universe,
+      type: req.query.type,
+      tag: req.query.tag,
+    });
   });
  
   get('/universes/:shortname/items/create', Auth.verifySessionOrRedirect, async (req, res) => {
@@ -204,6 +228,7 @@ module.exports = function(app) {
       return;
     }
     item.obj_data = JSON.parse(item.obj_data);
+    item.itemTypeName = ((universe.obj_data.cats ?? {})[item.item_type] ?? ['missing_cat'])[0];
     const parsedBody = 'body' in item.obj_data && (await parseMarkdown(item.obj_data.body || '').evaluate(req.params.universeShortname, { item }))
     if ('tabs' in item.obj_data) {
       for (const tab in item.obj_data.tabs) {
@@ -241,7 +266,7 @@ module.exports = function(app) {
         }
       ));
     }
-    res.prepareRender('item', { item, universe, parsedBody, tab: req.query.tab });
+    res.prepareRender('item', { item, universe, parsedBody });
   });
   get('/universes/:universeShortname/items/:itemShortname/edit', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code1, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);

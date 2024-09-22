@@ -1,3 +1,10 @@
+/**
+ * Rich Text Editor
+ * 
+ * TODO this isn't quite working right yet - it's being
+ * shelved for now in favor of the enhanced markdown editor.
+ */
+
 if (!window.createElement) throw 'domUtils.js not loaded!';
 if (!window.createSearchableSelect) throw 'searchableSelect.js not loaded!';
 if (!window.parseMarkdown) throw 'markdown/parse.js not loaded!';
@@ -173,6 +180,21 @@ class EditorNode extends MarkdownElement {
     }
   }
 
+  isInline() {
+    return !({
+      p: true,
+      li: true,
+      aside: true,
+      div: true,
+      h1: true,
+      h2: true,
+      h3: true,
+      h4: true,
+      h5: true,
+      h6: true,
+    }[this.type]);
+  }
+
   isEditable() {
     return !({
       ul: true,
@@ -269,14 +291,6 @@ class EditorNode extends MarkdownElement {
 
 async function loadRichEditor(universe, body) {
 
-  window.contextUniverse = universe;
-  const editor = document.getElementById('editor');
-  if (!editor) throw new Error('Editor div not found!');
-  editor.classList.add('markdown');
-  editor.classList.add('rich-editor');
-  const nodes = new EditorNode({ getElement: () => editor, save }, await parseMarkdown(body).evaluate(universe.shortname, { item: window.item }));
-  nodes.render();
-
   function addFocusHandlers(editor) {
     editor.addEventListener(
       'focusin',
@@ -294,9 +308,24 @@ async function loadRichEditor(universe, body) {
       true,
     );
   }
-  addFocusHandlers(editor);
 
   const saves = [];
+
+  window.contextUniverse = universe;
+  const editor = document.getElementById('editor');
+  if (editor) {
+    editor.classList.add('markdown');
+    editor.classList.add('rich-editor');
+    const nodes = new EditorNode({ getElement: () => editor, save }, await parseMarkdown(body).evaluate(universe.shortname, { item: window.item }));
+    nodes.render();
+    addFocusHandlers(editor);
+    saves.push(() => {
+      const markdown = nodes.export().trim();
+      window.item.obj_data.body = markdown;
+    });
+  } else {
+    console.warn('Editor div not found!');
+  }
 
   document.querySelectorAll('.editableKey').forEach(async (container) => {
     const { tabName, key, val } = container.dataset;
@@ -355,9 +384,6 @@ async function loadRichEditor(universe, body) {
     for (const f of saves) {
       f();
     }
-
-    const markdown = nodes.export().trim();
-    window.item.obj_data.body = markdown;
 
     console.log(JSON.stringify(item, null, 1).replaceAll('\\n', '\n'));
 

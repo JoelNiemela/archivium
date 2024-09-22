@@ -34,21 +34,6 @@ class MarkdownElement {
     this.handle = null;
   }
 
-  isInline() {
-    return !({
-      p: true,
-      li: true,
-      aside: true,
-      div: true,
-      h1: true,
-      h2: true,
-      h3: true,
-      h4: true,
-      h5: true,
-      h6: true,
-    }[this.type]);
-  }
-
   makeElement() {
     const children = this.children.map(child => child.makeElement());
     this.element = createElement(this.type, {

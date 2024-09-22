@@ -146,7 +146,10 @@ async function del(user, shortname) {
   const [code, universe] = await getOne(user, { shortname }, perms.ADMIN);
   if (!universe) return [code];
 
-  console.log(universe)
+  const itemCount = (await executeQuery(`SELECT COUNT(id) as count FROM item WHERE universe_id = ?;`, [universe.id]))[0].count;
+  if (itemCount > 0) {
+    return [409, 'Cannot delete universe, universe not empty.'];
+  }
 
   try {
     await executeQuery(`DELETE FROM authoruniverse WHERE universe_id = ?;`, [universe.id]);

@@ -11,31 +11,65 @@ if (!MarkdownElement) throw 'markdown/render.js not loaded!';
 
 (function() {
   class EditorRowNode {
-    constructor(container, data) {
-      this.rowEl = createElement('div', { attrs: { contentEditable: true } });
-      this.node = new MarkdownElement({ getElement: () => this.rowEl }, data);
-      container.appendChild(this.rowEl);
-      this.rowEl.addEventListener(
-        'focusin',
-        (e) => {
-          e.target.classList.add('selected');
-        },
-        true,
-      );
-      this.rowEl.addEventListener(
-        'focusout',
-        (e) => {
-          e.target.classList.remove('selected');
-          e.target.ondeselect && e.target.ondeselect();
-        },
-        true,
-      );
+    constructor(editor, row) {
+      this.editor = editor;
+      this.renderedEl = createElement('div', { attrs: { contentEditable: false } });
+      this.editor.container.appendChild(this.renderedEl);
+      this.currentEl = this.renderedEl;
+      this.focused = false;
+      
+      if (row.src !== '@toc') {
+        this.rawEl = createElement('div', { attrs: { contentEditable: 'plaintext-only', innerText: row.src }, classList: ['selected'] });
+        this.renderedEl.onclick = (e) => {
+          e.stopPropagation();
+          this.focus();
+        };
+        this.rawEl.onclick = (e) => {
+          e.stopPropagation();
+        };
+        this.rawEl.addEventListener(
+          'focusout',
+          (e) => {
+            this.unfocus();
+          },
+          true,
+        );
+      }
+
+      row.evaluate(window.contextUniverse.shortname, { item: window.item }).then((data) => {
+        this.node = new MarkdownElement({ getElement: () => this.renderedEl }, data);
+        this.render();
+      });
+    }
+
+    async parse(src) {
+      const row = parseMarkdown(src).children[0];
+      const data = await row.evaluate(window.contextUniverse.shortname, { item: window.item });
+      this.node.update(data);
+    }
+
+    async focus() {
+      if (!this.focused) {
+        this.editor.unfocusAll();
+        this.rawEl.focus();
+        this.editor.container.replaceChild(this.rawEl, this.currentEl);
+        this.currentEl = this.rawEl;
+        this.focused = true;
+      }
+    }
+
+    async unfocus() {
+      if (this.focused) {
+        await this.parse(this.rawEl.innerText);
+        this.editor.container.replaceChild(this.renderedEl, this.currentEl);
+        this.currentEl = this.renderedEl;
+        this.render();
+        this.focused = false;
+      }
     }
 
     render() {
       this.node.render();
-      const el = this.node.getElement();
-      // el.
     }
   } 
 
@@ -43,15 +77,11 @@ if (!MarkdownElement) throw 'markdown/render.js not loaded!';
     constructor(container, body) {
       this.container = container;
       this.rows = parseMarkdown(body).children;
-      this.nodes = [];
+      this.nodes = this.rows.map((row) => new EditorRowNode(this, row));
     }
 
-    async render() {
-      const rowData = await Promise.all(this.rows.map(row => row.evaluate(window.contextUniverse.shortname, { item: window.item })));
-      this.nodes = rowData.map((row) => new EditorRowNode(this.container, row));
-      for (const node of this.nodes) {
-        node.render();
-      }
+    unfocusAll() {
+      this.nodes.forEach(node => node.unfocus());
     }
   }
 
@@ -68,7 +98,9 @@ if (!MarkdownElement) throw 'markdown/render.js not loaded!';
       editorDiv.classList.add('markdown');
       editorDiv.classList.add('rich-editor');
       const editor = new Editor(editorDiv, body);
-      editor.render();
+      // window.onclick = () => {
+      //   editor.unfocusAll();
+      // };
       saves.push(() => {
         const markdown = editor.export().trim();
         window.item.obj_data.body = markdown;

@@ -72,6 +72,7 @@ function replaceSelectionWithEl(el) {
 class EditorNode extends MarkdownElement {
   constructor(...args) {
     super(...args);
+    this.handle = null;
   }
 
   save() {

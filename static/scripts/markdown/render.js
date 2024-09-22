@@ -2,6 +2,8 @@ class MarkdownElement {
   constructor(parent, data, meta={}) {
     this.parent = parent;
     this.update(data, meta);
+
+    this.element = null;
   }
   
   update([type, content, children, attrs], meta={}) {
@@ -29,9 +31,6 @@ class MarkdownElement {
     } else {
       this.classes = [];
     }
-
-    this.element = null;
-    this.handle = null;
   }
 
   makeElement() {

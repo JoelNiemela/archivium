@@ -6,6 +6,18 @@ async function getJSON(url) {
     .catch(error => console.error('Error:', error));
 }
 
+async function postJSON(url, body) {
+  return await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  })
+    .then(response => response.json())
+    .catch(error => console.error('Error:', error));
+}
+
 async function fetchJSON(url) {
   return await fetch('https://example.com/api/resource', {
     method: 'PUT', // Specify the request method as PUT

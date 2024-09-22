@@ -1,5 +1,34 @@
 if (!window.getJSON) throw 'fetchUtils.js not loaded!';
 
+class BulkFetcher {
+  constructor(url) {
+    this.url = url;
+    this.data = {};
+    this.callbacks = [];
+  }
+
+  addCallback(cb) {
+    this.callbacks.push(cb);
+  }
+
+  async fetch() {
+    const result = await postJSON(this.url, this.data);
+    this.callbacks.forEach(cb =>  cb(result));
+    return result;
+  }
+}
+
+function bulkCheckExists(universe, item, fetches, cb) {
+  if (!fetches.exists) {
+    fetches.exists = new BulkFetcher('/api/exists');
+  }
+  if (!(universe in fetches.exists.data)) fetches.exists.data[universe] = [];
+  fetches.exists.data[universe].push(item);
+  fetches.exists.addCallback((result) => {
+    cb(result[universe][item]);
+  });
+}
+
 class MarkdownNode {
   constructor(type, content, attrs={}) {
     this.type = type;
@@ -49,7 +78,7 @@ class MarkdownNode {
     return `${this.content ?? ''}${this.children.map(child => child.innerText()).join('')}`;
   }
 
-  async evaluate(currentUniverse, ctx, transform) {
+  async evaluate(currentUniverse, ctx, transform, topLevel=true, fetches={}) {
     if (this.type === 'a') {
       this.addClass('link');
       this.addClass('link-animated');
@@ -70,10 +99,9 @@ class MarkdownNode {
         this.attrs.href = `/universes/${universe}/items/${itemHash}`;
         this.attrs['data-universe'] = universe;
         this.attrs['data-item'] = item;
-        console.log(universe)
-        if (!(await getJSON(`/api/universes/${universe}/items/${item}/exists`))) {
+        bulkCheckExists(universe, item, fetches, (exists) => {
           this.addClass('link-broken');
-        }
+        });
       }
     }
     if (transform) transform(this);
@@ -96,7 +124,11 @@ class MarkdownNode {
       }
       delete this.attrs.ctx;
     }
-    return [this.type, this.content ?? '', await Promise.all(this.children.map(tag => tag.evaluate(currentUniverse, ctx, transform))), this.attrs];
+    const result = [this.type, this.content ?? '', await Promise.all(this.children.map(tag => tag.evaluate(currentUniverse, ctx, transform, false, fetches))), this.attrs];
+    if (topLevel) {
+      await fetches.exists?.fetch();
+    }
+    return result;
   }
 }
 
@@ -284,8 +316,6 @@ function parseMarkdown(text) {
   let curList = [null, -1];
   let curTocList = [null, -1];
   let asideStart = null;
-
-  console.log(text)
 
   const lines = text.split('\n');
   for (const line of lines) {

@@ -309,7 +309,6 @@ async function loadRichEditor(universe, body) {
       if (tag.type === 'div') tag.attrs.style = {'text-align': 'right'};
       if (tag.type === 'p') tag.type = 'span';
     });
-    console.log(valData)
     const keyNodes = new EditorNode({ getElement: () => keyEditor, save }, ['span', key, [], {}]);
     const valNodes = new EditorNode({ getElement: () => valEditor, save }, valData);
     keyNodes.render();

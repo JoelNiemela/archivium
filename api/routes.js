@@ -81,7 +81,6 @@ module.exports = function(app) {
             GET: async (req) => api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortName, req.params.itemShortName),
             PUT: async (req) => api.item.save(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body, true),
           }, [
-            new APIRoute('/exists', { GET: (req) => api.item.exists(req.session.user, req.params.universeShortName, req.params.itemShortName) }),
             new APIRoute('/tags', {
               PUT: (req) => api.item.putTags(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body.tags),
               DELETE: (req) => api.item.delTags(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body.tags),
@@ -93,6 +92,29 @@ module.exports = function(app) {
         ])
       ])
     ]),
+    new APIRoute('/exists', { POST: async (req) => {
+      try {
+        const tuples = [];
+        for (const universe in req.body) {
+          for (const item of req.body[universe]) {
+            tuples.push([universe, item]);
+          }
+        }
+        const results = await Promise.all(tuples.map(args => api.item.exists(req.session.user, ...args) ));
+        const resultMap = {};
+        for (let i = 0; i < results.length; i++) {
+          const [code, data] = results[i];
+          if (code !== 200) return [code];
+          const [universe, item] = tuples[i];
+          if (!(universe in resultMap)) resultMap[universe] = {};
+          resultMap[universe][item] = data;
+        }
+        return [200, resultMap];
+      } catch (err) {
+        console.error(err);
+        return [500];
+      }
+    }}),
   ]);
 
   apiRoutes.setup(ADDR_PREFIX);

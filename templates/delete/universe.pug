@@ -6,8 +6,13 @@ block content
     async function deleteUniverse() {
       const shortname = document.getElementById('shortname').value;
       if (shortname !== universeShortname) return;
-      await fetch(`/api/universes/${universeShortname}`, { method: 'DELETE' });
-      window.location.reload();
+      const response = await fetch(`/api/universes/${universeShortname}`, { method: 'DELETE' })
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        const errSpan = document.getElementById('error');
+        errSpan.innerText = await response.json();
+      }
     }
 
   h2 Delete #{universe.title}
@@ -30,6 +35,5 @@ block content
     div
       button( onclick='deleteUniverse()' ) Delete Universe
 
-    if error
-      div
-        span( style={color: 'red', 'font-size': 'small'} )= error
+    div
+      span#error( style={color: 'red', 'font-size': 'small'} )

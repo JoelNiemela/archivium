@@ -270,10 +270,11 @@ module.exports = function(app) {
   });
   get('/universes/:universeShortname/items/:itemShortname/edit', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code1, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
+    res.status(code1);
+    if (!item) return;
     const [code2, itemList] = await api.item.getByUniverseId(req.session.user, item.universe_id, perms.READ, true, { type: 'character' });
-    const code = code1 !== 200 ? code1 : code2;
-    res.status(code);
-    if (code !== 200) return;
+    res.status(code2);
+    if (code2 !== 200) return;
     item.obj_data = JSON.parse(item.obj_data);
     if (Object.keys(item.parents).length > 0 || Object.keys(item.children).length > 0) {
       item.obj_data.lineage = { ...item.obj_data.lineage };

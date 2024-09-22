@@ -29,10 +29,9 @@ block content
       a.link.link-animated( href=`${ADDR_PREFIX}/users/${universe.owner}` ) #{universe.owner}
       |  #{formatDate(new Date(universe.created_at))}
       |  - Last updated #{formatDate(new Date(universe.updated_at))}
-      if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
+      if contextUser && (universe.author_permissions[contextUser.id] >= perms.ADMIN)
         |  - 
         a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/edit` ) Edit
-      if contextUser && (universe.author_permissions[contextUser.id] >= perms.ADMIN)
         |  - 
         a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/permissions` ) Set Permissions
         |  - 
@@ -52,14 +51,18 @@ block content
 
   .tabs
     .container.hidden( data-tab='items' )
-      if universe.obj_data.cats
+      if universe.obj_data.cats && Object.keys(universe.obj_data.cats).length
         .type-card-container
           each category, shortname in universe.obj_data.cats
             +typeCard(shortname, category)
       else
-        p No item types have been defined yet — go to the 
-          a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/edit` ) edit
-          |  page to add some.
+        p No item types have been defined yet — 
+          if contextUser && (universe.author_permissions[contextUser.id] >= perms.ADMIN)
+            | go to the 
+            a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/edit` ) edit
+            |  page to add some.
+          else
+            | ask the owner of this universe to add some.
     
     .card-list.hidden( data-tab='authors' )
       each username, id in universe.authors

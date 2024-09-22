@@ -20,7 +20,9 @@ async function getOne(user, options, permissionLevel) {
  */
 async function getMany(user, conditions, permissionLevel=perms.READ) {
   try {
-    const usrQueryString = user ? ` OR (au_filter.user_id = ${user.id} AND au_filter.permission_level >= ${permissionLevel})` : '';
+    const readOnlyQueryString = permissionLevel > perms.READ ? '' : `universe.public = 1`;
+    const usrQueryString = user ? `(au_filter.user_id = ${user.id} AND au_filter.permission_level >= ${permissionLevel})` : '';
+    const permsQueryString = `${readOnlyQueryString}${(readOnlyQueryString && usrQueryString) ? ' OR ' : ''}${usrQueryString}`;
     const conditionString = conditions ? `WHERE ${conditions.strings.join(' AND ')}` : '';
     const queryString = `
       SELECT 
@@ -31,7 +33,7 @@ async function getMany(user, conditions, permissionLevel=perms.READ) {
       FROM universe
       INNER JOIN authoruniverse as au_filter
         ON universe.id = au_filter.universe_id AND (
-          universe.public = 1${usrQueryString}
+          ${permsQueryString}
         )
       LEFT JOIN authoruniverse as au ON universe.id = au.universe_id
       LEFT JOIN user ON user.id = au.user_id
@@ -144,7 +146,10 @@ async function del(user, shortname) {
   const [code, universe] = await getOne(user, { shortname }, perms.ADMIN);
   if (!universe) return [code];
 
-  console.log(universe)
+  const itemCount = (await executeQuery(`SELECT COUNT(id) as count FROM item WHERE universe_id = ?;`, [universe.id]))[0].count;
+  if (itemCount > 0) {
+    return [409, 'Cannot delete universe, universe not empty.'];
+  }
 
   try {
     await executeQuery(`DELETE FROM authoruniverse WHERE universe_id = ?;`, [universe.id]);

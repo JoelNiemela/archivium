@@ -17,7 +17,7 @@ async function getOne(user, id, permissionsRequired=perms.READ, basicOnly=false)
   return [200, item];
 }
 
-function getQuery(selectString='', usrQueryString='', joinString='', conditionString='', options={}) {
+function getQuery(selectString='', permsQueryString='', joinString='', conditionString='', options={}) {
   return `
       SELECT
         item.id,
@@ -35,7 +35,7 @@ function getQuery(selectString='', usrQueryString='', joinString='', conditionSt
       FROM item
       INNER JOIN user ON user.id = item.author_id
       INNER JOIN universe ON universe.id = item.universe_id
-      INNER JOIN authoruniverse as au_filter ON universe.id = au_filter.universe_id AND (universe.public = 1${usrQueryString})
+      INNER JOIN authoruniverse as au_filter ON universe.id = au_filter.universe_id AND (${permsQueryString})
       LEFT JOIN (
         SELECT item_id, JSON_ARRAYAGG(tag) as tags
         FROM tag
@@ -72,7 +72,9 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
   }
 
   try {
-    const usrQueryString = user ? ` OR (au_filter.user_id = ${user.id} AND au_filter.permission_level >= ${permissionsRequired})` : '';
+    const readOnlyQueryString = permissionsRequired > perms.READ ? '' : `universe.public = 1`;
+    const usrQueryString = user ? `(au_filter.user_id = ${user.id} AND au_filter.permission_level >= ${permissionsRequired})` : '';
+    const permsQueryString = `${readOnlyQueryString}${(readOnlyQueryString && usrQueryString) ? ' OR ' : ''}${usrQueryString}`;
     const conditionString = (
       conditions ? `WHERE ${conditions.strings.join(' AND ')}` : ''
     ) + (options.where ? (conditions ? ' AND ' : 'WHERE ') + options.where : '');
@@ -102,7 +104,7 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
       queryString = `
         ${getQuery(
           extraSelects + selectString,
-          usrQueryString,
+          permsQueryString,
           joinString,
           conditionString + condPref + `item.title LIKE '%${options.search}%'`,
           options,
@@ -110,7 +112,7 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
         UNION
         ${getQuery(
           extraSelects + selectString,
-          usrQueryString,
+          permsQueryString,
           joinString,
           conditionString + condPref + `item.shortname LIKE '%${options.search}%'`,
           options,
@@ -118,7 +120,7 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
         UNION
         ${getQuery(
           extraSelects + selectString,
-          usrQueryString,
+          permsQueryString,
           joinString + ' INNER JOIN tag as search_tag ON search_tag.item_id = item.id',
           conditionString + condPref + `search_tag.tag = '%${options.search}%'`,
           options,
@@ -126,14 +128,14 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
         UNION
         ${getQuery(
           extraSelects + selectString,
-          usrQueryString,
+          permsQueryString,
           joinString + ' INNER JOIN tag as search_tag ON search_tag.item_id = item.id',
           conditionString + condPref + `search_tag.tag LIKE '%${options.search}%'`,
           options,
         )}
       `;
     } else {
-      queryString = getQuery(selectString, usrQueryString, joinString, conditionString, options);
+      queryString = getQuery(selectString, permsQueryString, joinString, conditionString, options);
     }
     const data = await executeQuery(queryString, conditions && conditions.values);
     return [200, data];

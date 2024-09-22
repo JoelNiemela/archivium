@@ -285,6 +285,8 @@ function parseMarkdown(text) {
   let curTocList = [null, -1];
   let asideStart = null;
 
+  console.log(text)
+
   const lines = text.split('\n');
   for (const line of lines) {
     // console.log(line)

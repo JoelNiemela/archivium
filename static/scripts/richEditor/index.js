@@ -1,6 +1,7 @@
 if (!window.createElement) throw 'domUtils.js not loaded!';
 if (!window.createSearchableSelect) throw 'searchableSelect.js not loaded!';
-if (!window.parseMarkdown) throw 'markdown.js not loaded!';
+if (!window.parseMarkdown) throw 'markdown/parse.js not loaded!';
+if (!MarkdownElement) throw 'markdown/render.js not loaded!';
 
 const ELEMENT_NODE = 1;
 function serializeElement(element) {
@@ -61,40 +62,13 @@ function replaceSelectionWithEl(el) {
   }
 }
 
-class Node {
-  constructor(parent, data, meta={}) {
-    this.parent = parent;
-    this.update(data, meta);
+class EditorNode extends MarkdownElement {
+  constructor(...args) {
+    super(...args);
   }
-  
-  update([type, content, children, attrs], meta={}) {
-    this.type = type;
-    this.attrs = attrs ?? {};
-    this.dataset = {};
-    for (const key in this.attrs) {
-      if (key.startsWith('data-')) {
-        this.dataset[key.replace('data-', '')] = this.attrs[key];
-        delete this.attrs[key];
-      }
-    }
-    this.meta = { ...meta };
 
-    if (this.type === 'text') this.type = 'span';
-    if (this.attrs.id === 'toc') meta.isToc = true;
-    if (this.type === 'a') meta.isLink = true;
-
-    this.content = content;
-    this.children = children.map(child => new Node(this, child, { ...meta }));
-
-    if ('class' in this.attrs) {
-      this.classes = this.attrs.class.split(' ');
-      delete this.attrs.class;
-    } else {
-      this.classes = [];
-    }
-
-    this.element = null;
-    this.handle = null;
+  save() {
+    this.parent.save();
   }
 
   getHref() {
@@ -147,10 +121,6 @@ class Node {
     }
   }
 
-  save() {
-    this.parent.save();
-  }
-
   move(steps) {
     const index = this.parent.children.indexOf(this);
     this.parent.children.splice(index, 1);
@@ -161,23 +131,8 @@ class Node {
 
   addBelow() {
     const index = this.parent.children.indexOf(this);
-    this.parent.children.splice(index + 1, 0, new Node(this.parent, ['p', '', [], {}], { ...this.meta }));
+    this.parent.children.splice(index + 1, 0, new this.constructor(this.parent, ['p', '', [], {}], { ...this.meta }));
     this.parent.render();
-  }
-
-  isInline() {
-    return !({
-      p: true,
-      li: true,
-      aside: true,
-      div: true,
-      h1: true,
-      h2: true,
-      h3: true,
-      h4: true,
-      h5: true,
-      h6: true,
-    }[this.type]);
   }
 
   getHandle() {
@@ -229,14 +184,9 @@ class Node {
   }
 
   makeElement() {
-    const children = this.children.map(child => child.makeElement());
+    this.attrs.contentEditable = this.isEditable();
+    const innerEl = super.makeElement();
     const handle = this.getHandle();
-    const innerEl = createElement(this.type, {
-      attrs: { ...this.attrs, innerText: this.content, contentEditable: this.isEditable() },
-      dataset: this.dataset,
-      children,
-      classList: this.classes,
-    });
 
     if (this.isEditable()) {
       innerEl.ondeselect = () => {
@@ -297,9 +247,9 @@ class Node {
   }
 
   getElement() {
-    return this.innerEl ?? this.element;
+    return this.innerEl ?? super.getElement();
   }
-
+  
   postRender() {
     if (this.handle) {
       const { marginTop, paddingTop, marginRight } = window.getComputedStyle(this.innerEl);
@@ -312,25 +262,19 @@ class Node {
   }
 
   render() {
-    const prevEl = this.element;
-    if (prevEl) this.parent.getElement().replaceChild(this.makeElement(), prevEl);
-    else this.parent.getElement().appendChild(this.makeElement());
+    super.render();
     this.postRender();
   }
 }
 
 async function loadRichEditor(universe, body) {
 
-  console.log(body)
-
-  const data = await parseMarkdown(body).evaluate(universe.shortname, { item: window.item });
-  console.log(data)
-
   window.contextUniverse = universe;
   const editor = document.getElementById('editor');
   if (!editor) throw new Error('Editor div not found!');
   editor.classList.add('markdown');
-  const nodes = new Node({ getElement: () => editor, save }, data);
+  editor.classList.add('rich-editor');
+  const nodes = new EditorNode({ getElement: () => editor, save }, await parseMarkdown(body).evaluate(universe.shortname, { item: window.item }));
   nodes.render();
 
   function addFocusHandlers(editor) {
@@ -354,13 +298,24 @@ async function loadRichEditor(universe, body) {
 
   const saves = [];
 
-  document.querySelectorAll('.editableKey').forEach(container => {
+  document.querySelectorAll('.editableKey').forEach(async (container) => {
     const { tabName, key, val } = container.dataset;
     const keyEditor = createElement('div');
     const valEditor = createElement('div');
     container.appendChild(keyEditor);
     container.appendChild(createElement('hr'));
     container.appendChild(valEditor);
+    const valData = await parseMarkdown(val).evaluate(universe.shortname, null, (tag) => {
+      if (tag.type === 'div') tag.attrs.style = {'text-align': 'right'};
+      if (tag.type === 'p') tag.type = 'span';
+    });
+    console.log(valData)
+    const keyNodes = new EditorNode({ getElement: () => keyEditor, save }, ['span', key, [], {}]);
+    const valNodes = new EditorNode({ getElement: () => valEditor, save }, valData);
+    keyNodes.render();
+    valNodes.render();
+    addFocusHandlers(keyEditor);
+    addFocusHandlers(valEditor);
     saves.push(() => {
       if (window.item.obj_data.tabs[tabName] && window.item.obj_data.tabs[tabName][key]) {
         const newKey = keyNodes.export().trim();
@@ -368,32 +323,33 @@ async function loadRichEditor(universe, body) {
         window.item.obj_data.tabs[tabName][newKey] = valNodes.export().trim();
       }
     });
-    const keyNodes = new Node({ getElement: () => keyEditor, save }, ['span', key, [], {}]);
-    const valNodes = new Node({ getElement: () => valEditor, save }, JSON.parse(val));
-    keyNodes.render();
-    valNodes.render();
-    addFocusHandlers(keyEditor);
-    addFocusHandlers(valEditor);
   });
-  document.querySelectorAll('.editableLabel').forEach(container => {
+  document.querySelectorAll('.editableLabel').forEach(async (container) => {
     const { index, label } = container.dataset;
     const labelEditor = createElement('div');
     container.appendChild(labelEditor);
+    const data = await parseMarkdown(label).evaluate(universe.shortname, null, (tag) => {
+      if (tag.type === 'div') {
+        tag.attrs.style = {'text-align': 'center'};
+        tag.attrs.class += ' label';
+      }
+      if (tag.type === 'p') tag.type = 'span';
+    });
+    const labelNodes = new EditorNode(
+      {
+        getElement: () => labelEditor,
+        save,
+      },
+      ['div', '', [label ? data : ['span', '', [], {}]], { class: 'label' }],
+    );
+    labelNodes.render();
+    addFocusHandlers(labelEditor);
+    delete window.item.obj_data.gallery.imgs[index].mdLabel;
     saves.push(() => {
       if (window.item.obj_data.gallery?.imgs[index]) {
         window.item.obj_data.gallery.imgs[index].label = labelNodes.export().trim();
       }
     });
-    const labelNodes = new Node(
-      {
-        getElement: () => labelEditor,
-        save,
-      },
-      ['div', '', [label ? JSON.parse(label) : ['span', '', [], {}]], { class: 'label' }],
-    );
-    labelNodes.render();
-    addFocusHandlers(labelEditor);
-    delete window.item.obj_data.gallery.imgs[index].mdLabel;
   });
 
   async function save(submit=true) {

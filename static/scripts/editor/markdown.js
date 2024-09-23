@@ -45,9 +45,9 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
       if (this.src !== '@toc') {
         this.rawEl = createElement('div', { attrs: { contentEditable: true, innerText: this.src }, classList: ['selected'] });
 
-        this.renderedEl.onclick = (e) => {
+        this.renderedEl.onclick = async (e) => {
           e.stopPropagation();
-          this.editor.select(this, e.shiftKey);
+          await this.editor.select(this, e.shiftKey);
         };
 
         this.rawEl.onclick = (e) => {
@@ -74,10 +74,6 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
           const text = (e.clipboardData || window.clipboardData).getData('text');
           document.execCommand('insertText', false, text); // TODO replace this later
         });
-        
-        this.rawEl.addEventListener('focusout', (e) => {
-            this.unfocus();
-        }, true);
       }
 
       row.evaluate(window.contextUniverse.shortname, { item: window.item }).then((data) => {
@@ -109,12 +105,12 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
       return true;
     }
 
-    async focus() {
+    focus() {
       if (!this.focused) {
-        this.rawEl.focus();
         this.editor.container.replaceChild(this.rawEl, this.currentEl);
         this.currentEl = this.rawEl;
         this.focused = true;
+        this.rawEl.focus();
       }
     }
 
@@ -154,7 +150,7 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
       this.save = save;
     }
 
-    select(node, multi) {
+    async select(node, multi) {
       if (multi && this.selected) {
         if (!this.selected.focused) this.selected.focus();
         const diff = this.nodes.indexOf(node) - this.nodes.indexOf(this.selected)
@@ -169,7 +165,7 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
           if (dir < 0) start--;
         }
       } else {
-        this.unfocusAll();
+        await this.unfocusAll();
         this.selected = node;
         this.selected.focus();
       }
@@ -188,9 +184,9 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
       node.remove();
     }
 
-    unfocusAll() {
+    async unfocusAll() {
       this.selected = null;
-      this.nodes.forEach(node => node.unfocus());
+      await Promise.all(this.nodes.map(node => node.unfocus()));
       this.save(this.nodes.map(node => node.getSrc()).join('\n\n'));
     }
   }

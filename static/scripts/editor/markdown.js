@@ -11,29 +11,38 @@ if (!MarkdownElement) throw 'markdown/render.js not loaded!';
 
 (function() {
   class EditorRowNode {
-    constructor(editor, row) {
+    constructor(editor, row, insertAfter=null) {
       this.editor = editor;
       this.renderedEl = createElement('div', { attrs: { contentEditable: false } });
-      this.editor.container.appendChild(this.renderedEl);
+      if (insertAfter) {
+        insertAfter.currentEl.insertAdjacentElement('afterend', this.renderedEl);
+      } else {
+        this.editor.container.appendChild(this.renderedEl);
+      }
       this.currentEl = this.renderedEl;
       this.focused = false;
       
       if (row.src !== '@toc') {
-        this.rawEl = createElement('div', { attrs: { contentEditable: 'plaintext-only', innerText: row.src }, classList: ['selected'] });
+        this.src = row.src;
+        this.rawEl = createElement('div', { attrs: { contentEditable: 'plaintext-only', innerText: this.src }, classList: ['selected'] });
+
         this.renderedEl.onclick = (e) => {
           e.stopPropagation();
           this.editor.select(this, e.shiftKey);
         };
+
         this.rawEl.onclick = (e) => {
+          console.log('click')
           e.stopPropagation();
         };
-        this.rawEl.addEventListener(
-          'focusout',
-          (e) => {
+
+        this.rawEl.addEventListener('input', (e) => {
+            this.setSrc(this.rawEl.innerText, false);
+        });
+        
+        this.rawEl.addEventListener('focusout', (e) => {
             this.unfocus();
-          },
-          true,
-        );
+        }, true);
       }
 
       row.evaluate(window.contextUniverse.shortname, { item: window.item }).then((data) => {
@@ -43,16 +52,23 @@ if (!MarkdownElement) throw 'markdown/render.js not loaded!';
     }
 
     getSrc() {
-      return this.rawEl.innerText;
+      return this.src;
     }
 
-    setSrc(src) {
-      this.rawEl.innerText = src;
+    setSrc(src, reset=true) {
+      this.src = src;
+      if (reset) this.rawEl.innerText = this.src;
     }
 
     async parse(src) {
-      const row = parseMarkdown(src).children[0];
+      const rows = parseMarkdown(src).children;
+      let refNode = this;
+      rows.splice(1).forEach(row => {
+        refNode = this.editor.addBelow(refNode, row);
+      })
+      const row = rows[0];
       if (!row) return false;
+      this.setSrc(row.src);
       const data = await row.evaluate(window.contextUniverse.shortname, { item: window.item });
       this.node.update(data);
       return true;
@@ -97,34 +113,41 @@ if (!MarkdownElement) throw 'markdown/render.js not loaded!';
   class Editor {
     constructor(container, body) {
       this.container = container;
-      this.rows = parseMarkdown(body).children;
-      this.nodes = this.rows.map((row) => new EditorRowNode(this, row));
+      const rows = parseMarkdown(body).children;
+      this.nodes = rows.map((row) => new EditorRowNode(this, row));
       this.selected = null;
     }
 
     select(node, multi) {
-      if (multi) {
+      if (multi && this.selected) {
         const diff = this.nodes.indexOf(node) - this.nodes.indexOf(this.selected)
         const dist = Math.abs(diff);
         const dir = Math.sign(diff);
-        if (dist === 1) {
-          const newSrc = dir > 0 ? `${this.selected.getSrc()}\n\n${node.getSrc()}` : `${node.getSrc()}\n\n${this.selected.getSrc()}`;
-          node.setSrc(newSrc);
-          this.delete(this.selected);
+        let start = this.nodes.indexOf(this.selected);
+        for (let i = 0; i < dist; i++) {
+          const curNode = this.nodes[start + dir];
+          const newSrc = dir > 0 ? `${this.selected.getSrc()}\n\n${curNode.getSrc()}` : `${curNode.getSrc()}\n\n${this.selected.getSrc()}`;
+          this.selected.setSrc(newSrc);
+          this.delete(curNode);
+          if (dir < 0) start--;
         }
       } else {
         this.unfocusAll();
+        this.selected = node;
+        this.selected.focus();
       }
-      this.selected = node;
-      node.focus();
-      console.log(multi)
+    }
+
+    addBelow(node, row) {
+      const i = this.nodes.indexOf(node);
+      const newNode = new EditorRowNode(this, row, node);
+      this.nodes.splice(i + 1, 0, newNode);
+      return newNode;
     }
 
     delete(node) {
       const i = this.nodes.indexOf(node);
-      console.log('delete', node, i)
       this.nodes.splice(i, 1);
-      this.rows.splice(i, 1);
       node.remove();
     }
 
@@ -146,12 +169,12 @@ if (!MarkdownElement) throw 'markdown/render.js not loaded!';
     if (editorDiv) {
       editorDiv.classList.add('markdown');
       editorDiv.classList.add('md-editor');
-      editorDiv.contentEditable = 'plaintext-only';
       const editor = new Editor(editorDiv, body);
       editorDiv.onmousedown = (e) => e.stopPropagation();
       window.onmousedown = () => {
         editor.unfocusAll();
       };
+      window.editorObj = editor;
       saves.push(() => {
         const markdown = editor.export().trim();
         window.item.obj_data.body = markdown;

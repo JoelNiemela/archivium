@@ -197,9 +197,15 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
   async function loadEditor(universe, body) {
     
     const saves = [];
+    let saveTimeout = null;
     function save(markdown) {
-      console.log('SAVING...');
-      putJSON(`/api/universes/${universe.shortname}/items/${window.item.shortname}/data`, { body: markdown });
+      if (saveTimeout) {
+        clearTimeout(saveTimeout);
+      }
+      saveTimeout = setTimeout(() => {
+        console.log('SAVING...');
+        putJSON(`/api/universes/${universe.shortname}/items/${window.item.shortname}/data`, { body: markdown });
+      }, 2000);
     }
 
     window.contextUniverse = universe;

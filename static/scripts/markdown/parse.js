@@ -329,6 +329,7 @@ if (!window.getJSON) throw 'fetchUtils.js not loaded!';
     let maxTocDepth;
     let curParagraph = new MarkdownNode('p');
     let curList = [null, -1];
+    let rootList = null;
     let curTocList = [null, -1];
     let asideStart = null;
 
@@ -411,6 +412,7 @@ if (!window.getJSON) throw 'fetchUtils.js not loaded!';
         if (indent > lastIndent) {
           const lastListItem = lastListNode ? (lastListNode.lastChild() ?? lastListNode.addChild(new MarkdownNode('li'))) : null;
           const newListNode = (lastListItem ?? root).addChild(new MarkdownNode('ul'));
+          if (!lastListItem) rootList = newListNode;
           curList = [newListNode, indent];
         } else if (indent < lastIndent) {
           let newListNode = lastListNode;
@@ -420,7 +422,7 @@ if (!window.getJSON) throw 'fetchUtils.js not loaded!';
         const [curListNode] = curList;
         curListNode.addChild(new MarkdownNode('li'));
         curListNode.lastChild().addChildren(parseInline(new Line(trimmedLine.substring(2))));
-        curListNode.addSrc(line);
+        rootList.addSrc(line);
       } else if (trimmedLine === '') {
         if (curParagraph.hasChildren()) root.addChild(curParagraph);
         curParagraph = new MarkdownNode('p');

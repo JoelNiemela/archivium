@@ -22,7 +22,7 @@ if (!MarkdownElement) throw 'markdown/render.js not loaded!';
         this.rawEl = createElement('div', { attrs: { contentEditable: 'plaintext-only', innerText: row.src }, classList: ['selected'] });
         this.renderedEl.onclick = (e) => {
           e.stopPropagation();
-          this.focus();
+          this.editor.select(this, e.shiftKey);
         };
         this.rawEl.onclick = (e) => {
           e.stopPropagation();
@@ -42,15 +42,24 @@ if (!MarkdownElement) throw 'markdown/render.js not loaded!';
       });
     }
 
+    getSrc() {
+      return this.rawEl.innerText;
+    }
+
+    setSrc(src) {
+      this.rawEl.innerText = src;
+    }
+
     async parse(src) {
       const row = parseMarkdown(src).children[0];
+      if (!row) return false;
       const data = await row.evaluate(window.contextUniverse.shortname, { item: window.item });
       this.node.update(data);
+      return true;
     }
 
     async focus() {
       if (!this.focused) {
-        this.editor.unfocusAll();
         this.rawEl.focus();
         this.editor.container.replaceChild(this.rawEl, this.currentEl);
         this.currentEl = this.rawEl;
@@ -60,16 +69,28 @@ if (!MarkdownElement) throw 'markdown/render.js not loaded!';
 
     async unfocus() {
       if (this.focused) {
-        await this.parse(this.rawEl.innerText);
-        this.editor.container.replaceChild(this.renderedEl, this.currentEl);
-        this.currentEl = this.renderedEl;
-        this.render();
-        this.focused = false;
+        const notEmpty = await this.parse(this.getSrc());
+        if (notEmpty) {
+          try {
+            this.editor.container.replaceChild(this.renderedEl, this.currentEl);
+            this.currentEl = this.renderedEl;
+            this.render();
+            this.focused = false;
+          } catch (err) {}
+        } else {
+          this.editor.delete(this);
+        }
       }
     }
 
     render() {
       this.node.render();
+    }
+
+    remove() {
+      this.currentEl = null;
+      this.renderedEl.remove();
+      this.rawEl.remove();
     }
   } 
 
@@ -78,9 +99,37 @@ if (!MarkdownElement) throw 'markdown/render.js not loaded!';
       this.container = container;
       this.rows = parseMarkdown(body).children;
       this.nodes = this.rows.map((row) => new EditorRowNode(this, row));
+      this.selected = null;
+    }
+
+    select(node, multi) {
+      if (multi) {
+        const diff = this.nodes.indexOf(node) - this.nodes.indexOf(this.selected)
+        const dist = Math.abs(diff);
+        const dir = Math.sign(diff);
+        if (dist === 1) {
+          const newSrc = dir > 0 ? `${this.selected.getSrc()}\n\n${node.getSrc()}` : `${node.getSrc()}\n\n${this.selected.getSrc()}`;
+          node.setSrc(newSrc);
+          this.delete(this.selected);
+        }
+      } else {
+        this.unfocusAll();
+      }
+      this.selected = node;
+      node.focus();
+      console.log(multi)
+    }
+
+    delete(node) {
+      const i = this.nodes.indexOf(node);
+      console.log('delete', node, i)
+      this.nodes.splice(i, 1);
+      this.rows.splice(i, 1);
+      node.remove();
     }
 
     unfocusAll() {
+      this.selected = null;
       this.nodes.forEach(node => node.unfocus());
     }
   }
@@ -96,11 +145,13 @@ if (!MarkdownElement) throw 'markdown/render.js not loaded!';
     const editorDiv = document.getElementById('editor');
     if (editorDiv) {
       editorDiv.classList.add('markdown');
-      editorDiv.classList.add('rich-editor');
+      editorDiv.classList.add('md-editor');
+      editorDiv.contentEditable = 'plaintext-only';
       const editor = new Editor(editorDiv, body);
-      // window.onclick = () => {
-      //   editor.unfocusAll();
-      // };
+      editorDiv.onmousedown = (e) => e.stopPropagation();
+      window.onmousedown = () => {
+        editor.unfocusAll();
+      };
       saves.push(() => {
         const markdown = editor.export().trim();
         window.item.obj_data.body = markdown;

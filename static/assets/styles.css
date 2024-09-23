@@ -380,7 +380,10 @@ button:active {
   padding: 0 1.75rem 0 2.5rem;
   min-height: 2rem;
 }
-.rich-editor .selected {
+.md-editor {
+  outline: none;
+}
+.md-editor .selected {
   /* box-shadow: 2px 2px 8px 1px rgb(0, 0, 0, 0.25); */
   /* border-radius: 0.25rem; */
   box-sizing: content-box;
@@ -390,7 +393,7 @@ button:active {
   padding: 0 0.75rem 0 0.5rem;
   min-height: 2rem;
 }
-.rich-editor :not(.selected) {
+.md-editor :not(.selected) {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   -khtml-user-select: none;

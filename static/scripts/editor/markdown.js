@@ -156,6 +156,7 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
 
     select(node, multi) {
       if (multi && this.selected) {
+        if (!this.selected.focused) this.selected.focus();
         const diff = this.nodes.indexOf(node) - this.nodes.indexOf(this.selected)
         const dist = Math.abs(diff);
         const dir = Math.sign(diff);

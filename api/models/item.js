@@ -385,6 +385,24 @@ async function put(user, universeShortname, itemShortname, changes) {
   }
 }
 
+async function putData(user, universeShortname, itemShortname, changes) {
+
+  const [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE);
+  if (!item) return [code];
+
+  item.obj_data = {
+    ...JSON.parse(item.obj_data),
+    ...changes,
+  };
+
+  try {
+    return [200, await executeQuery(`UPDATE item SET ? WHERE id = ${item.id};`, { obj_data: JSON.stringify(item.obj_data) })];
+  } catch (err) {
+    console.error(err);
+    return [500];
+  }
+}
+
 // TODO - how should permissions work on this?
 async function exists(user, universeShortname, itemShortname) {
   const queryString = `
@@ -491,6 +509,7 @@ module.exports = {
   post,
   save,
   put,
+  putData,
   exists,
   putLineage,
   delLineage,

@@ -43,7 +43,7 @@ block content
 
   //- Tab buttons
   ul.navbarBtns#tabBtns.gap-1
-    if item.obj_data.body
+    if 'body' in item.obj_data
       li.navbarBtn#bodyBtn( data-tab='body' )
         h3.navbarBtnLink.navbarText( onclick=`showTab('body')` ) Main Text
     if 'tabs' in item.obj_data
@@ -98,7 +98,7 @@ block content
               a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${shortname}` )
                 | #{item.child_titles[shortname]}
 
-    if item.obj_data.body
+    if 'body' in item.obj_data
       .sheet.hidden( data-tab='body' )
         if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
           #editor

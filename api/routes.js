@@ -81,6 +81,9 @@ module.exports = function(app) {
             GET: async (req) => api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortName, req.params.itemShortName),
             PUT: async (req) => api.item.save(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body, true),
           }, [
+            new APIRoute('/data', {
+              PUT: (req) => api.item.putData(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body),
+            }),
             new APIRoute('/tags', {
               PUT: (req) => api.item.putTags(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body.tags),
               DELETE: (req) => api.item.delTags(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body.tags),

@@ -10,6 +10,7 @@ if (!window.createElement) throw 'domUtils.js not loaded!';
 if (!window.createSearchableSelect) throw 'searchableSelect.js not loaded!';
 if (!window.parseMarkdown) throw 'markdown/parse.js not loaded!';
 if (!MarkdownElement) throw 'markdown/render.js not loaded!';
+if (!window.putJSON) throw 'fetchUtils.js not loaded!';
 
 (function() {
   function preserveCaretPosition(el, callback) {
@@ -39,9 +40,9 @@ if (!MarkdownElement) throw 'markdown/render.js not loaded!';
       }
       this.currentEl = this.renderedEl;
       this.focused = false;
+      this.src = row.src;
       
-      if (row.src !== '@toc') {
-        this.src = row.src;
+      if (this.src !== '@toc') {
         this.rawEl = createElement('div', { attrs: { contentEditable: true, innerText: this.src }, classList: ['selected'] });
 
         this.renderedEl.onclick = (e) => {
@@ -50,13 +51,16 @@ if (!MarkdownElement) throw 'markdown/render.js not loaded!';
         };
 
         this.rawEl.onclick = (e) => {
-          console.log('click')
           e.stopPropagation();
         };
 
         this.rawEl.addEventListener('input', (e) => {
-          console.log(e)
-          if (e.inputType === 'insertText' || e.inputType === 'insertFromPaste') {
+          if (
+            e.inputType === 'insertText'
+            || e.inputType === 'insertFromPaste'
+            || e.inputType === 'insertParagraph'
+            || e.inputType === 'deleteContentBackward'
+          ) {
             this.setSrc(this.rawEl.innerText, false);
           } else {
             preserveCaretPosition(this.rawEl, () => {
@@ -142,11 +146,12 @@ if (!MarkdownElement) throw 'markdown/render.js not loaded!';
   } 
 
   class Editor {
-    constructor(container, body) {
+    constructor(container, body, save) {
       this.container = container;
       const rows = parseMarkdown(body).children;
       this.nodes = rows.map((row) => new EditorRowNode(this, row));
       this.selected = null;
+      this.save = save;
     }
 
     select(node, multi) {
@@ -185,14 +190,16 @@ if (!MarkdownElement) throw 'markdown/render.js not loaded!';
     unfocusAll() {
       this.selected = null;
       this.nodes.forEach(node => node.unfocus());
+      this.save(this.nodes.map(node => node.getSrc()).join('\n\n'));
     }
   }
 
   async function loadEditor(universe, body) {
     
     const saves = [];
-    function save() {
-      console.log('SAVE')
+    function save(markdown) {
+      console.log('SAVING...');
+      putJSON(`/api/universes/${universe.shortname}/items/${window.item.shortname}/data`, { body: markdown });
     }
 
     window.contextUniverse = universe;
@@ -200,7 +207,7 @@ if (!MarkdownElement) throw 'markdown/render.js not loaded!';
     if (editorDiv) {
       editorDiv.classList.add('markdown');
       editorDiv.classList.add('md-editor');
-      const editor = new Editor(editorDiv, body);
+      const editor = new Editor(editorDiv, body, save);
       editorDiv.onmousedown = (e) => e.stopPropagation();
       window.onmousedown = () => {
         editor.unfocusAll();

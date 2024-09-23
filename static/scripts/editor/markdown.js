@@ -2,6 +2,8 @@
  * Enhanced Markdown Editor
  * 
  * Built as a middle ground between the original markdown editor and the problematic rich editor.
+ * It still has issues, mainly with selecting multiple paragraphs,
+ * but fixing those will probably require starting over from scratch again.
  */
 
 if (!window.createElement) throw 'domUtils.js not loaded!';

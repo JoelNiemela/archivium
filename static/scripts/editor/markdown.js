@@ -10,6 +10,22 @@ if (!window.parseMarkdown) throw 'markdown/parse.js not loaded!';
 if (!MarkdownElement) throw 'markdown/render.js not loaded!';
 
 (function() {
+  function preserveCaretPosition(el, callback) {
+    const selection = window.getSelection();
+    const range = selection.getRangeAt(0);
+    
+    const startOffset = range.startOffset;
+    const endOffset = range.endOffset;
+  
+    callback();
+  
+    const newRange = document.createRange();
+    newRange.setStart(el.firstChild, startOffset);
+    newRange.setEnd(el.firstChild, endOffset);
+    selection.removeAllRanges();
+    selection.addRange(newRange);
+  }
+
   class EditorRowNode {
     constructor(editor, row, insertAfter=null) {
       this.editor = editor;
@@ -24,7 +40,7 @@ if (!MarkdownElement) throw 'markdown/render.js not loaded!';
       
       if (row.src !== '@toc') {
         this.src = row.src;
-        this.rawEl = createElement('div', { attrs: { contentEditable: 'plaintext-only', innerText: this.src }, classList: ['selected'] });
+        this.rawEl = createElement('div', { attrs: { contentEditable: true, innerText: this.src }, classList: ['selected'] });
 
         this.renderedEl.onclick = (e) => {
           e.stopPropagation();
@@ -37,7 +53,20 @@ if (!MarkdownElement) throw 'markdown/render.js not loaded!';
         };
 
         this.rawEl.addEventListener('input', (e) => {
+          console.log(e)
+          if (e.inputType === 'insertText' || e.inputType === 'insertFromPaste') {
             this.setSrc(this.rawEl.innerText, false);
+          } else {
+            preserveCaretPosition(this.rawEl, () => {
+              this.rawEl.innerText = this.rawEl.innerText;
+            });
+          }
+        });
+
+        this.rawEl.addEventListener('paste', (e) => {
+          e.preventDefault();
+          const text = (e.clipboardData || window.clipboardData).getData('text');
+          document.execCommand('insertText', false, text); // TODO replace this later
         });
         
         this.rawEl.addEventListener('focusout', (e) => {

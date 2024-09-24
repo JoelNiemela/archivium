@@ -1,4 +1,5 @@
 const db = require('../db');
+const { database } = require('./config');
 const fsPromises = require('fs').promises;
 const path = require('path');
 
@@ -23,7 +24,7 @@ async function dbImport() {
   // disable constraint checking
   await db.queryAsync('SET FOREIGN_KEY_CHECKS = 0;');
 
-  const tables = (await db.queryAsync('SHOW TABLES;'))[0].map(item => item['Tables_in_archivium']);
+  const tables = (await db.queryAsync('SHOW TABLES;'))[0].map(item => item[`Tables_in_${database}`]);
   
   for (const table of tables) {
     if (table === 'session') continue;

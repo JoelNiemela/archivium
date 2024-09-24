@@ -25,8 +25,8 @@ async function getOne(options) {
 function post() {
   const data = utils.createRandom32String();
   const hash = utils.createHash(data);
-  const queryString = `INSERT INTO session SET ?`;
-  return executeQuery(queryString, { hash, created_at: new Date() });
+  const queryString = `INSERT INTO session (hash, created_at) VALUES (?, ?);`;
+  return executeQuery(queryString, [ hash, new Date() ]);
 }
 
 /**

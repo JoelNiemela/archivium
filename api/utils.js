@@ -9,7 +9,8 @@ exports.perms = {
 };
 
 exports.executeQuery = (query, values) => {
-  return db.queryAsync(query, values).spread(results => results);
+  console.log(query, values)
+  return db.executeAsync(query, values).spread(results => results);
 };
 
 exports.parseData = (options) => {

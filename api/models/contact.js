@@ -71,13 +71,15 @@ async function post(user, username) {
   const [_, contact] = await getOne(user, target.id);
   if (contact) return [200];
 
-  const newContact = {
-    requesting_user: user.id,
-    accepting_user: target.id,
-    accepted: false,
-  };
+  const queryString = `
+    INSERT INTO contact (
+      requesting_user,
+      accepting_user, 
+      accepted
+    ) VALUES (?, ?, ?);
+  `;
 
-  return [201, await executeQuery('INSERT INTO contact SET ?', newContact)];
+  return [201, await executeQuery(queryString, [user.id, target.id, false])];
 }
 
 async function put(user, username, accepted) {
@@ -89,11 +91,11 @@ async function put(user, username, accepted) {
 
   if (accepted) {
     return [201, await executeQuery(`
-      UPDATE contact SET ?
+      UPDATE contact SET accepted = ?
       WHERE
         requesting_user = ${contact.requesting_id}
         AND accepting_user = ${contact.accepting_id};
-    `, { accepted: true })];
+    `, [true])];
   } else {
     return await del(user, target.id);
   }

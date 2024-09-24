@@ -241,20 +241,32 @@ async function post(user, body, universeShortName) {
   }
 
   try {
-    const queryString = `INSERT INTO item SET ?`;
+    const queryString = `
+      INSERT INTO item (
+        title,
+        shortname,
+        item_type,
+        author_id,
+        universe_id,
+        parent_id,
+        obj_data,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+    `;
     const { title, shortname, item_type, parent_id, obj_data } = body;
     if (!title || !shortname || !item_type || !obj_data) return [400];
-    return [201, await executeQuery(queryString, {
+    return [201, await executeQuery(queryString, [
       title,
       shortname,
       item_type,
-      author_id: user.id,
-      universe_id: universeId,
+      user.id,
+      universeId,
       parent_id,
       obj_data,
-      created_at: new Date(),
-      updated_at: new Date(),
-    })];
+      new Date(),
+      new Date(),
+    ])];
   } catch (err) {
     console.error(err);
     return [500];
@@ -282,7 +294,16 @@ async function put(user, universeShortname, itemShortname, changes) {
   }
 
   try {
-    return [200, await executeQuery(`UPDATE item SET ? WHERE id = ${item.id};`, { title, obj_data, updated_at: new Date(), last_updated_by: user.id })];
+    const queryString = `
+      UPDATE item
+      SET
+        title = ?,
+        obj_data = ?,
+        updated_at = ?,
+        last_updated_by = ?
+      WHERE id = ?;
+    `;
+    return [200, await executeQuery(queryString, [ title, obj_data, new Date(), user.id, item.id ])];
   } catch (err) {
     console.error(err);
     return [500];
@@ -308,8 +329,8 @@ async function exists(universeShortname, itemShortname) {
  * @returns 
  */
 async function putLineage(parent_id, child_id, parent_title, child_title) {
-  const queryString = `INSERT INTO lineage SET ?;`;
-  const data = await executeQuery(queryString, { parent_id, child_id, parent_title, child_title });
+  const queryString = `INSERT INTO lineage (parent_id, child_id, parent_title, child_title) VALUES (?, ?, ?, ?);`;
+  const data = await executeQuery(queryString, [ parent_id, child_id, parent_title, child_title ]);
   return [200, data];
 }
 
@@ -334,10 +355,12 @@ async function putTags(user, universeShortname, itemShortname, tags) {
     item.tags?.forEach(tag => {
       tagLookup[tag] = true;
     });
-    const valueString = tags.filter(tag => !tagLookup[tag]).map(tag => `(${item.id}, "${tag}")`).join(',');
+    const filteredTags = tags.filter(tag => !tagLookup[tag]);
+    const valueString = filteredTags.map(() => `(?, ?)`).join(',');
+    const valueArray = filteredTags.map(tag => [item.id, tag]);
     if (!valueString) return [200];
     const queryString = `INSERT INTO tag (item_id, tag) VALUES ${valueString};`;
-    const data = await executeQuery(queryString);
+    const data = await executeQuery(queryString, valueArray);
     return [201, data];
   } catch (e) {
     console.error(e);
@@ -350,10 +373,10 @@ async function delTags(user, universeShortname, itemShortname, tags) {
   const [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE, true);
   if (!item) return [code];
   try {
-    const whereString = tags.map(tag => `tag = "${tag}"`).join(' OR ');
+    const whereString = tags.map(() => `tag = ?`).join(' OR ');
     if (!whereString) return [200];
-    const queryString = `DELETE FROM tag WHERE item_id = ${item.id} AND (${whereString});`;
-    const data = await executeQuery(queryString);
+    const queryString = `DELETE FROM tag WHERE item_id = ? AND (${whereString});`;
+    const data = await executeQuery(queryString, [ item.id, ...tags ]);
     return [200, data];
   } catch (e) {
     console.error(e);
@@ -372,7 +395,7 @@ async function snoozeUntil(user, universeShortname, itemShortname) {
 
   try {
     if (snooze) {
-      return [200, await executeQuery(`UPDATE snooze SET ? WHERE item_id = ${item.id} AND snoozed_by = ${user.id};`, { snoozed_until: snoozeTime })];
+      return [200, await executeQuery(`UPDATE snooze SET snoozed_until = ? WHERE item_id = ? AND snoozed_by = ?;`, [snoozeTime, item.id, user.id])];
     } else {
       return [200, await executeQuery(`INSERT INTO snooze (item_id, snoozed_until, snoozed_by) VALUES (?, ?, ?);`, [item.id, snoozeTime, user.id])];
     }

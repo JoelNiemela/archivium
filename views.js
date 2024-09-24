@@ -14,8 +14,8 @@ module.exports = function(app) {
     next();
   })
 
-  const doRender = (req, res) => {
-    if (res.statusCode === 302) return; // We did a redirect, no need to render.
+  const doRender = (req, res, next) => {
+    if (res.statusCode === 302) return next(); // We did a redirect, no need to render.
     try {
       const [template, data] = res.templateData;
       res.end(render(req, template, data));
@@ -27,6 +27,7 @@ module.exports = function(app) {
       }
       res.end(render(req, 'error', { code: res.statusCode }));
     }
+    next();
   };
 
   function use(method, path, ...middleware) {
@@ -224,6 +225,7 @@ module.exports = function(app) {
     if (code1 !== 200) return;
     if (!item) {
       if (universe.author_permissions[req.session.user?.id] >= perms.READ) {
+        res.status(404);
         res.prepareRender('error', {
           code: 404,
           hint: 'Looks like this item doesn\'t exist yet. Follow the link below to create it:',

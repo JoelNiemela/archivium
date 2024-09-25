@@ -41,7 +41,7 @@ Users retain full rights of the content they create, regardless of whether the c
 
 The Service Provider does not use the Website to knowingly solicit data from or market to children under the age of 13.
 
-The Website does not address anyone under the age of 13. The Service Provider does not knowingly collect personally identifiable information from children under 13 years of age. In the case the Service Provider discovers that a child under 13 has provided personal information, the Service Provider will immediately delete this from their servers. If you are a parent or guardian and you are aware that your child has provided us with personal information, please contact the Service Provider (contact@archivium.net) so that they will be able to take the necessary actions.
+The Website does not address anyone under the age of 13. The Service Provider does not knowingly collect personally identifiable information from children under 13 years of age. In the case the Service Provider discovers that a child under 13 has provided personal information, the Service Provider will immediately delete this from their servers. If you are a parent or guardian and you are aware that your child has provided us with personal information, please contact the Service Provider ([contact@archivium.net](mailto:contact@archivium.net)) so that they will be able to take the necessary actions.
 
 ## Security
 

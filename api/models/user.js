@@ -88,17 +88,24 @@ function post({ username, email, password }) {
   if (!username) throw new Error('malformed username');
   if (!email) throw new Error('malformed email');
 
-  const newUser = {
+  const queryString = `
+    INSERT INTO user (
+      username,
+      email,
+      salt,
+      password,
+      created_at,
+      updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?);
+  `;
+  return executeQuery(queryString, [
     username,
     email,
     salt,
-    password: utils.createHash(password, salt),
-    created_at: new Date(),
-    updated_at: new Date(),
-  };
-
-  const queryString = `INSERT INTO user SET ?`;
-  return executeQuery(queryString, newUser);
+    utils.createHash(password, salt),
+    new Date(),
+    new Date()
+  ]);
 }
 
 /**
@@ -113,17 +120,18 @@ function validatePassword(attempted, password, salt) {
 }
 
 async function put(user_id, userIDToPut, changes) {
-  delete changes.username;
-  delete changes.email;
-  delete changes.password;
-  delete changes.id;
-  delete changes.salt;
-  delete changes.created_at;
+  const { updated_at } = changes;
 
   if (Number(user_id) !== Number(userIDToPut)) return [403];
 
   try {
-    return [200, await executeQuery(`UPDATE user SET ? WHERE id = ${userIDToPut};`, changes)];
+    const queryString = `
+      UPDATE user
+      SET
+        updated_at = ?
+      WHERE id = ?;
+    `;
+    return [200, await executeQuery(queryString, [updated_at, userIDToPut])];
   } catch (err) {
     console.error(err);
     return [500];

@@ -1,4 +1,4 @@
-const { executeQuery, parseData, perms } = require('../utils');
+const { QueryBuilder, Cond, executeQuery, perms } = require('../utils');
 
 async function getOne(user, id, permissionsRequired=perms.READ, basicOnly=false) {
 
@@ -17,38 +17,37 @@ async function getOne(user, id, permissionsRequired=perms.READ, basicOnly=false)
   return [200, item];
 }
 
-function getQuery(selectString='', permsQueryString='', joinString='', conditionString='', options={}) {
-  return `
-      SELECT
-        item.id,
-        item.title,
-        item.shortname,
-        item.item_type,
-        item.created_at,
-        item.updated_at,
-        item.universe_id,
-        user.username as author,
-        universe.title as universe,
-        universe.shortname as universe_short,
-        ${selectString}
-        tag.tags
-      FROM item
-      INNER JOIN user ON user.id = item.author_id
-      INNER JOIN universe ON universe.id = item.universe_id
-      INNER JOIN authoruniverse as au_filter ON universe.id = au_filter.universe_id AND (${permsQueryString})
-      LEFT JOIN (
-        SELECT item_id, JSON_ARRAYAGG(tag) as tags
-        FROM tag
-        GROUP BY item_id
-      ) tag ON tag.item_id = item.id
-      ${joinString}
-      ${conditionString}
-      GROUP BY 
-        item.id,
-        user.username,
-        universe.title
-      ${options.sort ? `ORDER BY ${options.sort} ${options.sortDesc ? 'DESC' : 'ASC'}` : ''}
-      ${options.limit ? `LIMIT ${options.limit}` : ''}`;
+function getQuery(selects=[], permsCond=undefined, whereConds=undefined, options={}) {
+  let query = new QueryBuilder()
+    .select([
+      'item.id',
+      'item.title',
+      'item.shortname',
+      'item.item_type',
+      'item.created_at',
+      'item.updated_at',
+      'item.universe_id',
+      ['user.username', 'author'],
+      ['universe.title', 'universe'],
+      ['universe.shortname', 'universe_short'],
+      ...selects,
+      'tag.tags',
+    ])
+    .from('item')
+    .innerJoin('user', new Cond('user.id = item.author_id'))
+    .innerJoin('universe', new Cond('universe.id = item.universe_id'))
+    .innerJoin(['authoruniverse', 'au_filter'], new Cond('universe.id = au_filter.universe_id').and(permsCond))
+    .leftJoin(`(
+      SELECT item_id, JSON_ARRAYAGG(tag) as tags
+      FROM tag
+      GROUP BY item_id
+    ) tag`, new Cond('tag.item_id = item.id'))
+    .where(whereConds)
+    .groupBy(['item.id', 'user.username', 'universe.title'])
+    if (options.sort) query.orderBy(options.sort, options.sortDesc);
+    if (options.limit) query.limit(options.limit);
+
+  return query;
 }
 
 async function getMany(user, conditions, permissionsRequired=perms.READ, basicOnly=false, options={}) {
@@ -72,72 +71,86 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
   }
 
   try {
-    const readOnlyQueryString = permissionsRequired > perms.READ ? '' : `universe.public = 1`;
-    const usrQueryString = user ? `(au_filter.user_id = ${user.id} AND au_filter.permission_level >= ${permissionsRequired})` : '';
-    const permsQueryString = `${readOnlyQueryString}${(readOnlyQueryString && usrQueryString) ? ' OR ' : ''}${usrQueryString}`;
-    const conditionString = (
-      conditions ? `WHERE ${conditions.strings.join(' AND ')}` : ''
-    ) + (options.where ? (conditions ? ' AND ' : 'WHERE ') + options.where : '');
-    const selectString = (basicOnly ? '' : `
-      item.obj_data,
-      JSON_REMOVE(JSON_OBJECTAGG(
+    let permsCond = new Cond();
+    if (permissionsRequired <= perms.READ) permsCond = permsCond.or('universe.public = ?', 1);
+    if (user) permsCond = permsCond.or(
+      new Cond('au_filter.user_id = ?', user.id)
+      .and('au_filter.permission_level >= ?', permissionsRequired)
+    );
+
+    let whereConds = new Cond();
+    if (conditions) {
+      for (let i = 0; i < conditions.strings.length; i++) {
+        whereConds = whereConds.and(conditions.strings[i], conditions.values[i]);
+      }
+    }
+    if (options.where) whereConds = whereConds.and(options.where);
+
+    const selects = basicOnly ? [] : [
+      'item.obj_data',
+      [`JSON_REMOVE(JSON_OBJECTAGG(
         IFNULL(child_item.shortname, 'null__'),
         JSON_ARRAY(lineage_child.child_title, lineage_child.parent_title)
-      ), '$.null__') as children,
-      JSON_REMOVE(JSON_OBJECTAGG(
+      ), '$.null__')`, 'children'],
+      [`JSON_REMOVE(JSON_OBJECTAGG(
         IFNULL(parent_item.shortname, 'null__'),
         JSON_ARRAY(lineage_parent.parent_title, lineage_parent.child_title)
-      ), '$.null__') as parents,
-      JSON_REMOVE(JSON_OBJECTAGG(IFNULL(child_item.shortname, 'null__'), child_item.title), '$.null__') as child_titles,
-      JSON_REMOVE(JSON_OBJECTAGG(IFNULL(parent_item.shortname, 'null__'), parent_item.title), '$.null__') as parent_titles,
-    `) + (options.select ?? '');
-    const joinString = (basicOnly ? '' : `
-      LEFT JOIN lineage as lineage_child ON lineage_child.parent_id = item.id
-      LEFT JOIN lineage as lineage_parent ON lineage_parent.child_id = item.id
-      LEFT JOIN item as child_item ON child_item.id = lineage_child.child_id
-      LEFT JOIN item as parent_item ON parent_item.id = lineage_parent.parent_id
-    `) + (options.join ?? '');
-    let queryString;
+      ), '$.null__')`, 'parents'],
+      [`JSON_REMOVE(JSON_OBJECTAGG(IFNULL(child_item.shortname, 'null__'), child_item.title), '$.null__')`, 'child_titles'],
+      [`JSON_REMOVE(JSON_OBJECTAGG(IFNULL(parent_item.shortname, 'null__'), parent_item.title), '$.null__')`, 'parent_titles'],
+      ...(options.select ?? []),
+    ];
+
+    const joins = [
+      ...(basicOnly ? [] : [
+        ['LEFT', ['lineage', 'lineage_child'], new Cond('lineage_child.parent_id = item.id')],
+        ['LEFT', ['lineage', 'lineage_parent'], new Cond('lineage_parent.child_id = item.id')],
+        ['LEFT', ['item', 'child_item'], new Cond('child_item.id = lineage_child.child_id')],
+        ['LEFT', ['item', 'parent_item'], new Cond('parent_item.id = lineage_parent.parent_id')],
+      ]),
+      ...(options.join ?? []),
+    ]
+
+    let data;
     if (options.search) {
-      const condPref = conditionString ? ' AND ' : 'WHERE ';
-      const extraSelects = 'universe.shortname as universe_short,';
-      queryString = `
-        ${getQuery(
-          extraSelects + selectString,
-          permsQueryString,
-          joinString,
-          conditionString + condPref + `item.title LIKE '%${options.search}%'`,
+      const query = new QueryBuilder().union(
+        getQuery(
+          selects,
+          permsCond,
+          whereConds.and('item.title LIKE ?', `%${options.search}%`),
           options,
-        )}
-        UNION
-        ${getQuery(
-          extraSelects + selectString,
-          permsQueryString,
-          joinString,
-          conditionString + condPref + `item.shortname LIKE '%${options.search}%'`,
+        )
+      ).union(
+        getQuery(
+          selects,
+          permsCond,
+          whereConds.and('item.shortname LIKE ?', `%${options.search}%`),
           options,
-        )}
-        UNION
-        ${getQuery(
-          extraSelects + selectString,
-          permsQueryString,
-          joinString + ' INNER JOIN tag as search_tag ON search_tag.item_id = item.id',
-          conditionString + condPref + `search_tag.tag = '%${options.search}%'`,
+        )
+      ).union(
+        getQuery(
+          selects,
+          permsCond,
+          whereConds.and('search_tag.tag = ?', options.search),
           options,
-        )}
-        UNION
-        ${getQuery(
-          extraSelects + selectString,
-          permsQueryString,
-          joinString + ' INNER JOIN tag as search_tag ON search_tag.item_id = item.id',
-          conditionString + condPref + `search_tag.tag LIKE '%${options.search}%'`,
+        ).innerJoin(['tag', 'search_tag'], new Cond('search_tag.item_id = item.id'))
+      ).union(
+        getQuery(
+          selects,
+          permsCond,
+          whereConds.and('search_tag.tag LIKE ?', `%${options.search}%`),
           options,
-        )}
-      `;
+        ).innerJoin(['tag', 'search_tag'], new Cond('search_tag.item_id = item.id'))
+      );
+      data = await query.execute();
     } else {
-      queryString = getQuery(selectString, permsQueryString, joinString, conditionString, options);
+      const query = getQuery(selects, permsCond, whereConds, options);
+      for (const join of joins) {
+        query.join(...join);
+      }
+      data = await query.execute();
     }
-    const data = await executeQuery(queryString, conditions && conditions.values);
+    // const data = await executeQuery(queryString, conditions && conditions.values);
     return [200, data];
   } catch (err) {
     console.error(err);
@@ -241,20 +254,32 @@ async function post(user, body, universeShortName) {
   }
 
   try {
-    const queryString = `INSERT INTO item SET ?`;
+    const queryString = `
+      INSERT INTO item (
+        title,
+        shortname,
+        item_type,
+        author_id,
+        universe_id,
+        parent_id,
+        obj_data,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+    `;
     const { title, shortname, item_type, parent_id, obj_data } = body;
     if (!title || !shortname || !item_type || !obj_data) return [400];
-    return [201, await executeQuery(queryString, {
+    return [201, await executeQuery(queryString, [
       title,
       shortname,
       item_type,
-      author_id: user.id,
-      universe_id: universeId,
+      user.id,
+      universeId,
       parent_id,
       obj_data,
-      created_at: new Date(),
-      updated_at: new Date(),
-    })];
+      new Date(),
+      new Date(),
+    ])];
   } catch (err) {
     console.error(err);
     return [500];
@@ -282,7 +307,16 @@ async function put(user, universeShortname, itemShortname, changes) {
   }
 
   try {
-    return [200, await executeQuery(`UPDATE item SET ? WHERE id = ${item.id};`, { title, obj_data, updated_at: new Date(), last_updated_by: user.id })];
+    const queryString = `
+      UPDATE item
+      SET
+        title = ?,
+        obj_data = ?,
+        updated_at = ?,
+        last_updated_by = ?
+      WHERE id = ?;
+    `;
+    return [200, await executeQuery(queryString, [ title, obj_data, new Date(), user.id, item.id ])];
   } catch (err) {
     console.error(err);
     return [500];
@@ -308,8 +342,8 @@ async function exists(universeShortname, itemShortname) {
  * @returns 
  */
 async function putLineage(parent_id, child_id, parent_title, child_title) {
-  const queryString = `INSERT INTO lineage SET ?;`;
-  const data = await executeQuery(queryString, { parent_id, child_id, parent_title, child_title });
+  const queryString = `INSERT INTO lineage (parent_id, child_id, parent_title, child_title) VALUES (?, ?, ?, ?);`;
+  const data = await executeQuery(queryString, [ parent_id, child_id, parent_title, child_title ]);
   return [200, data];
 }
 
@@ -334,10 +368,12 @@ async function putTags(user, universeShortname, itemShortname, tags) {
     item.tags?.forEach(tag => {
       tagLookup[tag] = true;
     });
-    const valueString = tags.filter(tag => !tagLookup[tag]).map(tag => `(${item.id}, "${tag}")`).join(',');
+    const filteredTags = tags.filter(tag => !tagLookup[tag]);
+    const valueString = filteredTags.map(() => `(?, ?)`).join(',');
+    const valueArray = filteredTags.map(tag => [item.id, tag]);
     if (!valueString) return [200];
     const queryString = `INSERT INTO tag (item_id, tag) VALUES ${valueString};`;
-    const data = await executeQuery(queryString);
+    const data = await executeQuery(queryString, valueArray);
     return [201, data];
   } catch (e) {
     console.error(e);
@@ -350,10 +386,10 @@ async function delTags(user, universeShortname, itemShortname, tags) {
   const [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE, true);
   if (!item) return [code];
   try {
-    const whereString = tags.map(tag => `tag = "${tag}"`).join(' OR ');
+    const whereString = tags.map(() => `tag = ?`).join(' OR ');
     if (!whereString) return [200];
-    const queryString = `DELETE FROM tag WHERE item_id = ${item.id} AND (${whereString});`;
-    const data = await executeQuery(queryString);
+    const queryString = `DELETE FROM tag WHERE item_id = ? AND (${whereString});`;
+    const data = await executeQuery(queryString, [ item.id, ...tags ]);
     return [200, data];
   } catch (e) {
     console.error(e);
@@ -372,7 +408,7 @@ async function snoozeUntil(user, universeShortname, itemShortname) {
 
   try {
     if (snooze) {
-      return [200, await executeQuery(`UPDATE snooze SET ? WHERE item_id = ${item.id} AND snoozed_by = ${user.id};`, { snoozed_until: snoozeTime })];
+      return [200, await executeQuery(`UPDATE snooze SET snoozed_until = ? WHERE item_id = ? AND snoozed_by = ?;`, [snoozeTime, item.id, user.id])];
     } else {
       return [200, await executeQuery(`INSERT INTO snooze (item_id, snoozed_until, snoozed_by) VALUES (?, ?, ?);`, [item.id, snoozeTime, user.id])];
     }

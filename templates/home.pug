@@ -3,9 +3,17 @@ include mixins.pug
 
 block content
   script.
-    async function snooze(universe, item) {
-      await fetch(`/api/universes/${universe}/items/${item}/snooze`, { method: 'PUT' });
-      window.location.reload();
+    let snoozeTimeout;
+    let reloading = false;
+    function snooze(universe, item) {
+      if (reloading) return;
+      fetch(`/api/universes/${universe}/items/${item}/snooze`, { method: 'PUT' });
+      document.querySelector(`[data-item=${item}]`).parentNode.parentNode.remove();
+      if (snoozeTimeout) clearTimeout(snoozeTimeout);
+      snoozeTimeout = setTimeout(() => {
+        reloading = true;
+        window.location.reload();
+      }, 1000);
     }
 
   h1(align='center') Welcome to Archivium
@@ -16,7 +24,7 @@ block content
         | Archivium is a worldbuilding tool, allowing you to organize everything about your world in one place. 
         | It's designed for creators who want to keep track of all the details that make their worlds unique — from characters and histories to maps and cultures.
         | Whether you're developing a novel, designing a game, or just exploring new ideas, 
-        | Archivium offers a flexible space to collect, connect, and expand on your world’s elements at your own pace.
+        | Archivium offers a flexible space to collect, connect, and expand on your world's elements at your own pace.
         | You can work privately or collaborate with others, bringing your imaginative landscapes and stories to life.
       .d-flex.flex-col.align-center.gap-1
         h3.navbarBtn
@@ -53,7 +61,7 @@ block content
           each item in oldestUpdated
             li.big-text
               .d-flex.gap-1
-                button.pa-1( onclick=`snooze('${item.universe_short}', '${item.shortname}')` )
+                button.pa-1( onclick=`snooze('${item.universe_short}', '${item.shortname}')` data-item=item.shortname )
                   small Snooze
                 a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}` ) #{item.title}
       .grow-1.sheet

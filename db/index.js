@@ -2,10 +2,7 @@ const mysql = require('mysql2');
 const dbConfig = require('./config');
 const Promise = require('bluebird');
 
-const connection = mysql.createConnection({
-  ...dbConfig,
-  multipleStatements: true,
-});
+const connection = mysql.createConnection({ ...dbConfig });
 
 const db = Promise.promisifyAll(connection, { multiArgs: true });
 

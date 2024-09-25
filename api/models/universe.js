@@ -84,22 +84,28 @@ async function post(user, body) {
   try {
     const { title, shortname, public, obj_data } = body;
     if (!(title && shortname)) return [400, 'Missing parameters.'];
-    const queryString1 = `INSERT INTO universe SET ?`;
-    const data = await executeQuery(queryString1, {
+    const queryString1 = `
+      INSERT INTO universe (
+        title,
+        shortname,
+        author_id,
+        public,
+        obj_data,
+        created_at,
+        updated_at,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?);
+    `;
+    const data = await executeQuery(queryString1, [
       title,
       shortname,
-      author_id: user.id,
+      user.id,
       public,
       obj_data,
-      created_at: new Date(),
-      updated_at: new Date(),
-    });
-    const queryString2 = `INSERT INTO authoruniverse SET ?`;
-    return [201, [data, await executeQuery(queryString2, {
-      universe_id: data.insertId,
-      user_id: user.id,
-      permission_level: 3,
-    })]];
+      new Date(),
+      new Date(),
+    ]);
+    const queryString2 = `INSERT INTO authoruniverse (universe_id, user_id, permission_level) VALUES (?, ?, ?)`;
+    return [201, [data, await executeQuery(queryString2, [ data.insertId, user.id, 3 ])]];
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') return [400, 'universe.shortname must be unique.'];
     if (err.code === 'ER_BAD_NULL_ERROR') return [400, 'Missing parameters.'];
@@ -116,7 +122,16 @@ async function put(user, shortname, changes) {
   if (!universe) return [code];
 
   try {
-    return [200, await executeQuery(`UPDATE universe SET ? WHERE id = ${universe.id};`, { title, public, obj_data, updated_at: new Date() })];
+    const queryString = `
+      UPDATE universe
+      SET
+        title = ?,
+        public = ?,
+        obj_data = ?,
+        updated_at = ?
+      WHERE id = ?;
+    `;
+    return [200, await executeQuery(queryString, [ title, public, obj_data, new Date(), universe.id ])];
   } catch (err) {
     console.error(err);
     return [500];
@@ -129,9 +144,17 @@ async function putPermissions(user, shortname, targetUser, permission_level) {
 
   let query;
   if (targetUser.id in universe.author_permissions) {
-    query = executeQuery(`UPDATE authoruniverse SET ? WHERE user_id = ${targetUser.id} AND universe_id = ${universe.id};`, { permission_level });
+    query = executeQuery(`
+      UPDATE authoruniverse 
+      SET permission_level = ? 
+      WHERE user_id = ? AND universe_id = ?;`,
+      [ permission_level, targetUser.id, universe.id ],
+    );
   } else {
-    query = executeQuery(`INSERT INTO authoruniverse SET ?`, { permission_level, universe_id: universe.id, user_id: targetUser.id });
+    query = executeQuery(`
+      INSERT INTO authoruniverse (permission_level, universe_id, user_id) VALUES (?, ?, ?);`,
+      [ permission_level, universe.id, targetUser.id ],
+    );
   }
 
   try {

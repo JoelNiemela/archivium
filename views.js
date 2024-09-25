@@ -57,7 +57,6 @@ module.exports = function(app) {
         join: [['LEFT', ['user', 'lub'], new Cond('lub.id = item.last_updated_by')]],
         where: new Cond('au_filter.user_id = ?', user.id),
       });
-      console.log(recentlyUpdated)
       res.status(code2);
       const [code3, oldestUpdated] = await api.item.getMany(user, null, perms.WRITE, true, {
         sort: 'updated_at',

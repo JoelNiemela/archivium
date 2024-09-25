@@ -9,7 +9,6 @@ const perms = {
 };
 
 const executeQuery = (query, values) => {
-  console.log(query, values)
   return db.executeAsync(query, values).spread(results => results);
 };
 
@@ -134,7 +133,6 @@ class QueryBuilder {
       }
       queryStr += strs.join(' UNION ');
     }
-    console.log(queryStr)
     return [queryStr, values];
    }
 

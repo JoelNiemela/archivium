@@ -1,7 +1,17 @@
 extends layout.pug
 
+block scripts
+  script 
+    include /static/scripts/domUtils.js
+    include /static/scripts/fetchUtils.js
+    include /static/scripts/markdown/parse.js
+    include /static/scripts/markdown/render.js
+
 block content
   br
   .sheet
-    +mdText(content)
+    #md-body
+      script!= `window.content = ${JSON.stringify(content)};`
+      script.
+        loadMarkdown(document.getElementById('md-body'), null, window.content);
   br

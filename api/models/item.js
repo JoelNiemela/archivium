@@ -1,4 +1,4 @@
-const { executeQuery, parseData, perms } = require('../utils');
+const { QueryBuilder, Cond, executeQuery, perms } = require('../utils');
 
 async function getOne(user, id, permissionsRequired=perms.READ, basicOnly=false) {
 
@@ -17,38 +17,37 @@ async function getOne(user, id, permissionsRequired=perms.READ, basicOnly=false)
   return [200, item];
 }
 
-function getQuery(selectString='', permsQueryString='', joinString='', conditionString='', options={}) {
-  return `
-      SELECT
-        item.id,
-        item.title,
-        item.shortname,
-        item.item_type,
-        item.created_at,
-        item.updated_at,
-        item.universe_id,
-        user.username as author,
-        universe.title as universe,
-        universe.shortname as universe_short,
-        ${selectString}
-        tag.tags
-      FROM item
-      INNER JOIN user ON user.id = item.author_id
-      INNER JOIN universe ON universe.id = item.universe_id
-      INNER JOIN authoruniverse as au_filter ON universe.id = au_filter.universe_id AND (${permsQueryString})
-      LEFT JOIN (
-        SELECT item_id, JSON_ARRAYAGG(tag) as tags
-        FROM tag
-        GROUP BY item_id
-      ) tag ON tag.item_id = item.id
-      ${joinString}
-      ${conditionString}
-      GROUP BY 
-        item.id,
-        user.username,
-        universe.title
-      ${options.sort ? `ORDER BY ${options.sort} ${options.sortDesc ? 'DESC' : 'ASC'}` : ''}
-      ${options.limit ? `LIMIT ${options.limit}` : ''}`;
+function getQuery(selects=[], permsCond=undefined, whereConds=undefined, options={}) {
+  let query = new QueryBuilder()
+    .select([
+      'item.id',
+      'item.title',
+      'item.shortname',
+      'item.item_type',
+      'item.created_at',
+      'item.updated_at',
+      'item.universe_id',
+      ['user.username', 'author'],
+      ['universe.title', 'universe'],
+      ['universe.shortname', 'universe_short'],
+      ...selects,
+      'tag.tags',
+    ])
+    .from('item')
+    .innerJoin('user', new Cond('user.id = item.author_id'))
+    .innerJoin('universe', new Cond('universe.id = item.universe_id'))
+    .innerJoin(['authoruniverse', 'au_filter'], new Cond('universe.id = au_filter.universe_id').and(permsCond))
+    .leftJoin(`(
+      SELECT item_id, JSON_ARRAYAGG(tag) as tags
+      FROM tag
+      GROUP BY item_id
+    ) tag`, new Cond('tag.item_id = item.id'))
+    .where(whereConds)
+    .groupBy(['item.id', 'user.username', 'universe.title'])
+    if (options.sort) query.orderBy(options.sort, options.sortDesc);
+    if (options.limit) query.limit(options.limit);
+
+  return query;
 }
 
 async function getMany(user, conditions, permissionsRequired=perms.READ, basicOnly=false, options={}) {
@@ -72,72 +71,86 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
   }
 
   try {
-    const readOnlyQueryString = permissionsRequired > perms.READ ? '' : `universe.public = 1`;
-    const usrQueryString = user ? `(au_filter.user_id = ${user.id} AND au_filter.permission_level >= ${permissionsRequired})` : '';
-    const permsQueryString = `${readOnlyQueryString}${(readOnlyQueryString && usrQueryString) ? ' OR ' : ''}${usrQueryString}`;
-    const conditionString = (
-      conditions ? `WHERE ${conditions.strings.join(' AND ')}` : ''
-    ) + (options.where ? (conditions ? ' AND ' : 'WHERE ') + options.where : '');
-    const selectString = (basicOnly ? '' : `
-      item.obj_data,
-      JSON_REMOVE(JSON_OBJECTAGG(
+    let permsCond = new Cond();
+    if (permissionsRequired <= perms.READ) permsCond = permsCond.or('universe.public = ?', 1);
+    if (user) permsCond = permsCond.or(
+      new Cond('au_filter.user_id = ?', user.id)
+      .and('au_filter.permission_level >= ?', permissionsRequired)
+    );
+
+    let whereConds = new Cond();
+    if (conditions) {
+      for (let i = 0; i < conditions.strings.length; i++) {
+        whereConds = whereConds.and(conditions.strings[i], conditions.values[i]);
+      }
+    }
+    if (options.where) whereConds = whereConds.and(options.where);
+
+    const selects = basicOnly ? [] : [
+      'item.obj_data',
+      [`JSON_REMOVE(JSON_OBJECTAGG(
         IFNULL(child_item.shortname, 'null__'),
         JSON_ARRAY(lineage_child.child_title, lineage_child.parent_title)
-      ), '$.null__') as children,
-      JSON_REMOVE(JSON_OBJECTAGG(
+      ), '$.null__')`, 'children'],
+      [`JSON_REMOVE(JSON_OBJECTAGG(
         IFNULL(parent_item.shortname, 'null__'),
         JSON_ARRAY(lineage_parent.parent_title, lineage_parent.child_title)
-      ), '$.null__') as parents,
-      JSON_REMOVE(JSON_OBJECTAGG(IFNULL(child_item.shortname, 'null__'), child_item.title), '$.null__') as child_titles,
-      JSON_REMOVE(JSON_OBJECTAGG(IFNULL(parent_item.shortname, 'null__'), parent_item.title), '$.null__') as parent_titles,
-    `) + (options.select ?? '');
-    const joinString = (basicOnly ? '' : `
-      LEFT JOIN lineage as lineage_child ON lineage_child.parent_id = item.id
-      LEFT JOIN lineage as lineage_parent ON lineage_parent.child_id = item.id
-      LEFT JOIN item as child_item ON child_item.id = lineage_child.child_id
-      LEFT JOIN item as parent_item ON parent_item.id = lineage_parent.parent_id
-    `) + (options.join ?? '');
-    let queryString;
+      ), '$.null__')`, 'parents'],
+      [`JSON_REMOVE(JSON_OBJECTAGG(IFNULL(child_item.shortname, 'null__'), child_item.title), '$.null__')`, 'child_titles'],
+      [`JSON_REMOVE(JSON_OBJECTAGG(IFNULL(parent_item.shortname, 'null__'), parent_item.title), '$.null__')`, 'parent_titles'],
+      ...(options.select ?? []),
+    ];
+
+    const joins = [
+      ...(basicOnly ? [] : [
+        ['LEFT', ['lineage', 'lineage_child'], new Cond('lineage_child.parent_id = item.id')],
+        ['LEFT', ['lineage', 'lineage_parent'], new Cond('lineage_parent.child_id = item.id')],
+        ['LEFT', ['item', 'child_item'], new Cond('child_item.id = lineage_child.child_id')],
+        ['LEFT', ['item', 'parent_item'], new Cond('parent_item.id = lineage_parent.parent_id')],
+      ]),
+      ...(options.join ?? []),
+    ]
+
+    let data;
     if (options.search) {
-      const condPref = conditionString ? ' AND ' : 'WHERE ';
-      const extraSelects = 'universe.shortname as universe_short,';
-      queryString = `
-        ${getQuery(
-          extraSelects + selectString,
-          permsQueryString,
-          joinString,
-          conditionString + condPref + `item.title LIKE '%${options.search}%'`,
+      const query = new QueryBuilder().union(
+        getQuery(
+          selects,
+          permsCond,
+          whereConds.and('item.title LIKE ?', `%${options.search}%`),
           options,
-        )}
-        UNION
-        ${getQuery(
-          extraSelects + selectString,
-          permsQueryString,
-          joinString,
-          conditionString + condPref + `item.shortname LIKE '%${options.search}%'`,
+        )
+      ).union(
+        getQuery(
+          selects,
+          permsCond,
+          whereConds.and('item.shortname LIKE ?', `%${options.search}%`),
           options,
-        )}
-        UNION
-        ${getQuery(
-          extraSelects + selectString,
-          permsQueryString,
-          joinString + ' INNER JOIN tag as search_tag ON search_tag.item_id = item.id',
-          conditionString + condPref + `search_tag.tag = '%${options.search}%'`,
+        )
+      ).union(
+        getQuery(
+          selects,
+          permsCond,
+          whereConds.and('search_tag.tag = ?', options.search),
           options,
-        )}
-        UNION
-        ${getQuery(
-          extraSelects + selectString,
-          permsQueryString,
-          joinString + ' INNER JOIN tag as search_tag ON search_tag.item_id = item.id',
-          conditionString + condPref + `search_tag.tag LIKE '%${options.search}%'`,
+        ).innerJoin(['tag', 'search_tag'], new Cond('search_tag.item_id = item.id'))
+      ).union(
+        getQuery(
+          selects,
+          permsCond,
+          whereConds.and('search_tag.tag LIKE ?', `%${options.search}%`),
           options,
-        )}
-      `;
+        ).innerJoin(['tag', 'search_tag'], new Cond('search_tag.item_id = item.id'))
+      );
+      data = await query.execute();
     } else {
-      queryString = getQuery(selectString, permsQueryString, joinString, conditionString, options);
+      const query = getQuery(selects, permsCond, whereConds, options);
+      for (const join of joins) {
+        query.join(...join);
+      }
+      data = await query.execute();
     }
-    const data = await executeQuery(queryString, conditions && conditions.values);
+    // const data = await executeQuery(queryString, conditions && conditions.values);
     return [200, data];
   } catch (err) {
     console.error(err);

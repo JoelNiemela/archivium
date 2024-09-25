@@ -3,7 +3,7 @@ const Auth = require('./middleware/auth');
 const api = require('./api');
 const md5 = require('md5');
 const { render } = require('./templates');
-const { perms } = require('./api/utils');
+const { perms, Cond } = require('./api/utils');
 const { parseMarkdown } = require('./templates/markdown');
 const { user } = require('./db/config');
 
@@ -23,6 +23,7 @@ module.exports = function(app) {
       res.end(render(req, template, data));
     } catch (err) {
       console.error(`Error ${res.statusCode} rendered`);
+      console.error(err);
       res.end(render(req, 'error', { code: res.statusCode }));
     }
   };
@@ -52,16 +53,16 @@ module.exports = function(app) {
         sort: 'updated_at',
         sortDesc: true,
         limit: 8,
-        select: 'lub.username as last_updated_by,',
-        join: 'LEFT JOIN user AS lub ON lub.id = item.last_updated_by',
+        select: [['lub.username', 'last_updated_by']],
+        join: [['LEFT', ['user', 'lub'], new Cond('lub.id = item.last_updated_by')]],
       });
       res.status(code2);
       const [code3, oldestUpdated] = await api.item.getMany(user, null, perms.READ, true, {
         sort: 'updated_at',
         sortDesc: false,
         limit: 16,
-        join: `LEFT JOIN snooze ON snooze.item_id = item.id AND snooze.snoozed_by = ${user.id}`,
-        where: '(snooze.snoozed_until < NOW() OR snooze.snoozed_until IS NULL) AND item.updated_at < DATE_SUB(NOW(), INTERVAL 2 DAY)',
+        join: [['LEFT', 'snooze', new Cond('snooze.item_id = item.id').and('snooze.snoozed_by = ?', user.id)]],
+        where: new Cond('(snooze.snoozed_until < NOW() OR snooze.snoozed_until IS NULL) AND item.updated_at < DATE_SUB(NOW(), INTERVAL 2 DAY)'),
       });
       res.status(code3);
       if (!oldestUpdated) return;

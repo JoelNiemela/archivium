@@ -286,6 +286,68 @@ async function post(user, body, universeShortName) {
   }
 }
 
+async function save(user, universeShortname, itemShortname, body, jsonMode=false) {
+  // Handle tags
+  if (!jsonMode) body.tags = body.tags?.split(' ') ?? [];
+
+  // Handle obj_data
+  if (!('obj_data' in body)) {
+    return [400]; // We should probably render an error on the edit page instead here.
+  }
+  if (!jsonMode) body.obj_data = JSON.parse(decodeURIComponent(body.obj_data));
+  let lineage;
+  if ('lineage' in body.obj_data) {
+    lineage = body.obj_data.lineage;
+    body.obj_data.lineage = { title: lineage.title };
+  }
+  let code; let data;
+  body.obj_data = JSON.stringify(body.obj_data);
+
+  // Actually save item
+  [code, data] = await put(user, universeShortname, itemShortname, body);
+  if (code !== 200) {
+    return [code, data];
+  }
+
+  // Handle lineage data
+  if (lineage) {
+    let item;
+    [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE);
+    if (code !== 200) return [code];
+    const [newParents, newChildren] = [{}, {}];
+    for (const shortname in lineage.parents ?? {}) {
+      const [, parent] = await getByUniverseAndItemShortnames(user, universeShortname, shortname, perms.WRITE);
+      if (!parent) return [400];
+      newParents[shortname] = true;
+      if (!(shortname in item.parents)) {
+        [code,] = await putLineage(parent.id, item.id, ...lineage.parents[shortname]);
+      }
+    }
+    for (const shortname in lineage.children ?? {}) {
+      const [, child] = await getByUniverseAndItemShortnames(user, universeShortname, shortname, perms.WRITE);
+      if (!child) return [400];
+      newChildren[shortname] = true;
+      if (!(shortname in item.children)) {
+        [code, ] = await putLineage(item.id, child.id, ...lineage.children[shortname].reverse());
+      }
+    }
+    for (const shortname in item.parents) {
+      if (!newParents[shortname]) {
+        const [, parent] = await getByUniverseAndItemShortnames(user, universeShortname, shortname, perms.WRITE);
+        delLineage(parent.id, item.id);
+      }
+    }
+    for (const shortname in item.children) {
+      if (!newChildren[shortname]) {
+        const [, child] = await getByUniverseAndItemShortnames(user, universeShortname, shortname, perms.WRITE);
+        delLineage(item.id, child.id);
+      }
+    }
+  }
+
+  return [200];
+}
+
 async function put(user, universeShortname, itemShortname, changes) {
   const { title, obj_data, tags } = changes;
 
@@ -323,8 +385,26 @@ async function put(user, universeShortname, itemShortname, changes) {
   }
 }
 
+async function putData(user, universeShortname, itemShortname, changes) {
+
+  const [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE);
+  if (!item) return [code];
+
+  item.obj_data = {
+    ...JSON.parse(item.obj_data),
+    ...changes,
+  };
+
+  try {
+    return [200, await executeQuery(`UPDATE item SET ? WHERE id = ${item.id};`, { obj_data: JSON.stringify(item.obj_data) })];
+  } catch (err) {
+    console.error(err);
+    return [500];
+  }
+}
+
 // TODO - how should permissions work on this?
-async function exists(universeShortname, itemShortname) {
+async function exists(user, universeShortname, itemShortname) {
   const queryString = `
     SELECT 1
     FROM item
@@ -332,7 +412,7 @@ async function exists(universeShortname, itemShortname) {
     WHERE universe.shortname = ? AND item.shortname = ?;
   `;
   const data = await executeQuery(queryString, [universeShortname, itemShortname]);
-  return data.length > 0;
+  return [200, data.length > 0];
 }
 
 
@@ -427,7 +507,9 @@ module.exports = {
   getByUniverseShortname,
   getByUniverseAndItemShortnames,
   post,
+  save,
   put,
+  putData,
   exists,
   putLineage,
   delLineage,

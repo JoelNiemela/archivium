@@ -1,5 +1,16 @@
 extends ../layout.pug
 
+block scripts
+  script
+    include /static/scripts/tabs.js
+    include /static/scripts/fetchUtils.js
+    include /static/scripts/markdown/parse.js
+    include /static/scripts/markdown/render.js
+    include /static/scripts/domUtils.js
+    include /static/scripts/searchableSelect.js
+    include /static/scripts/editor/markdown.js
+    //- include /static/scripts/editor/rich.js
+
 block breadcrumbs
   a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
   |  / 
@@ -12,9 +23,6 @@ block breadcrumbs
   span #{item.title}
 
 block content
-  script
-    include /static/scripts/tabs.js
-
   h1.center #{item.title}
   p.center #{capitalize(T(item.itemTypeName))} of 
     a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{item.universe}
@@ -35,7 +43,7 @@ block content
 
   //- Tab buttons
   ul.navbarBtns#tabBtns.gap-1
-    if parsedBody
+    if 'body' in item.obj_data
       li.navbarBtn#bodyBtn( data-tab='body' )
         h3.navbarBtnLink.navbarText( onclick=`showTab('body')` ) Main Text
     if 'tabs' in item.obj_data
@@ -57,17 +65,23 @@ block content
         .itemTab.hidden( data-tab=name )
           each val, key in tab
             .itemKey
-              span #{key}
-              hr
-              +mdText(val)
+              if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
+                .editableKey.rich-editor( data-key=key data-tab-name=name data-val=val )
+              else
+                span #{key}
+                hr
+                .mdVal( data-val=val )
 
     if 'gallery' in item.obj_data && 'title' in item.obj_data.gallery
         .itemTab.hidden.gallery( data-tab='gallery' )
-          each img in item.obj_data.gallery.imgs || []
+          each img, index in item.obj_data.gallery.imgs || []
             .itemKey
               img( src=img.url, alt=img.label )
-              if img.mdLabel
-                +mdText(img.mdLabel)
+              if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
+                .editableLabel.rich-editor( data-index=index data-label=img.label )
+              else
+                if img.label
+                  .mdLabel( data-val=img.label )
 
     if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
         .itemTab.hidden( data-tab='lineage' )
@@ -84,9 +98,42 @@ block content
               a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${shortname}` )
                 | #{item.child_titles[shortname]}
 
-    if parsedBody
+    if 'body' in item.obj_data
       .sheet.hidden( data-tab='body' )
-        +mdText(parsedBody)
+        if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
+          #editor
+        else
+          #markdown-body
+          //- script!= `loadMarkdown(${JSON.stringify(universe.shortname)}, ${JSON.stringify(item.obj_data.body)}, ${JSON.stringify({ item })});`
+
+  
+  script!= `window.item = ${JSON.stringify(item)};`
+  script.
+    const body = document.getElementById('markdown-body');
+    if (body) {
+      loadMarkdown(body, '#{universe.shortname}', item.obj_data.body, { item });
+
+      document.querySelectorAll('.mdVal').forEach((el) => {
+        loadMarkdown(el, '#{universe.shortname}', el.dataset.val, null, (tag) => {
+          if (tag.type === 'div') tag.attrs.style = {'text-align': 'right'};
+          if (tag.type === 'p') tag.type = 'span';
+        });
+      });
+
+      document.querySelectorAll('.mdLabel').forEach((el) => {
+        loadMarkdown(el, '#{universe.shortname}', el.dataset.val, null, (tag) => {
+          if (tag.type === 'div') {
+            tag.attrs.style = {'text-align': 'center'};
+            tag.attrs.class += ' label';
+          }
+          if (tag.type === 'p') tag.type = 'span';
+        });
+      });
+    };
+  
+  if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
+    script!= `loadEditor(${JSON.stringify(universe)}, ${JSON.stringify(item.obj_data.body)});`
+    //- script!= `loadRichEditor(${JSON.stringify(universe)}, ${JSON.stringify(item.obj_data.body)});`
 
   script.
     (function() {

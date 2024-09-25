@@ -1,11 +1,9 @@
-const { ADDR_PREFIX } = require('./config');
+const { ADDR_PREFIX, DEV_MODE } = require('./config');
 const Auth = require('./middleware/auth');
 const api = require('./api');
 const md5 = require('md5');
 const { render } = require('./templates');
 const { perms, Cond } = require('./api/utils');
-const { parseMarkdown } = require('./templates/markdown');
-const { user } = require('./db/config');
 
 module.exports = function(app) {
   app.use((req, res, next) => {
@@ -22,8 +20,11 @@ module.exports = function(app) {
       const [template, data] = res.templateData;
       res.end(render(req, template, data));
     } catch (err) {
-      console.error(`Error ${res.statusCode} rendered`);
-      console.error(err);
+      console.error(`Error ${res.statusCode} rendered.`);
+      if (DEV_MODE) {
+        console.error('Reason:');
+        console.error(err);
+      }
       res.end(render(req, 'error', { code: res.statusCode }));
     }
   };
@@ -231,44 +232,7 @@ module.exports = function(app) {
     }
     item.obj_data = JSON.parse(item.obj_data);
     item.itemTypeName = ((universe.obj_data.cats ?? {})[item.item_type] ?? ['missing_cat'])[0];
-    const parsedBody = 'body' in item.obj_data && (await parseMarkdown(item.obj_data.body || '').evaluate(req.params.universeShortname, { item }))
-    if ('tabs' in item.obj_data) {
-      for (const tab in item.obj_data.tabs) {
-        for (const key in item.obj_data.tabs[tab]) {
-          item.obj_data.tabs[tab][key] = await parseMarkdown(item.obj_data.tabs[tab][key]).evaluate(
-            req.params.universeShortname,
-            null,
-            (tag) => {
-              if (tag.type === 'div') tag.attrs.style = {'text-align': 'right'};
-              if (tag.type === 'p') tag.type = 'span';
-            },
-          );
-        }
-      }
-    }
-    if ('gallery' in item.obj_data) {
-      item.obj_data.gallery.imgs = await Promise.all((item.obj_data.gallery.imgs ?? []).filter(img => img).map(
-        async ({ url, label }) => {
-          const parsedLabel = label && parseMarkdown(label);
-          return { 
-            url, 
-            label: parsedLabel && parsedLabel.innerText(),
-            mdLabel: parsedLabel && await parsedLabel.evaluate(
-              req.params.universeShortname,
-              null,
-              (tag) => {
-                if (tag.type === 'div') {
-                  tag.attrs.style = {'text-align': 'center'};
-                  tag.attrs.class += ' label';
-                }
-                if (tag.type === 'p') tag.type = 'span';
-              },
-            ),
-          }
-        }
-      ));
-    }
-    res.prepareRender('item', { item, universe, parsedBody });
+    res.prepareRender('item', { item, universe, tab: req.query.tab });
   });
   get('/universes/:universeShortname/items/:itemShortname/edit', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code1, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
@@ -288,66 +252,11 @@ module.exports = function(app) {
     res.prepareRender(req.query.mode === 'raw' ? 'editItemRaw' : 'editItem', { item, itemMap });
   });
   post('/universes/:universeShortname/items/:itemShortname/edit', Auth.verifySessionOrRedirect, async (req, res) => {
-    // Handle tags
-    req.body.tags = req.body.tags?.split(' ') ?? [];
-
-    // Handle obj_data
-    if (!('obj_data' in req.body)) {
-      res.status(400);
-      return; // We should probably render an error on the edit page instead here.
-    }
-    req.body.obj_data = JSON.parse(decodeURIComponent(req.body.obj_data));
-    let lineage;
-    if ('lineage' in req.body.obj_data) {
-      lineage = req.body.obj_data.lineage;
-      req.body.obj_data.lineage = { title: lineage.title };
-    }
-    let code; let data;
-    req.body.obj_data = JSON.stringify(req.body.obj_data);
-
-    // Actually save item
-    [code, data] = await api.item.put(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
-    if (code !== 200) {
-      res.status(code);
-      return res.prepareRender('editItem', { error: data, ...req.body });
-    }
-
-    // Handle lineage data
-    if (lineage) {
-      let item;
-      [code, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
-      if (code !== 200) return res.status(code);
-      const [newParents, newChildren] = [{}, {}];
-      for (const shortname in lineage.parents ?? {}) {
-        const [, parent] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, shortname, perms.WRITE);
-        if (!parent) return res.status(400);
-        newParents[shortname] = true;
-        if (!(shortname in item.parents)) {
-          [code,] = await api.item.putLineage(parent.id, item.id, ...lineage.parents[shortname]);
-        }
-      }
-      for (const shortname in lineage.children ?? {}) {
-        const [, child] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, shortname, perms.WRITE);
-        if (!child) return res.status(400);
-        newChildren[shortname] = true;
-        if (!(shortname in item.children)) {
-          [code, ] = await api.item.putLineage(item.id, child.id, ...lineage.children[shortname].reverse());
-        }
-      }
-      for (const shortname in item.parents) {
-        if (!newParents[shortname]) {
-          const [, parent] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, shortname, perms.WRITE);
-          api.item.delLineage(parent.id, item.id);
-        }
-      }
-      for (const shortname in item.children) {
-        if (!newChildren[shortname]) {
-          const [, child] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, shortname, perms.WRITE);
-          api.item.delLineage(item.id, child.id);
-        }
-      }
-    }
+    const [code, err] = await api.item.save(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
     res.status(code);
+    if (err) {
+      return res.prepareRender('editItem', { error: err, ...body });
+    }
     res.redirect(`${ADDR_PREFIX}/universes/${req.params.universeShortname}/items/${req.params.itemShortname}`);
   });
 

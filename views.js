@@ -43,7 +43,7 @@ module.exports = function(app) {
   get(`${ADDR_PREFIX}/`, async (req, res) => {
     const user = req.session.user;
     if (user) {
-      const [code1, universes] = await api.universe.getMany(user);
+      const [code1, universes] = await api.universe.getMany(user, null, perms.WRITE);
       res.status(code1);
       if (!universes) return;
       const [code2, recentlyUpdated] = await api.item.getMany(user, {
@@ -55,14 +55,16 @@ module.exports = function(app) {
         limit: 8,
         select: [['lub.username', 'last_updated_by']],
         join: [['LEFT', ['user', 'lub'], new Cond('lub.id = item.last_updated_by')]],
+        where: new Cond('au_filter.user_id = ?', user.id),
       });
+      console.log(recentlyUpdated)
       res.status(code2);
-      const [code3, oldestUpdated] = await api.item.getMany(user, null, perms.READ, true, {
+      const [code3, oldestUpdated] = await api.item.getMany(user, null, perms.WRITE, true, {
         sort: 'updated_at',
         sortDesc: false,
         limit: 16,
         join: [['LEFT', 'snooze', new Cond('snooze.item_id = item.id').and('snooze.snoozed_by = ?', user.id)]],
-        where: new Cond('(snooze.snoozed_until < NOW() OR snooze.snoozed_until IS NULL) AND item.updated_at < DATE_SUB(NOW(), INTERVAL 2 DAY)'),
+        where: new Cond('snooze.snoozed_until < NOW()').or('snooze.snoozed_until IS NULL').and('item.updated_at < DATE_SUB(NOW(), INTERVAL 2 DAY)'),
       });
       res.status(code3);
       if (!oldestUpdated) return;

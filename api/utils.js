@@ -134,12 +134,12 @@ class QueryBuilder {
       }
       queryStr += strs.join(' UNION ');
     }
+    console.log(queryStr)
     return [queryStr, values];
    }
 
    async execute() {
     const [queryStr, values] = this.compile();
-    console.log(queryStr, values)
     return await executeQuery(queryStr, values);
    }
 }

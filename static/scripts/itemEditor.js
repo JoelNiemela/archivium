@@ -17,10 +17,10 @@ function updateObjData(newState) {
 
 function bindDataValue(selector, setter) {
   const el = document.querySelector(selector);
-  el.onchange = () => {
+  el.oninput = () => {
     setter(el.value);
   };
-  el.onchange();
+  el.oninput();
 }
 
 
@@ -162,6 +162,62 @@ function addTab(type, name, force=false) {
         createElement('input', { attrs: { id: 'new_child_other_data', placeholder: T('Child Title') } }),
       ] }),
     ] }),
+    type === 'chronology' && createElement('div', { children: [
+      createElement('div', { classList: ['events'], children: [
+        ...(obj_data.chronology.events ?? []).map((event, i) => (
+          createElement('div', { children: [
+            createElement('input', { attrs: { value: event.title, placeholder: T('Title'), oninput: ({ target }) => {
+              const newState = { ...obj_data };
+              newState.chronology.events[i].title = target.value;
+              updateObjData(newState);
+            } } }),
+            createElement('input', { attrs: { value: event.time, placeholder: T('Time'), type: 'number', oninput: ({ target }) => {
+              const newState = { ...obj_data };
+              newState.chronology.events[i].time = Math.round(Number(target.value));
+              updateObjData(newState);
+            }, onchange: ({ target }) => { target.value = Math.round(Number(target.value)); } } }),
+            createElement('button', { attrs: {
+              type: 'button',
+              innerText: T('Remove'),
+              onclick: () => {
+                const newState = { ...obj_data };
+                newState.chronology.events.splice(i, 1);
+                updateObjData(newState);
+                resetTabs(name);
+              },
+            } }),
+          ] })
+        )),
+        createElement('div', { children: [
+          createElement('input', { attrs: { id: 'new_event_title', placeholder: T('Title') } }),
+          createElement('input', { attrs: { id: 'new_event_time', placeholder: T('Time'), type: 'number', onchange: ({ target }) => {
+            target.value = Math.round(Number(target.value));
+          } } }),
+          createElement('button', { attrs: {
+            type: 'button',
+            innerText: T('Add'),
+            onclick: () => {
+              const newState = { ...obj_data };
+              const title = getIdValue('new_event_title');
+              if (!title && newState.chronology.events?.some(({ title }) => !title)) {
+                alert('Only one untitled event allowed per item!');
+                return;
+              }
+              if (!newState.chronology.events) newState.chronology.events = [];
+              newState.chronology.events.push({ title, time: getIdValue('new_event_time') });
+              updateObjData(newState);
+              resetTabs(name);
+            },
+          } }),
+        ] }),
+      ] }),
+      createElement('button', { attrs: {
+        type: 'button',
+        innerText: 'Add New Key',
+        onclick: () => addKeyValuePair(name, getIdValue(`${name}-new_key`)),
+      } }),
+      createElement('input', { attrs: { id: `${name}-new_key` } }),
+    ] }),
     type === 'gallery' && createElement('div', { children: [
       createElement('div', { classList: ['item-gallery', 'd-flex', 'gap-4', 'flex-wrap'], children: [
         ...(obj_data.gallery.imgs ?? []).map(img => img ?? {}).map(({ url, label }, i) => (       
@@ -244,7 +300,7 @@ function addKeyValuePair(tabName, key, startValue='', force=false) {
   document.querySelector(`#tabs [data-tab="${tabName}"] .keyPairs`).appendChild(
     createElement('div', { children: [
       createElement('label', { attrs: { innerText: key, for: inputId } }),
-      createElement('input', { attrs: { id: inputId, name: inputId, value: startValue, onchange: () => updateKeyValue(tabName, key) } }),
+      createElement('input', { attrs: { id: inputId, name: inputId, value: startValue, oninput: () => updateKeyValue(tabName, key) } }),
     ] })
   );
 }

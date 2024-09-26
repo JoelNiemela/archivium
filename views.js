@@ -253,6 +253,10 @@ module.exports = function(app) {
       item.obj_data.lineage.parents = item.parents;
       item.obj_data.lineage.children = item.children;
     }
+    if (Object.keys(item.events).length > 0) {
+      item.obj_data.chronology = { ...item.obj_data.chronology };
+      item.obj_data.chronology.events = Object.keys(item.events).map((title) => ({ title, time: item.events[title] }));
+    }
     const itemMap = {};
     itemList.forEach(item => itemMap[item.shortname] = item.title);
     res.prepareRender(req.query.mode === 'raw' ? 'editItemRaw' : 'editItem', { item, itemMap });

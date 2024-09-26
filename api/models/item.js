@@ -86,18 +86,21 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
     }
     if (options.where) whereConds = whereConds.and(options.where);
 
-    const selects = basicOnly ? [] : [
-      'item.obj_data',
-      [`JSON_REMOVE(JSON_OBJECTAGG(
-        IFNULL(child_item.shortname, 'null__'),
-        JSON_ARRAY(lineage_child.child_title, lineage_child.parent_title)
-      ), '$.null__')`, 'children'],
-      [`JSON_REMOVE(JSON_OBJECTAGG(
-        IFNULL(parent_item.shortname, 'null__'),
-        JSON_ARRAY(lineage_parent.parent_title, lineage_parent.child_title)
-      ), '$.null__')`, 'parents'],
-      [`JSON_REMOVE(JSON_OBJECTAGG(IFNULL(child_item.shortname, 'null__'), child_item.title), '$.null__')`, 'child_titles'],
-      [`JSON_REMOVE(JSON_OBJECTAGG(IFNULL(parent_item.shortname, 'null__'), parent_item.title), '$.null__')`, 'parent_titles'],
+    const selects = [
+      ...(basicOnly ? [] : [
+        'item.obj_data',
+        [`JSON_REMOVE(JSON_OBJECTAGG(
+          IFNULL(child_item.shortname, 'null__'),
+          JSON_ARRAY(lineage_child.child_title, lineage_child.parent_title)
+        ), '$.null__')`, 'children'],
+        [`JSON_REMOVE(JSON_OBJECTAGG(
+          IFNULL(parent_item.shortname, 'null__'),
+          JSON_ARRAY(lineage_parent.parent_title, lineage_parent.child_title)
+        ), '$.null__')`, 'parents'],
+        [`JSON_REMOVE(JSON_OBJECTAGG(IFNULL(child_item.shortname, 'null__'), child_item.title), '$.null__')`, 'child_titles'],
+        [`JSON_REMOVE(JSON_OBJECTAGG(IFNULL(parent_item.shortname, 'null__'), parent_item.title), '$.null__')`, 'parent_titles'],
+        [`JSON_OBJECTAGG(IFNULL(itemevent.event_title, 'null__'), itemevent.abstime)`, 'events'],
+      ]),
       ...(options.select ?? []),
     ];
 
@@ -107,6 +110,7 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
         ['LEFT', ['lineage', 'lineage_parent'], new Cond('lineage_parent.child_id = item.id')],
         ['LEFT', ['item', 'child_item'], new Cond('child_item.id = lineage_child.child_id')],
         ['LEFT', ['item', 'parent_item'], new Cond('parent_item.id = lineage_parent.parent_id')],
+        ['LEFT', 'itemevent', new Cond('itemevent.item_id = item.id')],
       ]),
       ...(options.join ?? []),
     ]
@@ -300,6 +304,11 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
     lineage = body.obj_data.lineage;
     body.obj_data.lineage = { title: lineage.title };
   }
+  let chronology;
+  if ('chronology' in body.obj_data) {
+    chronology = body.obj_data.chronology;
+    body.obj_data.chronology = { title: chronology.title };
+  }
   let code; let data;
   body.obj_data = JSON.stringify(body.obj_data);
 
@@ -309,11 +318,11 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
     return [code, data];
   }
 
+  const [itemCode, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE);
+  if (!item) return [itemCode];
+
   // Handle lineage data
   if (lineage) {
-    let item;
-    [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE);
-    if (code !== 200) return [code];
     const [newParents, newChildren] = [{}, {}];
     for (const shortname in lineage.parents ?? {}) {
       const [, parent] = await getByUniverseAndItemShortnames(user, universeShortname, shortname, perms.WRITE);
@@ -345,7 +354,46 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
     }
   }
 
+  // Handle chronology data
+  if (chronology) {
+    const events = await fetchEvents(item.id);
+    const existingEvents = events.reduce((acc, event) => ({...acc, [event.event_title ?? null]: event}), {});
+    const newEvents = chronology.events.filter(event => !existingEvents[event.title]);
+    const updatedEvents = chronology.events.filter(event => existingEvents[event.title] && (
+      existingEvents[event.title].event_title !== event.title
+      || existingEvents[event.title].abstime !== event.time
+    )).map(({ title, time }) => ({ event_title: title, abstime: time, id: existingEvents[title].id }));
+    const newEventMap = chronology.events.reduce((acc, event) => ({...acc, [event.title ?? null]: true}), {});
+    const deletedEvents = events.filter(event => !newEventMap[event.event_title]).map(event => event.id);
+    insertEvents(item.id, newEvents);
+    for (const event of updatedEvents) {
+      updateEvent(event.id, event);
+    }
+    deleteEvents(deletedEvents)
+  }
+
   return [200];
+}
+
+async function fetchEvents(itemId, options={}) {
+  const queryString = 'SELECT * FROM itemevent WHERE item_id = ?';
+  return await executeQuery(queryString, [itemId]);
+}
+async function insertEvents(itemId, events) {
+  if (!events.length) return;
+  const queryString = 'INSERT INTO itemevent (item_id, event_title, abstime) VALUES ' + events.map(() => '(?, ?, ?)').join(',');
+  const values = events.reduce((acc, event) => ([ ...acc, itemId, event.title, event.time ]), []);
+  return await executeQuery(queryString, values);
+}
+async function updateEvent(eventId, changes) {
+  const { event_title, abstime } = changes;
+  const queryString = 'UPDATE itemevent SET event_title = ?, abstime = ? WHERE id = ?';
+  return await executeQuery(queryString, [event_title, abstime, eventId]);
+}
+async function deleteEvents(eventIds) {
+  const [whereClause, values] = eventIds.reduce((cond, id) => cond.or('id = ?', id), new Cond()).export()
+  const queryString = `DELETE FROM itemevent WHERE ${whereClause};`;
+  return await executeQuery(queryString, values.filter(val => val !== undefined));
 }
 
 async function put(user, universeShortname, itemShortname, changes) {

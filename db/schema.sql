@@ -85,6 +85,7 @@ CREATE TABLE itemevent (
   item_id INT NOT NULL,
   event_title VARCHAR(64),
   abstime BIGINT,
+  UNIQUE(item_id, event_title),
   PRIMARY KEY (id),
   FOREIGN KEY (item_id) REFERENCES item (id)
 );

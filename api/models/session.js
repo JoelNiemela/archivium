@@ -35,10 +35,11 @@ function post() {
  * @param {{key: value}} values 
  * @returns 
  */
-function put(options, values) {
+function put(options, changes) {
+  const { user_id } = changes;
   const parsedOptions = parseData(options);
-  const queryString = `UPDATE session SET ? WHERE ${parsedOptions.strings.join(' AND ')}`;
-  return executeQuery(queryString, Array.prototype.concat(values, parsedOptions.values));
+  const queryString = `UPDATE session SET user_id = ? WHERE ${parsedOptions.strings.join(' AND ')}`;
+  return executeQuery(queryString, [user_id, ...parsedOptions.values]);
 }
 
 /**

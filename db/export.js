@@ -1,4 +1,5 @@
 const db = require('.');
+const { database } = require('./config');
 const fsPromises = require('fs').promises;
 const path = require('path');
 
@@ -6,7 +7,7 @@ const path = require('path');
  * Export contents of database to JSON for ETL purposes.
  */
 async function dbExport() {
-  const tables = (await db.queryAsync('SHOW TABLES;'))[0].map(item => item['Tables_in_archivium']);
+  const tables = (await db.queryAsync('SHOW TABLES;'))[0].map(item => item[`Tables_in_${database}`]);
   
   for (const table of tables) {
     console.log(table)

@@ -369,7 +369,7 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
     for (const event of updatedEvents) {
       updateEvent(event.id, event);
     }
-    deleteEvents(deletedEvents)
+    deleteEvents(deletedEvents);
   }
 
   return [200];
@@ -444,7 +444,8 @@ async function putData(user, universeShortname, itemShortname, changes) {
   };
 
   try {
-    return [200, await executeQuery(`UPDATE item SET obj_data = ? WHERE id = ?;`, [JSON.stringify(item.obj_data), item.id])];
+    const queryString = `UPDATE item SET obj_data = ?, updated_at = ?, last_updated_by = ? WHERE id = ?;`;
+    return [200, await executeQuery(queryString, [JSON.stringify(item.obj_data), new Date(), user.id, item.id])];
   } catch (err) {
     console.error(err);
     return [500];

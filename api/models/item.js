@@ -88,7 +88,6 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
 
     const selects = [
       ...(basicOnly ? [] : [
-        'item.obj_data',
         [`JSON_REMOVE(JSON_OBJECTAGG(
           IFNULL(child_item.shortname, 'null__'),
           JSON_ARRAY(lineage_child.child_title, lineage_child.parent_title)
@@ -102,6 +101,7 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
         [`JSON_OBJECTAGG(IFNULL(itemevent.event_title, 'null__'), itemevent.abstime)`, 'events'],
       ]),
       ...(options.select ?? []),
+      ...(options.includeData ? ['item.obj_data'] : []),
     ];
 
     const joins = [
@@ -238,7 +238,7 @@ async function getByUniverseAndItemShortnames(user, universeShortname, itemShort
     ]
   };
 
-  const [errCode, data] = await getMany(user, conditions, permissionsRequired, basicOnly);
+  const [errCode, data] = await getMany(user, conditions, permissionsRequired, basicOnly, { includeData: true });
   if (!data) return [errCode];
   const item = data[0];
   if (!item) return [user ? 403 : 401];
@@ -391,6 +391,7 @@ async function updateEvent(eventId, changes) {
   return await executeQuery(queryString, [event_title, abstime, eventId]);
 }
 async function deleteEvents(eventIds) {
+  if (!eventIds.length) return;
   const [whereClause, values] = eventIds.reduce((cond, id) => cond.or('id = ?', id), new Cond()).export()
   const queryString = `DELETE FROM itemevent WHERE ${whereClause};`;
   return await executeQuery(queryString, values.filter(val => val !== undefined));

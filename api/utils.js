@@ -27,8 +27,8 @@ class QueryBuilder {
     this.joins = [];
     this.whereCond = null;
     this.groups = {};
-    this.order = null;
-    this.orderDesc = false;
+    this.order = [];
+    this.orderDesc = [];
     this.resultLimit = null;
     this.unions = [];
    }
@@ -72,9 +72,9 @@ class QueryBuilder {
     return this;
    }
 
-   orderBy(col, orderDesc) {
-    this.order = col;
-    this.orderDesc = orderDesc;
+   orderBy(col, orderDesc=false) {
+    this.order.push(col);
+    this.orderDesc.push(orderDesc);
     return this;
    }
 
@@ -118,8 +118,9 @@ class QueryBuilder {
       if (groupCols.length > 0) {
         queryStr += ` GROUP BY ${groupCols.join(', ')}`;
       }
-      if (this.order) {
-        queryStr += ` ORDER BY ${this.order} ${this.orderDesc ? 'DESC' : 'ASC'}`;
+      if (this.order.length) {
+        const orderStr = this.order.map((col, i) => `${col} ${this.orderDesc[i] ? 'DESC' : 'ASC'}`);
+        queryStr += ` ORDER BY ${orderStr}`;
       }
       if (this.resultLimit) {
         queryStr += ` LIMIT ${this.resultLimit}`;

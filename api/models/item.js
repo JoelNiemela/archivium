@@ -99,6 +99,7 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
         [`JSON_REMOVE(JSON_OBJECTAGG(IFNULL(child_item.shortname, 'null__'), child_item.title), '$.null__')`, 'child_titles'],
         [`JSON_REMOVE(JSON_OBJECTAGG(IFNULL(parent_item.shortname, 'null__'), parent_item.title), '$.null__')`, 'parent_titles'],
         [`JSON_OBJECTAGG(IFNULL(itemevent.event_title, 'null__'), itemevent.abstime)`, 'events'],
+        [`JSON_OBJECTAGG(IFNULL(itemevent.event_title, 'null__'), JSON_ARRAY(ti_item.shortname, ti_item.title))`, 'event_src'],
       ]),
       ...(options.select ?? []),
       ...(options.includeData ? ['item.obj_data'] : []),
@@ -110,7 +111,9 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
         ['LEFT', ['lineage', 'lineage_parent'], new Cond('lineage_parent.child_id = item.id')],
         ['LEFT', ['item', 'child_item'], new Cond('child_item.id = lineage_child.child_id')],
         ['LEFT', ['item', 'parent_item'], new Cond('parent_item.id = lineage_parent.parent_id')],
-        ['LEFT', 'itemevent', new Cond('itemevent.item_id = item.id')],
+        ['LEFT', 'timelineitem', new Cond('timelineitem.timeline_id = item.id')],
+        ['LEFT', 'itemevent', new Cond('itemevent.item_id = item.id').or('itemevent.id = timelineitem.event_id')],
+        ['LEFT', ['item', 'ti_item'], new Cond('itemevent.item_id = ti_item.id')],
       ]),
       ...(options.join ?? []),
     ]
@@ -154,7 +157,11 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
       }
       data = await query.execute();
     }
-    // const data = await executeQuery(queryString, conditions && conditions.values);
+    data.forEach(item => {
+      if (!basicOnly) {
+        if ('null__' in item.events) delete item.events['null__']; // TODO dumb workaround for bad SQL query
+      }
+    })
     return [200, data];
   } catch (err) {
     console.error(err);
@@ -356,28 +363,53 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
 
   // Handle chronology data
   if (chronology) {
-    const events = await fetchEvents(item.id);
-    const existingEvents = events.reduce((acc, event) => ({...acc, [event.event_title ?? null]: event}), {});
-    const newEvents = chronology.events.filter(event => !existingEvents[event.title]);
-    const updatedEvents = chronology.events.filter(event => existingEvents[event.title] && (
-      existingEvents[event.title].event_title !== event.title
-      || existingEvents[event.title].abstime !== event.time
-    )).map(({ title, time }) => ({ event_title: title, abstime: time, id: existingEvents[title].id }));
-    const newEventMap = chronology.events.reduce((acc, event) => ({...acc, [event.title ?? null]: true}), {});
-    const deletedEvents = events.filter(event => !newEventMap[event.event_title]).map(event => event.id);
-    insertEvents(item.id, newEvents);
-    for (const event of updatedEvents) {
-      updateEvent(event.id, event);
+    if (chronology.events) {
+      const events = await fetchEvents(item.id);
+      const existingEvents = events.reduce((acc, event) => ({...acc, [event.event_title ?? null]: event}), {});
+      const newEvents = chronology.events.filter(event => !existingEvents[event.title]);
+      const updatedEvents = chronology.events.filter(event => existingEvents[event.title] && (
+        existingEvents[event.title].event_title !== event.title
+        || existingEvents[event.title].abstime !== event.time
+      )).map(({ title, time }) => ({ event_title: title, abstime: time, id: existingEvents[title].id }));
+      const newEventMap = chronology.events.reduce((acc, event) => ({...acc, [event.title ?? null]: true}), {});
+      const deletedEvents = events.filter(event => !newEventMap[event.event_title]).map(event => event.id);
+      insertEvents(item.id, newEvents);
+      for (const event of updatedEvents) {
+        updateEvent(event.id, event);
+      }
+      deleteEvents(deletedEvents);
     }
-    deleteEvents(deletedEvents);
+
+    if (chronology.imports) {
+      const imports = await fetchImports(item.id);
+      const existingImports = imports.reduce((acc, ti) => ({...acc, [ti.event_id]: ti}), {});
+      const newImports = [];
+      const importsMap = {};
+      for (const [itemId, eventTitle] of chronology.imports) {
+        const event = (await fetchEvents(itemId, { title: eventTitle }))[0];
+        if (!event) continue;
+        if (!(event.id in existingImports)) {
+          newImports.push(event.id);
+        }
+        importsMap[event.id] = true;
+      }
+      const deletedImports = imports.filter(ti => !importsMap[ti.event_id]).map(ti => ti.event_id);
+      importEvents(item.id, newImports);
+      deleteImports(item.id, deletedImports);
+    }
   }
 
   return [200];
 }
 
 async function fetchEvents(itemId, options={}) {
-  const queryString = 'SELECT * FROM itemevent WHERE item_id = ?';
-  return await executeQuery(queryString, [itemId]);
+  let queryString = `SELECT * FROM itemevent WHERE item_id = ?`;
+  const values = [itemId];
+  if (options.title) {
+    queryString += ` AND event_title = ?`;
+    values.push(options.title);
+  }
+  return await executeQuery(queryString, values);
 }
 async function insertEvents(itemId, events) {
   if (!events.length) return;
@@ -395,6 +427,24 @@ async function deleteEvents(eventIds) {
   const [whereClause, values] = eventIds.reduce((cond, id) => cond.or('id = ?', id), new Cond()).export()
   const queryString = `DELETE FROM itemevent WHERE ${whereClause};`;
   return await executeQuery(queryString, values.filter(val => val !== undefined));
+}
+async function importEvents(itemId, eventIds) {
+  if (!eventIds.length) return;
+  const queryString = 'INSERT INTO timelineitem (timeline_id, event_id) VALUES ' + eventIds.map(() => '(?, ?)').join(',');
+  const values = eventIds.reduce((acc, eventId) => ([ ...acc, itemId, eventId ]), []);
+  return await executeQuery(queryString, values);
+}
+async function deleteImports(itemId, eventIds) {
+  if (!eventIds.length) return;
+  const cond = eventIds.reduce((cond, id) => cond.or('event_id = ?', id), new Cond());
+  const [whereClause, values] = cond.and('timeline_id = ?', itemId).export();
+  const queryString = `DELETE FROM timelineitem WHERE ${whereClause};`;
+  return await executeQuery(queryString, values.filter(val => val !== undefined));
+}
+async function fetchImports(itemId) {
+  const queryString = `SELECT * FROM timelineitem WHERE timeline_id = ?`;
+  const values = [itemId];
+  return await executeQuery(queryString, values);
 }
 
 async function put(user, universeShortname, itemShortname, changes) {

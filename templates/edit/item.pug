@@ -9,6 +9,8 @@ block content
   script
     include /static/scripts/domUtils.js
     include /static/scripts/searchableSelect.js
+    include /static/scripts/modal.js
+    include /static/scripts/fetchUtils.js
     include /static/scripts/itemEditor.js
 
   h2 Edit #{item.title}
@@ -67,6 +69,6 @@ block content
       div
         span( style={color: 'red', 'font-size': 'small'} )= error 
 
-  script!= `updateObjData(${JSON.stringify(item.obj_data)}); itemMap = ${JSON.stringify(itemMap)};`
+  script!= `updateObjData(${JSON.stringify(item.obj_data)}); itemMap = ${JSON.stringify(itemMap)}; universe = '${item.universe_short}'`
   script.
     resetTabs();

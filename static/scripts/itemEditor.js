@@ -4,6 +4,8 @@ let selectedTab = null;
 
 if (!window.createElement) throw 'domUtils not loaded!';
 if (!window.createSearchableSelect) throw 'searchableSelect not loaded!';
+if (!window.modal) throw 'modal not loaded!';
+if (!window.getJSON) throw 'fetchUtils.js not loaded!';
 
 function getIdValue(id) {
   return document.getElementById(id).value;
@@ -39,7 +41,7 @@ function selectTab(name) {
 }
 
 
-function addTab(type, name, force=false) {
+async function addTab(type, name, force=false) {
   if (!('tabs' in obj_data)) obj_data.tabs = {};
   if (!name || (name in obj_data.tabs && !force)) return;
 
@@ -163,9 +165,12 @@ function addTab(type, name, force=false) {
       ] }),
     ] }),
     type === 'chronology' && createElement('div', { children: [
-      createElement('div', { classList: ['events'], children: [
-        ...(obj_data.chronology.events ?? []).map((event, i) => (
-          createElement('div', { children: [
+      createElement('h4', { attrs: { innerText: T('Events') } }),
+      ...(obj_data.chronology.events ?? []).sort((a, b) => a.time > b.time ? 1 : -1).map((event, i) => (
+        createElement('div', { children: [
+          ...(event.imported ? [
+            createElement('span', { attrs: { innerText: `${event.title} of ${event.src}: ${event.time} ` } }),
+          ] : [
             createElement('input', { attrs: { value: event.title, placeholder: T('Title'), oninput: ({ target }) => {
               const newState = { ...obj_data };
               newState.chronology.events[i].title = target.value;
@@ -175,48 +180,58 @@ function addTab(type, name, force=false) {
               const newState = { ...obj_data };
               newState.chronology.events[i].time = Math.round(Number(target.value));
               updateObjData(newState);
-            }, onchange: ({ target }) => { target.value = Math.round(Number(target.value)); } } }),
-            createElement('button', { attrs: {
-              type: 'button',
-              innerText: T('Remove'),
-              onclick: () => {
-                const newState = { ...obj_data };
-                newState.chronology.events.splice(i, 1);
-                updateObjData(newState);
-                resetTabs(name);
-              },
-            } }),
-          ] })
-        )),
-        createElement('div', { children: [
-          createElement('input', { attrs: { id: 'new_event_title', placeholder: T('Title') } }),
-          createElement('input', { attrs: { id: 'new_event_time', placeholder: T('Time'), type: 'number', onchange: ({ target }) => {
-            target.value = Math.round(Number(target.value));
-          } } }),
+            }, onchange: ({ target }) => {
+              target.value = Math.round(Number(target.value));
+              resetTabs(name);
+            } } }),
+          ]),
           createElement('button', { attrs: {
             type: 'button',
-            innerText: T('Add'),
+            innerText: T('Remove'),
             onclick: () => {
               const newState = { ...obj_data };
-              const title = getIdValue('new_event_title');
-              if (!title && newState.chronology.events?.some(({ title }) => !title)) {
-                alert('Only one untitled event allowed per item!');
-                return;
-              }
-              if (!newState.chronology.events) newState.chronology.events = [];
-              newState.chronology.events.push({ title, time: getIdValue('new_event_time') });
+              newState.chronology.events.splice(i, 1);
               updateObjData(newState);
               resetTabs(name);
             },
           } }),
-        ] }),
+        ] })
+      )),
+      createElement('br'),
+      createElement('h4', { attrs: { innerText: T('Add Events') } }),
+      createElement('div', { children: [
+        createElement('input', { attrs: { id: 'new_event_title', placeholder: T('Title') } }),
+        createElement('input', { attrs: { id: 'new_event_time', placeholder: T('Time'), type: 'number', onchange: ({ target }) => {
+          target.value = Math.round(Number(target.value));
+        } } }),
+        createElement('button', { attrs: {
+          type: 'button',
+          innerText: T('Create New Event'),
+          onclick: () => {
+            const newState = { ...obj_data };
+            const title = getIdValue('new_event_title');
+            if (!title && newState.chronology.events?.some(({ title }) => !title)) {
+              alert('Only one untitled event allowed per item!');
+              return;
+            }
+            if (!newState.chronology.events) newState.chronology.events = [];
+            newState.chronology.events.push({ title, time: getIdValue('new_event_time') });
+            updateObjData(newState);
+            resetTabs(name);
+          },
+        } }),
       ] }),
-      createElement('button', { attrs: {
-        type: 'button',
-        innerText: 'Add New Key',
-        onclick: () => addKeyValuePair(name, getIdValue(`${name}-new_key`)),
-      } }),
-      createElement('input', { attrs: { id: `${name}-new_key` } }),
+      createElement('br'),
+      createElement('div', { children: [
+        ...(await importEventModal(([selectedItem, selectedEvent]) => {
+          const newState = { ...obj_data };
+          if (newState.chronology.imports?.some(({ item, event }) => selectedItem === item && selectedEvent === event)) return;
+          if (!newState.chronology.imports) newState.chronology.imports = [];
+          newState.chronology.imports.push([selectedItem, selectedEvent]);
+          updateObjData(newState);
+          resetTabs(name);
+        })),
+      ] }),
     ] }),
     type === 'gallery' && createElement('div', { children: [
       createElement('div', { classList: ['item-gallery', 'd-flex', 'gap-4', 'flex-wrap'], children: [
@@ -268,6 +283,50 @@ function addTab(type, name, force=false) {
   }
 }
 
+let eventItems = null;
+let eventMap = null;
+async function importEventModal(callback) {
+  if (!eventItems) {
+    const data = (await getJSON(`/api/universes/${universe}/items`))
+      .filter(item => !(Object.keys(item.events).length === 1 && Object.values(item.events)[0] === null));
+    eventMap = data.reduce((acc, item) => ({ ...acc, [item.id]: item.events }), {});
+    eventItems = data.reduce((acc, item) => ({ ...acc, [item.id]: item.title }), {});
+  }
+  let selectedItem;
+  const itemSelect = createSearchableSelect('import-event-item', eventItems, (value) => {
+    selectedItem = value;
+    const events = Object.keys(eventMap[selectedItem]).reduce((acc, key) => ({ ...acc, [key]: key || 'Default' }), {});
+    eventSelect.setOptions(events);
+    eventSelect.classList.remove('hidden');
+  });
+  let selectedEvent;
+  const eventSelect = createSearchableSelect('import-event-event', eventItems, (value) => {
+    selectedEvent = value;
+  });
+  eventSelect.classList.add('hidden');
+  return [
+    modal('import-event', [
+      createElement('div', { classList: ['sheet', 'd-flex', 'flex-col', 'gap-1'], children: [
+        itemSelect,
+        eventSelect,
+        createElement('button', { attrs: {
+          type: 'button',
+          innerText: T('Import'), 
+          onclick: () => {
+            callback([selectedItem, selectedEvent]);
+          },
+        } }),
+      ] }),
+    ]),
+    createElement('button', { attrs: {
+      type: 'button',
+      innerText: T('Import Event'), 
+      onclick: () => {
+        showModal('import-event');
+      },
+    } })
+  ];
+}
 
 function removeTab(name) {
   const newState = {...obj_data};
@@ -306,19 +365,19 @@ function addKeyValuePair(tabName, key, startValue='', force=false) {
 }
 
 
-function resetTabs(toSelect=null) {
+async function resetTabs(toSelect=null) {
   document.querySelector(`#tabs .tabs-buttons`).innerHTML = '';
   document.querySelector(`#tabs .tabs-content`).innerHTML = '';
   let firstTab = null;
   for (const type of ['lineage', 'location', 'chronology', 'gallery']) {
     if (type in obj_data) {
-      addTab(type, obj_data[type].title, true);
+      await addTab(type, obj_data[type].title, true);
     }
   }
   if ('tabs' in obj_data) {
     for (const name in obj_data.tabs) {
       if (!firstTab) firstTab = name;
-      addTab('custom', name, true);
+      await addTab('custom', name, true);
       for (const key in obj_data.tabs[name]) {
         addKeyValuePair(name, key, obj_data.tabs[name][key], true);
       }

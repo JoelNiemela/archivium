@@ -285,7 +285,8 @@ body {
   border-radius: 0.25rem;
 }
 
-.gallery .itemKey.modal {
+.modal {
+  display: flex;
   position: fixed;
   top: 0;
   bottom: 0;

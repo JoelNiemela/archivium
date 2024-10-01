@@ -255,7 +255,8 @@ module.exports = function(app) {
     }
     if (Object.keys(item.events).length > 0) {
       item.obj_data.chronology = { ...item.obj_data.chronology };
-      item.obj_data.chronology.events = Object.keys(item.events).map((title) => ({ title, time: item.events[title] }));
+      item.obj_data.chronology.events = Object.keys(item.events)
+        .map((title) => ({ title, time: item.events[title], imported: item.event_src[title][0] !== item.shortname, src: item.event_src[title][1] }));
     }
     const itemMap = {};
     itemList.forEach(item => itemMap[item.shortname] = item.title);

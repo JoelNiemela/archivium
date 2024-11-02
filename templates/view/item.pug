@@ -9,6 +9,7 @@ block scripts
     include /static/scripts/domUtils.js
     include /static/scripts/searchableSelect.js
     include /static/scripts/editor/markdown.js
+    include /static/scripts/timelineRender.js
     //- include /static/scripts/editor/rich.js
 
 block append save
@@ -65,7 +66,8 @@ block content
       li.navbarBtn( data-tab='lineage' )
           h3.navbarBtnLink.navbarText( onclick=`showTab('lineage')` ) #{item.obj_data.lineage.title}
 
-
+  
+  script!= `window.item = ${JSON.stringify(item)};`
 
   .tabs
     if 'tabs' in item.obj_data
@@ -82,18 +84,11 @@ block content
 
     if 'chronology' in item.obj_data && 'title' in item.obj_data.chronology
       .itemTab.hidden( data-tab='chronology' )
-        each event in (item.events || []).sort((a, b) => a[4] > b[4] ? 1 : -1)
-          .itemKey
-            if event[3]
-              span #{event[3]} #{T('of')} 
-                if event[0] === item.shortname
-                  | #{event[1]}
-                else
-                  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${event[0]}` ) #{event[1]}
-            else
-              span #{event[1]}
-            hr
-            span #{event[4]}
+      script.
+        const timelineTab = document.querySelector('.itemTab[data-tab=chronology]');
+        if (timelineTab) {
+          renderTimeline(timelineTab, item, item.events);
+        };
 
     if 'gallery' in item.obj_data && 'title' in item.obj_data.gallery
       .itemTab.hidden.gallery( data-tab='gallery' )
@@ -129,8 +124,6 @@ block content
           #markdown-body
           //- script!= `loadMarkdown(${JSON.stringify(universe.shortname)}, ${JSON.stringify(item.obj_data.body)}, ${JSON.stringify({ item })});`
 
-  
-  script!= `window.item = ${JSON.stringify(item)};`
   script.
     const body = document.getElementById('markdown-body');
     if (body) {

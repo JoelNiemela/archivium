@@ -300,13 +300,14 @@ async function importEventModal(callback) {
   let selectedItem;
   const itemSelect = createSearchableSelect('import-event-item', eventItems, (value) => {
     selectedItem = { id: value, title: eventItems[value], shortname: eventItemShorts[value] };
-    const events = Object.keys(eventMap[value]).reduce((acc, key) => ({ ...acc, [key]: key || 'Default' }), {});
+    const events = eventMap[value].reduce((acc, [,,, key], i) => ({ ...acc, [i]: key || 'Default' }), {});
     eventSelect.setOptions(events);
     eventSelect.classList.remove('hidden');
   });
   let selectedEvent;
   const eventSelect = createSearchableSelect('import-event-event', eventItems, (value) => {
-    selectedEvent = { title: value, time: (eventMap[selectedItem.id] ?? {})[value] };
+    const [,,, title, time] = (eventMap[selectedItem.id] ?? {})[value];
+    selectedEvent = { title, time };
   });
   eventSelect.classList.add('hidden');
   return [

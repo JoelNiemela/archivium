@@ -82,18 +82,18 @@ block content
 
     if 'chronology' in item.obj_data && 'title' in item.obj_data.chronology
       .itemTab.hidden( data-tab='chronology' )
-        each title in Object.keys(item.events || {}).sort((a, b) => item.events[a] > item.events[b] ? 1 : -1)
+        each event in (item.events || []).sort((a, b) => a[4] > b[4] ? 1 : -1)
           .itemKey
-            if title
-              span #{title} #{T('of')} 
-                if item.event_src[title][0] === item.shortname
-                  | #{item.event_src[title][1]}
+            if event[3]
+              span #{event[3]} #{T('of')} 
+                if event[0] === item.shortname
+                  | #{event[1]}
                 else
-                  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.event_src[title][0]}` ) #{item.event_src[title][1]}
+                  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${event[0]}` ) #{event[1]}
             else
-              span #{item.title}
+              span #{event[1]}
             hr
-            span #{item.events[title]}
+            span #{event[4]}
 
     if 'gallery' in item.obj_data && 'title' in item.obj_data.gallery
       .itemTab.hidden.gallery( data-tab='gallery' )

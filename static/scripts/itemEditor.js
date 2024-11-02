@@ -169,7 +169,7 @@ async function addTab(type, name, force=false) {
       ...(obj_data.chronology.events ?? []).sort((a, b) => a.time > b.time ? 1 : -1).map((event, i) => (
         createElement('div', { children: [
           ...(event.imported ? [
-            createElement('span', { attrs: { innerText: `${event.title} of ${event.src}: ${event.time} ` } }),
+            createElement('span', { attrs: { innerText: `${event.title ? `${event.title} of ` : ``}${event.src}: ${event.time}` } }),
           ] : [
             createElement('input', { attrs: { value: event.title, placeholder: T('Title'), oninput: ({ target }) => {
               const newState = { ...obj_data };
@@ -215,7 +215,7 @@ async function addTab(type, name, force=false) {
               return;
             }
             if (!newState.chronology.events) newState.chronology.events = [];
-            newState.chronology.events.push({ title, time: getIdValue('new_event_time') });
+            newState.chronology.events.push({ title, time: getIdValue('new_event_time'), imported: false });
             updateObjData(newState);
             resetTabs(name);
           },
@@ -227,6 +227,8 @@ async function addTab(type, name, force=false) {
           const newState = { ...obj_data };
           if (newState.chronology.imports?.some(({ item, event }) => selectedItem === item && selectedEvent === event)) return;
           if (!newState.chronology.imports) newState.chronology.imports = [];
+          if (!newState.chronology.events) newState.chronology.events = [];
+          newState.chronology.events.push({ ...selectedEvent, imported: true, src: selectedItem.title, srcId: selectedItem.id });
           newState.chronology.imports.push([selectedItem, selectedEvent]);
           updateObjData(newState);
           resetTabs(name);
@@ -284,24 +286,27 @@ async function addTab(type, name, force=false) {
 }
 
 let eventItems = null;
+let eventItemShorts = null;
 let eventMap = null;
 async function importEventModal(callback) {
   if (!eventItems) {
     const data = (await getJSON(`/api/universes/${universe}/items`))
-      .filter(item => !(Object.keys(item.events).length === 1 && Object.values(item.events)[0] === null));
+      .filter(item => (item.events.length > 0));
     eventMap = data.reduce((acc, item) => ({ ...acc, [item.id]: item.events }), {});
     eventItems = data.reduce((acc, item) => ({ ...acc, [item.id]: item.title }), {});
+    eventItemShorts = data.reduce((acc, item) => ({ ...acc, [item.id]: item.shortname }), {});
+    console.log(eventMap, eventItems, eventItemShorts)
   }
   let selectedItem;
   const itemSelect = createSearchableSelect('import-event-item', eventItems, (value) => {
-    selectedItem = value;
-    const events = Object.keys(eventMap[selectedItem]).reduce((acc, key) => ({ ...acc, [key]: key || 'Default' }), {});
+    selectedItem = { id: value, title: eventItems[value], shortname: eventItemShorts[value] };
+    const events = Object.keys(eventMap[value]).reduce((acc, key) => ({ ...acc, [key]: key || 'Default' }), {});
     eventSelect.setOptions(events);
     eventSelect.classList.remove('hidden');
   });
   let selectedEvent;
   const eventSelect = createSearchableSelect('import-event-event', eventItems, (value) => {
-    selectedEvent = value;
+    selectedEvent = { title: value, time: (eventMap[selectedItem.id] ?? {})[value] };
   });
   eventSelect.classList.add('hidden');
   return [

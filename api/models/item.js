@@ -98,8 +98,7 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
         ), '$.null__')`, 'parents'],
         [`JSON_REMOVE(JSON_OBJECTAGG(IFNULL(child_item.shortname, 'null__'), child_item.title), '$.null__')`, 'child_titles'],
         [`JSON_REMOVE(JSON_OBJECTAGG(IFNULL(parent_item.shortname, 'null__'), parent_item.title), '$.null__')`, 'parent_titles'],
-        [`JSON_OBJECTAGG(IFNULL(itemevent.event_title, 'null__'), itemevent.abstime)`, 'events'],
-        [`JSON_OBJECTAGG(IFNULL(itemevent.event_title, 'null__'), JSON_ARRAY(ti_item.shortname, ti_item.title))`, 'event_src'],
+        [`JSON_ARRAYAGG(JSON_ARRAY(ev.src_shortname, ev.src_title, ev.src_id, ev.event_title, ev.abstime))`, 'events'],
       ]),
       ...(options.select ?? []),
       ...(options.includeData ? ['item.obj_data'] : []),
@@ -111,9 +110,13 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
         ['LEFT', ['lineage', 'lineage_parent'], new Cond('lineage_parent.child_id = item.id')],
         ['LEFT', ['item', 'child_item'], new Cond('child_item.id = lineage_child.child_id')],
         ['LEFT', ['item', 'parent_item'], new Cond('parent_item.id = lineage_parent.parent_id')],
-        ['LEFT', 'timelineitem', new Cond('timelineitem.timeline_id = item.id')],
-        ['LEFT', 'itemevent', new Cond('itemevent.item_id = item.id').or('itemevent.id = timelineitem.event_id')],
-        ['LEFT', ['item', 'ti_item'], new Cond('itemevent.item_id = ti_item.id')],
+        ['LEFT', `(
+            SELECT DISTINCT itemevent.item_id, itemevent.event_title, itemevent.abstime, timelineitem.timeline_id, item.shortname as src_shortname, item.title as src_title, item.id as src_id
+            FROM itemevent
+            LEFT JOIN timelineitem ON timelineitem.event_id = itemevent.id
+            INNER JOIN item ON itemevent.item_id = item.id
+            ORDER BY itemevent.abstime DESC
+        ) ev`, new Cond('ev.item_id = item.id').or('ev.timeline_id = item.id')],
       ]),
       ...(options.join ?? []),
     ]
@@ -159,7 +162,8 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
     }
     data.forEach(item => {
       if (!basicOnly) {
-        if ('null__' in item.events) delete item.events['null__']; // TODO dumb workaround for bad SQL query
+        // TODO dumb workarounds for bad SQL query
+        item.events = item.events.filter(event => event[0] !== null);
       }
     })
     return [200, data];
@@ -363,15 +367,17 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
 
   // Handle chronology data
   if (chronology) {
-    if (chronology.events) {
+    const myEvents = chronology.events.filter(event => !event.imported);
+    const myImports = chronology.events.filter(event => event.imported);
+    if (myEvents) {
       const events = await fetchEvents(item.id);
       const existingEvents = events.reduce((acc, event) => ({...acc, [event.event_title ?? null]: event}), {});
-      const newEvents = chronology.events.filter(event => !existingEvents[event.title]);
-      const updatedEvents = chronology.events.filter(event => existingEvents[event.title] && (
+      const newEvents = myEvents.filter(event => !existingEvents[event.title]);
+      const updatedEvents = myEvents.filter(event => existingEvents[event.title] && (
         existingEvents[event.title].event_title !== event.title
         || existingEvents[event.title].abstime !== event.time
       )).map(({ title, time }) => ({ event_title: title, abstime: time, id: existingEvents[title].id }));
-      const newEventMap = chronology.events.reduce((acc, event) => ({...acc, [event.title ?? null]: true}), {});
+      const newEventMap = myEvents.reduce((acc, event) => ({...acc, [event.title ?? null]: true}), {});
       const deletedEvents = events.filter(event => !newEventMap[event.event_title]).map(event => event.id);
       insertEvents(item.id, newEvents);
       for (const event of updatedEvents) {
@@ -380,12 +386,12 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
       deleteEvents(deletedEvents);
     }
 
-    if (chronology.imports) {
+    if (myImports) {
       const imports = await fetchImports(item.id);
       const existingImports = imports.reduce((acc, ti) => ({...acc, [ti.event_id]: ti}), {});
       const newImports = [];
       const importsMap = {};
-      for (const [itemId, eventTitle] of chronology.imports) {
+      for (const { srcId: itemId, title: eventTitle } of myImports) {
         const event = (await fetchEvents(itemId, { title: eventTitle }))[0];
         if (!event) continue;
         if (!(event.id in existingImports)) {

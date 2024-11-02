@@ -316,10 +316,10 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
     lineage = body.obj_data.lineage;
     body.obj_data.lineage = { title: lineage.title };
   }
-  let chronology;
-  if ('chronology' in body.obj_data) {
-    chronology = body.obj_data.chronology;
-    body.obj_data.chronology = { title: chronology.title };
+  let timeline;
+  if ('timeline' in body.obj_data) {
+    timeline = body.obj_data.timeline;
+    body.obj_data.timeline = { title: timeline.title };
   }
   let code; let data;
   body.obj_data = JSON.stringify(body.obj_data);
@@ -366,10 +366,10 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
     }
   }
 
-  // Handle chronology data
-  if (chronology) {
-    const myEvents = chronology.events.filter(event => !event.imported);
-    const myImports = chronology.events.filter(event => event.imported);
+  // Handle timeline data
+  if (timeline) {
+    const myEvents = timeline.events.filter(event => !event.imported);
+    const myImports = timeline.events.filter(event => event.imported);
     if (myEvents) {
       const events = await fetchEvents(item.id);
       const existingEvents = events.reduce((acc, event) => ({...acc, [event.event_title ?? null]: event}), {});

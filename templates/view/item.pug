@@ -56,9 +56,9 @@ block content
       each tab, name in item.obj_data.tabs
         li.navbarBtn( data-tab=name )
           h3.navbarBtnLink.navbarText( onclick=`showTab('${name}')` ) #{name}
-    if 'chronology' in item.obj_data && 'title' in item.obj_data.chronology
-      li.navbarBtn( data-tab='chronology' )
-          h3.navbarBtnLink.navbarText( onclick=`showTab('chronology')` ) #{item.obj_data.chronology.title}
+    if 'timeline' in item.obj_data && 'title' in item.obj_data.timeline
+      li.navbarBtn( data-tab='timeline' )
+          h3.navbarBtnLink.navbarText( onclick=`showTab('timeline')` ) #{item.obj_data.timeline.title}
     if 'gallery' in item.obj_data && 'title' in item.obj_data.gallery
       li.navbarBtn( data-tab='gallery' )
           h3.navbarBtnLink.navbarText( onclick=`showTab('gallery')` ) #{item.obj_data.gallery.title}
@@ -82,10 +82,10 @@ block content
                 hr
                 .mdVal( data-val=val )
 
-    if 'chronology' in item.obj_data && 'title' in item.obj_data.chronology
-      .itemTab.hidden( data-tab='chronology' )
+    if 'timeline' in item.obj_data && 'title' in item.obj_data.timeline
+      .itemTab.hidden( data-tab='timeline' )
       script.
-        const timelineTab = document.querySelector('.itemTab[data-tab=chronology]');
+        const timelineTab = document.querySelector('.itemTab[data-tab=timeline]');
         if (timelineTab) {
           renderTimeline(timelineTab, item, item.events);
         };

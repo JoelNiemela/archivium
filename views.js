@@ -254,8 +254,8 @@ module.exports = function(app) {
       item.obj_data.lineage.children = item.children;
     }
     if (item.events.length > 0) {
-      item.obj_data.chronology = { ...item.obj_data.chronology };
-      item.obj_data.chronology.events = item.events
+      item.obj_data.timeline = { ...item.obj_data.timeline };
+      item.obj_data.timeline.events = item.events
         .map(([srcShort, src, srcId, title, time]) => ({
           title,
           time,

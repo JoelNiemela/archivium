@@ -23,7 +23,7 @@ class Timeline {
         createElement('div', { style: { paddingBottom: '1rem' }, children: [
           createElement('span', { attrs: { innerText: `${time} — ` }, children: [
             ...(src === item.shortname
-            ? [createElement('span', { attrs: { innerText: title } })]
+            ? [createElement('span', { attrs: { innerText: title || srcTitle } })]
             : [
               ...(title ? [createElement('span', { attrs: { innerText: `${title} of ` } })] : []),
               createElement('a', {

@@ -164,21 +164,21 @@ async function addTab(type, name, force=false) {
         createElement('input', { attrs: { id: 'new_child_other_data', placeholder: T('Child Title') } }),
       ] }),
     ] }),
-    type === 'chronology' && createElement('div', { children: [
+    type === 'timeline' && createElement('div', { children: [
       createElement('h4', { attrs: { innerText: T('Events') } }),
-      ...(obj_data.chronology.events ?? []).sort((a, b) => a.time > b.time ? 1 : -1).map((event, i) => (
+      ...(obj_data.timeline.events ?? []).sort((a, b) => a.time > b.time ? 1 : -1).map((event, i) => (
         createElement('div', { children: [
           ...(event.imported ? [
             createElement('span', { attrs: { innerText: `${event.title ? `${event.title} of ` : ``}${event.src}: ${event.time}` } }),
           ] : [
             createElement('input', { attrs: { value: event.title, placeholder: T('Title'), oninput: ({ target }) => {
               const newState = { ...obj_data };
-              newState.chronology.events[i].title = target.value;
+              newState.timeline.events[i].title = target.value;
               updateObjData(newState);
             } } }),
             createElement('input', { attrs: { value: event.time, placeholder: T('Time'), type: 'number', oninput: ({ target }) => {
               const newState = { ...obj_data };
-              newState.chronology.events[i].time = Math.round(Number(target.value));
+              newState.timeline.events[i].time = Math.round(Number(target.value));
               updateObjData(newState);
             }, onchange: ({ target }) => {
               target.value = Math.round(Number(target.value));
@@ -190,7 +190,7 @@ async function addTab(type, name, force=false) {
             innerText: T('Remove'),
             onclick: () => {
               const newState = { ...obj_data };
-              newState.chronology.events.splice(i, 1);
+              newState.timeline.events.splice(i, 1);
               updateObjData(newState);
               resetTabs(name);
             },
@@ -210,12 +210,12 @@ async function addTab(type, name, force=false) {
           onclick: () => {
             const newState = { ...obj_data };
             const title = getIdValue('new_event_title');
-            if (!title && newState.chronology.events?.some(({ title }) => !title)) {
+            if (!title && newState.timeline.events?.some(({ title }) => !title)) {
               alert('Only one untitled event allowed per item!');
               return;
             }
-            if (!newState.chronology.events) newState.chronology.events = [];
-            newState.chronology.events.push({ title, time: getIdValue('new_event_time'), imported: false });
+            if (!newState.timeline.events) newState.timeline.events = [];
+            newState.timeline.events.push({ title, time: getIdValue('new_event_time'), imported: false });
             updateObjData(newState);
             resetTabs(name);
           },
@@ -225,11 +225,11 @@ async function addTab(type, name, force=false) {
       createElement('div', { children: [
         ...(await importEventModal(([selectedItem, selectedEvent]) => {
           const newState = { ...obj_data };
-          if (newState.chronology.imports?.some(({ item, event }) => selectedItem === item && selectedEvent === event)) return;
-          if (!newState.chronology.imports) newState.chronology.imports = [];
-          if (!newState.chronology.events) newState.chronology.events = [];
-          newState.chronology.events.push({ ...selectedEvent, imported: true, src: selectedItem.title, srcId: selectedItem.id });
-          newState.chronology.imports.push([selectedItem, selectedEvent]);
+          if (newState.timeline.imports?.some(({ item, event }) => selectedItem === item && selectedEvent === event)) return;
+          if (!newState.timeline.imports) newState.timeline.imports = [];
+          if (!newState.timeline.events) newState.timeline.events = [];
+          newState.timeline.events.push({ ...selectedEvent, imported: true, src: selectedItem.title, srcId: selectedItem.id });
+          newState.timeline.imports.push([selectedItem, selectedEvent]);
           updateObjData(newState);
           resetTabs(name);
         })),
@@ -375,7 +375,7 @@ async function resetTabs(toSelect=null) {
   document.querySelector(`#tabs .tabs-buttons`).innerHTML = '';
   document.querySelector(`#tabs .tabs-content`).innerHTML = '';
   let firstTab = null;
-  for (const type of ['lineage', 'location', 'chronology', 'gallery']) {
+  for (const type of ['lineage', 'location', 'timeline', 'gallery']) {
     if (type in obj_data) {
       await addTab(type, obj_data[type].title, true);
     }

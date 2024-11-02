@@ -282,6 +282,7 @@ async function post(user, body, universeShortName) {
         updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
+    console.log(body)
     const { title, shortname, item_type, parent_id, obj_data } = body;
     if (!title || !shortname || !item_type || !obj_data) return [400];
     return [201, await executeQuery(queryString, [
@@ -290,7 +291,7 @@ async function post(user, body, universeShortName) {
       item_type,
       user.id,
       universeId,
-      parent_id,
+      parent_id ?? null,
       obj_data,
       new Date(),
       new Date(),

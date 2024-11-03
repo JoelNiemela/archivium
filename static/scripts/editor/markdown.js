@@ -55,6 +55,7 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
         };
 
         this.rawEl.addEventListener('input', (e) => {
+          this.editor.onchange();
           if (
             e.inputType === 'insertText'
             || e.inputType === 'insertFromPaste'
@@ -142,12 +143,13 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
   } 
 
   class Editor {
-    constructor(container, body, save) {
+    constructor(container, body, save, onchange) {
       this.container = container;
       const rows = parseMarkdown(body).children;
       this.nodes = rows.map((row) => new EditorRowNode(this, row));
       this.selected = null;
       this.save = save;
+      this.onchange = onchange;
     }
 
     async select(node, multi) {
@@ -184,10 +186,14 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
       node.remove();
     }
 
+    export() {
+      return this.nodes.map(node => node.getSrc()).join('\n\n');
+    }
+
     async unfocusAll() {
       this.selected = null;
       await Promise.all(this.nodes.map(node => node.unfocus()));
-      this.save(this.nodes.map(node => node.getSrc()).join('\n\n'));
+      this.save();
     }
   }
 
@@ -195,23 +201,32 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
     
     const saves = [];
     let saveTimeout = null;
-    function save(markdown) {
+    function save() {
+      const saveBtn = document.getElementById('save-btn');
+      const changes = saves.map(f => f()).filter(k => k);
+      if (changes.length === 0) {
+        console.log('NO CHANGE');
+        saveBtn.firstChild.innerText = 'Saved';
+        return;
+      }
       if (saveTimeout) {
         clearTimeout(saveTimeout);
       }
+      saveBtn.firstChild.innerText = 'Saving...';
       saveTimeout = setTimeout(async () => {
-        if (markdown === window.item.obj_data.body) {
-          console.log('NO CHANGE');
-          return;
-        }
         console.log('SAVING...');
         try {
-          await putJSON(`/api/universes/${universe.shortname}/items/${window.item.shortname}/data`, { body: markdown });
+          const data = {};
+          for (const key of changes) {
+            data[key] = window.item.obj_data[key];
+          }
+          await putJSON(`/api/universes/${universe.shortname}/items/${window.item.shortname}/data`, data);
           console.log('SAVED.');
-          window.item.obj_data.body = markdown;
+          saveBtn.firstChild.innerText = 'Saved';
         } catch (err) {
           console.error('Failed to save!');
           console.error(err);
+          saveBtn.firstChild.innerText = 'Save';
         }
       }, 2000);
     }
@@ -221,7 +236,14 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
     if (editorDiv) {
       editorDiv.classList.add('markdown');
       editorDiv.classList.add('md-editor');
-      const editor = new Editor(editorDiv, body, save);
+      const editor = new Editor(editorDiv, body, save, () => {
+        if (saveTimeout) {
+          clearTimeout(saveTimeout);
+        }
+        const saveBtn = document.getElementById('save-btn');
+        saveBtn.firstChild.innerText = 'Save';
+        saveBtn.classList.remove('hidden');
+      });
       editorDiv.onmousedown = (e) => e.stopPropagation();
       window.onmousedown = () => {
         editor.unfocusAll();
@@ -229,8 +251,13 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
       window.editorObj = editor;
       saves.push(() => {
         const markdown = editor.export().trim();
+        if (markdown === window.item.obj_data.body) return false;
         window.item.obj_data.body = markdown;
+        return 'body';
       });
+      document.getElementById('save-btn').onclick = () => {
+        save();
+      };
     } else {
       console.warn('Editor div not found!');
     }

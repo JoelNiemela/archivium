@@ -413,6 +413,8 @@ button:active {
 }
 .md-editor {
   outline: none;
+  min-height: 2rem;
+  min-width: 2rem;
 }
 .md-editor .selected {
   /* box-shadow: 2px 2px 8px 1px rgb(0, 0, 0, 0.25); */

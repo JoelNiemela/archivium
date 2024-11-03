@@ -82,7 +82,7 @@ block content
             .itemKey
               img( src=img.url, alt=img.label )
               if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
-                .editableLabel( data-index=index data-label=img.label )
+                .editableLabel.label( data-index=index data-label=img.label )
               else
                 if img.label
                   .mdLabel( data-val=img.label )

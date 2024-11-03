@@ -153,10 +153,18 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
       container.classList.add('markdown');
       container.classList.add('md-editor');
       if (isSingleLine) container.classList.add('single-line');
-      container.onmousedown = (e) => e.stopPropagation();
+      container.onmousedown = (e) => {
+        e.stopPropagation();
+        if (this.nodes.length === 0) {
+          const node = new EditorRowNode(this, parseMarkdown(''));
+          this.nodes.push(node);
+          this.select(node);
+        }
+      };
       this.container = container;
       const rows = parseMarkdown(body).children;
       this.nodes = rows.map((row) => new EditorRowNode(this, row));
+      // if (this.nodes.length === 0) 
       this.selected = null;
       this.onchange = onchange;
       this.isSingleLine = isSingleLine;
@@ -230,6 +238,7 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
             if (key in data) continue;
             data[key] = window.item.obj_data[key];
           }
+          console.log(data)
           await putJSON(`/api/universes/${universe.shortname}/items/${window.item.shortname}/data`, data);
           console.log('SAVED.');
           saveBtn.firstChild.innerText = 'Saved';
@@ -273,6 +282,7 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
       console.warn('Editor div not found!');
     }
 
+    // Tabs
     document.querySelectorAll('.editableKey').forEach(async (container) => {
       const { tabName, key, val } = container.dataset;
       const keyEditorDiv = createElement('div');
@@ -296,6 +306,25 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
         delete window.item.obj_data.tabs[tabName][key];
         window.item.obj_data.tabs[tabName][newKey] = newVal;
         return 'tabs';
+      });
+    });
+
+    // Gallery Labels
+    document.querySelectorAll('.editableLabel').forEach(async (container) => {
+      const { index, label } = container.dataset;
+      const labelEditorDiv = createElement('div');
+      container.appendChild(labelEditorDiv);
+      const labelEditor = new Editor(labelEditorDiv, label, onchange, true);
+      editors.push(labelEditor);
+      delete window.item.obj_data.gallery.imgs[index].mdLabel;
+      let oldLabel = label;
+      saves.push(() => {
+        if (!window.item.obj_data.gallery?.imgs[index]) return false;
+        const newLabel = labelEditor.export().trim();
+        if (newLabel === oldLabel) return false;
+        oldLabel = newLabel;
+        window.item.obj_data.gallery.imgs[index].label = newLabel;
+        return 'gallery';
       });
     });
   }

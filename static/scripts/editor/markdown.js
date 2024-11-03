@@ -60,6 +60,7 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
             preserveCaretPosition(this.rawEl, () => {
               this.rawEl.innerText = this.rawEl.innerText.replaceAll('\n', '');
             });
+            this.unfocus();
             return;
           }
           if (
@@ -228,18 +229,19 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
     let saveTimeout = null;
     function save() {
       const saveBtn = document.getElementById('save-btn');
-      const changes = saves.map(f => f()).filter(k => k);
-      if (changes.length === 0) {
-        console.log('NO CHANGE');
-        saveBtn.firstChild.innerText = 'Saved';
-        return;
-      }
       if (saveTimeout) {
         clearTimeout(saveTimeout);
       }
       saveBtn.firstChild.innerText = 'Saving...';
       saveTimeout = setTimeout(async () => {
         console.log('SAVING...');
+        const changes = saves.map(f => f()).filter(k => k);
+        if (changes.length === 0) {
+          console.log('NO CHANGE');
+          saveBtn.firstChild.innerText = 'Saved';
+          needsSaving = false;
+          return;
+        }
         try {
           const data = {};
           for (const key of changes) {
@@ -256,7 +258,7 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
           console.error(err);
           saveBtn.firstChild.innerText = 'Save';
         }
-      }, 2000);
+      }, 1000);
     }
     function onchange() {
       needsSaving = true;

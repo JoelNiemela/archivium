@@ -48,14 +48,25 @@ html(lang='en')
           a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/universes`) Universes
         li.navbarBtn
           a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/search`) Search
-      if contextUser
-        ul.navbarBtns
-          li.navbarBtn
-            span.navbarText Logged in as #{contextUser.username}
-          li.navbarBtn
-            a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/logout`) Log Out
-      else
-        ul.navbarBtns
+      ul.navbarBtns
+        block saveSpinner
+        if contextUser
+          li.navbarBtn( style={ position: 'relative' } )
+            script.
+              function toggleUserDropdown() {
+                const drop = document.querySelector('.user-dropdown');
+                drop.classList.toggle('hidden');
+              }
+            a.navbarBtnLink.d-flex.align-center( onclick='toggleUserDropdown()' )
+              img.pfp( src=contextUser.gravatarLink )
+              span.navbarText #{contextUser.username} &#x23F7;
+            .user-dropdown.hidden
+              ul.navbarBtns.flex-col
+                li.navbarBtn
+                  a.navbarBtnLink.navbarText.text-start(href=`${ADDR_PREFIX}/users/${contextUser.username}`) Profile
+                li.navbarBtn
+                  a.navbarBtnLink.navbarText.text-start(href=`${ADDR_PREFIX}/logout`) Log Out
+        else
           if curTemplate !== 'login'
             li.navbarBtn
               a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/login${curTemplate === 'signup' ? '' : `?${encodedPath}`}`) Login

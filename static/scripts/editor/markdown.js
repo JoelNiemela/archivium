@@ -227,7 +227,7 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
     
     const saves = [];
     let saveTimeout = null;
-    function save() {
+    function save(timeout=5000) {
       const saveBtn = document.getElementById('save-btn');
       if (saveTimeout) {
         clearTimeout(saveTimeout);
@@ -258,7 +258,7 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
           console.error(err);
           saveBtn.firstChild.innerText = 'Save';
         }
-      }, 1000);
+      }, timeout);
     }
     function onchange() {
       needsSaving = true;
@@ -288,7 +288,7 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
         return 'body';
       });
       document.getElementById('save-btn').onclick = () => {
-        save();
+        save(0);
       };
     } else {
       console.warn('Editor div not found!');

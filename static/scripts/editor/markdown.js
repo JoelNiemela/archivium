@@ -56,6 +56,12 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
 
         this.rawEl.addEventListener('input', (e) => {
           this.editor.onchange();
+          if (e.inputType === 'insertParagraph' && this.editor.isSingleLine) {
+            preserveCaretPosition(this.rawEl, () => {
+              this.rawEl.innerText = this.rawEl.innerText.replaceAll('\n', '');
+            });
+            return;
+          }
           if (
             e.inputType === 'insertText'
             || e.inputType === 'insertFromPaste'
@@ -143,13 +149,17 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
   } 
 
   class Editor {
-    constructor(container, body, save, onchange) {
+    constructor(container, body, onchange, isSingleLine=false) {
+      container.classList.add('markdown');
+      container.classList.add('md-editor');
+      if (isSingleLine) container.classList.add('single-line');
+      container.onmousedown = (e) => e.stopPropagation();
       this.container = container;
       const rows = parseMarkdown(body).children;
       this.nodes = rows.map((row) => new EditorRowNode(this, row));
       this.selected = null;
-      this.save = save;
       this.onchange = onchange;
+      this.isSingleLine = isSingleLine;
     }
 
     async select(node, multi) {
@@ -193,7 +203,6 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
     async unfocusAll() {
       this.selected = null;
       await Promise.all(this.nodes.map(node => node.unfocus()));
-      this.save();
     }
   }
 
@@ -218,6 +227,7 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
         try {
           const data = {};
           for (const key of changes) {
+            if (key in data) continue;
             data[key] = window.item.obj_data[key];
           }
           await putJSON(`/api/universes/${universe.shortname}/items/${window.item.shortname}/data`, data);
@@ -230,23 +240,24 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
         }
       }, 2000);
     }
+    function onchange() {
+      if (saveTimeout) {
+        clearTimeout(saveTimeout);
+      }
+      const saveBtn = document.getElementById('save-btn');
+      saveBtn.firstChild.innerText = 'Save';
+      saveBtn.classList.remove('hidden');
+    }
 
     window.contextUniverse = universe;
+    const editors = [];
     const editorDiv = document.getElementById('editor');
     if (editorDiv) {
-      editorDiv.classList.add('markdown');
-      editorDiv.classList.add('md-editor');
-      const editor = new Editor(editorDiv, body, save, () => {
-        if (saveTimeout) {
-          clearTimeout(saveTimeout);
-        }
-        const saveBtn = document.getElementById('save-btn');
-        saveBtn.firstChild.innerText = 'Save';
-        saveBtn.classList.remove('hidden');
-      });
-      editorDiv.onmousedown = (e) => e.stopPropagation();
+      const editor = new Editor(editorDiv, body, onchange);
+      editors.push(editor);
       window.onmousedown = () => {
-        editor.unfocusAll();
+        editors.forEach(e => e.unfocusAll());
+        save();
       };
       window.editorObj = editor;
       saves.push(() => {
@@ -261,6 +272,32 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
     } else {
       console.warn('Editor div not found!');
     }
+
+    document.querySelectorAll('.editableKey').forEach(async (container) => {
+      const { tabName, key, val } = container.dataset;
+      const keyEditorDiv = createElement('div');
+      const valEditorDiv = createElement('div');
+      container.appendChild(keyEditorDiv);
+      container.appendChild(createElement('hr'));
+      container.appendChild(valEditorDiv);
+      const keyEditor = new Editor(keyEditorDiv, key, onchange, true);
+      editors.push(keyEditor);
+      const valEditor = new Editor(valEditorDiv, val, onchange, true);
+      editors.push(valEditor);
+      let oldKey = key;
+      let oldVal = val;
+      saves.push(() => {
+        if (!window.item.obj_data.tabs[tabName] || !window.item.obj_data.tabs[tabName][key]) return false;
+        const newKey = keyEditor.export().trim();
+        const newVal = valEditor.export().trim();
+        if (newKey === oldKey && newVal === oldVal) return false;
+        oldKey = newKey;
+        oldVal = newVal;
+        delete window.item.obj_data.tabs[tabName][key];
+        window.item.obj_data.tabs[tabName][newKey] = newVal;
+        return 'tabs';
+      });
+    });
   }
   window.loadEditor = loadEditor;
 })();

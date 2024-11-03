@@ -70,7 +70,7 @@ block content
           each val, key in tab
             .itemKey
               if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
-                .editableKey.rich-editor( data-key=key data-tab-name=name data-val=val )
+                .editableKey( data-key=key data-tab-name=name data-val=val )
               else
                 span #{key}
                 hr
@@ -82,7 +82,7 @@ block content
             .itemKey
               img( src=img.url, alt=img.label )
               if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
-                .editableLabel.rich-editor( data-index=index data-label=img.label )
+                .editableLabel( data-index=index data-label=img.label )
               else
                 if img.label
                   .mdLabel( data-val=img.label )

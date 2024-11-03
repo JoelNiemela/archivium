@@ -433,6 +433,11 @@ button:active {
   user-select: none;
 }
 
+.md-editor.single-line p {
+  padding: 0;
+  margin: 0;
+}
+
 .editor-handle {
   position: relative;
   /* left: calc(-100% - 0.5rem); */

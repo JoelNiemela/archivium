@@ -199,9 +199,20 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
       if (saveTimeout) {
         clearTimeout(saveTimeout);
       }
-      saveTimeout = setTimeout(() => {
+      saveTimeout = setTimeout(async () => {
+        if (markdown === window.item.obj_data.body) {
+          console.log('NO CHANGE');
+          return;
+        }
         console.log('SAVING...');
-        putJSON(`/api/universes/${universe.shortname}/items/${window.item.shortname}/data`, { body: markdown });
+        try {
+          await putJSON(`/api/universes/${universe.shortname}/items/${window.item.shortname}/data`, { body: markdown });
+          console.log('SAVED.');
+          window.item.obj_data.body = markdown;
+        } catch (err) {
+          console.error('Failed to save!');
+          console.error(err);
+        }
       }, 2000);
     }
 

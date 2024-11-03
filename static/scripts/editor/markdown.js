@@ -215,6 +215,14 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
   }
 
   async function loadEditor(universe, body) {
+
+    let needsSaving = false;
+    window.onbeforeunload = (event) => {
+      if (needsSaving) {
+        event.preventDefault();
+        event.returnValue = true;
+      }
+    };
     
     const saves = [];
     let saveTimeout = null;
@@ -242,6 +250,7 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
           await putJSON(`/api/universes/${universe.shortname}/items/${window.item.shortname}/data`, data);
           console.log('SAVED.');
           saveBtn.firstChild.innerText = 'Saved';
+          needsSaving = false;
         } catch (err) {
           console.error('Failed to save!');
           console.error(err);
@@ -250,6 +259,7 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
       }, 2000);
     }
     function onchange() {
+      needsSaving = true;
       if (saveTimeout) {
         clearTimeout(saveTimeout);
       }

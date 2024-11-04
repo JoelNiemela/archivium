@@ -84,7 +84,7 @@ CREATE TABLE itemevent (
   id INT NOT NULL AUTO_INCREMENT,
   item_id INT NOT NULL,
   event_title VARCHAR(64),
-  abstime BIGINT,
+  abstime BIGINT, --measured in tenths of a second
   UNIQUE(item_id, event_title),
   PRIMARY KEY (id),
   FOREIGN KEY (item_id) REFERENCES item (id)

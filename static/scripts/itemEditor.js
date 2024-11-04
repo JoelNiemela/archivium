@@ -6,6 +6,7 @@ if (!window.createElement) throw 'domUtils not loaded!';
 if (!window.createSearchableSelect) throw 'searchableSelect not loaded!';
 if (!window.modal) throw 'modal not loaded!';
 if (!window.getJSON) throw 'fetchUtils.js not loaded!';
+if (!window.CalendarPicker) throw 'calendarPicker.js not loaded!';
 
 function getIdValue(id) {
   return document.getElementById(id).value;
@@ -176,7 +177,7 @@ async function addTab(type, name, force=false) {
               newState.timeline.events[i].title = target.value;
               updateObjData(newState);
             } } }),
-            createElement('input', { attrs: { value: event.time, placeholder: T('Time'), type: 'number', oninput: ({ target }) => {
+            createElement('input', { attrs: { id: `${i}_event_time`, value: event.time, placeholder: T('Time'), type: 'number', oninput: ({ target }) => {
               const newState = { ...obj_data };
               newState.timeline.events[i].time = Math.round(Number(target.value));
               updateObjData(newState);
@@ -184,6 +185,10 @@ async function addTab(type, name, force=false) {
               target.value = Math.round(Number(target.value));
               resetTabs(name);
             } } }),
+            ...timePickerModal(`${i}_event_time`, () => {
+              const input = document.getElementById(`${i}_event_time`);
+              input.oninput({ target: input });
+            }),
           ]),
           createElement('button', { attrs: {
             type: 'button',
@@ -199,11 +204,18 @@ async function addTab(type, name, force=false) {
       )),
       createElement('br'),
       createElement('h4', { attrs: { innerText: T('Add Events') } }),
-      createElement('div', { children: [
-        createElement('input', { attrs: { id: 'new_event_title', placeholder: T('Title') } }),
-        createElement('input', { attrs: { id: 'new_event_time', placeholder: T('Time'), type: 'number', onchange: ({ target }) => {
-          target.value = Math.round(Number(target.value));
-        } } }),
+      createElement('div', { classList: ['d-flex', 'flex-col', 'gap-1', 'pa-1', 'align-start'], children: [
+        createElement('div', { children: [
+          createElement('b', { attrs: { innerText: `${T('Title')}: ` } }),
+          createElement('input', { attrs: { id: 'new_event_title' } }),
+        ]}),
+        createElement('div', { children: [
+          createElement('b', { attrs: { innerText: `${T('Time')}: ` } }),
+          createElement('input', { attrs: { id: 'new_event_time', type: 'number', onchange: ({ target }) => {
+            target.value = Math.round(Number(target.value));
+          } } }),
+          ...timePickerModal('new_event_time'),
+        ]}),
         createElement('button', { attrs: {
           type: 'button',
           innerText: T('Create New Event'),
@@ -329,6 +341,34 @@ async function importEventModal(callback) {
       innerText: T('Import Event'), 
       onclick: () => {
         showModal('import-event');
+      },
+    } })
+  ];
+}
+
+function timePickerModal(id, callback) {
+  const cp = new CalendarPicker();
+  return [
+    modal(`time-picker-${id}`, [
+      createElement('div', { classList: ['sheet', 'd-flex', 'flex-col', 'gap-1'], children: [
+        ...cp.fields,
+        createElement('button', { attrs: {
+          type: 'button',
+          innerText: T('Select'), 
+          onclick: () => {
+            document.getElementById(id).value = cp.getAbsTime();
+            hideModal(`time-picker-${id}`);
+            if (callback) callback();
+          },
+        } }),
+      ] }),
+    ]),
+    createElement('button', { attrs: {
+      type: 'button',
+      innerHTML: '&#x1F4C5;', 
+      onclick: () => {
+        cp.setTime(Number(document.getElementById(id).value));
+        showModal(`time-picker-${id}`);
       },
     } })
   ];

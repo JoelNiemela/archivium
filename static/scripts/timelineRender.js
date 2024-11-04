@@ -1,4 +1,5 @@
 if (!window.createElement) throw 'domUtils.js not loaded!';
+if (!window.CalendarPicker) throw 'calendarPicker.js not loaded!';
 
 class Timeline {
   constructor(item, events) {
@@ -8,12 +9,12 @@ class Timeline {
 
     this.wrapper.appendChild(this.itemBrackets);
     this.wrapper.appendChild(this.eventList);
+    const cp = new CalendarPicker();
 
     for (const [src, srcTitle, srcID, title, time] of events) {
       // const style = { left: `${(time - firstTime) * zoom}px` };
-      const titleText = src === item.shortname ? title : (
-        title ? `${title} of ${srcTitle}` : srcTitle
-      );
+      cp.setTime(time);
+      const formattedTime = cp.format();
       this.eventList.appendChild(createElement('div', { classList: ['d-flex', 'gap-3'], children: [
         createElement('div', { classList: ['d-flex', 'justify-center'], style: { width: '0.5rem' }, children: [
           createElement('div', { classList: ['timeline-line'], children: [
@@ -21,7 +22,7 @@ class Timeline {
           ] }),
         ] }),
         createElement('div', { style: { paddingBottom: '1rem' }, children: [
-          createElement('span', { attrs: { innerText: `${time} — ` }, children: [
+          createElement('span', { attrs: { innerText: `${formattedTime} — ` }, children: [
             ...(src === item.shortname
             ? [createElement('span', { attrs: { innerText: title || srcTitle } })]
             : [

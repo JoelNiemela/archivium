@@ -12,6 +12,27 @@ if (!window.createElement) throw 'domUtils.js not loaded!';
     else if (Month === 4 || Month === 6 || Month === 9 || Month === 11) return 30 * 864000;
     else return 31 * 864000;
   }
+  function nameMonth(month) {
+    return {
+      1: 'January',
+      2: 'February',
+      3: 'March',
+      4: 'April',
+      5: 'May',
+      6: 'June',
+      7: 'July',
+      8: 'August',
+      9: 'September',
+      10: 'October',
+      11: 'November',
+      12: 'December',
+    }[month];
+  }
+  function nameDay(day) {
+    if (day === 1) return '1st';
+    else if (day === 2) return '2nd';
+    else return `${day}th`;
+  }
 
   class CalendarPicker {
     constructor() {
@@ -35,6 +56,15 @@ if (!window.createElement) throw 'domUtils.js not loaded!';
         Second: () => 10,
       };
 
+      this.names = {
+        Year: v => v,
+        Month: v => nameMonth(v),
+        Day: v => nameDay(v),
+        Hour: v => v,
+        Minute: v => v,
+        Second: v => v,
+      };
+
       this.fields = [];
       this.inputs = {};
       for (const key in this.time) {
@@ -45,6 +75,11 @@ if (!window.createElement) throw 'domUtils.js not loaded!';
         ] }));
         this.inputs[key] = input;
       }
+    }
+
+    format() {
+      const { Year, Month, Day, Hour, Minute } = this.time;
+      return `${this.names.Month(Month)} ${this.names.Day(Day)} ${Year}, ${Hour}:${Minute < 10 && '0'}${Minute}`;
     }
 
     update() {

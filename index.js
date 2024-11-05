@@ -6,6 +6,9 @@ const { render } = require('./templates');
 const CookieParser = require('./middleware/cookieParser');
 const Auth = require('./middleware/auth');
 
+const cron = require('node-cron');
+const backup = require('./db/backup');
+
 const { PORT, ADDR_PREFIX, DEV_MODE } = require('./config');
 
 const app = express();
@@ -14,6 +17,13 @@ app.use(express.json());
 
 app.use(CookieParser);
 app.use(Auth.createSession);
+
+
+// Cron Jobs
+cron.schedule('0 0 * * *', () => {
+    console.log('Running daily DB export...');
+    backup();
+});
 
 
 // Timer if in Dev Mode

@@ -1,13 +1,14 @@
-const db = require('.');
-const { database } = require('./config');
+const mysql = require('mysql2');
+const dbConfig = require('./config');
+const Promise = require('bluebird');
 const fsPromises = require('fs').promises;
 const path = require('path');
 
 /**
  * Export contents of database to JSON for ETL purposes.
  */
-async function dbExport() {
-  const tables = (await db.queryAsync('SHOW TABLES;'))[0].map(item => item[`Tables_in_${database}`]);
+async function dbExport(db) {
+  const tables = (await db.queryAsync('SHOW TABLES;'))[0].map(item => item[`Tables_in_${dbConfig.database}`]);
   
   for (const table of tables) {
     console.log(table)
@@ -29,7 +30,9 @@ async function dbExport() {
 };
 
 async function main() {
-  await dbExport();
+  const connection = mysql.createConnection({ ...dbConfig, multipleStatements: true });
+  const db = Promise.promisifyAll(connection, { multiArgs: true });
+  await dbExport(db);
   db.end();
 }
 

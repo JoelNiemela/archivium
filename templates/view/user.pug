@@ -19,7 +19,7 @@ block content
     small Joined
       |  #{formatDate(new Date(user.created_at))}
       |  - Last seen #{formatDate(new Date(user.updated_at))}
-      if !user.isContact
+      if !user.isContact && !user.isMe
         |  - 
         a.link.link-animated( onclick=`addContact('${user.username}')` ) #{T('Add to contacts')}
   hr

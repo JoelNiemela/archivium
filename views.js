@@ -98,10 +98,14 @@ module.exports = function(app) {
     const [code2, universes] = await api.universe.getManyByAuthorId(req.session.user, user.id);
     res.status(code2);
     if (!universes) return;
-    const [code3, contact] = await api.contact.getOne(req.session.user, user.id);
-    res.status(code3);
-    if (code3 !== 200) return;
-    user.isContact = contact !== undefined;
+    if (req.session.user.id !== user.id) {
+      const [code3, contact] = await api.contact.getOne(req.session.user, user.id);
+      res.status(code3);
+      if (code3 !== 200) return;
+      user.isContact = contact !== undefined;
+    } else {
+      user.isMe = true;
+    }
     res.prepareRender('user', { 
       user,
       gravatarLink: `http://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
@@ -261,7 +265,7 @@ module.exports = function(app) {
   });
 
   get('/universes/:shortname/permissions', Auth.verifySessionOrRedirect, async (req, res) => {
-    const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
+    const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname }, perms.ADMIN);
     const [code2, users] = await api.user.getMany();
     const [code3, contacts] = await api.contact.getAll(req.session.user);
     const code = code1 !== 200 ? code1 : (code2 !== 200 ? code2 : code3);

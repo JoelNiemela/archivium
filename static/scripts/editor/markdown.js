@@ -55,6 +55,14 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
         };
 
         this.rawEl.addEventListener('input', (e) => {
+          this.editor.onchange();
+          if (e.inputType === 'insertParagraph' && this.editor.isSingleLine) {
+            preserveCaretPosition(this.rawEl, () => {
+              this.rawEl.innerText = this.rawEl.innerText.replaceAll('\n', '');
+            });
+            this.unfocus();
+            return;
+          }
           if (
             e.inputType === 'insertText'
             || e.inputType === 'insertFromPaste'
@@ -142,12 +150,25 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
   } 
 
   class Editor {
-    constructor(container, body, save) {
+    constructor(container, body, onchange, isSingleLine=false) {
+      container.classList.add('markdown');
+      container.classList.add('md-editor');
+      if (isSingleLine) container.classList.add('single-line');
+      container.onmousedown = (e) => {
+        e.stopPropagation();
+        if (this.nodes.length === 0) {
+          const node = new EditorRowNode(this, parseMarkdown(''));
+          this.nodes.push(node);
+          this.select(node);
+        }
+      };
       this.container = container;
       const rows = parseMarkdown(body).children;
       this.nodes = rows.map((row) => new EditorRowNode(this, row));
+      // if (this.nodes.length === 0) 
       this.selected = null;
-      this.save = save;
+      this.onchange = onchange;
+      this.isSingleLine = isSingleLine;
     }
 
     async select(node, multi) {
@@ -184,45 +205,140 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
       node.remove();
     }
 
+    export() {
+      return this.nodes.map(node => node.getSrc()).join('\n\n');
+    }
+
     async unfocusAll() {
       this.selected = null;
       await Promise.all(this.nodes.map(node => node.unfocus()));
-      this.save(this.nodes.map(node => node.getSrc()).join('\n\n'));
     }
   }
 
   async function loadEditor(universe, body) {
+
+    let needsSaving = false;
+    window.onbeforeunload = (event) => {
+      if (needsSaving) {
+        event.preventDefault();
+        event.returnValue = true;
+      }
+    };
     
     const saves = [];
     let saveTimeout = null;
-    function save(markdown) {
+    function save(timeout=5000) {
+      const saveBtn = document.getElementById('save-btn');
       if (saveTimeout) {
         clearTimeout(saveTimeout);
       }
-      saveTimeout = setTimeout(() => {
+      saveBtn.firstChild.innerText = 'Saving...';
+      saveTimeout = setTimeout(async () => {
         console.log('SAVING...');
-        putJSON(`/api/universes/${universe.shortname}/items/${window.item.shortname}/data`, { body: markdown });
-      }, 2000);
+        const changes = saves.map(f => f()).filter(k => k);
+        if (changes.length === 0) {
+          console.log('NO CHANGE');
+          saveBtn.firstChild.innerText = 'Saved';
+          needsSaving = false;
+          return;
+        }
+        try {
+          const data = {};
+          for (const key of changes) {
+            if (key in data) continue;
+            data[key] = window.item.obj_data[key];
+          }
+          console.log(data)
+          await putJSON(`/api/universes/${universe.shortname}/items/${window.item.shortname}/data`, data);
+          console.log('SAVED.');
+          saveBtn.firstChild.innerText = 'Saved';
+          needsSaving = false;
+        } catch (err) {
+          console.error('Failed to save!');
+          console.error(err);
+          saveBtn.firstChild.innerText = 'Save';
+        }
+      }, timeout);
+    }
+    function onchange() {
+      needsSaving = true;
+      if (saveTimeout) {
+        clearTimeout(saveTimeout);
+      }
+      const saveBtn = document.getElementById('save-btn');
+      saveBtn.firstChild.innerText = 'Save';
+      saveBtn.classList.remove('hidden');
     }
 
     window.contextUniverse = universe;
+    const editors = [];
     const editorDiv = document.getElementById('editor');
     if (editorDiv) {
-      editorDiv.classList.add('markdown');
-      editorDiv.classList.add('md-editor');
-      const editor = new Editor(editorDiv, body, save);
-      editorDiv.onmousedown = (e) => e.stopPropagation();
+      const editor = new Editor(editorDiv, body, onchange);
+      editors.push(editor);
       window.onmousedown = () => {
-        editor.unfocusAll();
+        editors.forEach(e => e.unfocusAll());
+        save();
       };
       window.editorObj = editor;
       saves.push(() => {
         const markdown = editor.export().trim();
+        if (markdown === window.item.obj_data.body) return false;
         window.item.obj_data.body = markdown;
+        return 'body';
       });
+      document.getElementById('save-btn').onclick = () => {
+        save(0);
+      };
     } else {
       console.warn('Editor div not found!');
     }
+
+    // Tabs
+    document.querySelectorAll('.editableKey').forEach(async (container) => {
+      const { tabName, key, val } = container.dataset;
+      const keyEditorDiv = createElement('div');
+      const valEditorDiv = createElement('div');
+      container.appendChild(keyEditorDiv);
+      container.appendChild(createElement('hr'));
+      container.appendChild(valEditorDiv);
+      const keyEditor = new Editor(keyEditorDiv, key, onchange, true);
+      editors.push(keyEditor);
+      const valEditor = new Editor(valEditorDiv, val, onchange, true);
+      editors.push(valEditor);
+      let oldKey = key;
+      let oldVal = val;
+      saves.push(() => {
+        if (!window.item.obj_data.tabs[tabName] || !window.item.obj_data.tabs[tabName][key]) return false;
+        const newKey = keyEditor.export().trim();
+        const newVal = valEditor.export().trim();
+        if (newKey === oldKey && newVal === oldVal) return false;
+        oldKey = newKey;
+        oldVal = newVal;
+        delete window.item.obj_data.tabs[tabName][key];
+        window.item.obj_data.tabs[tabName][newKey] = newVal;
+        return 'tabs';
+      });
+    });
+
+    // Gallery Labels
+    document.querySelectorAll('.editableLabel').forEach(async (container) => {
+      const { index, label } = container.dataset;
+      const labelEditorDiv = createElement('div');
+      container.appendChild(labelEditorDiv);
+      const labelEditor = new Editor(labelEditorDiv, label, onchange, true);
+      editors.push(labelEditor);
+      delete window.item.obj_data.gallery.imgs[index].mdLabel;
+      let oldLabel = label;
+      saves.push(() => {
+        if (!window.item.obj_data.gallery?.imgs[index]) return false;
+        const newLabel = labelEditor.export().trim();
+        if (newLabel === oldLabel) return false;
+        oldLabel = newLabel;
+        window.item.obj_data.gallery.imgs[index].label = newLabel;
+        return 'gallery';
+      });
+    });
   }
   window.loadEditor = loadEditor;
 })();

@@ -1,6 +1,7 @@
 const pug = require('pug');
 const { ADDR_PREFIX } = require('../config');
 const { perms } = require('../api/utils');
+const md5 = require('md5');
 const path = require('path');
 
 const locale = {
@@ -34,7 +35,12 @@ const locale = {
 // Basic context information to be sent to the templates
 function contextData(req) {
   const user = req.session.user;
-  const contextUser = user ? { id: user.id, username: user.username } : null;
+  const contextUser = user ? {
+    id: user.id,
+    username: user.username,
+    gravatarLink: `http://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
+  } : null;
+
   const lang = 'en';
 
   function T(str) {

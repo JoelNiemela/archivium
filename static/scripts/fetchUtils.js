@@ -2,8 +2,7 @@ async function getJSON(url) {
   return await fetch(url, {
     method: 'GET',
   })
-    .then(response => response.json())
-    .catch(error => console.error('Error:', error));
+    .then(response => response.json());
 }
 
 async function postJSON(url, body) {
@@ -14,8 +13,7 @@ async function postJSON(url, body) {
     },
     body: JSON.stringify(body),
   })
-    .then(response => response.json())
-    .catch(error => console.error('Error:', error));
+    .then(response => response.json());
 }
 
 async function putJSON(url, body) {
@@ -26,8 +24,7 @@ async function putJSON(url, body) {
     },
     body: JSON.stringify(body),
   })
-    .then(response => response.json())
-    .catch(error => console.error('Error:', error));
+    .then(response => response.json());
 }
 
 async function fetchJSON(url) {
@@ -39,6 +36,5 @@ async function fetchJSON(url) {
     },
     body: JSON.stringify({ key: 'value' }) // Replace with the data you want to send
   })
-    .then(response => response.json())
-    .catch(error => console.error('Error:', error));
+    .then(response => response.json());
 }

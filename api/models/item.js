@@ -396,7 +396,7 @@ async function putData(user, universeShortname, itemShortname, changes) {
   };
 
   try {
-    return [200, await executeQuery(`UPDATE item SET ? WHERE id = ${item.id};`, { obj_data: JSON.stringify(item.obj_data) })];
+    return [200, await executeQuery(`UPDATE item SET obj_data = ? WHERE id = ?;`, [JSON.stringify(item.obj_data), item.id])];
   } catch (err) {
     console.error(err);
     return [500];

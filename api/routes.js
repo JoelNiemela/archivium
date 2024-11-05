@@ -12,21 +12,21 @@ module.exports = function(app) {
   
     setup(parentPath) {
       const path = parentPath + this.path;
-      app.options(path, async (req, res) => {
+      app.options(path, async (req, res, next) => {
         res.setHeader('Access-Control-Allow-Methods', Object.keys(this.methodFuncs).join(','));
-        return res.end();
+        return next();
       });
       // app.all(path, Auth.verifySession, async (req, res) => {
-      app.all(path, async (req, res) => {
+      app.all(path, async (req, res, next) => {
         const method = req.method.toUpperCase();
         if (method in this.methodFuncs) {
           const [status, data] = await this.methodFuncs[method](req);
           res.status(status);
-          if (data !== undefined) return res.json(data);
+          if (data !== undefined) res.json(data);
         } else {
-          return res.sendStatus(405);
+          res.status(405);
         }
-        return res.end();
+        next();
       })
       for (const child of this.children) {
         child.setup(path);

@@ -1,6 +1,11 @@
-const db = require('../db');
+const mysql = require('mysql2');
+const dbConfig = require('./config');
+const Promise = require('bluebird');
 const fsPromises = require('fs').promises;
 const path = require('path');
+
+const connection = mysql.createConnection({ ...dbConfig, multipleStatements: true });
+const db = Promise.promisifyAll(connection, { multiArgs: true });
 
 function formatTypes(type, data) {
   if (type === 'datetime' || type === 'date' || type === 'timestamp') {
@@ -23,7 +28,7 @@ async function dbImport() {
   // disable constraint checking
   await db.queryAsync('SET FOREIGN_KEY_CHECKS = 0;');
 
-  const tables = (await db.queryAsync('SHOW TABLES;'))[0].map(item => item['Tables_in_archivium']);
+  const tables = (await db.queryAsync('SHOW TABLES;'))[0].map(item => item[`Tables_in_${dbConfig.database}`]);
   
   for (const table of tables) {
     if (table === 'session') continue;

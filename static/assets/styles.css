@@ -267,6 +267,24 @@ body {
   }
 }
 
+.timeline {
+  display: flex;
+}
+
+.timeline-line {
+  position: relative;
+  height: 100%;
+  width: 0.5rem;
+  background-color: silver;
+}
+
+.timeline-point {
+  border-radius: 0.5rem;
+  border: 0.5rem solid silver;
+  position: absolute;
+  left: -0.25rem;
+}
+
 .gallery .itemKey {
   display: flex;
   flex-direction: column;
@@ -285,7 +303,8 @@ body {
   border-radius: 0.25rem;
 }
 
-.gallery .itemKey.modal {
+.modal {
+  display: flex;
   position: fixed;
   top: 0;
   bottom: 0;
@@ -658,6 +677,9 @@ h4, h5 {
 
 .justify-start {
   justify-content: start;
+}
+.justify-center {
+  justify-content: center;
 }
 .justify-end {
   justify-content: end;

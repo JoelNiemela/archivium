@@ -1,6 +1,6 @@
-DROP DATABASE IF EXISTS archivium;
-CREATE DATABASE archivium;
-USE archivium;
+DROP DATABASE IF EXISTS archiviumtest;
+CREATE DATABASE archiviumtest;
+USE archiviumtest;
 
 CREATE TABLE user (
   id INT NOT NULL AUTO_INCREMENT,
@@ -78,6 +78,33 @@ CREATE TABLE lineage (
   child_title VARCHAR(64),
   FOREIGN KEY (parent_id) REFERENCES item (id),
   FOREIGN KEY (child_id) REFERENCES item (id)
+);
+
+CREATE TABLE itemevent (
+  id INT NOT NULL AUTO_INCREMENT,
+  item_id INT NOT NULL,
+  event_title VARCHAR(64),
+  abstime BIGINT, --measured in tenths of a second
+  UNIQUE(item_id, event_title),
+  PRIMARY KEY (id),
+  FOREIGN KEY (item_id) REFERENCES item (id)
+);
+CREATE INDEX idx_abstime ON itemevent (abstime);
+
+CREATE TABLE eventorder (
+  former INT NOT NULL,
+  latter INT NOT NULL,
+  PRIMARY KEY (former, latter),
+  FOREIGN KEY (former) REFERENCES itemevent (id),
+  FOREIGN KEY (latter) REFERENCES itemevent (id)
+);
+
+CREATE TABLE timelineitem (
+  timeline_id INT NOT NULL,
+  event_id INT NOT NULL,
+  PRIMARY KEY (timeline_id, event_id),
+  FOREIGN KEY (timeline_id) REFERENCES item (id),
+  FOREIGN KEY (event_id) REFERENCES itemevent (id)
 );
 
 CREATE TABLE authoruniverse (

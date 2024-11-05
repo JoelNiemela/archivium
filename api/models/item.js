@@ -86,19 +86,22 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
     }
     if (options.where) whereConds = whereConds.and(options.where);
 
-    const selects = basicOnly ? [] : [
-      'item.obj_data',
-      [`JSON_REMOVE(JSON_OBJECTAGG(
-        IFNULL(child_item.shortname, 'null__'),
-        JSON_ARRAY(lineage_child.child_title, lineage_child.parent_title)
-      ), '$.null__')`, 'children'],
-      [`JSON_REMOVE(JSON_OBJECTAGG(
-        IFNULL(parent_item.shortname, 'null__'),
-        JSON_ARRAY(lineage_parent.parent_title, lineage_parent.child_title)
-      ), '$.null__')`, 'parents'],
-      [`JSON_REMOVE(JSON_OBJECTAGG(IFNULL(child_item.shortname, 'null__'), child_item.title), '$.null__')`, 'child_titles'],
-      [`JSON_REMOVE(JSON_OBJECTAGG(IFNULL(parent_item.shortname, 'null__'), parent_item.title), '$.null__')`, 'parent_titles'],
+    const selects = [
+      ...(basicOnly ? [] : [
+        [`JSON_REMOVE(JSON_OBJECTAGG(
+          IFNULL(child_item.shortname, 'null__'),
+          JSON_ARRAY(lineage_child.child_title, lineage_child.parent_title)
+        ), '$.null__')`, 'children'],
+        [`JSON_REMOVE(JSON_OBJECTAGG(
+          IFNULL(parent_item.shortname, 'null__'),
+          JSON_ARRAY(lineage_parent.parent_title, lineage_parent.child_title)
+        ), '$.null__')`, 'parents'],
+        [`JSON_REMOVE(JSON_OBJECTAGG(IFNULL(child_item.shortname, 'null__'), child_item.title), '$.null__')`, 'child_titles'],
+        [`JSON_REMOVE(JSON_OBJECTAGG(IFNULL(parent_item.shortname, 'null__'), parent_item.title), '$.null__')`, 'parent_titles'],
+        [`JSON_ARRAYAGG(JSON_ARRAY(ev.src_shortname, ev.src_title, ev.src_id, ev.event_title, ev.abstime))`, 'events'],
+      ]),
       ...(options.select ?? []),
+      ...(options.includeData ? ['item.obj_data'] : []),
     ];
 
     const joins = [
@@ -107,6 +110,13 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
         ['LEFT', ['lineage', 'lineage_parent'], new Cond('lineage_parent.child_id = item.id')],
         ['LEFT', ['item', 'child_item'], new Cond('child_item.id = lineage_child.child_id')],
         ['LEFT', ['item', 'parent_item'], new Cond('parent_item.id = lineage_parent.parent_id')],
+        ['LEFT', `(
+            SELECT DISTINCT itemevent.item_id, itemevent.event_title, itemevent.abstime, timelineitem.timeline_id, item.shortname as src_shortname, item.title as src_title, item.id as src_id
+            FROM itemevent
+            LEFT JOIN timelineitem ON timelineitem.event_id = itemevent.id
+            INNER JOIN item ON itemevent.item_id = item.id
+            ORDER BY itemevent.abstime DESC
+        ) ev`, new Cond('ev.item_id = item.id').or('ev.timeline_id = item.id')],
       ]),
       ...(options.join ?? []),
     ]
@@ -150,7 +160,12 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
       }
       data = await query.execute();
     }
-    // const data = await executeQuery(queryString, conditions && conditions.values);
+    data.forEach(item => {
+      if (!basicOnly) {
+        // TODO dumb workarounds for bad SQL query
+        item.events = item.events.filter(event => event[0] !== null);
+      }
+    })
     return [200, data];
   } catch (err) {
     console.error(err);
@@ -234,7 +249,7 @@ async function getByUniverseAndItemShortnames(user, universeShortname, itemShort
     ]
   };
 
-  const [errCode, data] = await getMany(user, conditions, permissionsRequired, basicOnly);
+  const [errCode, data] = await getMany(user, conditions, permissionsRequired, basicOnly, { includeData: true });
   if (!data) return [errCode];
   const item = data[0];
   if (!item) return [user ? 403 : 401];
@@ -267,6 +282,7 @@ async function post(user, body, universeShortName) {
         updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
+    console.log(body)
     const { title, shortname, item_type, parent_id, obj_data } = body;
     if (!title || !shortname || !item_type || !obj_data) return [400];
     return [201, await executeQuery(queryString, [
@@ -275,7 +291,7 @@ async function post(user, body, universeShortName) {
       item_type,
       user.id,
       universeId,
-      parent_id,
+      parent_id ?? null,
       obj_data,
       new Date(),
       new Date(),
@@ -300,6 +316,11 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
     lineage = body.obj_data.lineage;
     body.obj_data.lineage = { title: lineage.title };
   }
+  let timeline;
+  if ('timeline' in body.obj_data) {
+    timeline = body.obj_data.timeline;
+    body.obj_data.timeline = { title: timeline.title };
+  }
   let code; let data;
   body.obj_data = JSON.stringify(body.obj_data);
 
@@ -309,11 +330,11 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
     return [code, data];
   }
 
+  const [itemCode, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE);
+  if (!item) return [itemCode];
+
   // Handle lineage data
   if (lineage) {
-    let item;
-    [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE);
-    if (code !== 200) return [code];
     const [newParents, newChildren] = [{}, {}];
     for (const shortname in lineage.parents ?? {}) {
       const [, parent] = await getByUniverseAndItemShortnames(user, universeShortname, shortname, perms.WRITE);
@@ -345,7 +366,92 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
     }
   }
 
+  // Handle timeline data
+  if (timeline) {
+    const myEvents = timeline.events.filter(event => !event.imported);
+    const myImports = timeline.events.filter(event => event.imported);
+    if (myEvents) {
+      const events = await fetchEvents(item.id);
+      const existingEvents = events.reduce((acc, event) => ({...acc, [event.event_title ?? null]: event}), {});
+      const newEvents = myEvents.filter(event => !existingEvents[event.title]);
+      const updatedEvents = myEvents.filter(event => existingEvents[event.title] && (
+        existingEvents[event.title].event_title !== event.title
+        || existingEvents[event.title].abstime !== event.time
+      )).map(({ title, time }) => ({ event_title: title, abstime: time, id: existingEvents[title].id }));
+      const newEventMap = myEvents.reduce((acc, event) => ({...acc, [event.title ?? null]: true}), {});
+      const deletedEvents = events.filter(event => !newEventMap[event.event_title]).map(event => event.id);
+      insertEvents(item.id, newEvents);
+      for (const event of updatedEvents) {
+        updateEvent(event.id, event);
+      }
+      deleteEvents(deletedEvents);
+    }
+
+    if (myImports) {
+      const imports = await fetchImports(item.id);
+      const existingImports = imports.reduce((acc, ti) => ({...acc, [ti.event_id]: ti}), {});
+      const newImports = [];
+      const importsMap = {};
+      for (const { srcId: itemId, title: eventTitle } of myImports) {
+        const event = (await fetchEvents(itemId, { title: eventTitle }))[0];
+        if (!event) continue;
+        if (!(event.id in existingImports)) {
+          newImports.push(event.id);
+        }
+        importsMap[event.id] = true;
+      }
+      const deletedImports = imports.filter(ti => !importsMap[ti.event_id]).map(ti => ti.event_id);
+      importEvents(item.id, newImports);
+      deleteImports(item.id, deletedImports);
+    }
+  }
+
   return [200];
+}
+
+async function fetchEvents(itemId, options={}) {
+  let queryString = `SELECT * FROM itemevent WHERE item_id = ?`;
+  const values = [itemId];
+  if (options.title) {
+    queryString += ` AND event_title = ?`;
+    values.push(options.title);
+  }
+  return await executeQuery(queryString, values);
+}
+async function insertEvents(itemId, events) {
+  if (!events.length) return;
+  const queryString = 'INSERT INTO itemevent (item_id, event_title, abstime) VALUES ' + events.map(() => '(?, ?, ?)').join(',');
+  const values = events.reduce((acc, event) => ([ ...acc, itemId, event.title, event.time ]), []);
+  return await executeQuery(queryString, values);
+}
+async function updateEvent(eventId, changes) {
+  const { event_title, abstime } = changes;
+  const queryString = 'UPDATE itemevent SET event_title = ?, abstime = ? WHERE id = ?';
+  return await executeQuery(queryString, [event_title, abstime, eventId]);
+}
+async function deleteEvents(eventIds) {
+  if (!eventIds.length) return;
+  const [whereClause, values] = eventIds.reduce((cond, id) => cond.or('id = ?', id), new Cond()).export()
+  const queryString = `DELETE FROM itemevent WHERE ${whereClause};`;
+  return await executeQuery(queryString, values.filter(val => val !== undefined));
+}
+async function importEvents(itemId, eventIds) {
+  if (!eventIds.length) return;
+  const queryString = 'INSERT INTO timelineitem (timeline_id, event_id) VALUES ' + eventIds.map(() => '(?, ?)').join(',');
+  const values = eventIds.reduce((acc, eventId) => ([ ...acc, itemId, eventId ]), []);
+  return await executeQuery(queryString, values);
+}
+async function deleteImports(itemId, eventIds) {
+  if (!eventIds.length) return;
+  const cond = eventIds.reduce((cond, id) => cond.or('event_id = ?', id), new Cond());
+  const [whereClause, values] = cond.and('timeline_id = ?', itemId).export();
+  const queryString = `DELETE FROM timelineitem WHERE ${whereClause};`;
+  return await executeQuery(queryString, values.filter(val => val !== undefined));
+}
+async function fetchImports(itemId) {
+  const queryString = `SELECT * FROM timelineitem WHERE timeline_id = ?`;
+  const values = [itemId];
+  return await executeQuery(queryString, values);
 }
 
 async function put(user, universeShortname, itemShortname, changes) {
@@ -396,7 +502,8 @@ async function putData(user, universeShortname, itemShortname, changes) {
   };
 
   try {
-    return [200, await executeQuery(`UPDATE item SET obj_data = ? WHERE id = ?;`, [JSON.stringify(item.obj_data), item.id])];
+    const queryString = `UPDATE item SET obj_data = ?, updated_at = ?, last_updated_by = ? WHERE id = ?;`;
+    return [200, await executeQuery(queryString, [JSON.stringify(item.obj_data), new Date(), user.id, item.id])];
   } catch (err) {
     console.error(err);
     return [500];

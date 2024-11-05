@@ -1,7 +1,3 @@
-DROP DATABASE IF EXISTS archiviumtest;
-CREATE DATABASE archiviumtest;
-USE archiviumtest;
-
 CREATE TABLE user (
   id INT NOT NULL AUTO_INCREMENT,
   username VARCHAR(32) UNIQUE NOT NULL,

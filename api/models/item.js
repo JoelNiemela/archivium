@@ -450,7 +450,7 @@ async function putTags(user, universeShortname, itemShortname, tags) {
     });
     const filteredTags = tags.filter(tag => !tagLookup[tag]);
     const valueString = filteredTags.map(() => `(?, ?)`).join(',');
-    const valueArray = filteredTags.map(tag => [item.id, tag]);
+    const valueArray = filteredTags.reduce((arr, tag) => [...arr, item.id, tag], []);
     if (!valueString) return [200];
     const queryString = `INSERT INTO tag (item_id, tag) VALUES ${valueString};`;
     const data = await executeQuery(queryString, valueArray);

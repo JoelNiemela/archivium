@@ -4,7 +4,7 @@ const path = require('path');
 const dbConfig = require('./config');
 
 /**
- * Export contents of database to JSON for ETL purposes.
+ * Back up contents of database to JSON in case the database is lost.
  */
 async function backup() {
   console.log('Backing up db...');

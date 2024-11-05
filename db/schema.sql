@@ -1,7 +1,3 @@
-DROP DATABASE IF EXISTS archiviumtest;
-CREATE DATABASE archiviumtest;
-USE archiviumtest;
-
 CREATE TABLE user (
   id INT NOT NULL AUTO_INCREMENT,
   username VARCHAR(32) UNIQUE NOT NULL,
@@ -84,7 +80,7 @@ CREATE TABLE itemevent (
   id INT NOT NULL AUTO_INCREMENT,
   item_id INT NOT NULL,
   event_title VARCHAR(64),
-  abstime BIGINT, --measured in tenths of a second
+  abstime BIGINT,
   UNIQUE(item_id, event_title),
   PRIMARY KEY (id),
   FOREIGN KEY (item_id) REFERENCES item (id)

@@ -26,4 +26,5 @@
       .d-flex.flex-wrap.gap-1.grow-4
         if item.tags
           each itemTag in item.tags
-            a.filter.link.link-animated( class={ 'link-selected': itemTag == tag } data-filter-key='tag' data-filter-value=itemTag ) ##{itemTag} 
+            if itemTag
+              a.filter.link.link-animated( class={ 'link-selected': itemTag == tag } data-filter-key='tag' data-filter-value=itemTag ) ##{itemTag} 

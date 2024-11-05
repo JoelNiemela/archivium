@@ -50,8 +50,8 @@ module.exports = function(app) {
       res.status(code1);
       if (!universes) return;
       const [code2, recentlyUpdated] = await api.item.getMany(user, {
-        strings: ['lub.id <> ? OR item.last_updated_by IS NULL', 'item.author_id <> ?'],
-        values: [user.id, user.id],
+        strings: ['lub.id <> ? OR item.last_updated_by IS NULL'],
+        values: [user.id],
       }, perms.READ, true, {
         sort: 'updated_at',
         sortDesc: true,

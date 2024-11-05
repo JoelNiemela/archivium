@@ -42,7 +42,8 @@ block content
     small
       if item.tags
         each tag in item.tags
-          | ##{tag} 
+          if tag
+            | ##{tag} 
   hr
 
   //- Tab buttons

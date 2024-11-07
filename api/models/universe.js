@@ -27,17 +27,22 @@ async function getMany(user, conditions, permissionLevel=perms.READ) {
     const queryString = `
       SELECT 
         universe.*,
-        JSON_OBJECTAGG(user.id, user.username) as authors,
-        JSON_OBJECTAGG(user.id, au.permission_level) as author_permissions,
-        owner.username as owner
+        JSON_OBJECTAGG(author.id, author.username) AS authors,
+        JSON_OBJECTAGG(author.id, au.permission_level) AS author_permissions,
+        owner.username AS owner,
+        JSON_REMOVE(JSON_OBJECTAGG(
+          IFNULL(fu.user_id, 'null__'),
+          fu.is_following
+        ), '$.null__') AS followers
       FROM universe
-      INNER JOIN authoruniverse as au_filter
+      INNER JOIN authoruniverse AS au_filter
         ON universe.id = au_filter.universe_id AND (
           ${permsQueryString}
         )
-      LEFT JOIN authoruniverse as au ON universe.id = au.universe_id
-      LEFT JOIN user ON user.id = au.user_id
-      INNER JOIN user as owner ON universe.author_id = owner.id
+      LEFT JOIN authoruniverse AS au ON universe.id = au.universe_id
+      LEFT JOIN user AS author ON author.id = au.user_id
+      LEFT JOIN followeruniverse AS fu ON universe.id = fu.universe_id
+      INNER JOIN user AS owner ON universe.author_id = owner.id
       ${conditionString}
       GROUP BY universe.id;`;
     const data = await executeQuery(queryString, conditions && conditions.values);

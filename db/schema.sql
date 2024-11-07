@@ -113,6 +113,14 @@ CREATE TABLE authoruniverse (
   PRIMARY KEY (id)
 );
 
+CREATE TABLE followeruniverse (
+  universe_id INT NOT NULL,
+  user_id INT NOT NULL,
+  is_following BOOLEAN NOT NULL,
+  FOREIGN KEY (universe_id) REFERENCES universe (id),
+  FOREIGN KEY (user_id) REFERENCES user (id)
+);
+
 CREATE TABLE tag (
   item_id INT NOT NULL,
   tag VARCHAR(32),

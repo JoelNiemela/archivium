@@ -13,10 +13,35 @@
           .d-flex.gap-2.flex-wrap
             span
               b #{T('Created')}: 
-              | #{formatDate(universe.created_at)}
+              | #{formatDate(universe.created_at, true)}
             | — 
             span 
               b #{T('Updated')}: 
-              | #{formatDate(universe.updated_at)}
+              | #{formatDate(universe.updated_at, true)}
             | —
             span #{universe.public ? 'Public' : 'Private'}
+            | —
+            a.follow-btn.link.link-animated( data-following=universe.followers[contextUser.id] data-universe-short=universe.shortname )
+              | #{universe.followers[contextUser.id] ? 'Unfollow' : 'Follow'}
+  
+  script.
+    document.querySelectorAll('.follow-btn').forEach((followBtn) => {
+      followBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const { following, universeShort } = followBtn.dataset;
+        let isFollowing = following !== 'true';
+        followBtn.classList.add('disabled');
+        followBtn.classList.remove('link-broken');
+        try {
+          await putJSON(`/api/universes/${universeShort}/follow`, { isFollowing });
+        } catch (err) {
+          console.error(err);
+          followBtn.classList.add('link-broken');
+          isFollowing = !isFollowing;
+        } finally {
+          followBtn.innerText = isFollowing ? 'Unfollow' : 'Follow';
+          followBtn.dataset.following = isFollowing ? 'true' : 'false';
+          followBtn.classList.remove('disabled');
+        }
+      });
+    });

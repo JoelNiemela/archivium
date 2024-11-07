@@ -132,7 +132,8 @@ app.post(`${ADDR_PREFIX}/signup`, async (req, res, next) => {
 app.use((req, res, next) => {
   if (!res.headersSent) {
     res.status(404);
-    res.send(render(req, 'error', { code: 404 }));
+    if (req.isApiRequest) res.json({ error: 'Not Found.', code: 404 });
+    else res.send(render(req, 'error', { code: 404 }));
   }
   next();
 });

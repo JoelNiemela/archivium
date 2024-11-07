@@ -18,6 +18,7 @@ module.exports = function(app) {
       });
       // app.all(path, Auth.verifySession, async (req, res) => {
       app.all(path, async (req, res, next) => {
+        req.isApiRequest = true;
         const method = req.method.toUpperCase();
         if (method in this.methodFuncs) {
           const [status, data] = await this.methodFuncs[method](req);
@@ -92,7 +93,10 @@ module.exports = function(app) {
               PUT: (req) => api.item.snoozeUntil(req.session.user, req.params.universeShortName, req.params.itemShortName),
             }),
           ])
-        ])
+        ]),
+        new APIRoute('/follow', {
+          PUT: (req) => api.universe.putUserFollowing(req.session.user, req.params.universeShortName, req.body.isFollowing),
+        }),
       ])
     ]),
     new APIRoute('/exists', { POST: async (req) => {
@@ -118,6 +122,7 @@ module.exports = function(app) {
         return [500];
       }
     }}),
+    new APIRoute('/*'),
   ]);
 
   apiRoutes.setup(ADDR_PREFIX);

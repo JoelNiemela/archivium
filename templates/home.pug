@@ -43,36 +43,40 @@ block content
     .d-flex.gap-1.flex-wrap.align-start
       .grow-3.sheet
         h2 Recent Updates by Others
-        ul
-          each item in recentlyUpdated
-            li
-              .d-flex.align-center.gap-2
-                span
-                  //- small
-                  //-   a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}` ) #{item.universe}
-                  //- | /
-                  a.big-text.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}` ) #{item.title}
-                small (
-                  if item.last_updated_by
-                    | Updated by 
-                    a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.last_updated_by}` ) #{item.last_updated_by}
-                  else
-                    | Created by 
-                    a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
-                  |  in 
+        table
+          thead
+            th Name
+            th Universe
+            th Last updated by
+            th Updated
+          tbody
+            each item in recentlyUpdated
+              tr
+                td
+                  a.big-text.link.link-animated( href=`${ADDR_PREFIX}/items/${item.shortname}` ) #{item.title}
+                  if !item.last_updated_by
+                    small( style='font-size: x-small;' )  (New)
+                td
                   a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}` ) #{item.universe}
-                  |  #{formatDate(new Date(item.updated_at))})
+                td
+                  a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.last_updated_by}` ) #{item.last_updated_by || item.author}
+                td #{formatDate(item.updated_at)}
         h2 May Need Review
-        ul
-          each item in oldestUpdated
-            li
-              .d-flex.gap-1.align-baseline.flex-wrap
-                button.pa-1( onclick=`snooze('${item.universe_short}', '${item.shortname}')` data-item=item.shortname )
-                  small Snooze
-                a.big-text.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}` ) #{item.title}
-                small (
+        table
+          thead
+            th
+            th Name
+            th Universe
+          tbody
+            each item in oldestUpdated
+              tr
+                td
+                  button.pa-1( onclick=`snooze('${item.universe_short}', '${item.shortname}')` data-item=item.shortname )
+                    small Snooze
+                td
+                  a.big-text.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}` ) #{item.title}
+                td
                   a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}` ) #{item.universe}
-                  | )
       .grow-1.d-flex.flex-col.gap-1
         .sheet
           h2 My Universes

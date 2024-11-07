@@ -24,7 +24,8 @@ module.exports = function(app) {
           res.status(status);
           if (data !== undefined) res.json(data);
         } else {
-          res.status(405);
+          if (path === '/api/*') return res.sendStatus(404);
+          else res.status(405);
         }
         next();
       })
@@ -93,9 +94,9 @@ module.exports = function(app) {
             }),
           ])
         ]),
-        new APIRoute('/follow', {
-          PUT: (req) => api.universe.putUserFollowing(req.session.user, req.params.universeShortName, req.body.isFollowing),
-        }),
+        // new APIRoute('/follow', {
+        //   PUT: (req) => api.universe.putUserFollowing(req.session.user, req.params.universeShortName, req.body.isFollowing),
+        // }),
       ])
     ]),
     new APIRoute('/exists', { POST: async (req) => {
@@ -121,6 +122,7 @@ module.exports = function(app) {
         return [500];
       }
     }}),
+    new APIRoute('/*'),
   ]);
 
   apiRoutes.setup(ADDR_PREFIX);

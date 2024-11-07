@@ -381,7 +381,7 @@ module.exports = function(app) {
   get('/universes/:shortname/permissions', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname }, perms.ADMIN);
     const [code2, users] = await api.user.getMany();
-    const [code3, contacts] = await api.contact.getAll(req.session.user);
+    const [code3, contacts] = await api.contact.getAll(req.session.user, false);
     const code = code1 !== 200 ? code1 : (code2 !== 200 ? code2 : code3);
     res.status(code);
     if (code !== 200) return;

@@ -18,24 +18,53 @@ block breadcrumbs
   |  / 
   span #{universe.title}
 
-block content
+block scripts
   script
     include /static/scripts/tabs.js
     include /static/scripts/cardUtils.js
+    include /static/scripts/fetchUtils.js
 
+block content
   h1.center #{universe.title}
   p.center
     small Created by 
       a.link.link-animated( href=`${ADDR_PREFIX}/users/${universe.owner}` ) #{universe.owner}
       |  #{formatDate(new Date(universe.created_at))}
       |  - Last updated #{formatDate(new Date(universe.updated_at))}
-      if contextUser && (universe.author_permissions[contextUser.id] >= perms.ADMIN)
+      if contextUser
+        script!= `isFollowing = ${universe.followers[contextUser.id]};`
+        script!= `universeShort = '${universe.shortname}';`
         |  - 
-        a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/edit` ) Edit
-        |  - 
-        a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/permissions` ) Set Permissions
-        |  - 
-        a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/delete` ) Delete
+        a#follow-btn.link.link-animated
+          if universe.followers[contextUser.id]
+            | Unfollow
+          else
+            | Follow
+          script.
+            let isFollowing = false;
+            const followBtn = document.getElementById('follow-btn');
+            followBtn.addEventListener('click', async () => {
+              isFollowing = !isFollowing;
+              followBtn.classList.add('disabled');
+              followBtn.classList.remove('link-broken');
+              try {
+                await putJSON(`/api/universes/${universeShort}/follow`, { isFollowing: isFollowing });
+              } catch (err) {
+                console.error(err);
+                isFollowing = !isFollowing;
+                followBtn.classList.add('link-broken');
+              } finally {
+                followBtn.innerText = isFollowing ? 'Unfollow' : 'Follow';
+                followBtn.classList.remove('disabled');
+              }
+            });
+        if universe.author_permissions[contextUser.id] >= perms.ADMIN
+          |  - 
+          a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/edit` ) Edit
+          |  - 
+          a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/permissions` ) Set Permissions
+          |  - 
+          a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/delete` ) Delete
 
   hr
 

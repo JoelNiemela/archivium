@@ -92,7 +92,10 @@ module.exports = function(app) {
               PUT: (req) => api.item.snoozeUntil(req.session.user, req.params.universeShortName, req.params.itemShortName),
             }),
           ])
-        ])
+        ]),
+        new APIRoute('/follow', {
+          PUT: (req) => api.universe.putUserFollowing(req.session.user, req.params.universeShortName, req.body.isFollowing),
+        }),
       ])
     ]),
     new APIRoute('/exists', { POST: async (req) => {

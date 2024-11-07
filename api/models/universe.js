@@ -170,6 +170,34 @@ async function putPermissions(user, shortname, targetUser, permission_level) {
   }
 }
 
+async function putUserFollowing(user, shortname, isFollowing) {
+  if (!user) return [401];
+  const [code, universe] = await getOne(user, { shortname }, perms.READ);
+  if (!universe) return [code];
+
+  let query;
+  if (user.id in universe.followers) {
+    query = executeQuery(`
+      UPDATE followeruniverse 
+      SET is_following = ? 
+      WHERE user_id = ? AND universe_id = ?;`,
+      [ isFollowing, user.id, universe.id ],
+    );
+  } else {
+    query = executeQuery(`
+      INSERT INTO followeruniverse (is_following, universe_id, user_id) VALUES (?, ?, ?);`,
+      [ isFollowing, universe.id, user.id ],
+    );
+  }
+
+  try {
+    return [200, await query];
+  } catch (err) {
+    console.error(err);
+    return [500];
+  }
+}
+
 async function del(user, shortname) {
   const [code, universe] = await getOne(user, { shortname }, perms.ADMIN);
   if (!universe) return [code];
@@ -198,5 +226,6 @@ module.exports = {
   post,
   put,
   putPermissions,
+  putUserFollowing,
   del,
 };

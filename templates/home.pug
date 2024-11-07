@@ -47,7 +47,11 @@ block content
           each item in recentlyUpdated
             li
               .d-flex.align-center.gap-2
-                a.big-text.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}` ) #{item.title}
+                span
+                  //- small
+                  //-   a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}` ) #{item.universe}
+                  //- | /
+                  a.big-text.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}` ) #{item.title}
                 small (
                   if item.last_updated_by
                     | Updated by 
@@ -55,18 +59,30 @@ block content
                   else
                     | Created by 
                     a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
+                  |  in 
+                  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}` ) #{item.universe}
                   |  #{formatDate(new Date(item.updated_at))})
         h2 May Need Review
         ul
           each item in oldestUpdated
-            li.big-text
-              .d-flex.gap-1
+            li
+              .d-flex.gap-1.align-baseline.flex-wrap
                 button.pa-1( onclick=`snooze('${item.universe_short}', '${item.shortname}')` data-item=item.shortname )
                   small Snooze
-                a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}` ) #{item.title}
-      .grow-1.sheet
-        h2 My Universes
-        ul
-          each universe in universes
-            li.big-text
-              a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
+                a.big-text.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}` ) #{item.title}
+                small (
+                  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}` ) #{item.universe}
+                  | )
+      .grow-1.d-flex.flex-col.gap-1
+        .sheet
+          h2 My Universes
+          ul
+            each universe in universes
+              li.big-text
+                a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
+        .sheet
+          h2 Universes I Follow
+          ul
+            each universe in followedUniverses
+              li.big-text
+                a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}

@@ -11,6 +11,7 @@ if (!window.createSearchableSelect) throw 'searchableSelect.js not loaded!';
 if (!window.parseMarkdown) throw 'markdown/parse.js not loaded!';
 if (!MarkdownElement) throw 'markdown/render.js not loaded!';
 if (!window.putJSON) throw 'fetchUtils.js not loaded!';
+if (!window.modal) throw 'modal not loaded!';
 
 (function() {
   function preserveCaretPosition(el, callback) {
@@ -242,13 +243,12 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
           needsSaving = false;
           return;
         }
+        const data = {};
+        for (const key of changes) {
+          if (key in data) continue;
+          data[key] = window.item.obj_data[key];
+        }
         try {
-          const data = {};
-          for (const key of changes) {
-            if (key in data) continue;
-            data[key] = window.item.obj_data[key];
-          }
-          console.log(data)
           await putJSON(`/api/universes/${universe.shortname}/items/${window.item.shortname}/data`, data);
           console.log('SAVED.');
           saveBtn.firstChild.innerText = 'Saved';
@@ -256,7 +256,10 @@ if (!window.putJSON) throw 'fetchUtils.js not loaded!';
         } catch (err) {
           console.error('Failed to save!');
           console.error(err);
-          saveBtn.firstChild.innerText = 'Save';
+          saveBtn.firstChild.innerText = 'Error';
+          for (const key in data) {
+            window.item.obj_data[key] = null;
+          }
         }
       }, timeout);
     }

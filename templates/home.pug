@@ -43,7 +43,7 @@ block content
     .d-flex.gap-1.flex-wrap.align-start
       .grow-3.sheet
         h2 Recent Updates by Others
-        table
+        table.w-100
           thead
             th Name
             th Universe
@@ -62,19 +62,18 @@ block content
                   a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.last_updated_by}` ) #{item.last_updated_by || item.author}
                 td #{formatDate(item.updated_at)}
         h2 May Need Review
-        table
+        table.w-100
           thead
-            th
             th Name
             th Universe
           tbody
             each item in oldestUpdated
               tr
                 td
-                  button.pa-1( onclick=`snooze('${item.universe_short}', '${item.shortname}')` data-item=item.shortname )
-                    small Snooze
-                td
-                  a.big-text.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}` ) #{item.title}
+                  .d-flex.gap-1
+                    button.pa-1( onclick=`snooze('${item.universe_short}', '${item.shortname}')` data-item=item.shortname )
+                      small Snooze
+                    a.big-text.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}` ) #{item.title}
                 td
                   a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}` ) #{item.universe}
       .grow-1.d-flex.flex-col.gap-1

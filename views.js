@@ -99,7 +99,7 @@ module.exports = function(app) {
     if (!contacts) return;
     const gravatarContacts = contacts.map(user => ({
       ...user,
-      gravatarLink: `http://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
+      gravatarLink: `https://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
     }));
     res.prepareRender('contactList', {
       contacts: gravatarContacts.filter(contact => contact.accepted),
@@ -124,7 +124,7 @@ module.exports = function(app) {
     }
     res.prepareRender('user', { 
       user,
-      gravatarLink: `http://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
+      gravatarLink: `https://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
       universes,
     });
   });
@@ -162,7 +162,7 @@ module.exports = function(app) {
     authors.forEach(author => {
       authorMap[author.id] = {
         ...author,
-        gravatarLink: `http://www.gravatar.com/avatar/${md5(author.email)}.jpg`,
+        gravatarLink: `https://www.gravatar.com/avatar/${md5(author.email)}.jpg`,
       };
     });
     res.prepareRender('universe', { universe, authors: authorMap });

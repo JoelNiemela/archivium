@@ -38,7 +38,7 @@ function contextData(req) {
   const contextUser = user ? {
     id: user.id,
     username: user.username,
-    gravatarLink: `http://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
+    gravatarLink: `https://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
   } : null;
 
   const lang = 'en';

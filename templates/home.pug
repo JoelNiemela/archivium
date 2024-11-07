@@ -8,7 +8,7 @@ block content
     function snooze(universe, item) {
       if (reloading) return;
       fetch(`/api/universes/${universe}/items/${item}/snooze`, { method: 'PUT' });
-      document.querySelector(`[data-item=${item}]`).parentNode.parentNode.remove();
+      document.querySelector(`[data-item=${item}]`).parentNode.parentNode.parentNode.remove();
       if (snoozeTimeout) clearTimeout(snoozeTimeout);
       snoozeTimeout = setTimeout(() => {
         reloading = true;

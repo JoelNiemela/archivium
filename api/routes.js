@@ -18,14 +18,15 @@ module.exports = function(app) {
       });
       // app.all(path, Auth.verifySession, async (req, res) => {
       app.all(path, async (req, res, next) => {
+        req.isApiRequest = true;
         const method = req.method.toUpperCase();
+        console.log(path, method)
         if (method in this.methodFuncs) {
           const [status, data] = await this.methodFuncs[method](req);
           res.status(status);
           if (data !== undefined) res.json(data);
         } else {
-          if (path === '/api/*') return res.sendStatus(404);
-          else res.status(405);
+          res.status(405);
         }
         next();
       })
@@ -94,9 +95,9 @@ module.exports = function(app) {
             }),
           ])
         ]),
-        // new APIRoute('/follow', {
-        //   PUT: (req) => api.universe.putUserFollowing(req.session.user, req.params.universeShortName, req.body.isFollowing),
-        // }),
+        new APIRoute('/follow', {
+          PUT: (req) => api.universe.putUserFollowing(req.session.user, req.params.universeShortName, req.body.isFollowing),
+        }),
       ])
     ]),
     new APIRoute('/exists', { POST: async (req) => {

@@ -690,6 +690,9 @@ h4, h5 {
 .align-stretch {
   align-items: stretch;
 }
+.align-baseline {
+  align-items: baseline;
+}
 .align-end {
   align-items: end;
 }

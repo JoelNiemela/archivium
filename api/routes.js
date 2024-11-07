@@ -20,7 +20,6 @@ module.exports = function(app) {
       app.all(path, async (req, res, next) => {
         req.isApiRequest = true;
         const method = req.method.toUpperCase();
-        console.log(path, method)
         if (method in this.methodFuncs) {
           const [status, data] = await this.methodFuncs[method](req);
           res.status(status);

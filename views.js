@@ -49,31 +49,36 @@ module.exports = function(app) {
       const [code1, universes] = await api.universe.getMany(user, null, perms.WRITE);
       res.status(code1);
       if (!universes) return;
-      const [code2, recentlyUpdated] = await api.item.getMany(user, {
-        strings: ['lub.id <> ? OR item.last_updated_by IS NULL'],
-        values: [user.id],
-      }, perms.READ, true, {
+      const [code2, followedUniverses] = await api.universe.getMany(user, {
+        strings: ['fu.user_id = ?', 'fu.is_following = ?'],
+        values: [user.id, true],
+      }, perms.READ);
+      res.status(code2);
+      if (!followedUniverses) return;
+      const followedUniverseIds = `(${followedUniverses.map(universe => universe.id).join(',')})`;
+      const [code3, recentlyUpdated] = await api.item.getMany(user, null, perms.READ, true, {
         sort: 'updated_at',
         sortDesc: true,
         limit: 8,
         select: [['lub.username', 'last_updated_by']],
         join: [['LEFT', ['user', 'lub'], new Cond('lub.id = item.last_updated_by')]],
-        where: new Cond('au_filter.user_id = ?', user.id),
+        where: new Cond(`item.universe_id IN ${followedUniverseIds}`)
+          .and(new Cond('lub.id <> ?', user.id).or('item.last_updated_by IS NULL')),
       });
-      res.status(code2);
-      const [code3, oldestUpdated] = await api.item.getMany(user, null, perms.WRITE, true, {
+      res.status(code3);
+      const [code4, oldestUpdated] = await api.item.getMany(user, null, perms.WRITE, true, {
         sort: 'updated_at',
         sortDesc: false,
         limit: 16,
         join: [['LEFT', 'snooze', new Cond('snooze.item_id = item.id').and('snooze.snoozed_by = ?', user.id)]],
         where: new Cond('snooze.snoozed_until < NOW()').or('snooze.snoozed_until IS NULL').and('item.updated_at < DATE_SUB(NOW(), INTERVAL 2 DAY)'),
       });
-      res.status(code3);
+      res.status(code4);
       if (!oldestUpdated) return;
       // if (universes.length === 1) {
       //   res.redirect(`${ADDR_PREFIX}/universes/${universes[0].shortname}`);
       // }
-      return res.prepareRender('home', { universes, recentlyUpdated, oldestUpdated });
+      return res.prepareRender('home', { universes, followedUniverses, recentlyUpdated, oldestUpdated });
     }
     res.prepareRender('home', { universes: [] })
   });

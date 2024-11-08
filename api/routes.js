@@ -3,7 +3,7 @@ const Auth = require('../middleware/auth');
 const api = require('./');
 const logger = require('../logger');
 
-module.exports = function(app) {
+module.exports = function(app, upload) {
   class APIRoute {
     constructor(path, methodFuncs, children) {
       this.path = path;
@@ -18,13 +18,17 @@ module.exports = function(app) {
         return next();
       });
       // app.all(path, Auth.verifySession, async (req, res) => {
-      app.all(path, async (req, res, next) => {
+      app.all(path, ...(this.methodFuncs.middleware ?? []), async (req, res, next) => {
         req.isApiRequest = true;
         const method = req.method.toUpperCase();
         if (method in this.methodFuncs) {
-          const [status, data] = await this.methodFuncs[method](req);
+          const [status, data, resCb] = await this.methodFuncs[method](req);
           res.status(status);
-          if (data !== undefined) res.json(data);
+          if (resCb !== undefined) resCb(res);
+          if (data !== undefined) {
+            if (data instanceof Buffer) res.send(data);
+            else res.json(data);
+          }
         } else {
           res.status(405);
         }
@@ -38,7 +42,9 @@ module.exports = function(app) {
   
   async function frmtData(promise, callback) {
     const [status, data] = await promise;
-    return [status, callback(data)];
+    let frmttedData = callback(data);
+    if (!(frmttedData instanceof Array)) frmttedData = [frmttedData];
+    return [status, ...frmttedData];
   }
 
   app.use('/api', (req, res, next) => {
@@ -93,7 +99,23 @@ module.exports = function(app) {
             new APIRoute('/snooze', {
               PUT: (req) => api.item.snoozeUntil(req.session.user, req.params.universeShortName, req.params.itemShortName),
             }),
-          ])
+            new APIRoute('/gallery', {}, [
+              new APIRoute('/upload', {
+                middleware: [upload.single('image')],
+                POST: (req) => api.itemimage.post(req.session.user, req.file, req.params.universeShortName, req.params.itemShortName),
+              }),
+              new APIRoute('/images', {
+                GET: (req) => api.itemimage.getManyByItemShort(req.session.user, req.params.universeShortName, req.params.itemShortName),
+              }, [
+                new APIRoute('/:id', {
+                  GET: (req) => frmtData(
+                    api.itemimage.getOneByItemShort(req.session.user, req.params.universeShortName, req.params.itemShortName, { id: req.params.id }),
+                    (image) => [image?.data, (res) => image && res.contentType(image.mimetype)],
+                  ),
+                }),
+              ]),
+            ]),
+          ]),
         ]),
         new APIRoute('/follow', {
           PUT: (req) => api.universe.putUserFollowing(req.session.user, req.params.universeShortName, req.body.isFollowing),
@@ -105,7 +127,7 @@ module.exports = function(app) {
           ),
           POST: (req) => api.discussion.postThread(req.session.user, req.params.universeShortName, req.body),
         }, []),
-      ])
+      ]),
     ]),
     new APIRoute('/exists', { POST: async (req) => {
       try {

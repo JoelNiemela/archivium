@@ -97,7 +97,7 @@ block content
 
     if 'gallery' in item.obj_data && 'title' in item.obj_data.gallery
       .itemTab.hidden.gallery( data-tab='gallery' )
-        each img in item.gallery || []
+        each img, index in item.gallery || []
           .itemKey
             img( src=`/api/universes/${universe.shortname}/items/${item.shortname}/gallery/images/${img[0]}`, title=img[1], alt=img[2] )
             if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)

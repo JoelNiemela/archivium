@@ -112,6 +112,7 @@ module.exports = function(app, upload) {
                     api.item.image.getOneByItemShort(req.session.user, req.params.universeShortName, req.params.itemShortName, { id: req.params.id }),
                     (image) => [image?.data, (res) => image && res.contentType(image.mimetype)],
                   ),
+                  PUT: (req) => api.item.image.putLabel(req.session.user, req.params.id, req.body.label),
                 }),
               ]),
             ]),

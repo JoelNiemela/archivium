@@ -273,9 +273,10 @@ async function addTab(type, name, force=false) {
         type: 'button',
         innerText: 'Upload Image',
         onclick: () => {
-          uploadImage(`/api/universes/${universe}/items/${item}/gallery/upload`, document.body, (newId, newName) => {
+          uploadImage(`/api/universes/${universe}/items/${item}/gallery`, document.body, async (newId, newName) => {
             const url = `/api/universes/${universe}/items/${item}/gallery/images/${newId}`;
             const label = getIdValue('new_gallery_image_label');
+            await putJSON(`/api/universes/${universe}/items/${item}/gallery/images/${newId}`, { label });
             if (!url) return;
             const newState = { ...obj_data };
             if (!('imgs' in newState.gallery)) newState.gallery.imgs = [];

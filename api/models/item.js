@@ -639,7 +639,7 @@ const image = (function() {
       const parsedOptions = parseData(options);
       let queryString = `
         SELECT 
-          id, item_id, name, mimetype ${inclData ? ', data' : ''}
+          id, item_id, name, mimetype, label ${inclData ? ', data' : ''}
         FROM itemimage
       `;
       if (options) queryString += ` WHERE ${parsedOptions.strings.join(' AND ')}`;
@@ -671,6 +671,21 @@ const image = (function() {
     return [201, await executeQuery(queryString, [ item.id, originalname, mimetype, buffer, '' ])];
   }
 
+  async function putLabel(user, imageId, label) {
+    try {
+      if (!user) return [401];
+      const [code1, images] = (await getMany({ id: imageId }, false));
+      const image = images[0];
+      if (!image) return [code1];
+      const [code2, item] = await getOne(user, image.item_id);
+      if (!item) return [code2];
+      return [200, await executeQuery(`UPDATE itemimage SET label = ? WHERE id = ?;`, [label, imageId])];
+    } catch (err) {
+      console.error(err);
+      return [500];
+    }
+  }
+
   async function del(user, imageId) {
     try {
       if (!user) return [401];
@@ -691,6 +706,7 @@ const image = (function() {
     getMany,
     getManyByItemShort,
     post,
+    putLabel,
     del,
   };
 })();

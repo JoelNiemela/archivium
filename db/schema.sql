@@ -18,13 +18,6 @@ CREATE TABLE session (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE profileimage (
-  profile_id INT NOT NULL,
-  name VARCHAR(64) NOT NULL,
-  data LONGBLOB NOT NULL,
-  FOREIGN KEY (profile_id) REFERENCES user (id)
-);
-
 CREATE TABLE contact (
   requesting_user INT NOT NULL,
   accepting_user INT NOT NULL,

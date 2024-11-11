@@ -62,17 +62,20 @@ footer {
   text-indent: 2rem;
 }
 
+header {
+  position: sticky;
+  margin: 0.5rem;
+  top: -0.0625rem;
+  z-index: 1;
+  transition: margin 0.1s;
+}
+
 .navbar {
   display: flex;
-  margin: 0.5rem;
   justify-content: space-between;
   border: 0.0625rem solid #e7e7e7;
   border-radius: 0.25rem;
   background-color: #f3f3f3;
-  position: sticky;
-  top: -0.0625rem;
-  z-index: 1;
-  transition: margin 0.1s;
 }
 
 .nav-fullwidth {

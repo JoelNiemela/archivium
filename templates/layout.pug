@@ -36,9 +36,9 @@ html(lang='en')
         script.
           window.onscroll = () => {
             if (document.body.scrollTop > 8 || document.documentElement.scrollTop > 8) {
-              document.querySelector('.navbar').classList.add('nav-fullwidth');
+              document.querySelector('header').classList.add('nav-fullwidth');
             } else {
-              document.querySelector('.navbar').classList.remove('nav-fullwidth');
+              document.querySelector('header').classList.remove('nav-fullwidth');
             }
           }
         ul.navbarBtns
@@ -69,12 +69,6 @@ html(lang='en')
                 li.navbarBtn
                   a.navbarBtnLink.navbarText.text-start(href=`${ADDR_PREFIX}/logout`) Log Out
         else
-          if curTemplate !== 'login'
-            li.navbarBtn
-              span.navbarText Logged in as #{contextUser.username}
-            li.navbarBtn
-              a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/logout`) Log Out
-        else
           ul.navbarBtns
             if curTemplate !== 'login'
               li.navbarBtn
@@ -89,13 +83,17 @@ html(lang='en')
         block content
 
     footer
-      .d-flex.justify-center.gap-4.flex-wrap
+      small.d-flex.justify-center.gap-4.flex-wrap
         .d-flex.justify-center.gap-1.flex-wrap
           a.link.link-animated( href=`${ADDR_PREFIX}/privacy-policy` ) Privacy Policy
           span —
           a.link.link-animated( href=`${ADDR_PREFIX}/terms-of-service` ) Terms of Service
           span —
           a.link.link-animated( href=`${ADDR_PREFIX}/code-of-conduct` ) Code of Conduct
-        span &copy; 2024 Archivium. Developed by kjniemela & JoelNiemela.
+        span &copy; 2024 Archivium. Developed by 
+          a.link.link-animated( href='https://github.com/kjniemela' ) kjniemela
+          |  &amp; 
+          a.link.link-animated( href='https://github.com/JoelNiemela' ) JoelNiemela
+          | .
         span Open source on 
           a.link.link-animated( href='https://github.com/JoelNiemela/archivium' ) GitHub.

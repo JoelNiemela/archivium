@@ -726,6 +726,9 @@ h4, h5 {
 .align-end {
   align-items: end;
 }
+.align-self-start {
+  align-self: start;
+}
 .align-self-end {
   align-self: end;
 }

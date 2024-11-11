@@ -415,9 +415,16 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
 
   if (gallery) {
     const [_, existingImages] = await image.getManyByItemShort(user, universeShortname, itemShortname);
+    const oldImages = {};
     const newImages = {};
+    for (const img of existingImages) {
+      oldImages[img.id] = img;
+    }
     for (const img of gallery.imgs) {
       newImages[img.id] = img;
+      if (oldImages[img.id] && img.label !== oldImages[img.id].label) {
+        await image.putLabel(user, img.id, img.label);
+      }
     }
     for (const img of existingImages) {
       if (!newImages[img.id]) await image.del(user, img.id);

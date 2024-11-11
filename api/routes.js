@@ -110,7 +110,11 @@ module.exports = function(app, upload) {
                 new APIRoute('/:id', {
                   GET: (req) => frmtData(
                     api.item.image.getOneByItemShort(req.session.user, req.params.universeShortName, req.params.itemShortName, { id: req.params.id }),
-                    (image) => [image?.data, (res) => image && res.contentType(image.mimetype)],
+                    (image) => [image?.data, (res) => {
+                      if (!image) return;
+                      res.contentType(image.mimetype);
+                      if (req.query.download === '1') res.setHeader('Content-Disposition', `attachment; filename="${image.name}"`);
+                    }],
                   ),
                   PUT: (req) => api.item.image.putLabel(req.session.user, req.params.id, req.body.label),
                 }),

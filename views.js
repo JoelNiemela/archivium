@@ -4,6 +4,7 @@ const api = require('./api');
 const md5 = require('md5');
 const { render } = require('./templates');
 const { perms, Cond } = require('./api/utils');
+const fs = require('fs/promises');
 
 module.exports = function(app) {
   app.use((req, res, next) => {
@@ -75,6 +76,20 @@ module.exports = function(app) {
       return res.prepareRender('home', { universes, recentlyUpdated, oldestUpdated });
     }
     res.prepareRender('home', { universes: [] })
+  });
+
+  /* Terms and Agreements */
+  get('/privacy-policy', async (_, res) => {
+    const content = (await fs.readFile('static/privacy_policy.md')).toString();
+    res.prepareRender('docs', { content });
+  });
+  get('/terms-of-service', async (_, res) => {
+    const content = (await fs.readFile('static/ToS.md')).toString();
+    res.prepareRender('docs', { content });
+  });
+  get('/code-of-conduct', async (_, res) => {
+    const content = (await fs.readFile('static/code_of_conduct.md')).toString();
+    res.prepareRender('docs', { content });
   });
 
   /* User Pages */

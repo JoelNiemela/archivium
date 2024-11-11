@@ -167,6 +167,7 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
       if (!basicOnly) {
         // TODO dumb workarounds for bad SQL query
         item.events = item.events.filter(event => event[0] !== null);
+        item.gallery = item.gallery.filter(image => image[0] !== null);
       }
     })
     return [200, data];

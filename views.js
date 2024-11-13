@@ -148,6 +148,7 @@ module.exports = function(app) {
       ...req.body,
       obj_data: decodeURIComponent(req.body.obj_data),
       public: req.body.visibility === 'public',
+      discussion_enabled: req.body.discussion_enabled === 'enabled',
     });
     res.status(code);
     if (code === 201) return res.redirect(`${ADDR_PREFIX}/universes/${req.body.shortname}`);
@@ -189,6 +190,7 @@ module.exports = function(app) {
       ...req.body,
       obj_data: decodeURIComponent(req.body.obj_data),
       public: req.body.visibility === 'public',
+      discussion_enabled: req.body.discussion_enabled === 'enabled',
     }
     const [code, data] = await api.universe.put(req.session.user, req.params.shortname, req.body);
     res.status(code);

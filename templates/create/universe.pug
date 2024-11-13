@@ -27,6 +27,11 @@ block content
       select( id='visibility' name='visibility' )
         option( value='public' selected=(visibility === 'public') ) Public
         option( value='private' selected=(visibility === 'private') ) Private
+    div.inputGroup
+      label( for='discussion_enabled' ) Discussion: 
+      select( id='discussion_enabled' name='discussion_enabled' )
+        option( value='enabled' selected=(discussion_enabled === 'enabled') ) Enabled
+        option( value='disabled' selected=(discussion_enabled === 'disabled') ) Disabled
     div
       input( type='hidden' id='obj_data' name='obj_data' value='{}' )
       button( type='submit' ) Create Universe

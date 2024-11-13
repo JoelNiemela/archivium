@@ -27,6 +27,7 @@ const locale = {
     missing_cat: 'Missing Category',
     [`perms_${perms.NONE}`]: 'None',
     [`perms_${perms.READ}`]: 'Read',
+    [`perms_${perms.COMMENT}`]: 'Comment',
     [`perms_${perms.WRITE}`]: 'Write',
     [`perms_${perms.ADMIN}`]: 'Admin',
   }

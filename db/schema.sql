@@ -34,9 +34,32 @@ CREATE TABLE universe (
   created_at TIMESTAMP NOT NULL,
   updated_at TIMESTAMP NOT NULL,
   public BOOLEAN NOT NULL,
+  discussion_enabled BOOLEAN NOT NULL,
   obj_data TEXT NOT NULL,
   FOREIGN KEY (author_id) REFERENCES user (id),
   PRIMARY KEY (id)
+);
+
+CREATE TABLE discussion (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(256)
+);
+
+CREATE TABLE comment (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  body VARCHAR(2048) NOT NULL,
+  author_id INT NOT NULL,
+  thread_id INT NOT NULL,
+  created_at TIMESTAMP NOT NULL,
+  FOREIGN KEY (author_id) REFERENCES user (id),
+  FOREIGN KEY (thread_id) REFERENCES discussion (id)
+);
+
+CREATE TABLE universethread (
+  universe_id INT NOT NULL,
+  thread_id INT NOT NULL,
+  FOREIGN KEY (universe_id) REFERENCES universe (id),
+  FOREIGN KEY (thread_id) REFERENCES discussion (id)
 );
 
 CREATE TABLE item (
@@ -57,6 +80,13 @@ CREATE TABLE item (
   FOREIGN KEY (parent_id) REFERENCES item (id),
   FOREIGN KEY (last_updated_by) REFERENCES user (id),
   PRIMARY KEY (id)
+);
+
+CREATE TABLE itemthread (
+  item_id INT NOT NULL,
+  thread_id INT NOT NULL,
+  FOREIGN KEY (item_id) REFERENCES item (id),
+  FOREIGN KEY (thread_id) REFERENCES discussion (id)
 );
 
 CREATE TABLE snooze (

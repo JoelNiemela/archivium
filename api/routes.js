@@ -98,6 +98,10 @@ module.exports = function(app) {
         new APIRoute('/follow', {
           PUT: (req) => api.universe.putUserFollowing(req.session.user, req.params.universeShortName, req.body.isFollowing),
         }),
+        new APIRoute('/discussion', {
+          GET: (req) => api.discussion.getThread(req.session.user, { 'universe.shortname': req.params.universeShortName }),
+          POST: (req) => api.discussion.postThread(req.session.user, req.params.universeShortName, req.body),
+        }, []),
       ])
     ]),
     new APIRoute('/exists', { POST: async (req) => {

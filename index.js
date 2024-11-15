@@ -145,6 +145,7 @@ app.use((req, res, next) => {
 // Logger if in Dev Mode
 if (DEV_MODE) {
   app.use('/', (req, res, next) => {
+    // console.log(req.headers['x-subdomain'])
     const endTime = new Date();
     let clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     // If the IP is in IPv6-mapped IPv4 format, extract the IPv4 part

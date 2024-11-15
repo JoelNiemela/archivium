@@ -197,6 +197,28 @@ module.exports = function(app) {
     if (code === 200) return res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}`);
     res.prepareRender('editUniverse', { error: data, ...req.body });
   });
+ 
+  get('/universes/:shortname/discuss/create', Auth.verifySessionOrRedirect, async (req, res) => {
+    const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname }, perms.COMMENT);
+    res.status(code);
+    if (code !== 200) return;
+    res.prepareRender('createUniverseThread', { universe });
+  });
+  post('/universes/:shortname/discuss/create', Auth.verifySessionOrRedirect, async (req, res) => {
+    const [code1, data] = await api.discussion.postUniverseThread(req.session.user, req.params.shortname, { title: req.body.title });
+    res.status(code1);
+    if (code1 === 201) {
+      if (req.body.comment) {
+        const [code2, _] = await api.discussion.postComment(req.session.user, data.insertId, { body: req.body.comment });
+        res.status(code2);
+      }
+      return res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}/discuss/${data.insertId}`);
+    }
+    const [code3, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
+    res.status(code3);
+    if (code3 !== 200) return;
+    res.prepareRender('createUniverseThread', { error: data, ...req.body, universe });
+  });
 
   get('/universes/:shortname/items', async (req, res) => {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });

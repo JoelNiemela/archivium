@@ -32,10 +32,6 @@ async function getMany(user, conditions, permissionLevel=perms.READ) {
         JSON_OBJECTAGG(author.id, au.permission_level) AS author_permissions,
         owner.username AS owner,
         JSON_REMOVE(JSON_OBJECTAGG(
-          IFNULL(discussion.id, 'null__'),
-          discussion.title
-        ), '$.null__') AS discussion_threads,
-        JSON_REMOVE(JSON_OBJECTAGG(
           IFNULL(fu.user_id, 'null__'),
           fu.is_following
         ), '$.null__') AS followers
@@ -47,8 +43,6 @@ async function getMany(user, conditions, permissionLevel=perms.READ) {
       LEFT JOIN authoruniverse AS au ON universe.id = au.universe_id
       LEFT JOIN user AS author ON author.id = au.user_id
       LEFT JOIN followeruniverse AS fu ON universe.id = fu.universe_id
-      LEFT JOIN universethread as ut ON universe.id = ut.universe_id
-      LEFT JOIN discussion ON discussion.id = ut.thread_id
       INNER JOIN user AS owner ON universe.author_id = owner.id
       ${conditionString}
       GROUP BY universe.id;`;

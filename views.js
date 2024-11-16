@@ -169,7 +169,9 @@ module.exports = function(app) {
         gravatarLink: `https://www.gravatar.com/avatar/${md5(author.email)}.jpg`,
       };
     });
-    res.prepareRender('universe', { universe, authors: authorMap });
+    const [code3, threads] = await api.discussion.getThreads(req.session.user, { 'universethread.universe_id': universe.id }, perms.READ, true);
+    if (!threads) return [code3];
+    res.prepareRender('universe', { universe, authors: authorMap, threads });
   });
 
   get('/universes/:shortname/delete', Auth.verifySessionOrRedirect, async (req, res) => {

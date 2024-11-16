@@ -1,7 +1,7 @@
 const { executeQuery, parseData, perms } = require('../utils');
 const universeapi = require('./universe');
 
-async function getThreads(user, options, permissionLevel=perms.READ) {
+async function getThreads(user, options, permissionLevel=perms.READ, includeExtra=false) {
   try {
     const parsedOptions = parseData(options);
     const readOnlyQueryString = permissionLevel > perms.READ ? '' : `universe.public = 1`;
@@ -9,15 +9,28 @@ async function getThreads(user, options, permissionLevel=perms.READ) {
     const permsQueryString = `${readOnlyQueryString}${(readOnlyQueryString && usrQueryString) ? ' OR ' : ''}${usrQueryString}`;
     const conditionString = options ? `WHERE ${parsedOptions.strings.join(' AND ')}` : '';
     const queryString = `
-      SELECT discussion.*
-      FROM universethread
-      INNER JOIN discussion ON discussion.id = universethread.thread_id
+      SELECT
+        ${includeExtra ? 'comments.*,' : ''}
+        discussion.*
+      FROM discussion
+      INNER JOIN universethread ON discussion.id = universethread.thread_id
       INNER JOIN universe ON universe.id = universethread.universe_id
       INNER JOIN authoruniverse as au_filter
         ON universe.id = au_filter.universe_id AND (
           ${permsQueryString}
         )
       LEFT JOIN authoruniverse as au ON universe.id = au.universe_id
+      ${includeExtra ? `
+        LEFT JOIN (
+          SELECT DISTINCT
+            COUNT(id) as comment_count,
+            MIN(created_at) as first_activity,
+            MAX(created_at) as last_activity,
+            thread_id
+          FROM comment
+          GROUP BY thread_id
+        ) comments ON comments.thread_id = discussion.id
+      ` : ''}
       ${conditionString}
       GROUP BY discussion.id;`;
     const data = await executeQuery(queryString, options && parsedOptions.values);

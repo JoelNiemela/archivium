@@ -77,6 +77,9 @@ block content
     if !universe.public
       li.navbarBtn#bodyBtn( data-tab='viewers' )
         h3.navbarBtnLink.navbarText( onclick=`showTab('viewers')` ) Viewers
+    if universe.discussion_enabled
+      li.navbarBtn#bodyBtn( data-tab='discuss' )
+        h3.navbarBtnLink.navbarText( onclick=`showTab('discuss')` ) Discuss
 
   .tabs
     .container.hidden( data-tab='items' )
@@ -95,7 +98,7 @@ block content
     
     .card-list.hidden( data-tab='authors' )
       each username, id in universe.authors
-        if universe.author_permissions[id] > perms.READ
+        if universe.author_permissions[id] >= perms.WRITE
           .card.sheet.gap-4( onclick=`goTo('${ADDR_PREFIX}/users/${username}')` )
             img.userIcon( alt=username, src=authors[id].gravatarLink )
             .d-flex.flex-col.grow-1
@@ -117,7 +120,7 @@ block content
     
     .card-list.hidden( data-tab='viewers' )
       each username, id in universe.authors
-        if universe.author_permissions[id] === perms.READ
+        if universe.author_permissions[id] < perms.WRITE && universe.author_permissions[id] >= perms.READ
           .card.sheet.gap-4( onclick=`goTo('${ADDR_PREFIX}/users/${username}')` )
             img.userIcon( alt=username, src=authors[id].gravatarLink )
             .d-flex.flex-col.grow-1
@@ -129,4 +132,22 @@ block content
               span 
                 b #{T('Last seen')}: 
                 | #{formatDate(authors[id].updated_at)}
+    
+    .d-flex.flex-col.gap-4.hidden( data-tab='discuss' )
+      div
+        a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/discuss/create` ) Create New
+      each thread in threads
+        .sheet.d-flex.flex-col.gap-2.align-start( onclick=`goTo('${ADDR_PREFIX}/universes/${universe.shortname}/discuss/${thread.id}')` )
+          h2.ma-0
+            a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/discuss/${thread.id}` ) #{thread.title}
+          .d-flex.gap-4.flex-wrap
+            span
+              b #{T('Comments')}: 
+              | #{thread.comment_count}
+            span
+              b #{T('Created')}: 
+              | #{formatDate(thread.first_activity)}
+            span 
+              b #{T('Last activity')}: 
+              | #{formatDate(thread.last_activity)}
         

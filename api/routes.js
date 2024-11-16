@@ -1,6 +1,7 @@
 const { ADDR_PREFIX } = require('../config');
 const Auth = require('../middleware/auth');
 const api = require('./');
+const logger = require('../logger');
 
 module.exports = function(app) {
   class APIRoute {
@@ -114,7 +115,7 @@ module.exports = function(app) {
         }
         return [200, resultMap];
       } catch (err) {
-        console.error(err);
+        logger.error(err);
         return [500];
       }
     }}),

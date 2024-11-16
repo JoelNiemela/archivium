@@ -1,5 +1,6 @@
 const { executeQuery, parseData } = require('../utils');
 const userapi = require('./user');
+const logger = require('../../logger');
 
 async function getOne(sessionUser, targetID) {
   try {
@@ -31,7 +32,7 @@ async function getOne(sessionUser, targetID) {
     if (!user) return [404];
     return [200, user];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }
@@ -59,7 +60,7 @@ async function getAll(user, includePending=true, includeAccepted=true) {
     const users = await executeQuery(queryString, [user.id, user.id, user.id, user.id]);
     return [200, users];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }
@@ -118,7 +119,7 @@ async function del(user, targetID) {
       return [404];
     }
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }

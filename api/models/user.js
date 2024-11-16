@@ -1,6 +1,7 @@
 const { executeQuery, parseData } = require('../utils');
 const utils = require('../../lib/hashUtils');
 const universeapi = require('./universe');
+const logger = require('../../logger');
 
 /**
    * returns a "safe" version of the user object with password data removed unless the includeAuth parameter is true
@@ -20,7 +21,7 @@ async function getOne(options, includeAuth=false) {
     }
     return [200, user];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }
@@ -44,7 +45,7 @@ async function getMany(options, includeEmail=false) {
     const users = await executeQuery(queryString, parsedOptions.values);
     return [200, users];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }
@@ -72,7 +73,7 @@ async function getByUniverseShortname(user, shortname) {
     const users = await executeQuery(queryString, [universe.id]);
     return [200, users];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }
@@ -133,7 +134,7 @@ async function put(user_id, userIDToPut, changes) {
     `;
     return [200, await executeQuery(queryString, [updated_at, userIDToPut])];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }
@@ -151,7 +152,7 @@ async function doDeleteUser(user_id) {
     await executeQuery(userQueryString);
     return [200];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }
@@ -172,7 +173,7 @@ async function del(req) {
       return [404];
     }
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }

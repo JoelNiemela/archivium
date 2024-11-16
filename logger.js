@@ -25,10 +25,4 @@ const logger = winston.createLogger({
   ],
 });
 
-const oldInfo = logger.info;
-logger.info = (...args) => {
-  args = args.map(arg => typeof arg !== 'object' ? arg : JSON.stringify(arg));
-  oldInfo(args.join(' '));
-};
-
 module.exports = logger;

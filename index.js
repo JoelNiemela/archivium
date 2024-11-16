@@ -151,7 +151,9 @@ if (DEV_MODE) {
     if (clientIp.startsWith('::ffff:')) {
       clientIp = clientIp.split(':').pop();
     }
-    logger.info(req.method, req.path, res.statusCode, req.query || '', req.session.user?.username ?? 'anonymous', clientIp, `${endTime - req.startTime}ms`);
+    const { method, path, query, session, startTime } = req;
+    const user = session.user?.username ?? 'anonymous';
+    logger.info(`${method} ${path} ${res.statusCode}${query ? ` ${JSON.stringify(query)}` : ''} ${user} ${clientIp} ${endTime - startTime}ms`);
     next();
   });
 }

@@ -28,6 +28,27 @@ async function getThreads(user, options, permissionLevel=perms.READ) {
   }
 }
 
+async function getComments(user, threadId, validate=true, inclCommenters=false, permissionLevel=perms.READ) {
+  try {
+    if (validate) {
+      const [code, threads] = await getThreads(user, { 'discussion.id': threadId }, permissionLevel);
+      const thread = threads[0];
+      if (!thread) return [code];
+    }
+    const queryString1 = `SELECT * FROM comment WHERE thread_id = ?`;
+    const comments = await executeQuery(queryString1, [ threadId ]);
+    if (inclCommenters) {
+      const queryString2 = `SELECT user.id, user.username, user.email FROM user INNER JOIN comment ON user.id = comment.author_id WHERE comment.thread_id = ? GROUP BY user.id`;
+      const users = await executeQuery(queryString2, [ threadId ]);
+      return [200, comments, users];
+    }
+    return [200, comments];
+  } catch (err) {
+    console.error(err);
+    return [500];
+  }
+}
+
 async function postUniverseThread(user, universeShortname, { title }) {
   const [code, universe] = await universeapi.getOne(user, { shortname: universeShortname }, perms.COMMENT);
   if (!universe) return [code];
@@ -63,6 +84,7 @@ async function postComment(user, threadId, { body }) {
 
 module.exports = {
   getThreads,
+  getComments,
   postUniverseThread,
   postComment,
 };

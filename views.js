@@ -219,6 +219,30 @@ module.exports = function(app) {
     if (code3 !== 200) return;
     res.prepareRender('createUniverseThread', { error: data, ...req.body, universe });
   });
+  get('/universes/:shortname/discuss/:threadId', Auth.verifySessionOrRedirect, async (req, res) => {
+    const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
+    res.status(code1);
+    if (code1 !== 200) return;
+    const [code2, threads] = await api.discussion.getThreads(req.session.user, { 'discussion.id': req.params.threadId });
+    if (!threads) return [code2];
+    const thread = threads[0];
+    if (!thread) return [code2];
+    const [code3, comments, users] = await api.discussion.getComments(req.session.user, thread.id, false, true);
+    if (!comments || !users) return [code3];
+    const commenters = {};
+    for (const user of users) {
+      user.gravatarLink = `https://www.gravatar.com/avatar/${md5(user.email)}.jpg`;
+      delete user.email;
+      commenters[user.id] = user;
+    }
+    
+    res.prepareRender('universeThread', { universe, thread, comments, commenters });
+  });
+  post('/universes/:shortname/discuss/:threadId', Auth.verifySessionOrRedirect, async (req, res) => {
+    const [code, _] = await api.discussion.postComment(req.session.user, req.params.threadId, req.body);
+    res.status(code);
+    return res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}/discuss/${req.params.threadId}`);
+  });
 
   get('/universes/:shortname/items', async (req, res) => {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });

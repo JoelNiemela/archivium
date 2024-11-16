@@ -86,6 +86,7 @@ const templates = {
   universeList: compile('templates/list/universes.pug'),
   createUniverse: compile('templates/create/universe.pug'),
   editUniversePerms: compile('templates/edit/universePerms.pug'),
+  universeThread: compile('templates/view/universeThread.pug'),
   createUniverseThread: compile('templates/create/universeThread.pug'),
 
   item: compile('templates/view/item.pug'),

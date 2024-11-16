@@ -1,0 +1,25 @@
+div
+  .d-flex.flex-col.gap-4
+    each comment in comments
+      .sheet.d-flex.gap-4.align-start
+        img.userIcon( alt=commenters[comment.author_id].username, src=commenters[comment.author_id].gravatarLink )
+        .d-flex.flex-col.grow-1
+          div
+            a.link.link-animated.mr-2( href=`/users/${commenters[comment.author_id].username}` ) 
+              b #{commenters[comment.author_id].username}
+            small #{formatDate(comment.created_at)}
+          .comment( data-val=comment.body )
+
+  br
+  hr
+  br
+
+  if contextUser && (universe.author_permissions[contextUser.id] >= (universe.discussion_open ? perms.READ : perms.COMMENT))
+    form( method='POST' action=commentAction )
+      .editor( data-replicated-value='' )
+        textarea( id='body' name='body' oninput="this.parentNode.dataset.replicatedValue = this.value" )
+      div
+        button( type='submit' ) Post Comment
+      if error
+        div
+          span( style={'font-size': 'small'} ).color-error= error

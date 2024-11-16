@@ -123,29 +123,7 @@ block content
         
     if 'comments' in item.obj_data && 'title' in item.obj_data.comments
       .hidden( data-tab='comments' )
-        .d-flex.flex-col.gap-4
-          each comment in comments
-            .sheet.d-flex.gap-4.align-start
-              img.userIcon( alt=commenters[comment.author_id].username, src=commenters[comment.author_id].gravatarLink )
-              .d-flex.flex-col.grow-1
-                small
-                  b #{commenters[comment.author_id].username} 
-                  | #{formatDate(comment.created_at)}
-                .comment( data-val=comment.body )
-
-        br
-        hr
-        br
-
-        if contextUser && (universe.author_permissions[contextUser.id] >= (universe.discussion_open ? perms.READ : perms.COMMENT))
-          form( method='POST' action=`/universes/${universe.shortname}/items/${item.shortname}/comment` )
-            div
-              textarea( id='body' name='body' value=`${comment || ''}` )
-            div
-              button( type='submit' ) Post Comment
-            if error
-              div
-                span( style={'font-size': 'small'} ).color-error= error
+        include ../components/comments.pug
 
     if 'body' in item.obj_data
       .sheet.hidden( data-tab='body' )

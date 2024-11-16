@@ -240,7 +240,10 @@ module.exports = function(app) {
       commenters[user.id] = user;
     }
     
-    res.prepareRender('universeThread', { universe, thread, comments, commenters });
+    res.prepareRender('universeThread', { 
+      universe, thread, comments, commenters,
+      commentAction: `/universes/${universe.shortname}/discuss/${thread.id}/comment`,
+    });
   });
   post('/universes/:shortname/discuss/:threadId/comment', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code, _] = await api.discussion.postCommentToThread(req.session.user, req.params.threadId, req.body);
@@ -314,7 +317,10 @@ module.exports = function(app) {
       delete user.email;
       commenters[user.id] = user;
     }
-    res.prepareRender('item', { item, universe, tab: req.query.tab, comments, commenters });
+    res.prepareRender('item', {
+      item, universe, tab: req.query.tab, comments, commenters,
+      commentAction: `/universes/${universe.shortname}/items/${item.shortname}/comment`,
+    });
   });
   get('/universes/:universeShortname/items/:itemShortname/edit', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code1, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);

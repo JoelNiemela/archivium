@@ -776,6 +776,13 @@ h4, h5 {
   margin: 0.25rem;
 }
 
+.mr-1 {
+  margin-right: 0.25rem;
+}
+.mr-2 {
+  margin-right: 0.5rem;
+}
+
 .pa-0 {
   padding: 0;
 }

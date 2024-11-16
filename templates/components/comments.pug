@@ -17,9 +17,19 @@ div
   if contextUser && (universe.author_permissions[contextUser.id] >= (universe.discussion_open ? perms.READ : perms.COMMENT))
     form( method='POST' action=commentAction )
       .editor( data-replicated-value='' )
-        textarea( id='body' name='body' oninput="this.parentNode.dataset.replicatedValue = this.value" )
+        textarea.comment-field( id='body' name='body' oninput="t" )
+        span.chars 2000
       div
-        button( type='submit' ) Post Comment
+        button#post( type='submit' ) Post Comment
       if error
         div
           span( style={'font-size': 'small'} ).color-error= error
+
+  script.
+    document.querySelectorAll('textarea.comment-field').forEach(el => {
+      el.oninput = () => {
+        el.parentNode.dataset.replicatedValue = el.value;
+        el.parentNode.querySelector('.chars').innerText = 2000 - el.value.length;
+        el.form.post.disabled = el.value.length > 2000;
+      };
+    });

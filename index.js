@@ -51,7 +51,6 @@ require('./api/routes')(app);
 async function logout(req, res, next) {
   await api.session.delete({ id: req.session.id })
   res.clearCookie('archiviumuid', req.session.id);
-  next();
 }
 
 app.get(`${ADDR_PREFIX}/login`, async (req, res, next) => {

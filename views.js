@@ -148,6 +148,8 @@ module.exports = function(app) {
       ...req.body,
       obj_data: decodeURIComponent(req.body.obj_data),
       public: req.body.visibility === 'public',
+      discussion_enabled: req.body.discussion_enabled === 'enabled',
+      discussion_open: req.body.discussion_open === 'enabled',
     });
     res.status(code);
     if (code === 201) return res.redirect(`${ADDR_PREFIX}/universes/${req.body.shortname}`);
@@ -168,7 +170,9 @@ module.exports = function(app) {
         gravatarLink: `https://www.gravatar.com/avatar/${md5(author.email)}.jpg`,
       };
     });
-    res.prepareRender('universe', { universe, authors: authorMap });
+    const [code3, threads] = await api.discussion.getThreads(req.session.user, { 'discussion.universe_id': universe.id }, false, true);
+    if (!threads) return [code3];
+    res.prepareRender('universe', { universe, authors: authorMap, threads });
   });
 
   get('/universes/:shortname/delete', Auth.verifySessionOrRedirect, async (req, res) => {
@@ -189,11 +193,62 @@ module.exports = function(app) {
       ...req.body,
       obj_data: decodeURIComponent(req.body.obj_data),
       public: req.body.visibility === 'public',
+      discussion_enabled: req.body.discussion_enabled === 'enabled',
+      discussion_open: req.body.discussion_open === 'enabled',
     }
     const [code, data] = await api.universe.put(req.session.user, req.params.shortname, req.body);
     res.status(code);
     if (code === 200) return res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}`);
     res.prepareRender('editUniverse', { error: data, ...req.body });
+  });
+ 
+  get('/universes/:shortname/discuss/create', Auth.verifySessionOrRedirect, async (req, res) => {
+    const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname }, perms.COMMENT);
+    res.status(code);
+    if (code !== 200) return;
+    res.prepareRender('createUniverseThread', { universe });
+  });
+  post('/universes/:shortname/discuss/create', Auth.verifySessionOrRedirect, async (req, res) => {
+    const [code1, data] = await api.discussion.postUniverseThread(req.session.user, req.params.shortname, { title: req.body.title });
+    res.status(code1);
+    if (code1 === 201) {
+      if (req.body.comment) {
+        const [code2, _] = await api.discussion.postCommentToThread(req.session.user, data.insertId, { body: req.body.comment });
+        res.status(code2);
+      }
+      return res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}/discuss/${data.insertId}`);
+    }
+    const [code3, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
+    res.status(code3);
+    if (code3 !== 200) return;
+    res.prepareRender('createUniverseThread', { error: data, ...req.body, universe });
+  });
+  get('/universes/:shortname/discuss/:threadId', Auth.verifySessionOrRedirect, async (req, res) => {
+    const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
+    res.status(code1);
+    if (code1 !== 200) return;
+    const [code2, threads] = await api.discussion.getThreads(req.session.user, { 'discussion.id': req.params.threadId });
+    if (!threads) return [code2];
+    const thread = threads[0];
+    if (!thread) return [code2];
+    const [code3, comments, users] = await api.discussion.getCommentsByThread(req.session.user, thread.id, false, true);
+    if (!comments || !users) return [code3];
+    const commenters = {};
+    for (const user of users) {
+      user.gravatarLink = `https://www.gravatar.com/avatar/${md5(user.email)}.jpg`;
+      delete user.email;
+      commenters[user.id] = user;
+    }
+    
+    res.prepareRender('universeThread', { 
+      universe, thread, comments, commenters,
+      commentAction: `/universes/${universe.shortname}/discuss/${thread.id}/comment`,
+    });
+  });
+  post('/universes/:shortname/discuss/:threadId/comment', Auth.verifySessionOrRedirect, async (req, res) => {
+    const [code, _] = await api.discussion.postCommentToThread(req.session.user, req.params.threadId, req.body);
+    res.status(code);
+    return res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}/discuss/${req.params.threadId}`);
   });
 
   get('/universes/:shortname/items', async (req, res) => {
@@ -254,7 +309,18 @@ module.exports = function(app) {
     }
     item.obj_data = JSON.parse(item.obj_data);
     item.itemTypeName = ((universe.obj_data.cats ?? {})[item.item_type] ?? ['missing_cat'])[0];
-    res.prepareRender('item', { item, universe, tab: req.query.tab });
+    const [code3, comments, users] = await api.discussion.getCommentsByItem(req.session.user, item.id, false, true);
+    if (!comments || !users) return [code3];
+    const commenters = {};
+    for (const user of users) {
+      user.gravatarLink = `https://www.gravatar.com/avatar/${md5(user.email)}.jpg`;
+      delete user.email;
+      commenters[user.id] = user;
+    }
+    res.prepareRender('item', {
+      item, universe, tab: req.query.tab, comments, commenters,
+      commentAction: `/universes/${universe.shortname}/items/${item.shortname}/comment`,
+    });
   });
   get('/universes/:universeShortname/items/:itemShortname/edit', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code1, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
@@ -291,6 +357,11 @@ module.exports = function(app) {
       return res.prepareRender('editItem', { error: err, ...body });
     }
     res.redirect(`${ADDR_PREFIX}/universes/${req.params.universeShortname}/items/${req.params.itemShortname}`);
+  });
+  post('/universes/:universeShortname/items/:itemShortname/comment', Auth.verifySessionOrRedirect, async (req, res) => {
+    const [code, _] = await api.discussion.postCommentToItem(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
+    res.status(code);
+    res.redirect(`${ADDR_PREFIX}/universes/${req.params.universeShortname}/items/${req.params.itemShortname}?tab=comments`);
   });
 
   get('/universes/:shortname/permissions', Auth.verifySessionOrRedirect, async (req, res) => {

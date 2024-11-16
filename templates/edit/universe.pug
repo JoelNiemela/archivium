@@ -1,5 +1,10 @@
 extends ../layout.pug
 
+block append save
+  li#save-btn.navbarBtn
+    script.
+    a.navbarBtnLink.navbarText( onclick='document.forms.edit.submit()' ) Save Changes
+
 block content
   script
     include /static/scripts/domUtils.js
@@ -8,7 +13,7 @@ block content
     include /static/scripts/universes.js
 
   h2 Edit #{universe.title}
-  form( method='POST' )
+  form#edit( method='POST' )
 
     div.inputGroup
       label( for='title' ) Title: 
@@ -20,12 +25,23 @@ block content
         option( value='public' selected=(universe.public) ) Public
         option( value='private' selected=(!universe.public) ) Private
 
+    div.inputGroup
+      label( for='discussion_enabled' ) Discussion: 
+      select( id='discussion_enabled' name='discussion_enabled' )
+        option( value='enabled' selected=(universe.discussion_enabled) ) Enabled
+        option( value='disabled' selected=(!universe.discussion_enabled) ) Disabled
+
+    div.inputGroup
+      label( for='discussion_open' ) Who can comment: 
+      select( id='discussion_open' name='discussion_open' )
+        option( value='enabled' selected=(universe.discussion_open) ) Anyone
+        option( value='disabled' selected=(!universe.discussion_open) ) Only with COMMENT permission level
+
     h3 Item Types
     #cats
 
     div
       input( id='obj_data' type='hidden' name='obj_data' value='{}' )
-      button( type='submit' ) Save Changes
 
     if error
       div

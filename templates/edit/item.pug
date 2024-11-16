@@ -45,7 +45,7 @@ block content
         button( type='button' onclick=`addTabByType()` )= T('New Tab')
         select( id='new_tab_type' onchange='handleTypeChange()' )
           option( hidden disabled selected value ) #{T('Tab Type')}...
-          each type in ['lineage', 'location', 'timeline', 'gallery']
+          each type in ['lineage', 'location', 'timeline', 'gallery', 'comments']
             option( value=type )= capitalize(T(type))
           option( value='custom' )= T('Custom Data')
         input( id='new_tab' type='text' placeholder='Tab Name' ).hidden

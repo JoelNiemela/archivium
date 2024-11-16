@@ -4,8 +4,9 @@ const _ = require('lodash');
 const perms = {
   NONE: 0,
   READ: 1,
-  WRITE: 2,
-  ADMIN: 3,
+  COMMENT: 2,
+  WRITE: 3,
+  ADMIN: 4,
 };
 
 const executeQuery = (query, values) => {

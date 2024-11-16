@@ -27,6 +27,7 @@ const locale = {
     missing_cat: 'Missing Category',
     [`perms_${perms.NONE}`]: 'None',
     [`perms_${perms.READ}`]: 'Read',
+    [`perms_${perms.COMMENT}`]: 'Comment',
     [`perms_${perms.WRITE}`]: 'Write',
     [`perms_${perms.ADMIN}`]: 'Admin',
   }
@@ -85,6 +86,8 @@ const templates = {
   universeList: compile('templates/list/universes.pug'),
   createUniverse: compile('templates/create/universe.pug'),
   editUniversePerms: compile('templates/edit/universePerms.pug'),
+  universeThread: compile('templates/view/universeThread.pug'),
+  createUniverseThread: compile('templates/create/universeThread.pug'),
 
   item: compile('templates/view/item.pug'),
   editItem: compile('templates/edit/item.pug'),

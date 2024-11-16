@@ -1,14 +1,13 @@
 const Promise = require('bluebird');
 const api = require('../api');
 const { ADDR_PREFIX } = require('../config');
+const logger = require('../logger');
 
 module.exports.createSession = (req, res, next) => {
-  // console.log('res cookie', res.cookie);
   if (req.cookies['archiviumuid']) {
     api.session.getOne({hash: req.cookies['archiviumuid']})
       .then((session) => {
         if (session) {
-          // console.log('session:', session.user);
           if (session.user) {
             req.session = {
               userId: session.userId,
@@ -21,7 +20,6 @@ module.exports.createSession = (req, res, next) => {
               hash: session.hash
             };
           }
-          // console.log('AUTH req session', req.session);
           next();
         } else {
           api.session.post()
@@ -29,7 +27,6 @@ module.exports.createSession = (req, res, next) => {
               return api.session.getOne({ id: data.insertId });
             })
             .then((session) => {
-              // console.log('session:', session)
               res.cookie('archiviumuid', session.hash);
               req.session = {
                 id: session.id,
@@ -38,13 +35,13 @@ module.exports.createSession = (req, res, next) => {
               next();
             })
             .catch((err) => {
-              console.log(err)
+              logger.error(err)
               next();
             });
         }
       })
       .catch((err) => {
-        console.log(err)
+        logger.error(err)
         next();
       });
   } else {
@@ -53,17 +50,15 @@ module.exports.createSession = (req, res, next) => {
       return api.session.getOne({ id: data.insertId });
     })
     .then((session) => {
-      // console.log('session:', session)
       res.cookie('archiviumuid', session.hash);
       req.session = {
         id: session.id,
         hash: session.hash
       };
-      // console.log('req session ----->', req.session);
       next();
     })
     .catch((err) => {
-      console.log(err)
+      logger.error(err)
       next();
     });
   }

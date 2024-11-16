@@ -104,7 +104,6 @@ class QueryBuilder {
         queryStr += ` ${type} JOIN ${tableStr}`;
         if (on && on instanceof Cond) {
           const [str, vals] = on.export();
-          // console.log(str, vals)
           queryStr += ` ON ${str}`;
           values = [...values, ...vals.filter(val => val !== undefined)];
         }

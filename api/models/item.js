@@ -1,4 +1,5 @@
 const { QueryBuilder, Cond, executeQuery, perms } = require('../utils');
+const logger = require('../../logger');
 
 async function getOne(user, id, permissionsRequired=perms.READ, basicOnly=false) {
 
@@ -168,7 +169,7 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
     })
     return [200, data];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }
@@ -264,7 +265,7 @@ async function post(user, body, universeShortName) {
     universeId = (await executeQuery('SELECT id FROM universe WHERE shortname = ?', [ universeShortName ]))[0]?.id;
     if (universeId === undefined) return [404];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 
@@ -282,7 +283,6 @@ async function post(user, body, universeShortName) {
         updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
-    console.log(body)
     const { title, shortname, item_type, parent_id, obj_data } = body;
     if (!title || !shortname || !item_type || !obj_data) return [400];
     return [201, await executeQuery(queryString, [
@@ -297,7 +297,7 @@ async function post(user, body, universeShortName) {
       new Date(),
     ])];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }
@@ -486,7 +486,7 @@ async function put(user, universeShortname, itemShortname, changes) {
     `;
     return [200, await executeQuery(queryString, [ title, obj_data, new Date(), user.id, item.id ])];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }
@@ -505,7 +505,7 @@ async function putData(user, universeShortname, itemShortname, changes) {
     const queryString = `UPDATE item SET obj_data = ?, updated_at = ?, last_updated_by = ? WHERE id = ?;`;
     return [200, await executeQuery(queryString, [JSON.stringify(item.obj_data), new Date(), user.id, item.id])];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }
@@ -563,7 +563,7 @@ async function putTags(user, universeShortname, itemShortname, tags) {
     const data = await executeQuery(queryString, valueArray);
     return [201, data];
   } catch (e) {
-    console.error(e);
+    logger.error(e);
     return [500];
   }
 }
@@ -579,7 +579,7 @@ async function delTags(user, universeShortname, itemShortname, tags) {
     const data = await executeQuery(queryString, [ item.id, ...tags ]);
     return [200, data];
   } catch (e) {
-    console.error(e);
+    logger.error(e);
     return [500];
   }
 }
@@ -600,7 +600,7 @@ async function snoozeUntil(user, universeShortname, itemShortname) {
       return [200, await executeQuery(`INSERT INTO snooze (item_id, snoozed_until, snoozed_by) VALUES (?, ?, ?);`, [item.id, snoozeTime, user.id])];
     }
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }

@@ -5,6 +5,7 @@ const md5 = require('md5');
 const { render } = require('./templates');
 const { perms, Cond } = require('./api/utils');
 const fs = require('fs/promises');
+const logger = require('./logger');
 
 module.exports = function(app) {
   app.use((req, res, next) => {
@@ -21,11 +22,8 @@ module.exports = function(app) {
       const [template, data] = res.templateData;
       res.end(render(req, template, data));
     } catch (err) {
-      console.error(`Error ${res.statusCode} rendered.`);
-      if (DEV_MODE) {
-        console.error('Reason:');
-        console.error(err);
-      }
+      logger.error(`Error ${res.statusCode} rendered.`);
+      logger.debug(err.toString());
       res.end(render(req, 'error', { code: res.statusCode }));
     }
     next();
@@ -187,11 +185,9 @@ module.exports = function(app) {
       obj_data: decodeURIComponent(req.body.obj_data),
       public: req.body.visibility === 'public',
     }
-    console.log(req.body)
     const [code, data] = await api.universe.put(req.session.user, req.params.shortname, req.body);
     res.status(code);
     if (code === 200) return res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}`);
-    console.log(code, data)
     res.prepareRender('editUniverse', { error: data, ...req.body });
   });
 

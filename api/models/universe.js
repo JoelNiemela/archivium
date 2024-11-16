@@ -1,4 +1,5 @@
 const { executeQuery, parseData, perms } = require('../utils');
+const logger = require('../../logger');
 
 async function getOne(user, options, permissionLevel) {
   const parsedOptions = parseData(options);
@@ -43,7 +44,7 @@ async function getMany(user, conditions, permissionLevel=perms.READ) {
     const data = await executeQuery(queryString, conditions && conditions.values);
     return [200, data];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }
@@ -109,7 +110,7 @@ async function post(user, body) {
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') return [400, 'universe.shortname must be unique.'];
     if (err.code === 'ER_BAD_NULL_ERROR') return [400, 'Missing parameters.'];
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }
@@ -133,7 +134,7 @@ async function put(user, shortname, changes) {
     `;
     return [200, await executeQuery(queryString, [ title, public, obj_data, new Date(), universe.id ])];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }
@@ -160,7 +161,7 @@ async function putPermissions(user, shortname, targetUser, permission_level) {
   try {
     return [200, await query];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }
@@ -179,7 +180,7 @@ async function del(user, shortname) {
     await executeQuery(`DELETE FROM universe WHERE id = ?;`, [universe.id]);
     return [200];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }

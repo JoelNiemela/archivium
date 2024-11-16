@@ -2,12 +2,13 @@ const db = require('.');
 const fsPromises = require('fs').promises;
 const path = require('path');
 const dbConfig = require('./config');
+const logger = require('../logger');
 
 /**
  * Back up contents of database to JSON in case the database is lost.
  */
 async function backup() {
-  console.log('Backing up db...');
+  logger.info('Backing up db...');
 
   const tables = (await db.queryAsync('SHOW TABLES;'))[0].map(item => item[`Tables_in_${dbConfig.database}`]);
   const blob = {};
@@ -26,7 +27,7 @@ async function backup() {
 
   const time = Number(new Date());
   await fsPromises.writeFile(path.join(__dirname, `backups/backup-${time}.json`), JSON.stringify(blob));
-  console.log('Backup complete.');
+  logger.info('Backup complete.');
 };
 
 async function main() {

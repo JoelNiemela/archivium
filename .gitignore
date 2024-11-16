@@ -7,4 +7,6 @@ config.js
 db/export/
 db/backups/
 
+logs/
+
 elm/elm-stuff/

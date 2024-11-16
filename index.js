@@ -19,9 +19,14 @@ app.use(CookieParser);
 app.use(Auth.createSession);
 
 
+// Logging
+const logger = require('./logger');
+logger.info('Server starting...');
+
+
 // Cron Jobs
 cron.schedule('0 0 * * *', () => {
-    console.log('Running daily DB export...');
+    logger.info('Running daily DB export...');
     backup();
 });
 
@@ -59,7 +64,7 @@ app.get(`${ADDR_PREFIX}/login`, async (req, res, next) => {
     try {
       await logout(req, res, next);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.sendStatus(500);
     }
   }
@@ -77,7 +82,7 @@ app.get(`${ADDR_PREFIX}/logout`, async (req, res, next) => {
     await logout(req, res, next);
     res.redirect(`${ADDR_PREFIX}/`);
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     res.sendStatus(500);
   }
   next();
@@ -104,7 +109,7 @@ app.post(`${ADDR_PREFIX}/login`, async (req, res, next) => {
       res.end(render(req, 'login', { error: 'Username or password incorrect.' }));
     }
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     res.sendStatus(500);
   }
   next();
@@ -118,11 +123,11 @@ app.post(`${ADDR_PREFIX}/signup`, async (req, res, next) => {
       res.status(201);
       res.redirect(`${ADDR_PREFIX}${req.query.page || '/'}${req.query.search ? `?${req.query.search}` : ''}`);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.sendStatus(500);
     }
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     res.redirect(`${ADDR_PREFIX}/signup`);
   }
   next();
@@ -146,11 +151,11 @@ if (DEV_MODE) {
     if (clientIp.startsWith('::ffff:')) {
       clientIp = clientIp.split(':').pop();
     }
-    console.log(req.method, req.path, res.statusCode, req.query || '', req.session.user?.username ?? 'anonymous', clientIp, `${endTime - req.startTime}ms`);
+    logger.info(req.method, req.path, res.statusCode, req.query || '', req.session.user?.username ?? 'anonymous', clientIp, `${endTime - req.startTime}ms`);
     next();
   });
 }
 
 app.listen(PORT, () => {
-  console.log(`Example app listening at http://localhost:${PORT}`);
+  logger.info(`Example app listening at http://localhost:${PORT}`);
 });

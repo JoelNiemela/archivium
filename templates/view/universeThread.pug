@@ -7,7 +7,7 @@ block breadcrumbs
   |  / 
   a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
   |  / 
-  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/discuss` ) #{T('Discuss')}
+  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}?tab=discuss` ) #{T('Discuss')}
   |  / 
   span #{T('New')}
 
@@ -27,7 +27,8 @@ block content
         img.userIcon( alt=commenters[comment.author_id].username, src=commenters[comment.author_id].gravatarLink )
         .d-flex.flex-col.grow-1
           small
-            b #{commenters[comment.author_id].username}
+            b #{commenters[comment.author_id].username} 
+            | #{formatDate(comment.created_at)}
           .comment( data-val=comment.body )
 
   script.

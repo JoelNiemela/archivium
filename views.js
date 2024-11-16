@@ -169,7 +169,7 @@ module.exports = function(app) {
         gravatarLink: `https://www.gravatar.com/avatar/${md5(author.email)}.jpg`,
       };
     });
-    const [code3, threads] = await api.discussion.getThreads(req.session.user, { 'universethread.universe_id': universe.id }, perms.READ, true);
+    const [code3, threads] = await api.discussion.getThreads(req.session.user, { 'discussion.universe_id': universe.id }, perms.READ, true);
     if (!threads) return [code3];
     res.prepareRender('universe', { universe, authors: authorMap, threads });
   });
@@ -211,7 +211,7 @@ module.exports = function(app) {
     res.status(code1);
     if (code1 === 201) {
       if (req.body.comment) {
-        const [code2, _] = await api.discussion.postComment(req.session.user, data.insertId, { body: req.body.comment });
+        const [code2, _] = await api.discussion.postCommentToThread(req.session.user, data.insertId, { body: req.body.comment });
         res.status(code2);
       }
       return res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}/discuss/${data.insertId}`);
@@ -229,7 +229,7 @@ module.exports = function(app) {
     if (!threads) return [code2];
     const thread = threads[0];
     if (!thread) return [code2];
-    const [code3, comments, users] = await api.discussion.getComments(req.session.user, thread.id, false, true);
+    const [code3, comments, users] = await api.discussion.getCommentsByThread(req.session.user, thread.id, false, true);
     if (!comments || !users) return [code3];
     const commenters = {};
     for (const user of users) {
@@ -241,7 +241,7 @@ module.exports = function(app) {
     res.prepareRender('universeThread', { universe, thread, comments, commenters });
   });
   post('/universes/:shortname/discuss/:threadId', Auth.verifySessionOrRedirect, async (req, res) => {
-    const [code, _] = await api.discussion.postComment(req.session.user, req.params.threadId, req.body);
+    const [code, _] = await api.discussion.postCommentToThread(req.session.user, req.params.threadId, req.body);
     res.status(code);
     return res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}/discuss/${req.params.threadId}`);
   });

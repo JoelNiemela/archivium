@@ -13,8 +13,7 @@ async function getThreads(user, options, permissionLevel=perms.READ, includeExtr
         ${includeExtra ? 'comments.*,' : ''}
         discussion.*
       FROM discussion
-      INNER JOIN universethread ON discussion.id = universethread.thread_id
-      INNER JOIN universe ON universe.id = universethread.universe_id
+      INNER JOIN universe ON universe.id = discussion.universe_id
       INNER JOIN authoruniverse as au_filter
         ON universe.id = au_filter.universe_id AND (
           ${permsQueryString}
@@ -23,11 +22,12 @@ async function getThreads(user, options, permissionLevel=perms.READ, includeExtr
       ${includeExtra ? `
         LEFT JOIN (
           SELECT DISTINCT
-            COUNT(id) as comment_count,
-            MIN(created_at) as first_activity,
-            MAX(created_at) as last_activity,
-            thread_id
+            COUNT(comment.id) as comment_count,
+            MIN(comment.created_at) as first_activity,
+            MAX(comment.created_at) as last_activity,
+            tc.thread_id
           FROM comment
+          INNER JOIN threadcomment AS tc ON tc.comment_id = comment.id
           GROUP BY thread_id
         ) comments ON comments.thread_id = discussion.id
       ` : ''}
@@ -41,17 +41,27 @@ async function getThreads(user, options, permissionLevel=perms.READ, includeExtr
   }
 }
 
-async function getComments(user, threadId, validate=true, inclCommenters=false, permissionLevel=perms.READ) {
+async function getCommentsByThread(user, threadId, validate=true, inclCommenters=false, permissionLevel=perms.READ) {
   try {
     if (validate) {
       const [code, threads] = await getThreads(user, { 'discussion.id': threadId }, permissionLevel);
       const thread = threads[0];
       if (!thread) return [code];
     }
-    const queryString1 = `SELECT * FROM comment WHERE thread_id = ?`;
+    const queryString1 = `
+      SELECT comment.*
+      FROM comment
+      INNER JOIN threadcomment AS tc ON tc.comment_id = comment.id
+      WHERE tc.thread_id = ?`;
     const comments = await executeQuery(queryString1, [ threadId ]);
     if (inclCommenters) {
-      const queryString2 = `SELECT user.id, user.username, user.email FROM user INNER JOIN comment ON user.id = comment.author_id WHERE comment.thread_id = ? GROUP BY user.id`;
+      const queryString2 = `
+        SELECT user.id, user.username, user.email
+        FROM user
+        INNER JOIN comment ON user.id = comment.author_id
+        INNER JOIN threadcomment AS tc ON tc.comment_id = comment.id
+        WHERE tc.thread_id = ?
+        GROUP BY user.id`;
       const users = await executeQuery(queryString2, [ threadId ]);
       return [200, comments, users];
     }
@@ -69,10 +79,8 @@ async function postUniverseThread(user, universeShortname, { title }) {
   if (!title) return [400, 'Title is required for universe discussion threads.'];
 
   try {
-    const queryString1 = `INSERT INTO discussion (title) VALUES (?);`;
-    const data = await executeQuery(queryString1, [ title ?? null ]);
-    const queryString2 = `INSERT INTO universethread (universe_id, thread_id) VALUES (?, ?)`;
-    await executeQuery(queryString2, [ universe.id, data.insertId ])
+    const queryString = `INSERT INTO discussion (title, universe_id) VALUES (?, ?);`;
+    const data = await executeQuery(queryString, [ title, universe.id ]);
     return [201, data];
   } catch (err) {
     console.error(err);
@@ -80,15 +88,18 @@ async function postUniverseThread(user, universeShortname, { title }) {
   }
 }
 
-async function postComment(user, threadId, { body }) {
+async function postCommentToThread(user, threadId, { body, reply_to }) {
   const [code, threads] = await getThreads(user, { 'discussion.id': threadId }, perms.COMMENT);
   const thread = threads[0];
   if (!thread) return [code];
   if (!body) return [400];
 
   try {
-    const queryString = `INSERT INTO comment (body, author_id, thread_id, created_at) VALUES (?, ?, ?, ?);`;
-    return [201, await executeQuery(queryString, [ body, user.id, thread.id, new Date() ])];
+    const queryString1 = `INSERT INTO comment (body, author_id, reply_to, created_at) VALUES (?, ?, ?, ?);`;
+    const data = await executeQuery(queryString1, [ body, user.id, reply_to ?? null, new Date() ]);
+    const queryString2 = `INSERT INTO threadcomment (thread_id, comment_id) VALUES (?, ?)`;
+    await executeQuery(queryString2, [ thread.id, data.insertId ])
+    return [201, data];
   } catch (err) {
     console.error(err);
     return [500];
@@ -97,7 +108,7 @@ async function postComment(user, threadId, { body }) {
 
 module.exports = {
   getThreads,
-  getComments,
+  getCommentsByThread,
   postUniverseThread,
-  postComment,
+  postCommentToThread,
 };

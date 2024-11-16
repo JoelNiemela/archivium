@@ -88,7 +88,7 @@ function getManyByAuthorName(user, authorName) {
 
 async function post(user, body) {
   try {
-    const { title, shortname, public, discussion_enabled, obj_data } = body;
+    const { title, shortname, public, discussion_enabled, discussion_open, obj_data } = body;
     if (!(title && shortname)) return [400, 'Missing parameters.'];
     const queryString1 = `
       INSERT INTO universe (
@@ -97,6 +97,7 @@ async function post(user, body) {
         author_id,
         public,
         discussion_enabled,
+        discussion_open,
         obj_data,
         created_at,
         updated_at
@@ -108,6 +109,7 @@ async function post(user, body) {
       user.id,
       public,
       discussion_enabled,
+      discussion_open,
       obj_data,
       new Date(),
       new Date(),
@@ -123,7 +125,7 @@ async function post(user, body) {
 }
 
 async function put(user, shortname, changes) {
-  const { title, public, discussion_enabled, obj_data } = changes;
+  const { title, public, discussion_enabled, discussion_open, obj_data } = changes;
 
   if (!title) return [400];
   const [code, universe] = await getOne(user, { shortname }, perms.WRITE);
@@ -136,11 +138,12 @@ async function put(user, shortname, changes) {
         title = ?,
         public = ?,
         discussion_enabled = ?,
+        discussion_open = ?,
         obj_data = ?,
         updated_at = ?
       WHERE id = ?;
     `;
-    return [200, await executeQuery(queryString, [ title, public, discussion_enabled, obj_data, new Date(), universe.id ])];
+    return [200, await executeQuery(queryString, [ title, public, discussion_enabled, discussion_open, obj_data, new Date(), universe.id ])];
   } catch (err) {
     logger.error(err);
     return [500];

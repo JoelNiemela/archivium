@@ -149,6 +149,7 @@ module.exports = function(app) {
       obj_data: decodeURIComponent(req.body.obj_data),
       public: req.body.visibility === 'public',
       discussion_enabled: req.body.discussion_enabled === 'enabled',
+      discussion_open: req.body.discussion_open === 'enabled',
     });
     res.status(code);
     if (code === 201) return res.redirect(`${ADDR_PREFIX}/universes/${req.body.shortname}`);
@@ -169,7 +170,7 @@ module.exports = function(app) {
         gravatarLink: `https://www.gravatar.com/avatar/${md5(author.email)}.jpg`,
       };
     });
-    const [code3, threads] = await api.discussion.getThreads(req.session.user, { 'discussion.universe_id': universe.id }, perms.READ, true);
+    const [code3, threads] = await api.discussion.getThreads(req.session.user, { 'discussion.universe_id': universe.id }, false, true);
     if (!threads) return [code3];
     res.prepareRender('universe', { universe, authors: authorMap, threads });
   });
@@ -193,6 +194,7 @@ module.exports = function(app) {
       obj_data: decodeURIComponent(req.body.obj_data),
       public: req.body.visibility === 'public',
       discussion_enabled: req.body.discussion_enabled === 'enabled',
+      discussion_open: req.body.discussion_open === 'enabled',
     }
     const [code, data] = await api.universe.put(req.session.user, req.params.shortname, req.body);
     res.status(code);

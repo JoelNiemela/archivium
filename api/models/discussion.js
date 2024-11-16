@@ -2,13 +2,24 @@ const { executeQuery, parseData, perms } = require('../utils');
 const universeapi = require('./universe');
 const itemapi = require('./item');
 
-async function getThreads(user, options, permissionLevel=perms.READ, includeExtra=false) {
+async function getThreads(user, options, canPost=false, includeExtra=false) {
   try {
     const parsedOptions = parseData(options);
-    const readOnlyQueryString = permissionLevel > perms.READ ? '' : `universe.public = 1`;
-    const usrQueryString = user ? `(au_filter.user_id = ${user.id} AND au_filter.permission_level >= ${permissionLevel})` : '';
-    const permsQueryString = `${readOnlyQueryString}${(readOnlyQueryString && usrQueryString) ? ' OR ' : ''}${usrQueryString}`;
-    const conditionString = options ? `WHERE ${parsedOptions.strings.join(' AND ')}` : '';
+    // const readOnlyQueryString = permissionLevel > perms.READ ? '' : `universe.public = 1`;
+    // const usrQueryString = user ? `(au_filter.user_id = ${user.id} AND au_filter.permission_level >= ${permissionLevel})` : '';
+    // const permsQueryString = `${readOnlyQueryString}${(readOnlyQueryString && usrQueryString) ? ' OR ' : ''}${usrQueryString}`;
+    const filter = canPost
+      ? `
+        (universe.public = 1 AND universe.discussion_open)
+        OR (au_filter.user_id = ${user.id} AND (
+          (au_filter.permission_level >= ${perms.READ} AND universe.discussion_open)
+          OR au_filter.permission_level >= ${perms.COMMENT}
+        ))
+      `
+      : `
+        universe.public = 1 OR (au_filter.user_id = ${user.id} AND au_filter.permission_level >= ${perms.READ})
+      `;
+    const conditionString = options ? `AND ${parsedOptions.strings.join(' AND ')}` : '';
     const queryString = `
       SELECT
         ${includeExtra ? 'comments.*,' : ''}
@@ -17,7 +28,7 @@ async function getThreads(user, options, permissionLevel=perms.READ, includeExtr
       INNER JOIN universe ON universe.id = discussion.universe_id
       INNER JOIN authoruniverse as au_filter
         ON universe.id = au_filter.universe_id AND (
-          ${permsQueryString}
+          ${filter}
         )
       LEFT JOIN authoruniverse as au ON universe.id = au.universe_id
       ${includeExtra ? `
@@ -32,6 +43,7 @@ async function getThreads(user, options, permissionLevel=perms.READ, includeExtr
           GROUP BY thread_id
         ) comments ON comments.thread_id = discussion.id
       ` : ''}
+      WHERE universe.discussion_enabled
       ${conditionString}
       GROUP BY discussion.id;`;
     const data = await executeQuery(queryString, options && parsedOptions.values);
@@ -42,10 +54,10 @@ async function getThreads(user, options, permissionLevel=perms.READ, includeExtr
   }
 }
 
-async function getCommentsByThread(user, threadId, validate=true, inclCommenters=false, permissionLevel=perms.READ) {
+async function getCommentsByThread(user, threadId, validate=true, inclCommenters=false) {
   try {
     if (validate) {
-      const [code, threads] = await getThreads(user, { 'discussion.id': threadId }, permissionLevel);
+      const [code, threads] = await getThreads(user, { 'discussion.id': threadId });
       const thread = threads[0];
       if (!thread) return [code];
     }
@@ -73,7 +85,7 @@ async function getCommentsByThread(user, threadId, validate=true, inclCommenters
   }
 }
 
-async function getCommentsByItem(user, itemId, validate=true, inclCommenters=false, permissionLevel=perms.READ) {
+async function getCommentsByItem(user, itemId, validate=true, inclCommenters=false) {
   try {
     if (validate) {
       const [code, item] = await itemapi.getOne(user, itemId, permissionLevel, true);
@@ -104,9 +116,10 @@ async function getCommentsByItem(user, itemId, validate=true, inclCommenters=fal
 }
 
 async function postUniverseThread(user, universeShortname, { title }) {
-  const [code, universe] = await universeapi.getOne(user, { shortname: universeShortname }, perms.COMMENT);
+  const [code, universe] = await universeapi.getOne(user, { shortname: universeShortname }, perms.READ);
   if (!universe) return [code];
   if (!universe.discussion_enabled) return [403];
+  if (!universe.discussion_open && universe.author_permissions[user.id] < perms.COMMENT) return [403];
   if (!title) return [400, 'Title is required for universe discussion threads.'];
 
   try {
@@ -120,7 +133,7 @@ async function postUniverseThread(user, universeShortname, { title }) {
 }
 
 async function postCommentToThread(user, threadId, { body, reply_to }) {
-  const [code, threads] = await getThreads(user, { 'discussion.id': threadId }, perms.COMMENT);
+  const [code, threads] = await getThreads(user, { 'discussion.id': threadId }, true);
   const thread = threads[0];
   if (!thread) return [code];
   if (!body) return [400];

@@ -67,7 +67,7 @@ block content
     if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
       li.navbarBtn( data-tab='lineage' )
           h3.navbarBtnLink.navbarText( onclick=`showTab('lineage')` ) #{item.obj_data.lineage.title}
-    if 'comments' in item.obj_data
+    if 'comments' in item.obj_data && 'title' in item.obj_data.comments
       li.navbarBtn( data-tab='comments' )
           h3.navbarBtnLink.navbarText( onclick=`showTab('comments')` ) #{capitalize(T('comments'))}
 
@@ -121,7 +121,7 @@ block content
             a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${shortname}` )
               | #{item.child_titles[shortname]}
         
-    if 'comments' in item.obj_data
+    if 'comments' in item.obj_data && 'title' in item.obj_data.comments
       .hidden( data-tab='comments' )
         .d-flex.flex-col.gap-4
           each comment in comments
@@ -137,7 +137,7 @@ block content
         hr
         br
 
-        if contextUser && (universe.author_permissions[contextUser.id] >= perms.COMMENT)
+        if contextUser && (universe.author_permissions[contextUser.id] >= (universe.discussion_open ? perms.READ : perms.COMMENT))
           form( method='POST' action=`/universes/${universe.shortname}/items/${item.shortname}/comment` )
             div
               textarea( id='body' name='body' value=`${comment || ''}` )

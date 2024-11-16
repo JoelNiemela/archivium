@@ -40,7 +40,7 @@ block content
   hr
   br
 
-  if contextUser && (universe.author_permissions[contextUser.id] >= perms.COMMENT)
+  if contextUser && (universe.author_permissions[contextUser.id] >= (universe.discussion_open ? perms.READ : perms.COMMENT))
     form( method='POST' action=`/universes/${universe.shortname}/discuss/${thread.id}/comment` )
       div
         textarea( id='body' name='body' value=`${comment || ''}` )

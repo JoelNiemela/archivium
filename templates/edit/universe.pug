@@ -31,6 +31,12 @@ block content
         option( value='enabled' selected=(universe.discussion_enabled) ) Enabled
         option( value='disabled' selected=(!universe.discussion_enabled) ) Disabled
 
+    div.inputGroup
+      label( for='discussion_open' ) Who can comment: 
+      select( id='discussion_open' name='discussion_open' )
+        option( value='enabled' selected=(universe.discussion_open) ) Anyone
+        option( value='disabled' selected=(!universe.discussion_open) ) Only with COMMENT permission level
+
     h3 Item Types
     #cats
 

@@ -67,6 +67,9 @@ block content
     if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
       li.navbarBtn( data-tab='lineage' )
           h3.navbarBtnLink.navbarText( onclick=`showTab('lineage')` ) #{item.obj_data.lineage.title}
+    if 'comments' in item.obj_data
+      li.navbarBtn( data-tab='comments' )
+          h3.navbarBtnLink.navbarText( onclick=`showTab('comments')` ) #{capitalize(T('comments'))}
 
   
   script!= `window.item = ${JSON.stringify(item)};`
@@ -117,6 +120,32 @@ block content
             hr
             a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${shortname}` )
               | #{item.child_titles[shortname]}
+        
+    if 'comments' in item.obj_data
+      .hidden( data-tab='comments' )
+        .d-flex.flex-col.gap-4
+          each comment in comments
+            .sheet.d-flex.gap-4.align-start
+              img.userIcon( alt=commenters[comment.author_id].username, src=commenters[comment.author_id].gravatarLink )
+              .d-flex.flex-col.grow-1
+                small
+                  b #{commenters[comment.author_id].username} 
+                  | #{formatDate(comment.created_at)}
+                .comment( data-val=comment.body )
+
+        br
+        hr
+        br
+
+        if contextUser && (universe.author_permissions[contextUser.id] >= perms.COMMENT)
+          form( method='POST' action=`/universes/${universe.shortname}/items/${item.shortname}/comment` )
+            div
+              textarea( id='body' name='body' value=`${comment || ''}` )
+            div
+              button( type='submit' ) Post Comment
+            if error
+              div
+                span( style={'font-size': 'small'} ).color-error= error
 
     if 'body' in item.obj_data
       .sheet.hidden( data-tab='body' )
@@ -130,24 +159,29 @@ block content
     const body = document.getElementById('markdown-body');
     if (body) {
       loadMarkdown(body, '#{universe.shortname}', item.obj_data.body, { item });
-
-      document.querySelectorAll('.mdVal').forEach((el) => {
-        loadMarkdown(el, '#{universe.shortname}', el.dataset.val, null, (tag) => {
-          if (tag.type === 'div') tag.attrs.style = {'text-align': 'right'};
-          if (tag.type === 'p') tag.type = 'span';
-        });
-      });
-
-      document.querySelectorAll('.mdLabel').forEach((el) => {
-        loadMarkdown(el, '#{universe.shortname}', el.dataset.val, null, (tag) => {
-          if (tag.type === 'div') {
-            tag.attrs.style = {'text-align': 'center'};
-            tag.attrs.class += ' label';
-          }
-          if (tag.type === 'p') tag.type = 'span';
-        });
-      });
     };
+
+    document.querySelectorAll('.mdVal').forEach((el) => {
+      loadMarkdown(el, '#{universe.shortname}', el.dataset.val, null, (tag) => {
+        if (tag.type === 'div') tag.attrs.style = {'text-align': 'right'};
+        if (tag.type === 'p') tag.type = 'span';
+      });
+    });
+
+    document.querySelectorAll('.mdLabel').forEach((el) => {
+      loadMarkdown(el, '#{universe.shortname}', el.dataset.val, null, (tag) => {
+        if (tag.type === 'div') {
+          tag.attrs.style = {'text-align': 'center'};
+          tag.attrs.class += ' label';
+        }
+        if (tag.type === 'p') tag.type = 'span';
+      });
+    });
+    
+    document.querySelectorAll('.comment').forEach((el) => {
+      console.log(el.dataset.val)
+      loadMarkdown(el, '#{universe.shortname}', el.dataset.val, null);
+    });
   
   if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
     script!= `loadEditor(${JSON.stringify(universe)}, ${JSON.stringify(item.obj_data.body)});`

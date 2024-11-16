@@ -240,7 +240,7 @@ module.exports = function(app) {
     
     res.prepareRender('universeThread', { universe, thread, comments, commenters });
   });
-  post('/universes/:shortname/discuss/:threadId', Auth.verifySessionOrRedirect, async (req, res) => {
+  post('/universes/:shortname/discuss/:threadId/comment', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code, _] = await api.discussion.postCommentToThread(req.session.user, req.params.threadId, req.body);
     res.status(code);
     return res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}/discuss/${req.params.threadId}`);
@@ -304,7 +304,15 @@ module.exports = function(app) {
     }
     item.obj_data = JSON.parse(item.obj_data);
     item.itemTypeName = ((universe.obj_data.cats ?? {})[item.item_type] ?? ['missing_cat'])[0];
-    res.prepareRender('item', { item, universe, tab: req.query.tab });
+    const [code3, comments, users] = await api.discussion.getCommentsByItem(req.session.user, item.id, false, true);
+    if (!comments || !users) return [code3];
+    const commenters = {};
+    for (const user of users) {
+      user.gravatarLink = `https://www.gravatar.com/avatar/${md5(user.email)}.jpg`;
+      delete user.email;
+      commenters[user.id] = user;
+    }
+    res.prepareRender('item', { item, universe, tab: req.query.tab, comments, commenters });
   });
   get('/universes/:universeShortname/items/:itemShortname/edit', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code1, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
@@ -341,6 +349,11 @@ module.exports = function(app) {
       return res.prepareRender('editItem', { error: err, ...body });
     }
     res.redirect(`${ADDR_PREFIX}/universes/${req.params.universeShortname}/items/${req.params.itemShortname}`);
+  });
+  post('/universes/:universeShortname/items/:itemShortname/comment', Auth.verifySessionOrRedirect, async (req, res) => {
+    const [code, _] = await api.discussion.postCommentToItem(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
+    res.status(code);
+    res.redirect(`${ADDR_PREFIX}/universes/${req.params.universeShortname}/items/${req.params.itemShortname}?tab=comments`);
   });
 
   get('/universes/:shortname/permissions', Auth.verifySessionOrRedirect, async (req, res) => {

@@ -1,5 +1,6 @@
 const { executeQuery, parseData, perms } = require('../utils');
 const universeapi = require('./universe');
+const itemapi = require('./item');
 
 async function getThreads(user, options, permissionLevel=perms.READ, includeExtra=false) {
   try {
@@ -72,6 +73,36 @@ async function getCommentsByThread(user, threadId, validate=true, inclCommenters
   }
 }
 
+async function getCommentsByItem(user, itemId, validate=true, inclCommenters=false, permissionLevel=perms.READ) {
+  try {
+    if (validate) {
+      const [code, item] = await itemapi.getOne(user, itemId, permissionLevel, true);
+      if (!item) return [code];
+    }
+    const queryString1 = `
+      SELECT comment.*
+      FROM comment
+      INNER JOIN itemcomment AS ic ON ic.comment_id = comment.id
+      WHERE ic.item_id = ?`;
+    const comments = await executeQuery(queryString1, [ itemId ]);
+    if (inclCommenters) {
+      const queryString2 = `
+        SELECT user.id, user.username, user.email
+        FROM user
+        INNER JOIN comment ON user.id = comment.author_id
+        INNER JOIN itemcomment AS ic ON ic.comment_id = comment.id
+        WHERE ic.item_id = ?
+        GROUP BY user.id`;
+      const users = await executeQuery(queryString2, [ itemId ]);
+      return [200, comments, users];
+    }
+    return [200, comments];
+  } catch (err) {
+    console.error(err);
+    return [500];
+  }
+}
+
 async function postUniverseThread(user, universeShortname, { title }) {
   const [code, universe] = await universeapi.getOne(user, { shortname: universeShortname }, perms.COMMENT);
   if (!universe) return [code];
@@ -106,9 +137,28 @@ async function postCommentToThread(user, threadId, { body, reply_to }) {
   }
 }
 
+async function postCommentToItem(user, universeShortname, itemShortname, { body, reply_to }) {
+  const [code, item] = await itemapi.getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.COMMENT, true)
+  if (!item) return [code];
+  if (!body) return [400];
+
+  try {
+    const queryString1 = `INSERT INTO comment (body, author_id, reply_to, created_at) VALUES (?, ?, ?, ?);`;
+    const data = await executeQuery(queryString1, [ body, user.id, reply_to ?? null, new Date() ]);
+    const queryString2 = `INSERT INTO itemcomment (item_id, comment_id) VALUES (?, ?)`;
+    await executeQuery(queryString2, [ item.id, data.insertId ])
+    return [201, data];
+  } catch (err) {
+    console.error(err);
+    return [500];
+  }
+}
+
 module.exports = {
   getThreads,
   getCommentsByThread,
+  getCommentsByItem,
   postUniverseThread,
   postCommentToThread,
+  postCommentToItem,
 };

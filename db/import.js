@@ -9,6 +9,8 @@ const dbExport = require('./export');
 function formatTypes(type, data) {
   if (type === 'datetime' || type === 'date' || type === 'timestamp') {
     return data ? new Date(data) : null;
+  } else if (type === 'longblob') {
+    return Buffer.from(data.data);
   } else {
     return data;
   }

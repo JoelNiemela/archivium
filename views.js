@@ -309,6 +309,9 @@ module.exports = function(app) {
     }
     item.obj_data = JSON.parse(item.obj_data);
     item.itemTypeName = ((universe.obj_data.cats ?? {})[item.item_type] ?? ['missing_cat'])[0];
+    if (item.gallery.length > 0) {
+      item.gallery = item.gallery.sort((a, b) => a[0] > b[0] ? 1 : -1);
+    }
     const [code3, comments, users] = await api.discussion.getCommentsByItem(req.session.user, item.id, false, true);
     if (!comments || !users) return [code3];
     const commenters = {};
@@ -354,7 +357,8 @@ module.exports = function(app) {
           url: `/api/universes/${item.universe_short}/items/${item.shortname}/gallery/images/${id}`,
           name,
           label,
-        }));
+        }))
+        .sort((a, b) => a.id > b.id ? 1 : -1);
     }
     const itemMap = {};
     itemList.forEach(item => itemMap[item.shortname] = item.title);

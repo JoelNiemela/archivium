@@ -4,6 +4,8 @@ const api = require('./api');
 const { render } = require('./templates');
 
 const CookieParser = require('./middleware/cookieParser');
+const multer = require('multer');
+// const bodyParser = require('body-parser');
 const Auth = require('./middleware/auth');
 
 const cron = require('node-cron');
@@ -17,6 +19,10 @@ app.use(express.json());
 
 app.use(CookieParser);
 app.use(Auth.createSession);
+
+// Configure multer storage
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 
 // Logging
@@ -47,7 +53,7 @@ app.use(`${ADDR_PREFIX}/static`, express.static(path.join(__dirname, 'static/'))
 require('./views')(app);
 
 // Load api routes
-require('./api/routes')(app);
+require('./api/routes')(app, upload);
 
 
 /* 

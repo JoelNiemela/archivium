@@ -92,6 +92,16 @@ CREATE TABLE itemcomment (
   FOREIGN KEY (comment_id) REFERENCES comment (id)
 );
 
+CREATE TABLE itemimage (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  item_id INT NOT NULL,
+  name VARCHAR(64) NOT NULL,
+  label VARCHAR(256) NOT NULL,
+  mimetype VARCHAR(32) NOT NULL,
+  data LONGBLOB NOT NULL,
+  FOREIGN KEY (item_id) REFERENCES item (id)
+);
+
 CREATE TABLE snooze (
   snoozed_until TIMESTAMP NOT NULL,
   snoozed_by INT NOT NULL,

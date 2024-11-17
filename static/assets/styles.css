@@ -726,6 +726,9 @@ h4, h5 {
 .align-end {
   align-items: end;
 }
+.align-self-start {
+  align-self: start;
+}
 .align-self-end {
   align-self: end;
 }
@@ -754,6 +757,9 @@ h4, h5 {
 }
 .grow-4 {
   flex-grow: 4;
+}
+.shrink-1 {
+  flex-shrink: 1;
 }
 
 .gap-0 {
@@ -805,4 +811,8 @@ h4, h5 {
 
 .w-100 {
   width: 100%;
+}
+
+.scroll-x {
+  overflow-x: auto;
 }

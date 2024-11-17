@@ -215,6 +215,10 @@ if (!window.modal) throw 'modal not loaded!';
       await Promise.all(this.nodes.map(node => node.unfocus()));
     }
   }
+  
+  function saveFns(changeCheck, doSave) {
+    return { changeCheck, doSave };
+  }
 
   async function loadEditor(universe, body) {
 
@@ -236,8 +240,8 @@ if (!window.modal) throw 'modal not loaded!';
       saveBtn.firstChild.innerText = 'Saving...';
       saveTimeout = setTimeout(async () => {
         console.log('SAVING...');
-        const changes = saves.map(f => f()).filter(k => k);
-        if (changes.length === 0) {
+        const changes = saves.map(fns => fns.changeCheck());
+        if (!changes.some(v => v)) {
           console.log('NO CHANGE');
           saveBtn.firstChild.innerText = 'Saved';
           needsSaving = false;
@@ -249,7 +253,12 @@ if (!window.modal) throw 'modal not loaded!';
           data[key] = window.item.obj_data[key];
         }
         try {
-          await putJSON(`/api/universes/${universe.shortname}/items/${window.item.shortname}/data`, data);
+          const data = {};
+          const promises = saves.filter((_, i) => changes[i]).map(fns => fns.doSave(data));
+          await Promise.all(promises);
+          if (Object.keys(data).length > 0) {
+            await putJSON(`/api/universes/${universe.shortname}/items/${window.item.shortname}/data`, data);
+          }
           console.log('SAVED.');
           saveBtn.firstChild.innerText = 'Saved';
           needsSaving = false;
@@ -284,12 +293,14 @@ if (!window.modal) throw 'modal not loaded!';
         save();
       };
       window.editorObj = editor;
-      saves.push(() => {
+      saves.push(saveFns(() => {
         const markdown = editor.export().trim();
         if (markdown === window.item.obj_data.body) return false;
         window.item.obj_data.body = markdown;
-        return 'body';
-      });
+        return true;
+      }, (data) => {
+        data.body = window.item.obj_data.body;
+      }));
       document.getElementById('save-btn').onclick = () => {
         save(0);
       };
@@ -309,19 +320,23 @@ if (!window.modal) throw 'modal not loaded!';
       editors.push(keyEditor);
       const valEditor = new Editor(valEditorDiv, val, onchange, true);
       editors.push(valEditor);
-      let oldKey = key;
-      let oldVal = val;
-      saves.push(() => {
+      let curKey = key;
+      let curVal = val;
+      saves.push(saveFns(() => {
         if (!window.item.obj_data.tabs[tabName] || !window.item.obj_data.tabs[tabName][key]) return false;
         const newKey = keyEditor.export().trim();
         const newVal = valEditor.export().trim();
-        if (newKey === oldKey && newVal === oldVal) return false;
-        oldKey = newKey;
-        oldVal = newVal;
+        if (newKey === curKey && newVal === curVal) return false;
+        curKey = newKey;
+        curVal = newVal;
         delete window.item.obj_data.tabs[tabName][key];
         window.item.obj_data.tabs[tabName][newKey] = newVal;
-        return 'tabs';
-      });
+        return true;
+      }, (data) => {
+        if (!data.tabs) data.tabs = [];
+        if (!data.tabs[tabName]) data.tabs[tabName] = [];
+        data.tabs[tabName][curKey] = window.item.obj_data.tabs[tabName][curKey];
+      }));
     });
 
     // Gallery Labels
@@ -331,16 +346,18 @@ if (!window.modal) throw 'modal not loaded!';
       container.appendChild(labelEditorDiv);
       const labelEditor = new Editor(labelEditorDiv, label, onchange, true);
       editors.push(labelEditor);
-      delete window.item.obj_data.gallery.imgs[index].mdLabel;
-      let oldLabel = label;
-      saves.push(() => {
-        if (!window.item.obj_data.gallery?.imgs[index]) return false;
+      let curLabel = label;
+      saves.push(saveFns(() => {
+        if (!window.item.gallery[index]) return false;
         const newLabel = labelEditor.export().trim();
-        if (newLabel === oldLabel) return false;
-        oldLabel = newLabel;
-        window.item.obj_data.gallery.imgs[index].label = newLabel;
-        return 'gallery';
-      });
+        if (newLabel === curLabel) return false;
+        curLabel = newLabel;
+        window.item.gallery[index][2] = newLabel;
+        return true;
+      }, async (_) => {
+        const id = window.item.gallery[index][0];
+        await putJSON(`/api/universes/${universe.shortname}/items/${window.item.shortname}/gallery/images/${id}`, { label: curLabel });
+      }));
     });
   }
   window.loadEditor = loadEditor;

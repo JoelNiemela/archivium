@@ -12,6 +12,7 @@ block content
     include /static/scripts/modal.js
     include /static/scripts/fetchUtils.js
     include /static/scripts/calendarPicker.js
+    include /static/scripts/fileUpload.js
     include /static/scripts/itemEditor.js
 
   h2 Edit #{item.title}
@@ -70,6 +71,6 @@ block content
       div
         span( style={color: 'red', 'font-size': 'small'} )= error 
 
-  script!= `updateObjData(${JSON.stringify(item.obj_data)}); itemMap = ${JSON.stringify(itemMap)}; universe = '${item.universe_short}'`
+  script!= `updateObjData(${JSON.stringify(item.obj_data)}); itemMap = ${JSON.stringify(itemMap)}; universe = '${item.universe_short}'; item = '${item.shortname}'`
   script.
     resetTabs();

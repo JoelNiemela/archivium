@@ -7,6 +7,7 @@ if (!window.createSearchableSelect) throw 'searchableSelect not loaded!';
 if (!window.modal) throw 'modal not loaded!';
 if (!window.getJSON) throw 'fetchUtils.js not loaded!';
 if (!window.CalendarPicker) throw 'calendarPicker.js not loaded!';
+if (!window.uploadImage) throw 'fileUpload.js not loaded!';
 
 function getIdValue(id) {
   return document.getElementById(id).value;
@@ -249,41 +250,50 @@ async function addTab(type, name, force=false) {
     ] }),
     type === 'gallery' && createElement('div', { children: [
       createElement('div', { classList: ['item-gallery', 'd-flex', 'gap-4', 'flex-wrap'], children: [
-        ...(obj_data.gallery.imgs ?? []).map(img => img ?? {}).map(({ url, label }, i) => (       
+        ...(obj_data.gallery.imgs ?? []).map(img => img ?? {}).map(({ id, url, label }, i) => (       
           createElement('div', { classList: [], children: [
-            createElement('div', { classList: ['d-flex'], attrs: { style: 'height: 8rem;' }, children: [
-              createElement('button', { attrs: {
-                type: 'button',
-                innerText: T('Remove Image'),
-                onclick: () => {
-                  const newState = { ...obj_data };
-                  newState.gallery.imgs.splice(i, 1);
-                  updateObjData(newState);
-                  resetTabs(name);
-                },
-              } }),
+            createElement('div', { classList: ['d-flex', 'gap-1'], attrs: { style: 'height: 8rem;' }, children: [
               createElement('img', { attrs: { src: url, alt: label, style: { height: '2rem' } } }),
+              createElement('div', { classList: ['d-flex', 'flex-col'], children: [
+                createElement('button', { attrs: {
+                  type: 'button',
+                  innerText: T('Remove Image'),
+                  onclick: () => {
+                    const newState = { ...obj_data };
+                    newState.gallery.imgs.splice(i, 1);
+                    updateObjData(newState);
+                    resetTabs(name);
+                  },
+                } }),
+                createElement('input', { attrs: { value: label ?? '', placeholder: 'Label', onchange: ({ target }) => {
+                  const newState = { ...obj_data };
+                  newState.gallery.imgs[i].label = target.value;
+                  updateObjData(newState);
+                } } }),
+                createElement('a', { classList: ['link', 'link-animated', 'align-self-start'], attrs: {
+                  href: `/api/universes/${universe}/items/${item}/gallery/images/${id}?download=1`,
+                  innerText: T('Download'),
+                } }),
+              ] }),
             ] }),
-            label && createElement('span', { attrs: { innerText: label } }),
           ] })
         )),
       ] }),
       createElement('button', { attrs: {
         type: 'button',
-        innerText: 'Add New Key',
+        innerText: 'Upload Image',
         onclick: () => {
-          const url = getIdValue('new_gallery_image');
-          const label = getIdValue('new_gallery_image_label');
-          if (!url) return;
-          const newState = { ...obj_data };
-          if (!('imgs' in newState.gallery)) newState.gallery.imgs = [];
-          newState.gallery.imgs.push({ url, label });
-          updateObjData(newState);
-          resetTabs(name);
+          uploadImage(`/api/universes/${universe}/items/${item}/gallery`, document.body, async (newId, newName) => {
+            const url = `/api/universes/${universe}/items/${item}/gallery/images/${newId}`;
+            if (!url) return;
+            const newState = { ...obj_data };
+            if (!('imgs' in newState.gallery)) newState.gallery.imgs = [];
+            newState.gallery.imgs.push({ id: newId, url, name: newName });
+            updateObjData(newState);
+            resetTabs(name);
+          });
         },
       } }),
-      createElement('input', { attrs: { id: 'new_gallery_image', placeholder: T('Image URL') } }),
-      createElement('input', { attrs: { id: 'new_gallery_image_label', placeholder: `${T('Image Label')} (${T('Optional')})` } }),
     ] }),
   ] });
   document.querySelector('#tabs .tabs-content').appendChild(content);

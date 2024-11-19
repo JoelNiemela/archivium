@@ -20,9 +20,10 @@
               | #{formatDate(universe.updated_at, true)}
             | —
             span #{universe.public ? 'Public' : 'Private'}
-            | —
-            a.follow-btn.link.link-animated( data-following=universe.followers[contextUser.id] data-universe-short=universe.shortname )
-              | #{universe.followers[contextUser.id] ? 'Unfollow' : 'Follow'}
+            if contextUser
+              | —
+              a.follow-btn.link.link-animated( data-following=universe.followers[contextUser.id] data-universe-short=universe.shortname )
+                | #{universe.followers[contextUser.id] ? 'Unfollow' : 'Follow'}
   
   script.
     document.querySelectorAll('.follow-btn').forEach((followBtn) => {

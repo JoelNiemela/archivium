@@ -23,7 +23,7 @@ module.exports = function(app) {
       res.end(render(req, template, data));
     } catch (err) {
       logger.error(`Error ${res.statusCode} rendered.`);
-      logger.debug(err.toString());
+      logger.error(err);
       res.end(render(req, 'error', { code: res.statusCode }));
     }
     next();

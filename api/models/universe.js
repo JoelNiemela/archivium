@@ -200,7 +200,7 @@ async function putUserFollowing(user, shortname, isFollowing) {
   try {
     return [200, await query];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }

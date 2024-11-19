@@ -59,7 +59,7 @@ require('./api/routes')(app, upload);
 /* 
   ACCOUNT ROUTES
 */
-async function logout(req, res, next) {
+async function logout(req, res) {
   await api.session.delete({ id: req.session.id })
   res.clearCookie('archiviumuid', req.session.id);
 }

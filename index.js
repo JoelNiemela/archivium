@@ -165,6 +165,12 @@ if (DEV_MODE) {
   });
 }
 
+app.use((err, req, res, next) => {
+  logger.error(err);
+  res.status(500);
+  next();
+});
+
 app.listen(PORT, () => {
   logger.info(`Example app listening at http://localhost:${PORT}`);
 });

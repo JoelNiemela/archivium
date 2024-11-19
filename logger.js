@@ -5,9 +5,9 @@ const { DEV_MODE } = require('./config');
 const rotateFileTransport = new winston.transports.DailyRotateFile({
   filename: 'logs/application-%DATE%.log',
   datePattern: 'YYYY-MM-DD',
-  zippedArchive: true,
+  zippedArchive: false,
   maxSize: '20m',
-  maxFiles: '90d',
+  maxFiles: '28d',
 });
 
 const logger = winston.createLogger({

@@ -35,8 +35,8 @@ block content
     div.inputGroup
       label( for='discussion_open' ) Who can comment: 
       select( id='discussion_open' name='discussion_open' )
-        option( value='enabled' selected=(universe.discussion_open) ) Anyone
-        option( value='disabled' selected=(!universe.discussion_open) ) Only with COMMENT permission level
+        option( value='enabled' selected=(discussion_open) ) Anyone
+        option( value='disabled' selected=(!discussion_open) ) Only with COMMENT permission level
     div
       input( type='hidden' id='obj_data' name='obj_data' value='{}' )
       button( type='submit' ) Create Universe

@@ -221,7 +221,7 @@ module.exports = function(app) {
     if (code3 !== 200) return;
     res.prepareRender('createUniverseThread', { error: data, ...req.body, universe });
   });
-  get('/universes/:shortname/discuss/:threadId', Auth.verifySessionOrRedirect, async (req, res) => {
+  get('/universes/:shortname/discuss/:threadId', async (req, res) => {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
     res.status(code1);
     if (code1 !== 200) return;

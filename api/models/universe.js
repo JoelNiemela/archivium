@@ -101,7 +101,7 @@ async function post(user, body) {
         obj_data,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
     const data = await executeQuery(queryString1, [
       title,

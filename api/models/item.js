@@ -306,6 +306,7 @@ async function post(user, body, universeShortName) {
       new Date(),
     ])];
   } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') return [400, 'item.shortname must be unique within each universe.'];
     logger.error(err);
     return [500];
   }

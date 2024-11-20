@@ -9,9 +9,14 @@
 // ***********************************************
 
 
-Cypress.Commands.add('login', (username='cypressuser', password='cypressuser') => {
+Cypress.Commands.add('login', (username, pwd=null) => {
+  const password = pwd || username;
   cy.visit('/login');
   cy.get('input[name="username"]').type(username);
   cy.get('input[name="password"]').type(password);
   cy.get('button[type="submit"]').click();
+});
+
+Cypress.Commands.add('logout', () => {
+  cy.visit('/logout');
 });

@@ -1,26 +1,30 @@
-describe('User spec', () => {
+describe('Setup', () => {
   before(() => {
     cy.clearCookies();
   });
 
-  it('vists home page, follows link to create an account', () => {
-    cy.visit('/');
+  it('vists home page, follows link to create accounts', () => {
+    for (const user of ['user', 'admin', 'writer', 'reader', 'commenter']) {
+      cy.visit('/');
+  
+      cy.get('.navbarBtnLink').contains('Log In').should('have.attr', 'href', '/login');
+      cy.get('.navbarBtnLink').contains('Create Account').should('have.attr', 'href', '/signup?page=%2Funiverses%2Fcreate').click();
+  
+      // Fill in signup form
+      cy.get('#username').type(`cypress${user}`);
+      cy.get('#email').type(`cypress${user}@archivium.net`);
+      cy.get('#password').type(`cypress${user}`);
+  
+      cy.get('button[type="submit"]').click();
+  
+      cy.get('h2').contains('New Universe').should('exist');
 
-    cy.get('.navbarBtnLink').contains('Log In').should('have.attr', 'href', '/login');
-    cy.get('.navbarBtnLink').contains('Create Account').should('have.attr', 'href', '/signup?page=%2Funiverses%2Fcreate').click();
-
-    // Fill in signup form
-    cy.get('#username').type('cypressuser');
-    cy.get('#email').type(`cypressuser@archivium.net`);
-    cy.get('#password').type('cypressuser');
-
-    cy.get('button').contains('Sign Up').click();
-
-    cy.get('h2').contains('New Universe').should('exist');
+      cy.logout();
+    }
   });
 
   it('creates new universes', () => {
-    cy.login();
+    cy.login('cypressadmin');
 
     // Create public universe
     cy.visit('/universes/create');
@@ -33,7 +37,7 @@ describe('User spec', () => {
     cy.get('#discussion_enabled').select('disabled');
     cy.get('#discussion_open').select('disabled');
 
-    cy.get('button').contains('Create Universe').click();
+    cy.get('button[type="submit"]').click();
 
     cy.get('h1').contains('Public Cypress Universe').should('exist');
 
@@ -48,16 +52,24 @@ describe('User spec', () => {
     cy.get('#discussion_enabled').select('disabled');
     cy.get('#discussion_open').select('disabled');
 
-    cy.get('button').contains('Create Universe').click();
+    cy.get('button[type="submit"]').click();
 
     cy.get('h1').contains('Private Cypress Universe').should('exist');
   });
 
-  it('creates a character in the public universe', () => {
-    cy.login();
+  it('creates a character "bob" in the public universe', () => {
+    cy.login('cypressadmin');
     cy.visit('/universes/public-cypress-universe');
 
-    cy.get('.item-type a').contains('Characters').parent().get('.cardBtn').contains('New').click();
+    cy.get('.item-type a').contains('Characters').parent().parent().parent().find('.cardBtn').contains('New').click();
+
+    cy.get('h2').contains('New Item for Public Cypress Universe').should('exist');
+
+    cy.get('#title').type('Bob');
+    cy.get('#shortname').type(`bob`);
+    cy.get('select#item_type option:selected').should('have.text', 'Character');
+
+    cy.get('button[type="submit"]').click();
   });
 });
     

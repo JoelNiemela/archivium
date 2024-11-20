@@ -33,8 +33,8 @@ async function dropDb(db) {
   await db.ready;
   const ans = await askQuestion(`This will DROP the ${dbConfig.database} database! Are you SURE? [y/N] `);
   if (ans.toUpperCase() === 'Y') {
-    const ans = await askQuestion(`Export ${dbConfig.database} database first? [y/N] `);
-    if (ans.toUpperCase() === 'Y') {
+    const ans = await askQuestion(`Skip exporting ${dbConfig.database} database first? [y/N] `);
+    if (ans.toUpperCase() === 'N') {
       await dbExport(db);
     }
     await db.queryAsync(`DROP DATABASE IF EXISTS ${dbConfig.database};`);

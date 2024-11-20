@@ -4,8 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon -e '.js,.pug' --delay 1000ms index.js"
+    "test": "npx cypress run",
+    "dev": "nodemon -e '.js,.pug' --delay 1000ms index.js",
+    "db:export": "node db/export.js",
+    "db:import": "node db/import.js",
+    "db:reset": "node db/updateSchema.js"
   },
   "repository": {
     "type": "git",
@@ -32,6 +35,7 @@
     "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
+    "cypress": "^13.15.2",
     "nodemon": "^2.0.15"
   }
 }

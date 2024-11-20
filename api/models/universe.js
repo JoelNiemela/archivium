@@ -115,7 +115,7 @@ async function post(user, body) {
       new Date(),
     ]);
     const queryString2 = `INSERT INTO authoruniverse (universe_id, user_id, permission_level) VALUES (?, ?, ?)`;
-    return [201, [data, await executeQuery(queryString2, [ data.insertId, user.id, 3 ])]];
+    return [201, [data, await executeQuery(queryString2, [ data.insertId, user.id, perms.ADMIN ])]];
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') return [400, 'universe.shortname must be unique.'];
     if (err.code === 'ER_BAD_NULL_ERROR') return [400, 'Missing parameters.'];

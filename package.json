@@ -8,7 +8,8 @@
     "dev": "nodemon -e '.js,.pug' --delay 1000ms index.js",
     "db:export": "node db/export.js",
     "db:import": "node db/import.js",
-    "db:reset": "node db/updateSchema.js"
+    "db:clean": "node db/updateSchema.js",
+    "db:reset": "node db/generate"
   },
   "repository": {
     "type": "git",

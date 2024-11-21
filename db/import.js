@@ -19,14 +19,14 @@ function formatTypes(type, data) {
 // https://stackoverflow.com/a/50890409
 function askQuestion(query) {
     const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
+      input: process.stdin,
+      output: process.stdout,
     });
 
     return new Promise(resolve => rl.question(query, ans => {
-        rl.close();
-        resolve(ans);
-    }))
+      rl.close();
+      resolve(ans);
+    }));
 }
 
 async function dropDb(db) {

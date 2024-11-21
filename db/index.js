@@ -7,7 +7,7 @@ const connection = mysql.createConnection({ ...dbConfig });
 
 const db = Promise.promisifyAll(connection, { multiArgs: true });
 
-db.connectAsync()
+db.connectPromise = db.connectAsync()
   .then(() => {
     logger.info(`Connected to ${dbConfig.database} database as ID ${db.threadId}`);
   });

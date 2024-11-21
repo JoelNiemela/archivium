@@ -21,17 +21,22 @@ function updateObjData(newState) {
 
 function bindDataValue(selector, setter) {
   const el = document.querySelector(selector);
-  el.oninput = () => {
+  const onInput = () => {
     setter(el.value);
   };
-  el.oninput();
+  el.addEventListener('input', onInput);
+  onInput();
 }
 
 
 function createBody() {
   updateObjData({ body: '' });
-  document.querySelector('#body').appendChild(createElement('textarea'));
+  const el = createElement('textarea');
+  document.querySelector('#body').appendChild(el);
   bindDataValue('#body textarea', (body) => updateObjData({ body }));
+  el.addEventListener('input', () => {
+    el.parentNode.dataset.replicatedValue = el.value;
+  });
   document.querySelector('#body button').remove();
 }
 

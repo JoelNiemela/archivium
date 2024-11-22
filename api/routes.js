@@ -28,7 +28,7 @@ module.exports = function(app, upload) {
           if (data !== undefined) {
             if (data instanceof Buffer) res.send(data);
             else res.json(data);
-          }
+          } else res.end();
         } else {
           res.status(405);
         }

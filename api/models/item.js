@@ -1,20 +1,57 @@
 const { QueryBuilder, Cond, executeQuery, parseData, perms } = require('../utils');
 const logger = require('../../logger');
 
-async function getOne(user, id, permissionsRequired=perms.READ, basicOnly=false) {
+async function getOne(user, conditions, permissionsRequired=perms.READ, basicOnly=false, options={}) {
 
-  const conditions = { 
-    strings: [
-      'item.id = ?',
-    ], values: [
-      id,
-    ]
-  };
+  const parsedConditions = parseData(conditions);
 
-  const [errCode, data] = await getMany(user, conditions, permissionsRequired, basicOnly);
+  const [errCode, data] = await getMany(user, parsedConditions, permissionsRequired, { ...options, limit: 1 });
   if (!data) return [errCode];
   const item = data[0];
   if (!item) return [user ? 403 : 401];
+
+  if (!basicOnly) {
+    const events = await executeQuery(`
+      SELECT DISTINCT
+        itemevent.event_title, itemevent.abstime,
+        item.shortname AS src_shortname, item.title AS src_title, item.id AS src_id
+      FROM itemevent
+      LEFT JOIN timelineitem ON timelineitem.event_id = itemevent.id
+      INNER JOIN item ON itemevent.item_id = item.id
+      WHERE itemevent.item_id = ? OR timelineitem.timeline_id = ?
+      ORDER BY itemevent.abstime DESC
+    `, [item.id, item.id]);
+    item.events = events;
+
+    const gallery = await executeQuery(`
+      SELECT
+        itemimage.id, itemimage.name, itemimage.label
+      FROM itemimage
+      WHERE itemimage.item_id = ?
+    `, [item.id]);
+    item.gallery = gallery;
+
+    const children = await executeQuery(`
+      SELECT
+        item.shortname AS child_shortname, item.title AS child_title,
+        lineage.child_title AS child_label, lineage.parent_title AS parent_label
+      FROM lineage
+      INNER JOIN item ON item.id = lineage.child_id
+      WHERE lineage.parent_id = ?
+    `, [item.id]);
+    item.children = children;
+
+    const parents = await executeQuery(`
+      SELECT
+        item.shortname AS parent_shortname, item.title AS parent_title,
+        lineage.child_title AS child_label, lineage.parent_title AS parent_label
+      FROM lineage
+      INNER JOIN item ON item.id = lineage.parent_id
+      WHERE lineage.child_id = ?
+    `, [item.id]);
+    item.parents = parents;
+  }
+
   return [200, item];
 }
 
@@ -44,14 +81,14 @@ function getQuery(selects=[], permsCond=undefined, whereConds=undefined, options
       GROUP BY item_id
     ) tag`, new Cond('tag.item_id = item.id'))
     .where(whereConds)
-    .groupBy(['item.id', 'user.username', 'universe.title'])
-    if (options.sort) query.orderBy(options.sort, options.sortDesc);
-    if (options.limit) query.limit(options.limit);
+    .groupBy(['item.id', 'user.username', 'universe.title']);
+  if (options.sort) query.orderBy(options.sort, options.sortDesc);
+  if (options.limit) query.limit(options.limit);
 
   return query;
 }
 
-async function getMany(user, conditions, permissionsRequired=perms.READ, basicOnly=false, options={}) {
+async function getMany(user, conditions, permissionsRequired=perms.READ, options={}) {
   if (options.type) {
     if (!conditions) conditions = { strings: [], values: [] };
     conditions.strings.push('item.item_type = ?');
@@ -88,47 +125,13 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
     if (options.where) whereConds = whereConds.and(options.where);
 
     const selects = [
-      ...(basicOnly ? [] : [
-        [`JSON_REMOVE(JSON_OBJECTAGG(
-          IFNULL(child_item.shortname, 'null__'),
-          JSON_ARRAY(lineage_child.child_title, lineage_child.parent_title)
-        ), '$.null__')`, 'children'],
-        [`JSON_REMOVE(JSON_OBJECTAGG(
-          IFNULL(parent_item.shortname, 'null__'),
-          JSON_ARRAY(lineage_parent.parent_title, lineage_parent.child_title)
-        ), '$.null__')`, 'parents'],
-        [`JSON_REMOVE(JSON_OBJECTAGG(IFNULL(child_item.shortname, 'null__'), child_item.title), '$.null__')`, 'child_titles'],
-        [`JSON_REMOVE(JSON_OBJECTAGG(IFNULL(parent_item.shortname, 'null__'), parent_item.title), '$.null__')`, 'parent_titles'],
-        [`JSON_ARRAYAGG(JSON_ARRAY(ev.src_shortname, ev.src_title, ev.src_id, ev.event_title, ev.abstime))`, 'events'],
-        ['imgs.gallery'],
-      ]),
       ...(options.select ?? []),
       ...(options.includeData ? ['item.obj_data'] : []),
     ];
 
     const joins = [
-      ...(basicOnly ? [] : [
-        ['LEFT', ['lineage', 'lineage_child'], new Cond('lineage_child.parent_id = item.id')],
-        ['LEFT', ['lineage', 'lineage_parent'], new Cond('lineage_parent.child_id = item.id')],
-        ['LEFT', ['item', 'child_item'], new Cond('child_item.id = lineage_child.child_id')],
-        ['LEFT', ['item', 'parent_item'], new Cond('parent_item.id = lineage_parent.parent_id')],
-        ['LEFT', `(
-            SELECT DISTINCT itemevent.item_id, itemevent.event_title, itemevent.abstime, timelineitem.timeline_id, item.shortname as src_shortname, item.title as src_title, item.id as src_id
-            FROM itemevent
-            LEFT JOIN timelineitem ON timelineitem.event_id = itemevent.id
-            INNER JOIN item ON itemevent.item_id = item.id
-            ORDER BY itemevent.abstime DESC
-        ) ev`, new Cond('ev.item_id = item.id').or('ev.timeline_id = item.id')],
-        ['LEFT', `(
-            SELECT
-              itemimage.item_id,
-              JSON_ARRAYAGG(JSON_ARRAY(itemimage.id, itemimage.name, itemimage.label)) AS gallery
-            FROM itemimage
-            GROUP BY itemimage.item_id
-        ) imgs`, new Cond('imgs.item_id = item.id')],
-      ]),
       ...(options.join ?? []),
-    ]
+    ];
 
     let data;
     if (options.search) {
@@ -169,13 +172,7 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
       }
       data = await query.execute();
     }
-    data.forEach(item => {
-      if (!basicOnly) {
-        // TODO dumb workarounds for bad SQL query
-        item.events = item.events.filter(event => event[0] !== null);
-        item.gallery = item.gallery?.filter(image => image[0] !== null) ?? [];
-      }
-    })
+
     return [200, data];
   } catch (err) {
     logger.error(err);
@@ -183,7 +180,7 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, basicOn
   }
 }
 
-async function getByAuthorUsername(user, username, permissionsRequired, basicOnly, options) {
+async function getByAuthorUsername(user, username, permissionsRequired, options) {
 
   const conditions = { 
     strings: [
@@ -193,12 +190,12 @@ async function getByAuthorUsername(user, username, permissionsRequired, basicOnl
     ]
   };
 
-  const [errCode, items] = await getMany(user, conditions, permissionsRequired, basicOnly, options);
+  const [errCode, items] = await getMany(user, conditions, permissionsRequired, options);
   if (!items) return [errCode];
   return [200, items];
 }
 
-async function getByUniverseId(user, universeId, permissionsRequired, basicOnly, options) {
+async function getByUniverseId(user, universeId, permissionsRequired, options) {
 
   const conditions = { 
     strings: [
@@ -208,7 +205,7 @@ async function getByUniverseId(user, universeId, permissionsRequired, basicOnly,
     ]
   };
 
-  const [errCode, items] = await getMany(user, conditions, permissionsRequired, basicOnly, options);
+  const [errCode, items] = await getMany(user, conditions, permissionsRequired, options);
   if (!items) return [errCode];
   return [200, items];
 }
@@ -232,7 +229,7 @@ async function getByUniverseAndItemIds(user, universeId, itemId, permissionsRequ
   return [200, item];
 }
 
-async function getByUniverseShortname(user, shortname, permissionsRequired=perms.READ, basicOnly=false, options) {
+async function getByUniverseShortname(user, shortname, permissionsRequired=perms.READ, options) {
 
   const conditions = { 
     strings: [
@@ -242,7 +239,7 @@ async function getByUniverseShortname(user, shortname, permissionsRequired=perms
     ]
   };
 
-  const [errCode, items] = await getMany(user, conditions, permissionsRequired, basicOnly, options);
+  const [errCode, items] = await getMany(user, conditions, permissionsRequired, options);
   if (!items) return [errCode];
   return [200, items];
 }
@@ -250,20 +247,11 @@ async function getByUniverseShortname(user, shortname, permissionsRequired=perms
 async function getByUniverseAndItemShortnames(user, universeShortname, itemShortname, permissionsRequired=perms.READ, basicOnly=false) {
 
   const conditions = { 
-    strings: [
-      'universe.shortname = ?',
-      'item.shortname = ?',
-    ], values: [
-      universeShortname,
-      itemShortname,
-    ]
+    'universe.shortname': universeShortname,
+    'item.shortname': itemShortname,
   };
 
-  const [errCode, data] = await getMany(user, conditions, permissionsRequired, basicOnly, { includeData: true });
-  if (!data) return [errCode];
-  const item = data[0];
-  if (!item) return [user ? 403 : 401];
-  return [200, item];
+  return await getOne(user, conditions, permissionsRequired, basicOnly, { includeData: true });
 }
 
 async function post(user, body, universeShortName) {
@@ -321,6 +309,7 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
     return [400]; // We should probably render an error on the edit page instead here.
   }
   if (!jsonMode) body.obj_data = JSON.parse(decodeURIComponent(body.obj_data));
+  console.log(JSON.stringify(body))
   let lineage;
   if ('lineage' in body.obj_data) {
     lineage = body.obj_data.lineage;
@@ -350,12 +339,15 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
 
   // Handle lineage data
   if (lineage) {
+    const [existingParents, existingChildren] = [{}, {}];
+    for (const { parent_shortname } of item.parents) existingParents[parent_shortname] = true;
+    for (const { child_shortname } of item.children) existingChildren[child_shortname] = true;
     const [newParents, newChildren] = [{}, {}];
     for (const shortname in lineage.parents ?? {}) {
       const [, parent] = await getByUniverseAndItemShortnames(user, universeShortname, shortname, perms.WRITE);
       if (!parent) return [400];
       newParents[shortname] = true;
-      if (!(shortname in item.parents)) {
+      if (!(shortname in existingParents)) {
         [code,] = await putLineage(parent.id, item.id, ...lineage.parents[shortname]);
       }
     }
@@ -363,19 +355,19 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
       const [, child] = await getByUniverseAndItemShortnames(user, universeShortname, shortname, perms.WRITE);
       if (!child) return [400];
       newChildren[shortname] = true;
-      if (!(shortname in item.children)) {
+      if (!(shortname in existingChildren)) {
         [code, ] = await putLineage(item.id, child.id, ...lineage.children[shortname].reverse());
       }
     }
-    for (const shortname in item.parents) {
-      if (!newParents[shortname]) {
-        const [, parent] = await getByUniverseAndItemShortnames(user, universeShortname, shortname, perms.WRITE);
+    for (const { parent_shortname } of item.parents) {
+      if (!newParents[parent_shortname]) {
+        const [, parent] = await getByUniverseAndItemShortnames(user, universeShortname, parent_shortname, perms.WRITE);
         delLineage(parent.id, item.id);
       }
     }
-    for (const shortname in item.children) {
-      if (!newChildren[shortname]) {
-        const [, child] = await getByUniverseAndItemShortnames(user, universeShortname, shortname, perms.WRITE);
+    for (const { child_shortname } of item.children) {
+      if (!newChildren[child_shortname]) {
+        const [, child] = await getByUniverseAndItemShortnames(user, universeShortname, child_shortname, perms.WRITE);
         delLineage(item.id, child.id);
       }
     }
@@ -692,7 +684,7 @@ const image = (function() {
       const [code1, images] = (await getMany({ id: imageId }, false));
       const image = images[0];
       if (!image) return [code1];
-      const [code2, item] = await getOne(user, image.item_id);
+      const [code2, item] = await getOne(user, { 'item.id': image.item_id });
       if (!item) return [code2];
       return [200, await executeQuery(`UPDATE itemimage SET label = ? WHERE id = ?;`, [label, imageId])];
     } catch (err) {
@@ -707,7 +699,7 @@ const image = (function() {
       const [code1, images] = (await getMany({ id: imageId }, false));
       const image = images[0];
       if (!image) return [code1];
-      const [code2, item] = await getOne(user, image.item_id);
+      const [code2, item] = await getOne(user, { 'item.id': image.item_id });
       if (!item) return [code2];
       return [200, await executeQuery(`DELETE FROM itemimage WHERE id = ?;`, [imageId])];
     } catch (err) {

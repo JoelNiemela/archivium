@@ -79,7 +79,7 @@ if (!window.createElement) throw 'domUtils.js not loaded!';
 
     format() {
       const { Year, Month, Day, Hour, Minute } = this.time;
-      return `${this.names.Month(Month)} ${this.names.Day(Day)} ${Year}, ${Hour}:${Minute < 10 && '0'}${Minute}`;
+      return `${this.names.Month(Month)} ${this.names.Day(Day)} ${Year}, ${Hour}:${Minute < 10 ? '0' : ''}${Minute}`;
     }
 
     update() {

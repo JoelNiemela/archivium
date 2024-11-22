@@ -53,6 +53,7 @@ module.exports = function(app, upload) {
   })
 
   const apiRoutes = new APIRoute('/api', {}, [
+    new APIRoute('/*'),
     new APIRoute('/users', { GET: () => api.user.getMany() }, [
       new APIRoute('/:username', { GET: (req) => api.user.getOne({ username: req.params.username }) }, [
         new APIRoute('/universes', {

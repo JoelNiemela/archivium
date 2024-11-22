@@ -123,6 +123,9 @@ module.exports = function(app, upload) {
             ]),
           ]),
         ]),
+        new APIRoute('/events', {
+          GET: (req) => api.universe.getEventsByUniverseShortname(req.session.user, req.params.universeShortName),
+        }, []),
         new APIRoute('/follow', {
           PUT: (req) => api.universe.putUserFollowing(req.session.user, req.params.universeShortName, req.body.isFollowing),
         }),

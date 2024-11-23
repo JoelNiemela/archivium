@@ -27,8 +27,8 @@ module.exports.defaultItemData = {
       timeline: {
         title: 'Timeline',
         events: [
-          { title: 'Birth', time: age, imported: false },
-          { title: 'Death', time: age + 31557600000, imported: false },
+          { title: 'Birth', time: (age * 316224000) + Math.round(Math.random() * 7654321), imported: false },
+          { title: 'Death', time: (age * 316224000) + 31557600000 + Math.round(Math.random() * 7654321), imported: false },
         ],
       },
     };
@@ -41,5 +41,29 @@ module.exports.defaultItemData = {
         { title: null, time: Math.round(Math.random() * 31557600000), imported: false },
       ],
     },
+    comments: {
+      title: 'Comments',
+    },
+  },
+  timeline(items) {
+    const imports = items.reduce((list, item) => ([
+      ...list,
+      ...item.events.filter(e => e.src_id === item.id).map(e => ([
+        { id: e.src_id, title: e.src_title, shortname: e.src_shortname },
+        { title: e.event_title, time: e.abstime },
+      ])),
+    ]), []);
+    const events = items.reduce((list, item) => ([
+      ...list,
+      ...item.events.map(e => ({ title: e.event_title, time: e.abstime, imported: e.src_id === item.id, src: e.src_title, srcId: e.src_id })),
+    ]), []);
+
+    return {
+      timeline: {
+        title:'Timeline',
+        imports,
+        events,
+      },
+    }
   },
 };

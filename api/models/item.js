@@ -309,7 +309,6 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
     return [400]; // We should probably render an error on the edit page instead here.
   }
   if (!jsonMode) body.obj_data = JSON.parse(decodeURIComponent(body.obj_data));
-  console.log(JSON.stringify(body))
   let lineage;
   if ('lineage' in body.obj_data) {
     lineage = body.obj_data.lineage;

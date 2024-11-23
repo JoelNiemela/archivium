@@ -70,7 +70,6 @@ async function addTab(type, name, force=false) {
     },
     dataset: { tabBtn: name },
   });
-  document.querySelector('#tabs .tabs-buttons').appendChild(button);
 
   const content = createElement('div', { classList: ['hidden'], dataset: { tab: name }, children: [
     createElement('button', { attrs: {
@@ -302,6 +301,7 @@ async function addTab(type, name, force=false) {
     ] }),
   ] });
   document.querySelector('#tabs .tabs-content').appendChild(content);
+  document.querySelector('#tabs .tabs-buttons').appendChild(button);
 
   if (!force) {
     selectTab(name);

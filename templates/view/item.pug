@@ -31,7 +31,7 @@ block breadcrumbs
 
 block content
   h1.center #{item.title}
-  p.center #{capitalize(T(item.itemTypeName))} of 
+  p#action-bar.center #{capitalize(T(item.itemTypeName))} of 
     a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{item.universe}
     if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE/* || item.author === contextUser.username*/)
       |  - 
@@ -41,7 +41,7 @@ block content
       a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
       |  #{formatDate(new Date(item.created_at))}
       |  - Last updated #{formatDate(new Date(item.updated_at))}
-  p.center
+  p#tags.center
     small
       if item.tags
         each tag in item.tags

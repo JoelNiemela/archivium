@@ -20,8 +20,8 @@ window.addEventListener('load', () => {
   
   const url = new URL(window.location);
   if (url.searchParams.has('sort')) {
-    document.getElementById('sort').value = url.searchParams.get('sort');
-    document.getElementById('sort_order').value = url.searchParams.get('sort_order');
+    if (document.getElementById('sort')) document.getElementById('sort').value = url.searchParams.get('sort');
+    if (document.getElementById('sort_order')) document.getElementById('sort_order').value = url.searchParams.get('sort_order');
   }
 
   const handleSort = () => {
@@ -31,6 +31,6 @@ window.addEventListener('load', () => {
     history.pushState(null, '', url);
     location.reload();
   };
-  document.getElementById('sort').onchange = handleSort;
-  document.getElementById('sort_order').onchange = handleSort;
+  if (document.getElementById('sort')) document.getElementById('sort').onchange = handleSort;
+  if (document.getElementById('sort_order')) document.getElementById('sort_order').onchange = handleSort;
 });

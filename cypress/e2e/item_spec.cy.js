@@ -5,65 +5,65 @@ describe('Item spec', () => {
     cy.login('testadmin');
   });
 
-  // it('tries to create duplicate item, sees error messsage', () => {
-  //   cy.visit('/universes/public-test-universe/items/create');
+  it('tries to create duplicate item, sees error messsage', () => {
+    cy.visit('/universes/public-test-universe/items/create');
 
-  //   cy.get('#title').type('Duplicate Character');
-  //   cy.get('#shortname').type('test-character');
-  //   cy.get('button[type="submit"]').click();
-  //   cy.get('.color-error').contains('item.shortname must be unique within each universe.').should('exist');
-  // });
+    cy.get('#title').type('Duplicate Character');
+    cy.get('#shortname').type('test-character');
+    cy.get('button[type="submit"]').click();
+    cy.get('.color-error').contains('item.shortname must be unique within each universe.').should('exist');
+  });
 
-  // it('adds a link from the test character to the test event, then follows it', () => {
-  //   cy.visit('/universes/public-test-universe/items/test-character?tab=body');
-  //   cy.get('#action-bar').contains('Edit').click();
+  it('adds a link from the test character to the test event, then follows it', () => {
+    cy.visit('/universes/public-test-universe/items/test-character?tab=body');
+    cy.get('#action-bar').contains('Edit').click();
 
-  //   cy.get('#body textarea').then(editor => {
-  //     const oldContent = editor.val();
+    cy.get('#body textarea').then(editor => {
+      const oldContent = editor.val();
 
-  //     cy.get('#body textarea').clear();
-  //     cy.get('#body textarea').type('Here is a [test link](@test-event).');
-  //     cy.get('#save-btn').click();
+      cy.get('#body textarea').clear();
+      cy.get('#body textarea').type('Here is a [test link](@test-event).');
+      cy.get('#save-btn').click();
 
-  //     cy.get('[data-tab="body"]').should('contain', 'Here is a test link.');
-  //     cy.get('[data-tab="body"] a').contains('test link').click();
+      cy.get('[data-tab="body"]').should('contain', 'Here is a test link.');
+      cy.get('[data-tab="body"] a').contains('test link').click();
 
-  //     cy.get('h1').contains('Test Event').should('exist');
-  //     cy.url().should('include', '/universes/public-test-universe/items/test-event');
+      cy.get('h1').contains('Test Event').should('exist');
+      cy.url().should('include', '/universes/public-test-universe/items/test-event');
 
-  //     cy.visit('/universes/public-test-universe/items/test-character/edit');
-  //     cy.get('#body textarea').clear();
-  //     cy.get('#body textarea').type(oldContent);
-  //     cy.get('#save-btn').click();
-  //   });
-  // });
+      cy.visit('/universes/public-test-universe/items/test-character/edit');
+      cy.get('#body textarea').clear();
+      cy.get('#body textarea').type(oldContent);
+      cy.get('#save-btn').click();
+    });
+  });
 
-  // it('adds an event to the timline, then removes it', () => {
-  //   cy.visit('/universes/public-test-universe/items/test-timeline?tab=timeline');
-  //   cy.get('.timeline>.flex-col').children().should('have.length', timelineEvents);
-  //   cy.get('#action-bar').contains('Edit').click();
+  it('adds an event to the timline, then removes it', () => {
+    cy.visit('/universes/public-test-universe/items/test-timeline?tab=timeline');
+    cy.get('.timeline>.flex-col').children().should('have.length', timelineEvents);
+    cy.get('#action-bar').contains('Edit').click();
 
-  //   cy.get('.tabs-buttons').contains('Timeline').click();
-  //   cy.get('#new_event_title').type('Cypress Event');
-  //   cy.get('#new_event_time').siblings('button').click();
-  //   cy.get('#time-picker-new_event_time input').first().type('2004');
-  //   cy.get('#time-picker-new_event_time button').click();
-  //   cy.get('[data-tab="Timeline"] button').contains('Create New Event').click();
-  //   cy.get(`#${timelineEvents}_event_time`).siblings('input').should('have.value', 'Cypress Event');
-  //   cy.get('#save-btn').click();
+    cy.get('.tabs-buttons').contains('Timeline').click();
+    cy.get('#new_event_title').type('Cypress Event');
+    cy.get('#new_event_time').siblings('button').click();
+    cy.get('#time-picker-new_event_time input').first().type('2004');
+    cy.get('#time-picker-new_event_time button').click();
+    cy.get('[data-tab="Timeline"] button').contains('Create New Event').click();
+    cy.get(`#${timelineEvents}_event_time`).siblings('input').should('have.value', 'Cypress Event');
+    cy.get('#save-btn').click();
 
-  //   cy.visit('/universes/public-test-universe/items/test-timeline?tab=timeline');
-  //   cy.get('.timeline>.flex-col').children().should('have.length', timelineEvents + 1);
-  //   cy.get('.timeline>.flex-col>div').first().should('contain', 'January 1st 2004, 0:00 — Cypress Event');
-  //   cy.get('#action-bar').contains('Edit').click();
+    cy.visit('/universes/public-test-universe/items/test-timeline?tab=timeline');
+    cy.get('.timeline>.flex-col').children().should('have.length', timelineEvents + 1);
+    cy.get('.timeline>.flex-col>div').first().should('contain', 'January 1st 2004, 0:00 — Cypress Event');
+    cy.get('#action-bar').contains('Edit').click();
 
-  //   cy.get('.tabs-buttons').contains('Timeline').click();
-  //   cy.get(`#${timelineEvents}_event_time`).siblings('button').contains('Remove').click();
-  //   cy.get('#save-btn').click();
+    cy.get('.tabs-buttons').contains('Timeline').click();
+    cy.get(`#${timelineEvents}_event_time`).siblings('button').contains('Remove').click();
+    cy.get('#save-btn').click();
 
-  //   cy.visit('/universes/public-test-universe/items/test-timeline?tab=timeline');
-  //   cy.get('.timeline>.flex-col').children().should('have.length', timelineEvents);
-  // });
+    cy.visit('/universes/public-test-universe/items/test-timeline?tab=timeline');
+    cy.get('.timeline>.flex-col').children().should('have.length', timelineEvents);
+  });
 
   // TODO Reenable this and the following test once #73 is fixes
   // it('adds an event to an item, then imports it to the timeline', () => {

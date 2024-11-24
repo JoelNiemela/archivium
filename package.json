@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "npm run db:reset && npx cypress run",
+    "test": "npx cypress run",
     "dev": "nodemon -e '.js,.pug' --delay 1000ms index.js",
     "db:export": "node db/export.js",
     "db:import": "node db/import.js",

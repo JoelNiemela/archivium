@@ -59,7 +59,7 @@ require('./api/routes')(app, upload);
 /* 
   ACCOUNT ROUTES
 */
-async function logout(req, res, next) {
+async function logout(req, res) {
   await api.session.delete({ id: req.session.id })
   res.clearCookie('archiviumuid', req.session.id);
 }
@@ -164,6 +164,12 @@ if (DEV_MODE) {
     next();
   });
 }
+
+app.use((err, req, res, next) => {
+  logger.error(err);
+  res.status(500);
+  next();
+});
 
 app.listen(PORT, () => {
   logger.info(`Example app listening at http://localhost:${PORT}`);

@@ -660,7 +660,7 @@ const image = (function() {
       const users = await executeQuery(queryString, parsedOptions.values);
       return [200, users];
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       return [500];
     }
   }
@@ -695,7 +695,7 @@ const image = (function() {
       if (!item) return [code2];
       return [200, await executeQuery(`UPDATE itemimage SET label = ? WHERE id = ?;`, [label, imageId])];
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       return [500];
     }
   }
@@ -710,7 +710,7 @@ const image = (function() {
       if (!item) return [code2];
       return [200, await executeQuery(`DELETE FROM itemimage WHERE id = ?;`, [imageId])];
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       return [500];
     }
   }

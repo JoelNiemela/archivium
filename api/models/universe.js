@@ -101,7 +101,7 @@ async function post(user, body) {
         obj_data,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
     const data = await executeQuery(queryString1, [
       title,
@@ -200,7 +200,7 @@ async function putUserFollowing(user, shortname, isFollowing) {
   try {
     return [200, await query];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }

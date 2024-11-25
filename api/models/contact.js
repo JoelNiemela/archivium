@@ -3,6 +3,8 @@ const userapi = require('./user');
 const logger = require('../../logger');
 
 async function getOne(sessionUser, targetID) {
+  if (!sessionUser) return [401];
+
   try {
     const queryString = `
       SELECT 
@@ -39,6 +41,7 @@ async function getOne(sessionUser, targetID) {
 
 async function getAll(user, includePending=true, includeAccepted=true) {
   if (!(includePending || includeAccepted)) return [400];
+  if (!user) return [401];
 
   const acceptClause = includePending === includeAccepted ? '' : `AND contact.accepted = ${includeAccepted}`;
 

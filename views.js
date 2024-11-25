@@ -23,7 +23,7 @@ module.exports = function(app) {
       res.end(render(req, template, data));
     } catch (err) {
       logger.error(`Error ${res.statusCode} rendered.`);
-      logger.debug(err.toString());
+      logger.error(err);
       res.end(render(req, 'error', { code: res.statusCode }));
     }
     next();
@@ -118,9 +118,7 @@ module.exports = function(app) {
     res.status(code2);
     if (!universes) return;
     if (req.session.user?.id !== user.id) {
-      const [code3, contact] = await api.contact.getOne(req.session.user, user.id);
-      res.status(code3);
-      if (code3 !== 200) return;
+      const [_, contact] = await api.contact.getOne(req.session.user, user.id);
       user.isContact = contact !== undefined;
     } else {
       user.isMe = true;
@@ -223,7 +221,7 @@ module.exports = function(app) {
     if (code3 !== 200) return;
     res.prepareRender('createUniverseThread', { error: data, ...req.body, universe });
   });
-  get('/universes/:shortname/discuss/:threadId', Auth.verifySessionOrRedirect, async (req, res) => {
+  get('/universes/:shortname/discuss/:threadId', async (req, res) => {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
     res.status(code1);
     if (code1 !== 200) return;

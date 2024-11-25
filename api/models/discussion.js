@@ -1,4 +1,5 @@
 const { executeQuery, parseData, perms } = require('../utils');
+const logger = require('../../logger');
 const universeapi = require('./universe');
 const itemapi = require('./item');
 
@@ -8,17 +9,19 @@ async function getThreads(user, options, canPost=false, includeExtra=false) {
     // const readOnlyQueryString = permissionLevel > perms.READ ? '' : `universe.public = 1`;
     // const usrQueryString = user ? `(au_filter.user_id = ${user.id} AND au_filter.permission_level >= ${permissionLevel})` : '';
     // const permsQueryString = `${readOnlyQueryString}${(readOnlyQueryString && usrQueryString) ? ' OR ' : ''}${usrQueryString}`;
-    const filter = canPost
-      ? `
-        (universe.public = 1 AND universe.discussion_open)
-        OR (au_filter.user_id = ${user.id} AND (
-          (au_filter.permission_level >= ${perms.READ} AND universe.discussion_open)
-          OR au_filter.permission_level >= ${perms.COMMENT}
-        ))
-      `
-      : `
-        universe.public = 1 OR (au_filter.user_id = ${user.id} AND au_filter.permission_level >= ${perms.READ})
-      `;
+    const filter = user
+      ? (canPost
+        ? `
+          (universe.public = 1 AND universe.discussion_open)
+          OR (au_filter.user_id = ${user.id} AND (
+            (au_filter.permission_level >= ${perms.READ} AND universe.discussion_open)
+            OR au_filter.permission_level >= ${perms.COMMENT}
+          ))
+        `
+        : `
+          universe.public = 1 OR (au_filter.user_id = ${user.id} AND au_filter.permission_level >= ${perms.READ})
+        `)
+      : 'universe.public = 1';
     const conditionString = options ? `AND ${parsedOptions.strings.join(' AND ')}` : '';
     const queryString = `
       SELECT
@@ -49,7 +52,7 @@ async function getThreads(user, options, canPost=false, includeExtra=false) {
     const data = await executeQuery(queryString, options && parsedOptions.values);
     return [200, data];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }
@@ -80,7 +83,7 @@ async function getCommentsByThread(user, threadId, validate=true, inclCommenters
     }
     return [200, comments];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }
@@ -110,7 +113,7 @@ async function getCommentsByItem(user, itemId, validate=true, inclCommenters=fal
     }
     return [200, comments];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }
@@ -127,7 +130,7 @@ async function postUniverseThread(user, universeShortname, { title }) {
     const data = await executeQuery(queryString, [ title, universe.id ]);
     return [201, data];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }
@@ -145,7 +148,7 @@ async function postCommentToThread(user, threadId, { body, reply_to }) {
     await executeQuery(queryString2, [ thread.id, data.insertId ])
     return [201, data];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }
@@ -162,7 +165,7 @@ async function postCommentToItem(user, universeShortname, itemShortname, { body,
     await executeQuery(queryString2, [ item.id, data.insertId ])
     return [201, data];
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return [500];
   }
 }

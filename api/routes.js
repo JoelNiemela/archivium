@@ -157,7 +157,6 @@ module.exports = function(app, upload) {
         return [500];
       }
     }}),
-    new APIRoute('/*'),
   ]);
 
   apiRoutes.setup(ADDR_PREFIX);

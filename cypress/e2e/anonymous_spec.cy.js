@@ -45,4 +45,3 @@ describe('Anonymous user spec', () => {
     cy.get('.item-type a').contains('Characters').parent().parent().parent().contains('New').should('not.exist');
   });
 });
-  

@@ -177,4 +177,3 @@ describe('Universe spec', () => {
     cy.get('.card-list .card h3').contains('Cypress Universe').should('not.exist');
   });
 });
-    

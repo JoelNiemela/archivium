@@ -17,4 +17,3 @@ describe('User spec', () => {
     // cy.get('h2').contains('New Universe').should('exist');
   });
 });
-      

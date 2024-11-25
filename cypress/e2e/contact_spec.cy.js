@@ -57,4 +57,3 @@ describe('Contacts spec', () => {
     cy.get('.card').should('contain', 'testuser').and('contain', 'Pending');
   });
 });
-      

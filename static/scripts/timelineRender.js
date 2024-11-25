@@ -11,9 +11,9 @@ class Timeline {
     this.wrapper.appendChild(this.eventList);
     const cp = new CalendarPicker();
 
-    for (const [src, srcTitle, srcID, title, time] of events) {
+    for (const { event_title, abstime, src_shortname, src_title } of events) {
       // const style = { left: `${(time - firstTime) * zoom}px` };
-      cp.setTime(time);
+      cp.setTime(abstime);
       const formattedTime = cp.format();
       this.eventList.appendChild(createElement('div', { classList: ['d-flex', 'gap-3'], children: [
         createElement('div', { classList: ['d-flex', 'justify-center'], style: { width: '0.5rem' }, children: [
@@ -23,13 +23,13 @@ class Timeline {
         ] }),
         createElement('div', { style: { paddingBottom: '1rem' }, children: [
           createElement('span', { attrs: { innerText: `${formattedTime} — ` }, children: [
-            ...(src === item.shortname
-            ? [createElement('span', { attrs: { innerText: title || srcTitle } })]
+            ...(src_shortname === item.shortname
+            ? [createElement('span', { attrs: { innerText: event_title || src_title } })]
             : [
-              ...(title ? [createElement('span', { attrs: { innerText: `${title} of ` } })] : []),
+              ...(event_title ? [createElement('span', { attrs: { innerText: `${event_title} of ` } })] : []),
               createElement('a', {
                 classList: ['link', 'link-animated'],
-                attrs: { innerText: srcTitle, href: `/universes/${item.universe_short}/items/${src}` }
+                attrs: { innerText: src_title, href: `/universes/${item.universe_short}/items/${src_shortname}` }
               }),
             ])
           ] }),

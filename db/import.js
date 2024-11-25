@@ -19,22 +19,22 @@ function formatTypes(type, data) {
 // https://stackoverflow.com/a/50890409
 function askQuestion(query) {
     const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
+      input: process.stdin,
+      output: process.stdout,
     });
 
     return new Promise(resolve => rl.question(query, ans => {
-        rl.close();
-        resolve(ans);
-    }))
+      rl.close();
+      resolve(ans);
+    }));
 }
 
 async function dropDb(db) {
   await db.ready;
   const ans = await askQuestion(`This will DROP the ${dbConfig.database} database! Are you SURE? [y/N] `);
   if (ans.toUpperCase() === 'Y') {
-    const ans = await askQuestion(`Export ${dbConfig.database} database first? [y/N] `);
-    if (ans.toUpperCase() === 'Y') {
+    const ans = await askQuestion(`Skip exporting ${dbConfig.database} database first? [y/N] `);
+    if (ans.toUpperCase() === 'N') {
       await dbExport(db);
     }
     await db.queryAsync(`DROP DATABASE IF EXISTS ${dbConfig.database};`);

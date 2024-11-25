@@ -28,7 +28,7 @@ module.exports = function(app, upload) {
           if (data !== undefined) {
             if (data instanceof Buffer) res.send(data);
             else res.json(data);
-          }
+          } else res.end();
         } else {
           res.status(405);
         }
@@ -53,6 +53,7 @@ module.exports = function(app, upload) {
   })
 
   const apiRoutes = new APIRoute('/api', {}, [
+    new APIRoute('/*'),
     new APIRoute('/users', { GET: () => api.user.getMany() }, [
       new APIRoute('/:username', { GET: (req) => api.user.getOne({ username: req.params.username }) }, [
         new APIRoute('/universes', {
@@ -122,6 +123,9 @@ module.exports = function(app, upload) {
             ]),
           ]),
         ]),
+        new APIRoute('/events', {
+          GET: (req) => api.universe.getEventsByUniverseShortname(req.session.user, req.params.universeShortName),
+        }, []),
         new APIRoute('/follow', {
           PUT: (req) => api.universe.putUserFollowing(req.session.user, req.params.universeShortName, req.body.isFollowing),
         }),

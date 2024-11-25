@@ -21,17 +21,22 @@ function updateObjData(newState) {
 
 function bindDataValue(selector, setter) {
   const el = document.querySelector(selector);
-  el.oninput = () => {
+  const onInput = () => {
     setter(el.value);
   };
-  el.oninput();
+  el.addEventListener('input', onInput);
+  onInput();
 }
 
 
 function createBody() {
   updateObjData({ body: '' });
-  document.querySelector('#body').appendChild(createElement('textarea'));
+  const el = createElement('textarea');
+  document.querySelector('#body').appendChild(el);
   bindDataValue('#body textarea', (body) => updateObjData({ body }));
+  el.addEventListener('input', () => {
+    el.parentNode.dataset.replicatedValue = el.value;
+  });
   document.querySelector('#body button').remove();
 }
 
@@ -65,7 +70,6 @@ async function addTab(type, name, force=false) {
     },
     dataset: { tabBtn: name },
   });
-  document.querySelector('#tabs .tabs-buttons').appendChild(button);
 
   const content = createElement('div', { classList: ['hidden'], dataset: { tab: name }, children: [
     createElement('button', { attrs: {
@@ -297,6 +301,7 @@ async function addTab(type, name, force=false) {
     ] }),
   ] });
   document.querySelector('#tabs .tabs-content').appendChild(content);
+  document.querySelector('#tabs .tabs-buttons').appendChild(button);
 
   if (!force) {
     selectTab(name);
@@ -307,17 +312,23 @@ async function addTab(type, name, force=false) {
   }
 }
 
-let eventItems = null;
-let eventItemShorts = null;
-let eventMap = null;
+let eventItems = {};
+let eventItemShorts = {};
+let eventMap = {};
+let fetchedEvents = false;
 async function importEventModal(callback) {
-  if (!eventItems) {
-    const data = (await getJSON(`/api/universes/${universe}/items`))
-      .filter(item => (item.events.length > 0));
-    eventMap = data.reduce((acc, item) => ({ ...acc, [item.id]: item.events }), {});
-    eventItems = data.reduce((acc, item) => ({ ...acc, [item.id]: item.title }), {});
-    eventItemShorts = data.reduce((acc, item) => ({ ...acc, [item.id]: item.shortname }), {});
+  if (!fetchedEvents) {
+    const events = await getJSON(`/api/universes/${universe}/events`);
+    for (const { src_id, src_title, src_shortname, event_title, abstime } of events) {
+      if (!(src_id in eventMap)) {
+        eventMap[src_id] = [];
+        eventItems[src_id] = src_title;
+        eventItemShorts[src_id] = src_shortname;
+      }
+      eventMap[src_id].push([src_shortname, src_title, src_id, event_title, abstime ]);
+    }
     console.log(eventMap, eventItems, eventItemShorts)
+    fetchedEvents = true;
   }
   let selectedItem;
   const itemSelect = createSearchableSelect('import-event-item', eventItems, (value) => {

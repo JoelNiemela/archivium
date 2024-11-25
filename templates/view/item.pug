@@ -31,7 +31,7 @@ block breadcrumbs
 
 block content
   h1.center #{item.title}
-  p.center #{capitalize(T(item.itemTypeName))} of 
+  p#action-bar.center #{capitalize(T(item.itemTypeName))} of 
     a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{item.universe}
     if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE/* || item.author === contextUser.username*/)
       |  - 
@@ -41,7 +41,7 @@ block content
       a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
       |  #{formatDate(new Date(item.created_at))}
       |  - Last updated #{formatDate(new Date(item.updated_at))}
-  p.center
+  p#tags.center
     small
       if item.tags
         each tag in item.tags
@@ -97,29 +97,29 @@ block content
 
     if 'gallery' in item.obj_data && 'title' in item.obj_data.gallery
       .itemTab.hidden.gallery( data-tab='gallery' )
-        each img, index in item.gallery || []
+        each img in item.gallery || []
           .itemKey
-            img( src=`/api/universes/${universe.shortname}/items/${item.shortname}/gallery/images/${img[0]}`, title=img[1], alt=img[2] )
+            img( src=`/api/universes/${universe.shortname}/items/${item.shortname}/gallery/images/${img.id}`, title=img.name, alt=img.label )
             if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
-              .editableLabel.label( data-index=index data-label=img[2] )
+              .editableLabel.label( data-index=index data-label=img.label )
             else
               if img[2]
-                .mdLabel( data-val=img[2] )
+                .mdLabel( data-val=img.label )
 
     if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
       .itemTab.hidden( data-tab='lineage' )
-        each title, shortname in item.parents
+        each parent in item.parents
           .itemKey
-            span #{title[0] || T('Parent')}
+            span #{parent.parent_label || T('Parent')}
             hr
-            a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${shortname}` )
-              | #{item.parent_titles[shortname]}
-        each title, shortname in item.children
+            a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${parent.parent_shortname}` )
+              | #{parent.parent_title}
+        each child in item.children
           .itemKey
-            span #{title[0] || T('Child')}
+            span #{child.child_label || T('Child')}
             hr
-            a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${shortname}` )
-              | #{item.child_titles[shortname]}
+            a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${child.child_shortname}` )
+              | #{child.child_title}
         
     if 'comments' in item.obj_data && 'title' in item.obj_data.comments
       .hidden( data-tab='comments' )

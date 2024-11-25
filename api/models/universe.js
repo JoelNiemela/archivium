@@ -86,6 +86,26 @@ function getManyByAuthorName(user, authorName) {
   });
 }
 
+async function getEventsByUniverseShortname(user, shortname, permissionsRequired=perms.READ) {
+  const [code, universe] = await getOne(user, { 'universe.shortname': shortname }, permissionsRequired);
+  if (!universe) return [code];
+
+  try {
+    const queryString = `
+      SELECT
+        itemevent.event_title, itemevent.abstime,
+        item.shortname AS src_shortname, item.title AS src_title, item.id AS src_id
+      FROM itemevent
+      INNER JOIN item on item.id = itemevent.item_id
+      WHERE item.universe_id = ?
+    `;
+    return [200, await executeQuery(queryString, [universe.id])];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
 async function post(user, body) {
   try {
     const { title, shortname, public, discussion_enabled, discussion_open, obj_data } = body;
@@ -115,7 +135,7 @@ async function post(user, body) {
       new Date(),
     ]);
     const queryString2 = `INSERT INTO authoruniverse (universe_id, user_id, permission_level) VALUES (?, ?, ?)`;
-    return [201, [data, await executeQuery(queryString2, [ data.insertId, user.id, 3 ])]];
+    return [201, [data, await executeQuery(queryString2, [ data.insertId, user.id, perms.ADMIN ])]];
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') return [400, 'universe.shortname must be unique.'];
     if (err.code === 'ER_BAD_NULL_ERROR') return [400, 'Missing parameters.'];
@@ -229,6 +249,7 @@ module.exports = {
   getMany,
   getManyByAuthorId,
   getManyByAuthorName,
+  getEventsByUniverseShortname,
   post,
   put,
   putPermissions,

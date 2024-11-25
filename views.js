@@ -54,7 +54,7 @@ module.exports = function(app) {
       res.status(code2);
       if (!followedUniverses) return;
       const followedUniverseIds = `(${followedUniverses.map(universe => universe.id).join(',')})`;
-      const [code3, recentlyUpdated] = followedUniverses.length > 0 ? await api.item.getMany(user, null, perms.READ, true, {
+      const [code3, recentlyUpdated] = followedUniverses.length > 0 ? await api.item.getMany(user, null, perms.READ, {
         sort: 'updated_at',
         sortDesc: true,
         limit: 8,
@@ -64,7 +64,7 @@ module.exports = function(app) {
           .and(new Cond('lub.id <> ?', user.id).or('item.last_updated_by IS NULL')),
       }) : [200, []];
       res.status(code3);
-      const [code4, oldestUpdated] = await api.item.getMany(user, null, perms.WRITE, true, {
+      const [code4, oldestUpdated] = await api.item.getMany(user, null, perms.WRITE, {
         sort: 'updated_at',
         sortDesc: false,
         limit: 16,
@@ -251,7 +251,7 @@ module.exports = function(app) {
 
   get('/universes/:shortname/items', async (req, res) => {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
-    const [code2, items] = await api.item.getByUniverseShortname(req.session.user, req.params.shortname, perms.READ, true, {
+    const [code2, items] = await api.item.getByUniverseShortname(req.session.user, req.params.shortname, perms.READ, {
       sort: req.query.sort,
       sortDesc: req.query.sort_order === 'desc',
       limit: req.query.limit,
@@ -327,30 +327,30 @@ module.exports = function(app) {
     const [code1, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
     res.status(code1);
     if (!item) return;
-    const [code2, itemList] = await api.item.getByUniverseId(req.session.user, item.universe_id, perms.READ, true, { type: 'character' });
+    const [code2, itemList] = await api.item.getByUniverseId(req.session.user, item.universe_id, perms.READ, { type: 'character' });
     res.status(code2);
     if (code2 !== 200) return;
     item.obj_data = JSON.parse(item.obj_data);
-    if (Object.keys(item.parents).length > 0 || Object.keys(item.children).length > 0) {
+    if (item.parents.length > 0 || item.children.length > 0) {
       item.obj_data.lineage = { ...item.obj_data.lineage };
-      item.obj_data.lineage.parents = item.parents;
-      item.obj_data.lineage.children = item.children;
+      item.obj_data.lineage.parents = item.parents.reduce((obj, val) => ({ ...obj, [val.parent_shortname]: [val.parent_label, val.child_label] }), {});
+      item.obj_data.lineage.children = item.children.reduce((obj, val) => ({ ...obj, [val.child_shortname]: [val.child_label, val.parent_label] }), {});
     }
     if (item.events.length > 0) {
       item.obj_data.timeline = { ...item.obj_data.timeline };
       item.obj_data.timeline.events = item.events
-        .map(([srcShort, src, srcId, title, time]) => ({
-          title,
-          time,
-          imported: srcShort !== item.shortname,
-          src,
-          srcId,
+        .map(({ event_title, abstime, src_shortname, src_title, src_id }) => ({
+          title: event_title,
+          time: abstime,
+          imported: src_shortname !== item.shortname,
+          src: src_title,
+          srcId: src_id,
         }));
     }
     if (item.gallery.length > 0) {
       item.obj_data.gallery = { ...item.obj_data.gallery };
       item.obj_data.gallery.imgs = item.gallery
-        .map(([id, name, label]) => ({
+        .map(({ id, name, label }) => ({
           id,
           url: `/api/universes/${item.universe_short}/items/${item.shortname}/gallery/images/${id}`,
           name,
@@ -404,7 +404,7 @@ module.exports = function(app) {
     const search = req.query.search;
     if (search) {
       const [code1, universes] = await api.universe.getMany(req.session.user, { strings: ['title LIKE ?'], values: [`%${search}%`] });
-      const [code2, items] = await api.item.getMany(req.session.user, null, perms.READ, true, { search });
+      const [code2, items] = await api.item.getMany(req.session.user, null, perms.READ, { search });
       const code = code1 !== 200 ? code1 : code2;
       res.status(code);
       if (code !== 200) return;

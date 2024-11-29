@@ -81,7 +81,7 @@ function getQuery(selects=[], permsCond=undefined, whereConds=undefined, options
       GROUP BY item_id
     ) tag`, new Cond('tag.item_id = item.id'))
     .where(whereConds)
-    .groupBy(['item.id', 'user.username', 'universe.title']);
+    .groupBy(['item.id', 'user.username', 'universe.title', ...(options.groupBy ?? [])]);
   if (options.sort) query.orderBy(options.sort, options.sortDesc);
   if (options.limit) query.limit(options.limit);
 
@@ -101,7 +101,7 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, options
     conditions.values.push(options.tag);
   }
 
-  if (options.sort) {
+  if (options.sort && !options.forceSort) {
     const validSorts = { 'title': true, 'created_at': true, 'updated_at': true, 'author': true, 'item_type': true };
     if (!validSorts[options.sort]) {
       delete options.sort;
@@ -615,13 +615,12 @@ async function snoozeUntil(user, universeShortname, itemShortname) {
   const snooze = (await executeQuery(`SELECT * FROM snooze WHERE item_id = ${item.id} AND snoozed_by = ${user.id};`))[0];
 
   const now = new Date();
-  const snoozeTime = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
 
   try {
     if (snooze) {
-      return [200, await executeQuery(`UPDATE snooze SET snoozed_until = ? WHERE item_id = ? AND snoozed_by = ?;`, [snoozeTime, item.id, user.id])];
+      return [200, await executeQuery(`UPDATE snooze SET snoozed_at = ? WHERE item_id = ? AND snoozed_by = ?;`, [now, item.id, user.id])];
     } else {
-      return [200, await executeQuery(`INSERT INTO snooze (item_id, snoozed_until, snoozed_by) VALUES (?, ?, ?);`, [item.id, snoozeTime, user.id])];
+      return [200, await executeQuery(`INSERT INTO snooze (item_id, snoozed_at, snoozed_by) VALUES (?, ?, ?);`, [item.id, now, user.id])];
     }
   } catch (err) {
     logger.error(err);

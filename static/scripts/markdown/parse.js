@@ -218,7 +218,7 @@ if (!window.getJSON) throw 'fetchUtils.js not loaded!';
       const [src, alt, height, width] = args;
       const attrs = {
         ctx: {
-          src: isNaN(Number(src)) ? src : new GalleryUrl(new CtxLookup('item', 'gallery', src, 0)),
+          src: isNaN(Number(src)) ? src : new GalleryUrl(new CtxLookup('item', 'gallery', src, 'id')),
           title: alt || new CtxLookup('item', 'gallery', src, 1).default(alt),
           alt: alt || new CtxLookup('item', 'gallery', src, 2).default(alt),
         },

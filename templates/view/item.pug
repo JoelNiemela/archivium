@@ -67,7 +67,7 @@ block content
     if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
       li.navbarBtn( data-tab='lineage' )
           h3.navbarBtnLink.navbarText( onclick=`showTab('lineage')` ) #{item.obj_data.lineage.title}
-    if 'comments' in item.obj_data && 'title' in item.obj_data.comments
+    if item.obj_data.comments
       li.navbarBtn( data-tab='comments' )
           h3.navbarBtnLink.navbarText( onclick=`showTab('comments')` ) #{capitalize(T('comments'))}
 
@@ -121,7 +121,7 @@ block content
             a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${child.child_shortname}` )
               | #{child.child_title}
         
-    if 'comments' in item.obj_data && 'title' in item.obj_data.comments
+    if item.obj_data.comments
       .hidden( data-tab='comments' )
         include ../components/comments.pug
 

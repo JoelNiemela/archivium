@@ -26,6 +26,12 @@ block content
       label( for='tags' ) Tags: 
       textarea( id='tags' name='tags' ) #{(item.tags || []).join(' ')}
 
+    div.inputGroup
+      label( for='comments' ) Comments enabled: 
+      label.switch
+        input( id='comments' name='comments' type='checkbox' checked=item.obj_data.comments onchange='updateObjData({ comments: this.checked })' )
+        span.slider
+
     div#tabs
       div
         script.
@@ -46,7 +52,7 @@ block content
         button( type='button' onclick=`addTabByType()` )= T('New Tab')
         select( id='new_tab_type' onchange='handleTypeChange()' )
           option( hidden disabled selected value ) #{T('Tab Type')}...
-          each type in ['lineage', 'location', 'timeline', 'gallery', 'comments']
+          each type in ['lineage', 'location', 'timeline', 'gallery']
             option( value=type )= capitalize(T(type))
           option( value='custom' )= T('Custom Data')
         input( id='new_tab' type='text' placeholder='Tab Name' ).hidden

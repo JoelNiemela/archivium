@@ -436,7 +436,7 @@ async function resetTabs(toSelect=null) {
   document.querySelector(`#tabs .tabs-buttons`).innerHTML = '';
   document.querySelector(`#tabs .tabs-content`).innerHTML = '';
   let firstTab = null;
-  for (const type of ['lineage', 'location', 'timeline', 'gallery', 'comments']) {
+  for (const type of ['lineage', 'location', 'timeline', 'gallery']) {
     if (type in obj_data) {
       await addTab(type, obj_data[type].title, true);
     }

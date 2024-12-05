@@ -41,9 +41,7 @@ module.exports.defaultItemData = {
         { title: null, time: Math.round(Math.random() * 31557600000), imported: false },
       ],
     },
-    comments: {
-      title: 'Comments',
-    },
+    comments: true,
   },
   timeline(items) {
     const imports = items.reduce((list, item) => ([

@@ -473,7 +473,7 @@ async function resetTabs(toSelect=null) {
   document.querySelector('#body').dataset.tab = bodyTabName;
   let firstTab = ('body' in obj_data) ? bodyTabName : null;
   if ('body' in obj_data) await addTab('body', bodyTabName, true);
-  for (const type of ['lineage', 'location', 'timeline', 'gallery', 'comments']) {
+  for (const type of ['lineage', 'location', 'timeline', 'gallery']) {
     if (type in obj_data) {
       if (Object.keys(obj_data[type]).length === 0) {
         const newState = { ...obj_data };

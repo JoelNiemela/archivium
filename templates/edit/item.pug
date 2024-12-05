@@ -36,6 +36,12 @@ block content
       label( for='tags' ) Tags: 
       textarea( id='tags' name='tags' ) #{(item.tags || []).join(' ')}
 
+    div.inputGroup
+      label( for='comments' ) Comments enabled: 
+      label.switch
+        input( id='comments' name='comments' type='checkbox' checked=item.obj_data.comments onchange='updateObjData({ comments: this.checked })' )
+        span.slider
+    
     hr.w-100.mb-0
 
     div#tabs
@@ -59,7 +65,7 @@ block content
         .sheet.d-flex.flex-col.gap-1( style={'min-width': '20rem'} )
           select( id='new_tab_type' onchange='handleTypeChange()' )
             option( hidden disabled selected value ) #{T('Tab Type')}...
-            each type in ['body', 'lineage', 'location', 'timeline', 'gallery', 'comments']
+            each type in ['body', 'lineage', 'location', 'timeline', 'gallery']
               option( value=type )= type === 'body' ? 'Main Text' : capitalize(T(type))
             option( value='custom' )= T('Custom Data')
           input( id='new_tab' type='text' placeholder='Tab Name' ).hidden

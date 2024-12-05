@@ -27,9 +27,15 @@ block content
       textarea( id='tags' name='tags' ) #{(item.tags || []).join(' ')}
 
     div.inputGroup
-      label( for='comments' ) Comments enabled: 
+      label( for='comments' ) Enable comments: 
       label.switch
         input( id='comments' name='comments' type='checkbox' checked=item.obj_data.comments onchange='updateObjData({ comments: this.checked })' )
+        span.slider
+
+    div.inputGroup
+      label( for='notes' ) Enable notes: 
+      label.switch
+        input( id='notes' name='notes' type='checkbox' checked=item.obj_data.notes onchange='updateObjData({ notes: this.checked })' )
         span.slider
 
     div#tabs

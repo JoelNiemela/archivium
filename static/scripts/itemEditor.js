@@ -13,10 +13,14 @@ function getIdValue(id) {
   return document.getElementById(id).value;
 }
 
-function updateObjData(newState) {
-  obj_data = { ...obj_data, ...newState };
+function overwriteObjData(newState) {
+  obj_data = { ...newState };
   const objDataInput = document.getElementById('obj_data');
   objDataInput.value = encodeURIComponent(JSON.stringify(obj_data));
+}
+
+function updateObjData(newState) {
+  overwriteObjData({ ...obj_data, ...newState });
 }
 
 function bindDataValue(selector, setter) {

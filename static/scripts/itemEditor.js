@@ -279,7 +279,7 @@ async function addTab(type, name, force=false) {
                   updateObjData(newState);
                 } } }),
                 createElement('a', { classList: ['link', 'link-animated', 'align-self-start'], attrs: {
-                  href: `/api/universes/${universe}/items/${item}/gallery/images/${id}?download=1`,
+                  href: `/api/universes/${universe}/items/${item.shortname}/gallery/images/${id}?download=1`,
                   innerText: T('Download'),
                 } }),
               ] }),
@@ -291,8 +291,8 @@ async function addTab(type, name, force=false) {
         type: 'button',
         innerText: 'Upload Image',
         onclick: () => {
-          uploadImage(`/api/universes/${universe}/items/${item}/gallery`, document.body, async (newId, newName) => {
-            const url = `/api/universes/${universe}/items/${item}/gallery/images/${newId}`;
+          uploadImage(`/api/universes/${universe}/items/${item.shortname}/gallery`, document.body, async (newId, newName) => {
+            const url = `/api/universes/${universe}/items/${item.shortname}/gallery/images/${newId}`;
             if (!url) return;
             const newState = { ...obj_data };
             if (!('imgs' in newState.gallery)) newState.gallery.imgs = [];

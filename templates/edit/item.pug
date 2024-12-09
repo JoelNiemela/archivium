@@ -79,7 +79,7 @@ block content
     const easyMDE = new EasyMDE({
       element: textarea,
       unorderedListStyle: '-',
-      previewRender: (plainText, preview) => { // Async method
+      previewRender: (plainText, preview) => {
         renderMarkdown(universe, plainText, { item }).then((html) => {
             preview.innerHTML = html;
         });

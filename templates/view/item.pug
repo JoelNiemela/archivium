@@ -1,5 +1,15 @@
 extends ../layout.pug
 
+block styles
+  style.
+    .tags-and-icons {
+      display: grid;
+      grid-template-columns: 2rem 1fr 2rem;
+    }
+    .tags-and-icons a {
+      position: absolute;
+    }
+
 block scripts
   script
     include /static/scripts/tabs.js
@@ -12,6 +22,7 @@ block scripts
     include /static/scripts/editor/markdown.js
     include /static/scripts/calendarPicker.js
     include /static/scripts/timelineRender.js
+    include /static/scripts/cardUtils.js
     //- include /static/scripts/editor/rich.js
 
 block append save
@@ -33,43 +44,42 @@ block content
   h1.center #{item.title}
   p#action-bar.center #{capitalize(T(item.itemTypeName))} of 
     a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{item.universe}
-    if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE/* || item.author === contextUser.username*/)
-      |  - 
-      a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}/edit` ) Edit
   p.center
     small Created by 
       a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
       |  #{formatDate(new Date(item.created_at))}
       |  - Last updated #{formatDate(new Date(item.updated_at))}
-  p#tags.center
-    small
-      if item.tags
-        each tag in item.tags
-          if tag
-            | ##{tag} 
+  .tags-and-icons.my-4
+    div
+    .center#tags
+      small
+        if item.tags
+          each tag in item.tags
+            if tag
+              | ##{tag} 
+    .d-flex.justify-end.align-end
+      if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE/* || item.author === contextUser.username*/)
+        a.link.link-animated.d-flex.align-end( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}/edit` )
+          span.material-symbols-outlined edit
+          |  Edit
   hr
 
   //- Tab buttons
-  ul.navbarBtns#tabBtns.gap-1
+  ul.navbarBtns#tabBtns.gap-1.scroll-x.mb-2
     if 'body' in item.obj_data
       li.navbarBtn#bodyBtn( data-tab='body' )
-        h3.navbarBtnLink.navbarText( onclick=`showTab('body')` ) Main Text
+        h3.navbarBtnLink.navbarText.ma-0( onclick=`showTab('body')` ) Main Text
     if 'tabs' in item.obj_data
       each tab, name in item.obj_data.tabs
         li.navbarBtn( data-tab=name )
-          h3.navbarBtnLink.navbarText( onclick=`showTab('${name}')` ) #{name}
-    if 'timeline' in item.obj_data && 'title' in item.obj_data.timeline
-      li.navbarBtn( data-tab='timeline' )
-          h3.navbarBtnLink.navbarText( onclick=`showTab('timeline')` ) #{item.obj_data.timeline.title}
-    if 'gallery' in item.obj_data && 'title' in item.obj_data.gallery
-      li.navbarBtn( data-tab='gallery' )
-          h3.navbarBtnLink.navbarText( onclick=`showTab('gallery')` ) #{item.obj_data.gallery.title}
-    if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
-      li.navbarBtn( data-tab='lineage' )
-          h3.navbarBtnLink.navbarText( onclick=`showTab('lineage')` ) #{item.obj_data.lineage.title}
+          h3.navbarBtnLink.navbarText.ma-0( onclick=`showTab('${name}')` ) #{name}
+    each dataType in ['timeline', 'gallery', 'lineage']
+      if dataType in item.obj_data && 'title' in item.obj_data[dataType]
+        li.navbarBtn( data-tab=dataType )
+          h3.navbarBtnLink.navbarText.ma-0( onclick=`showTab('${dataType}')` ) #{item.obj_data[dataType].title}
     if 'comments' in item.obj_data && 'title' in item.obj_data.comments
       li.navbarBtn( data-tab='comments' )
-          h3.navbarBtnLink.navbarText( onclick=`showTab('comments')` ) #{capitalize(T('comments'))}
+        h3.navbarBtnLink.navbarText.ma-0( onclick=`showTab('comments')` ) #{capitalize(T('comments'))}
 
   
   script!= `window.item = ${JSON.stringify(item)};`
@@ -80,12 +90,9 @@ block content
         .itemTab.hidden( data-tab=name )
           each val, key in tab
             .itemKey
-              if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
-                .editableKey( data-key=key data-tab-name=name data-val=val )
-              else
-                span #{key}
-                hr
-                .mdVal( data-val=val )
+              span #{key}
+              hr
+              .mdVal( data-val=val )
 
     if 'timeline' in item.obj_data && 'title' in item.obj_data.timeline
       .itemTab.hidden( data-tab='timeline' )
@@ -100,11 +107,8 @@ block content
         each img in item.gallery || []
           .itemKey
             img( src=`/api/universes/${universe.shortname}/items/${item.shortname}/gallery/images/${img.id}`, title=img.name, alt=img.label )
-            if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
-              .editableLabel.label( data-index=index data-label=img.label )
-            else
-              if img[2]
-                .mdLabel( data-val=img.label )
+            if img.label
+              .mdLabel( data-val=img.label )
 
     if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
       .itemTab.hidden( data-tab='lineage' )
@@ -127,46 +131,37 @@ block content
 
     if 'body' in item.obj_data
       .sheet.hidden( data-tab='body' )
-        if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
-          #editor
-        else
-          #markdown-body
-          //- script!= `loadMarkdown(${JSON.stringify(universe.shortname)}, ${JSON.stringify(item.obj_data.body)}, ${JSON.stringify({ item })});`
-
-  script.
-    const body = document.getElementById('markdown-body');
-    if (body) {
-      loadMarkdown(body, '#{universe.shortname}', item.obj_data.body, { item });
-    };
-
-    document.querySelectorAll('.mdVal').forEach((el) => {
-      loadMarkdown(el, '#{universe.shortname}', el.dataset.val, null, (tag) => {
-        if (tag.type === 'div') tag.attrs.style = {'text-align': 'right'};
-        if (tag.type === 'p') tag.type = 'span';
-      });
-    });
-
-    document.querySelectorAll('.mdLabel').forEach((el) => {
-      loadMarkdown(el, '#{universe.shortname}', el.dataset.val, null, (tag) => {
-        if (tag.type === 'div') {
-          tag.attrs.style = {'text-align': 'center'};
-          tag.attrs.class += ' label';
-        }
-        if (tag.type === 'p') tag.type = 'span';
-      });
-    });
-    
-    document.querySelectorAll('.comment').forEach((el) => {
-      console.log(el.dataset.val)
-      loadMarkdown(el, '#{universe.shortname}', el.dataset.val, null);
-    });
-  
-  if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
-    script!= `loadEditor(${JSON.stringify(universe)}, ${JSON.stringify(item.obj_data.body)});`
-    //- script!= `loadRichEditor(${JSON.stringify(universe)}, ${JSON.stringify(item.obj_data.body)});`
+        #markdown-body
 
   script.
     (function() {
+      const body = document.getElementById('markdown-body');
+      if (body) {
+        loadMarkdown(body, '#{universe.shortname}', item.obj_data.body, { item });
+      };
+
+      document.querySelectorAll('.mdVal').forEach((el) => {
+        loadMarkdown(el, '#{universe.shortname}', el.dataset.val, null, (tag) => {
+          if (tag.type === 'div') tag.attrs.style = {'text-align': 'right'};
+          if (tag.type === 'p') tag.type = 'span';
+        });
+      });
+
+      document.querySelectorAll('.mdLabel').forEach((el) => {
+        loadMarkdown(el, '#{universe.shortname}', el.dataset.val, null, (tag) => {
+          if (tag.type === 'div') {
+            tag.attrs.style = {'text-align': 'center'};
+            tag.attrs.class += ' label';
+          }
+          if (tag.type === 'p') tag.type = 'span';
+        });
+      });
+      
+      document.querySelectorAll('.comment').forEach((el) => {
+        console.log(el.dataset.val)
+        loadMarkdown(el, '#{universe.shortname}', el.dataset.val, null);
+      });
+
       const galleryModalState = {}
       const galleryItems = document.querySelectorAll('.gallery .itemKey');
       galleryItems.forEach((itemKey, i) => {

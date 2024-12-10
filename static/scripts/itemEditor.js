@@ -1,4 +1,5 @@
 let obj_data = {};
+let hasLoaded = false;
 let itemMap = {};
 let selectedTab = null;
 
@@ -16,10 +17,11 @@ function getIdValue(id) {
 }
 
 function overwriteObjData(newState) {
+  if (!deepCompare(newState, obj_data) && hasLoaded) onItemUpdate();
+  hasLoaded = true;
   obj_data = { ...newState };
   const objDataInput = document.getElementById('obj_data');
   objDataInput.value = encodeURIComponent(JSON.stringify(obj_data));
-  onItemUpdate();
 }
 
 function updateObjData(newState) {
@@ -511,6 +513,13 @@ async function resetTabs(toSelect=null) {
   if ('body' in obj_data) await addTab('body', bodyTabName, true);
   for (const type of ['lineage', 'location', 'timeline', 'gallery', 'comments']) {
     if (type in obj_data) {
+      if (Object.keys(obj_data[type]).length === 0) {
+        const newState = { ...obj_data };
+        delete newState[type];
+        hasLoaded = false;
+        overwriteObjData(newState);
+        continue;
+      }
       if (!firstTab) firstTab = type;
       await addTab(type, obj_data[type].title, true);
     }

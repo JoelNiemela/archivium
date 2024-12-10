@@ -31,8 +31,10 @@ block content
       label( for='tags' ) Tags: 
       textarea( id='tags' name='tags' ) #{(item.tags || []).join(' ')}
 
+    hr.w-100.mb-0
+
     div#tabs
-      div
+      div#new-tab-modal
         script.
           function handleTypeChange() {
             const type = getIdValue('new_tab_type');
@@ -55,15 +57,17 @@ block content
             option( value=type )= capitalize(T(type))
           option( value='custom' )= T('Custom Data')
         input( id='new_tab' type='text' placeholder='Tab Name' ).hidden
-      div.tabs-buttons
+      script.
+        loadModal('new-tab-modal');
+      ul.tabs-buttons.navbarBtns.gap-1.scroll-x.mb-2
       div.tabs-content
 
-    div#body( data-replicated-value=item.obj_data.body || '' )
-      if 'body' in item.obj_data
-        textarea
-          | #{item.obj_data.body || ''}
-      else
-        button( type='button' onclick='createBody()' ) Add Body Text
+      div#body.hidden
+        if 'body' in item.obj_data
+          textarea
+            | #{item.obj_data.body || ''}
+        else
+          button( type='button' onclick='createBody()' ) Add Body Text
       
     div
       input( id='obj_data' type='hidden' name='obj_data' value='{}' )
@@ -75,18 +79,4 @@ block content
   script!= `updateObjData(${JSON.stringify(item.obj_data)}); itemMap = ${JSON.stringify(itemMap)}; universe = '${item.universe_short}'; item = ${JSON.stringify(item)}`
   script.
     resetTabs();
-    const textarea = document.querySelector('#body textarea');
-    const easyMDE = new EasyMDE({
-      element: textarea,
-      unorderedListStyle: '-',
-      previewRender: (plainText, preview) => {
-        renderMarkdown(universe, plainText, { item }).then((html) => {
-            preview.innerHTML = html;
-        });
-
-        return 'Loading...';
-      },
-    });
-    easyMDE.codemirror.on('change', () => {
-      updateObjData({ body: easyMDE.value() });
-    })
+    setupEasyMDE();

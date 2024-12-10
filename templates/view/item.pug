@@ -62,10 +62,11 @@ block content
         a.link.link-animated.d-flex.align-end( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}/edit` )
           span.material-symbols-outlined edit
           |  Edit
+          
   hr
 
   //- Tab buttons
-  ul.navbarBtns#tabBtns.gap-1.scroll-x.mb-2
+  ul#tabBtns.navbarBtns.gap-1.scroll-x.mb-2
     if 'body' in item.obj_data
       li.navbarBtn#bodyBtn( data-tab='body' )
         h3.navbarBtnLink.navbarText.ma-0( onclick=`showTab('body')` ) Main Text

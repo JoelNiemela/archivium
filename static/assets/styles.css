@@ -66,7 +66,7 @@ header {
   position: sticky;
   margin: 0.5rem;
   top: -0.0625rem;
-  z-index: 2;
+  z-index: 3;
   transition: margin 0.1s;
 }
 
@@ -327,7 +327,7 @@ header {
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 5;
+  z-index: 15;
   background-color: #0007;
   margin: 0;
   max-width: 100vw;
@@ -593,8 +593,12 @@ h4, h5 {
 .editor-toolbar:not(.fullscreen) {
   position: sticky !important;
   top: 47px;
-  z-index: 1;
+  z-index: 2;
   background-color: #e9e9e9;
+}
+
+.editor-preview-side:not(.fullscreen) {
+  z-index: 1 !important;
 }
 
 /* Fancy Links */
@@ -832,6 +836,9 @@ h4, h5 {
   margin-right: 0.5rem;
 }
 
+.mb-0 {
+  margin-bottom: 0;
+}
 .mb-1 {
   margin-bottom: 0.25rem;
 }

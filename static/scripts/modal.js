@@ -29,8 +29,19 @@ if (!window.createElement) throw 'domUtils.js not loaded!';
     modals[id].remove();
   }
 
+  function loadModal(id, show=false) {
+    const modalEl = document.getElementById(id);
+    modalEl.classList.add('modal', 'hidden');
+    modalEl.addEventListener('click', () => hideModal(id));
+    const content = modalEl.children;
+    modalEl.innerHTML = '';
+    modalEl.appendChild(createElement('div', { classList: ['modal-content'], attrs: {onclick: (e) => e.stopPropagation()}, children: content }));
+    if (show) showModal(id);
+  }
+
   window.modal = modal;
   window.showModal = showModal;
   window.hideModal = hideModal;
   window.removeModal = removeModal;
+  window.loadModal = loadModal;
 })();

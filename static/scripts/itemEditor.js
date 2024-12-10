@@ -8,15 +8,20 @@ if (!window.modal) throw 'modal not loaded!';
 if (!window.getJSON) throw 'fetchUtils.js not loaded!';
 if (!window.CalendarPicker) throw 'calendarPicker.js not loaded!';
 if (!window.uploadImage) throw 'fileUpload.js not loaded!';
+if (!window.EasyMDE) throw 'EasyMDE not loaded!';
 
 function getIdValue(id) {
   return document.getElementById(id).value;
 }
 
-function updateObjData(newState) {
-  obj_data = { ...obj_data, ...newState };
+function overwriteObjData(newState) {
+  obj_data = { ...newState };
   const objDataInput = document.getElementById('obj_data');
   objDataInput.value = encodeURIComponent(JSON.stringify(obj_data));
+}
+
+function updateObjData(newState) {
+  overwriteObjData({ ...obj_data, ...newState });
 }
 
 function bindDataValue(selector, setter) {
@@ -29,21 +34,57 @@ function bindDataValue(selector, setter) {
 }
 
 
-function createBody() {
-  updateObjData({ body: '' });
-  const el = createElement('textarea');
-  document.querySelector('#body').appendChild(el);
-  bindDataValue('#body textarea', (body) => updateObjData({ body }));
-  el.addEventListener('input', () => {
-    el.parentNode.dataset.replicatedValue = el.value;
-  });
-  document.querySelector('#body button').remove();
+function setupEasyMDE() {
+  const textarea = document.querySelector('#body textarea');
+  if (textarea) {
+    textarea.parentNode.classList.remove('hidden');
+    const easyMDE = new EasyMDE({
+      element: textarea,
+      unorderedListStyle: '-',
+      sideBySideFullscreen: true,
+      previewRender: (plainText, preview) => {
+        renderMarkdown(universe, plainText, { item }).then((html) => {
+            preview.innerHTML = html;
+        });
+
+        return 'Loading...';
+      },
+      toolbar: [
+        'bold', 'italic', 'heading',
+        '|',
+        /*'code', 'quote',*/ 'unordered-list', /*'ordered-list',*/
+        '|',
+        'link', 'image', /*'upload-image',*/
+        '|',
+        'undo', 'redo',
+        '|',
+        'preview', 'side-by-side', 'fullscreen',
+        '|',
+        {
+          name: 'guide',
+          action: '/help/markdown',
+          className: 'fa fa-question-circle',
+          title: 'Markdown Guide',
+        }
+      ],
+    });
+    easyMDE.codemirror.on('change', () => {
+      updateObjData({ body: easyMDE.value() });
+    });
+    textarea.parentNode.classList.add('hidden');
+  }
 }
 
 
 function selectTab(name) {
-  if (selectedTab) document.querySelector(`#tabs [data-tab="${selectedTab}"]`).classList.add('hidden');
+  if (selectedTab) {
+    document.querySelector(`#tabs [data-tab="${selectedTab}"]`).classList.add('hidden');
+    document.querySelector(`#tabs [data-tab-btn="${selectedTab}"]`).classList.remove('selected');
+    document.querySelector(`#tabs [data-tab-btn="${selectedTab}"] .badge`).classList.add('hidden');
+  }
   document.querySelector(`#tabs [data-tab="${name}"]`).classList.remove('hidden');
+  document.querySelector(`#tabs [data-tab-btn="${name}"]`).classList.add('selected');
+  document.querySelector(`#tabs [data-tab-btn="${name}"] .badge`).classList.remove('hidden');
   selectedTab = name;
 }
 
@@ -62,245 +103,38 @@ async function addTab(type, name, force=false) {
     updateObjData(newState);
   }
 
-  const button = createElement('button', {
-    attrs: {
-      type: 'button',
-      innerText: name,
-      onclick: () => selectTab(name),
-    },
+  const button = createElement('li', {
+    attrs: { type: 'button', onclick: () => selectTab(name) },
+    classList: ['navbarBtn', 'badge-anchor'],
     dataset: { tabBtn: name },
+    children: [
+      createElement('h3', {attrs: {innerText: name}, classList: ['navbarBtnLink', 'navbarText', 'ma-0'] }),
+      createElement('div', {
+        attrs: { innerText: 'delete', onclick: (e) => {
+          e.stopPropagation();
+          if (type !== 'custom') {
+            const newState = { ...obj_data, [type]: {} }
+            if (type === 'body') {
+              delete newState.body;
+            }
+            overwriteObjData(newState);
+          }
+          removeTab(name);
+        } },
+        classList: ['material-symbols-outlined', 'badge', 'badge-large', 'hidden'],
+      }),
+    ],
   });
 
-  const content = createElement('div', { classList: ['hidden'], dataset: { tab: name }, children: [
-    createElement('button', { attrs: {
-      type: 'button',
-      innerText: 'Delete Tab',
-      onclick: () => {
-        if (type !== 'custom') {
-          updateObjData({ [type]: {} });
-        }
-        removeTab(name);
-      },
-    } }),
-    createElement('h3', { attrs: { innerText: name } }),
-    type === 'custom' && createElement('div', { children: [
-      createElement('div', { classList: ['keyPairs'] }),
-      createElement('button', { attrs: {
-        type: 'button',
-        innerText: 'Add New Key',
-        onclick: () => addKeyValuePair(name, getIdValue(`${name}-new_key`)),
-      } }),
-      createElement('input', { attrs: { id: `${name}-new_key` } }),
-    ] }),
-    type === 'lineage' && createElement('div', { children: [
-      createElement('div', { classList: ['item-parents'], children: [
-        createElement('h4', { attrs: { innerText: 'Parents' } }),
-        ...Object.keys(obj_data.lineage.parents ?? {}).map((shortname) => (
-          createElement('div', { children: [
-            createElement('button', { attrs: {
-              type: 'button',
-              innerText: itemMap[shortname] ?? shortname,
-              onclick: () => {
-                const newState = { ...obj_data };
-                delete newState.lineage.parents[shortname];
-                updateObjData(newState);
-                resetTabs(name);
-              },
-            } }),
-            obj_data.lineage.parents[shortname][0]
-              && createElement('span', { attrs: { innerText: obj_data.lineage.parents[shortname][0] } }),
-          ] })
-        )),
-      ] }),
-      createElement('div', { classList: ['item-children'], children: [
-        createElement('h4', { attrs: { innerText: 'Children' } }),
-        ...Object.keys(obj_data.lineage.children ?? {}).map((shortname) => (
-          createElement('div', { children: [
-            createElement('button', { attrs: {
-              type: 'button',
-              innerText: itemMap[shortname],
-              onclick: () => {
-                const newState = { ...obj_data };
-                delete newState.lineage.children[shortname];
-                updateObjData(newState);
-                resetTabs(name);
-              },
-            } }),
-            obj_data.lineage.children[shortname][0]
-              && createElement('span', { attrs: { innerText: obj_data.lineage.children[shortname][0] } }),
-          ] })
-        )),
-      ] }),
-      createElement('div', { children: [
-        createElement('button', { attrs: {
-          type: 'button',
-          innerText: 'Add New Parent',
-          onclick: () => {
-            const val = getIdValue('new_parent');
-            const data = [getIdValue('new_parent_other_data') || null, getIdValue('new_parent_self_data') || null];
-            if (!val) return;
-            const newState = { ...obj_data };
-            if (!('parents' in newState.lineage)) newState.lineage.parents = {};
-            newState.lineage.parents[val] = data;
-            updateObjData(newState);
-            resetTabs(name);
-          },
-        } }),
-        createSearchableSelect('new_parent', itemMap),
-        createElement('input', { attrs: { id: 'new_parent_self_data', placeholder: T('Child Title') } }),
-        createElement('input', { attrs: { id: 'new_parent_other_data', placeholder: T('Parent Title') } }),
-      ] }),
-      createElement('div', { children: [
-        createElement('button', { attrs: {
-          type: 'button',
-          innerText: 'Add New Child',
-          onclick: () => {
-            const val = getIdValue('new_child');
-            const data = [getIdValue('new_child_other_data') || null, getIdValue('new_child_self_data') || null];
-            if (!val) return;
-            const newState = { ...obj_data };
-            if (!('children' in newState.lineage)) newState.lineage.children = {};
-            newState.lineage.children[val] = data;
-            updateObjData(newState);
-            resetTabs(name);
-          },
-        } }),
-        createSearchableSelect('new_child', itemMap),
-        createElement('input', { attrs: { id: 'new_child_self_data', placeholder: T('Parent Title') } }),
-        createElement('input', { attrs: { id: 'new_child_other_data', placeholder: T('Child Title') } }),
-      ] }),
-    ] }),
-    type === 'timeline' && createElement('div', { children: [
-      createElement('h4', { attrs: { innerText: T('Events') } }),
-      ...(obj_data.timeline.events ?? []).sort((a, b) => a.time > b.time ? 1 : -1).map((event, i) => (
-        createElement('div', { children: [
-          ...(event.imported ? [
-            createElement('span', { attrs: { innerText: `${event.title ? `${event.title} of ` : ``}${event.src}: ${event.time}` } }),
-          ] : [
-            createElement('input', { attrs: { value: event.title, placeholder: T('Title'), oninput: ({ target }) => {
-              const newState = { ...obj_data };
-              newState.timeline.events[i].title = target.value;
-              updateObjData(newState);
-            } } }),
-            createElement('input', { attrs: { id: `${i}_event_time`, value: event.time, placeholder: T('Time'), type: 'number', oninput: ({ target }) => {
-              const newState = { ...obj_data };
-              newState.timeline.events[i].time = Math.round(Number(target.value));
-              updateObjData(newState);
-            }, onchange: ({ target }) => {
-              target.value = Math.round(Number(target.value));
-              resetTabs(name);
-            } } }),
-            ...timePickerModal(`${i}_event_time`, () => {
-              const input = document.getElementById(`${i}_event_time`);
-              input.oninput({ target: input });
-            }),
-          ]),
-          createElement('button', { attrs: {
-            type: 'button',
-            innerText: T('Remove'),
-            onclick: () => {
-              const newState = { ...obj_data };
-              newState.timeline.events.splice(i, 1);
-              updateObjData(newState);
-              resetTabs(name);
-            },
-          } }),
-        ] })
-      )),
-      createElement('br'),
-      createElement('h4', { attrs: { innerText: T('Add Events') } }),
-      createElement('div', { classList: ['d-flex', 'flex-col', 'gap-1', 'pa-1', 'align-start'], children: [
-        createElement('div', { children: [
-          createElement('b', { attrs: { innerText: `${T('Title')}: ` } }),
-          createElement('input', { attrs: { id: 'new_event_title' } }),
-        ]}),
-        createElement('div', { children: [
-          createElement('b', { attrs: { innerText: `${T('Time')}: ` } }),
-          createElement('input', { attrs: { id: 'new_event_time', type: 'number', onchange: ({ target }) => {
-            target.value = Math.round(Number(target.value));
-          } } }),
-          ...timePickerModal('new_event_time'),
-        ]}),
-        createElement('button', { attrs: {
-          type: 'button',
-          innerText: T('Create New Event'),
-          onclick: () => {
-            const newState = { ...obj_data };
-            const title = getIdValue('new_event_title');
-            if (!title && newState.timeline.events?.some(({ title }) => !title)) {
-              alert('Only one untitled event allowed per item!');
-              return;
-            }
-            if (!newState.timeline.events) newState.timeline.events = [];
-            newState.timeline.events.push({ title, time: getIdValue('new_event_time'), imported: false });
-            updateObjData(newState);
-            resetTabs(name);
-          },
-        } }),
-      ] }),
-      createElement('br'),
-      createElement('div', { children: [
-        ...(await importEventModal(([selectedItem, selectedEvent]) => {
-          const newState = { ...obj_data };
-          if (newState.timeline.imports?.some(({ item, event }) => selectedItem === item && selectedEvent === event)) return;
-          if (!newState.timeline.imports) newState.timeline.imports = [];
-          if (!newState.timeline.events) newState.timeline.events = [];
-          newState.timeline.events.push({ ...selectedEvent, imported: true, src: selectedItem.title, srcId: selectedItem.id });
-          newState.timeline.imports.push([selectedItem, selectedEvent]);
-          updateObjData(newState);
-          resetTabs(name);
-        })),
-      ] }),
-    ] }),
-    type === 'gallery' && createElement('div', { children: [
-      createElement('div', { classList: ['item-gallery', 'd-flex', 'gap-4', 'flex-wrap'], children: [
-        ...(obj_data.gallery.imgs ?? []).map(img => img ?? {}).map(({ id, url, label }, i) => (       
-          createElement('div', { classList: [], children: [
-            createElement('div', { classList: ['d-flex', 'gap-1'], attrs: { style: 'height: 8rem;' }, children: [
-              createElement('img', { attrs: { src: url, alt: label, style: { height: '2rem' } } }),
-              createElement('div', { classList: ['d-flex', 'flex-col'], children: [
-                createElement('button', { attrs: {
-                  type: 'button',
-                  innerText: T('Remove Image'),
-                  onclick: () => {
-                    const newState = { ...obj_data };
-                    newState.gallery.imgs.splice(i, 1);
-                    updateObjData(newState);
-                    resetTabs(name);
-                  },
-                } }),
-                createElement('input', { attrs: { value: label ?? '', placeholder: 'Label', onchange: ({ target }) => {
-                  const newState = { ...obj_data };
-                  newState.gallery.imgs[i].label = target.value;
-                  updateObjData(newState);
-                } } }),
-                createElement('a', { classList: ['link', 'link-animated', 'align-self-start'], attrs: {
-                  href: `/api/universes/${universe}/items/${item}/gallery/images/${id}?download=1`,
-                  innerText: T('Download'),
-                } }),
-              ] }),
-            ] }),
-          ] })
-        )),
-      ] }),
-      createElement('button', { attrs: {
-        type: 'button',
-        innerText: 'Upload Image',
-        onclick: () => {
-          uploadImage(`/api/universes/${universe}/items/${item}/gallery`, document.body, async (newId, newName) => {
-            const url = `/api/universes/${universe}/items/${item}/gallery/images/${newId}`;
-            if (!url) return;
-            const newState = { ...obj_data };
-            if (!('imgs' in newState.gallery)) newState.gallery.imgs = [];
-            newState.gallery.imgs.push({ id: newId, url, name: newName });
-            updateObjData(newState);
-            resetTabs(name);
-          });
-        },
-      } }),
-    ] }),
-  ] });
-  document.querySelector('#tabs .tabs-content').appendChild(content);
+  if (type !== 'body') {
+    const content = createElement('div', { classList: ['hidden'], dataset: { tab: name }, children: [
+      type === 'custom' && customTab(name),
+      type === 'lineage' && lineageTab(name),
+      type === 'timeline' && await timelineTab(name),
+      type === 'gallery' && galleryTab(name),
+    ] });
+    document.querySelector('#tabs .tabs-content').appendChild(content);
+  }
   document.querySelector('#tabs .tabs-buttons').appendChild(button);
 
   if (!force) {
@@ -310,6 +144,234 @@ async function addTab(type, name, force=false) {
   if (type !== 'custom') {
     document.querySelector(`#new_tab_type [value="${type}"]`)?.remove();
   }
+}
+
+function customTab(name) {
+  return createElement('div', { children: [
+    createElement('div', { classList: ['keyPairs'] }),
+    createElement('button', { attrs: {
+      type: 'button',
+      innerText: 'Add New Key',
+      onclick: () => addKeyValuePair(name, getIdValue(`${name}-new_key`)),
+    } }),
+    createElement('input', { attrs: { id: `${name}-new_key` } }),
+  ] });
+}
+
+function lineageTab(name) {
+  return createElement('div', { children: [
+    createElement('div', { classList: ['item-parents'], children: [
+      createElement('h4', { attrs: { innerText: 'Parents' } }),
+      ...Object.keys(obj_data.lineage.parents ?? {}).map((shortname) => (
+        createElement('div', { children: [
+          createElement('button', { attrs: {
+            type: 'button',
+            innerText: itemMap[shortname] ?? shortname,
+            onclick: () => {
+              const newState = { ...obj_data };
+              delete newState.lineage.parents[shortname];
+              updateObjData(newState);
+              resetTabs(name);
+            },
+          } }),
+          obj_data.lineage.parents[shortname][0]
+            && createElement('span', { attrs: { innerText: obj_data.lineage.parents[shortname][0] } }),
+        ] })
+      )),
+    ] }),
+    createElement('div', { classList: ['item-children'], children: [
+      createElement('h4', { attrs: { innerText: 'Children' } }),
+      ...Object.keys(obj_data.lineage.children ?? {}).map((shortname) => (
+        createElement('div', { children: [
+          createElement('button', { attrs: {
+            type: 'button',
+            innerText: itemMap[shortname],
+            onclick: () => {
+              const newState = { ...obj_data };
+              delete newState.lineage.children[shortname];
+              updateObjData(newState);
+              resetTabs(name);
+            },
+          } }),
+          obj_data.lineage.children[shortname][0]
+            && createElement('span', { attrs: { innerText: obj_data.lineage.children[shortname][0] } }),
+        ] })
+      )),
+    ] }),
+    createElement('div', { children: [
+      createElement('button', { attrs: {
+        type: 'button',
+        innerText: 'Add New Parent',
+        onclick: () => {
+          const val = getIdValue('new_parent');
+          const data = [getIdValue('new_parent_other_data') || null, getIdValue('new_parent_self_data') || null];
+          if (!val) return;
+          const newState = { ...obj_data };
+          if (!('parents' in newState.lineage)) newState.lineage.parents = {};
+          newState.lineage.parents[val] = data;
+          updateObjData(newState);
+          resetTabs(name);
+        },
+      } }),
+      createSearchableSelect('new_parent', itemMap),
+      createElement('input', { attrs: { id: 'new_parent_self_data', placeholder: T('Child Title') } }),
+      createElement('input', { attrs: { id: 'new_parent_other_data', placeholder: T('Parent Title') } }),
+    ] }),
+    createElement('div', { children: [
+      createElement('button', { attrs: {
+        type: 'button',
+        innerText: 'Add New Child',
+        onclick: () => {
+          const val = getIdValue('new_child');
+          const data = [getIdValue('new_child_other_data') || null, getIdValue('new_child_self_data') || null];
+          if (!val) return;
+          const newState = { ...obj_data };
+          if (!('children' in newState.lineage)) newState.lineage.children = {};
+          newState.lineage.children[val] = data;
+          updateObjData(newState);
+          resetTabs(name);
+        },
+      } }),
+      createSearchableSelect('new_child', itemMap),
+      createElement('input', { attrs: { id: 'new_child_self_data', placeholder: T('Parent Title') } }),
+      createElement('input', { attrs: { id: 'new_child_other_data', placeholder: T('Child Title') } }),
+    ] }),
+  ] });
+}
+
+async function timelineTab(name) {
+  return createElement('div', { children: [
+    createElement('h4', { attrs: { innerText: T('Events') } }),
+    ...(obj_data.timeline.events ?? []).sort((a, b) => a.time > b.time ? 1 : -1).map((event, i) => (
+      createElement('div', { children: [
+        ...(event.imported ? [
+          createElement('span', { attrs: { innerText: `${event.title ? `${event.title} of ` : ``}${event.src}: ${event.time}` } }),
+        ] : [
+          createElement('input', { attrs: { value: event.title, placeholder: T('Title'), oninput: ({ target }) => {
+            const newState = { ...obj_data };
+            newState.timeline.events[i].title = target.value;
+            updateObjData(newState);
+          } } }),
+          createElement('input', { attrs: { id: `${i}_event_time`, value: event.time, placeholder: T('Time'), type: 'number', oninput: ({ target }) => {
+            const newState = { ...obj_data };
+            newState.timeline.events[i].time = Math.round(Number(target.value));
+            updateObjData(newState);
+          }, onchange: ({ target }) => {
+            target.value = Math.round(Number(target.value));
+            resetTabs(name);
+          } } }),
+          ...timePickerModal(`${i}_event_time`, () => {
+            const input = document.getElementById(`${i}_event_time`);
+            input.oninput({ target: input });
+          }),
+        ]),
+        createElement('button', { attrs: {
+          type: 'button',
+          innerText: T('Remove'),
+          onclick: () => {
+            const newState = { ...obj_data };
+            newState.timeline.events.splice(i, 1);
+            updateObjData(newState);
+            resetTabs(name);
+          },
+        } }),
+      ] })
+    )),
+    createElement('br'),
+    createElement('h4', { attrs: { innerText: T('Add Events') } }),
+    createElement('div', { classList: ['d-flex', 'flex-col', 'gap-1', 'pa-1', 'align-start'], children: [
+      createElement('div', { children: [
+        createElement('b', { attrs: { innerText: `${T('Title')}: ` } }),
+        createElement('input', { attrs: { id: 'new_event_title' } }),
+      ]}),
+      createElement('div', { children: [
+        createElement('b', { attrs: { innerText: `${T('Time')}: ` } }),
+        createElement('input', { attrs: { id: 'new_event_time', type: 'number', onchange: ({ target }) => {
+          target.value = Math.round(Number(target.value));
+        } } }),
+        ...timePickerModal('new_event_time'),
+      ]}),
+      createElement('button', { attrs: {
+        type: 'button',
+        innerText: T('Create New Event'),
+        onclick: () => {
+          const newState = { ...obj_data };
+          const title = getIdValue('new_event_title');
+          if (!title && newState.timeline.events?.some(({ title }) => !title)) {
+            alert('Only one untitled event allowed per item!');
+            return;
+          }
+          if (!newState.timeline.events) newState.timeline.events = [];
+          newState.timeline.events.push({ title, time: getIdValue('new_event_time'), imported: false });
+          updateObjData(newState);
+          resetTabs(name);
+        },
+      } }),
+    ] }),
+    createElement('br'),
+    createElement('div', { children: [
+      ...(await importEventModal(([selectedItem, selectedEvent]) => {
+        const newState = { ...obj_data };
+        if (newState.timeline.imports?.some(({ item, event }) => selectedItem === item && selectedEvent === event)) return;
+        if (!newState.timeline.imports) newState.timeline.imports = [];
+        if (!newState.timeline.events) newState.timeline.events = [];
+        newState.timeline.events.push({ ...selectedEvent, imported: true, src: selectedItem.title, srcId: selectedItem.id });
+        newState.timeline.imports.push([selectedItem, selectedEvent]);
+        updateObjData(newState);
+        resetTabs(name);
+      })),
+    ] }),
+  ] });
+}
+
+function galleryTab(name) {
+  return createElement('div', { children: [
+    createElement('div', { classList: ['item-gallery', 'd-flex', 'gap-4', 'flex-wrap'], children: [
+      ...(obj_data.gallery.imgs ?? []).map(img => img ?? {}).map(({ id, url, label }, i) => (       
+        createElement('div', { classList: [], children: [
+          createElement('div', { classList: ['d-flex', 'gap-1'], attrs: { style: 'height: 8rem;' }, children: [
+            createElement('img', { attrs: { src: url, alt: label, style: { height: '2rem' } } }),
+            createElement('div', { classList: ['d-flex', 'flex-col'], children: [
+              createElement('button', { attrs: {
+                type: 'button',
+                innerText: T('Remove Image'),
+                onclick: () => {
+                  const newState = { ...obj_data };
+                  newState.gallery.imgs.splice(i, 1);
+                  updateObjData(newState);
+                  resetTabs(name);
+                },
+              } }),
+              createElement('input', { attrs: { value: label ?? '', placeholder: 'Label', onchange: ({ target }) => {
+                const newState = { ...obj_data };
+                newState.gallery.imgs[i].label = target.value;
+                updateObjData(newState);
+              } } }),
+              createElement('a', { classList: ['link', 'link-animated', 'align-self-start'], attrs: {
+                href: `/api/universes/${universe}/items/${item.shortname}/gallery/images/${id}?download=1`,
+                innerText: T('Download'),
+              } }),
+            ] }),
+          ] }),
+        ] })
+      )),
+    ] }),
+    createElement('button', { attrs: {
+      type: 'button',
+      innerText: 'Upload Image',
+      onclick: () => {
+        uploadImage(`/api/universes/${universe}/items/${item.shortname}/gallery`, document.body, async (newId, newName) => {
+          const url = `/api/universes/${universe}/items/${item.shortname}/gallery/images/${newId}`;
+          if (!url) return;
+          const newState = { ...obj_data };
+          if (!('imgs' in newState.gallery)) newState.gallery.imgs = [];
+          newState.gallery.imgs.push({ id: newId, url, name: newName });
+          updateObjData(newState);
+          resetTabs(name);
+        });
+      },
+    } }),
+  ] });
 }
 
 let eventItems = {};
@@ -398,14 +460,14 @@ function timePickerModal(id, callback) {
 function removeTab(name) {
   const newState = {...obj_data};
   delete newState.tabs[name];
-  updateObjData(newState);
-  if (Object.keys(newState.tabs).length > 0) {
-    selectTab(Object.keys(newState.tabs)[0]);
-  } else {
-    selectedTab = null;
+  overwriteObjData(newState);
+  document.querySelector(`#tabs [data-tab-btn="${name}"]`).remove();
+  selectedTab = null;
+  const firstTab = document.querySelector('.tabs-buttons').firstChild;
+  if (firstTab) {
+    selectTab(firstTab.dataset.tabBtn);
   }
   document.querySelector(`#tabs [data-tab="${name}"]`).remove();
-  document.querySelector(`#tabs [data-tab-btn="${name}"]`).remove();
 }
 
 
@@ -433,11 +495,15 @@ function addKeyValuePair(tabName, key, startValue='', force=false) {
 
 
 async function resetTabs(toSelect=null) {
-  document.querySelector(`#tabs .tabs-buttons`).innerHTML = '';
-  document.querySelector(`#tabs .tabs-content`).innerHTML = '';
-  let firstTab = null;
+  document.querySelector('#tabs .tabs-buttons').innerHTML = '';
+  document.querySelector('#tabs .tabs-content').innerHTML = '';
+  const bodyTabName = 'Main Text';
+  document.querySelector('#body').dataset.tab = bodyTabName;
+  let firstTab = ('body' in obj_data) ? bodyTabName : null;
+  if ('body' in obj_data) await addTab('body', bodyTabName, true);
   for (const type of ['lineage', 'location', 'timeline', 'gallery', 'comments']) {
     if (type in obj_data) {
+      if (!firstTab) firstTab = type;
       await addTab(type, obj_data[type].title, true);
     }
   }
@@ -451,5 +517,5 @@ async function resetTabs(toSelect=null) {
     }
   }
   selectedTab = null;
-  if (firstTab || toSelect) selectTab(toSelect ?? firstTab);
+  if (toSelect || firstTab) selectTab(toSelect ?? firstTab);
 }

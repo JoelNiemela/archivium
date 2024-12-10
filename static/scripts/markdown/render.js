@@ -63,3 +63,11 @@ function loadMarkdown(container, universeShortname, body, ctx, frmt) {
     nodes.render();
   });
 }
+
+async function renderMarkdown(universeShortname, body, ctx, frmt) {
+  const data = await parseMarkdown(body).evaluate(universeShortname, ctx, frmt);
+  const container = createElement('div');
+  const nodes = new MarkdownElement({ getElement: () => container }, data);
+  nodes.render();
+  return container.innerHTML;
+}

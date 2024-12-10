@@ -374,8 +374,8 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
 
   // Handle timeline data
   if (timeline) {
-    const myEvents = timeline.events.filter(event => !event.imported);
-    const myImports = timeline.events.filter(event => event.imported);
+    const myEvents = timeline.events?.filter(event => !event.imported);
+    const myImports = timeline.events?.filter(event => event.imported);
     if (myEvents) {
       const events = await fetchEvents(item.id);
       const existingEvents = events.reduce((acc, event) => ({...acc, [event.event_title ?? null]: event}), {});

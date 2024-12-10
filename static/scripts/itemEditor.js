@@ -41,11 +41,11 @@ function bindDataValue(selector, setter) {
 function setupEasyMDE() {
   const textarea = document.querySelector('#body textarea');
   if (textarea) {
-    textarea.parentNode.classList.remove('hidden');
     const easyMDE = new EasyMDE({
       element: textarea,
       unorderedListStyle: '-',
       sideBySideFullscreen: true,
+      autoRefresh: { delay: 300 },
       previewRender: (plainText, preview) => {
         renderMarkdown(universe, plainText, { item }).then((html) => {
             preview.innerHTML = html;
@@ -75,7 +75,6 @@ function setupEasyMDE() {
     easyMDE.codemirror.on('change', () => {
       updateObjData({ body: easyMDE.value() });
     });
-    textarea.parentNode.classList.add('hidden');
   }
 }
 

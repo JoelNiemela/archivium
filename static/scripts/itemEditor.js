@@ -9,6 +9,7 @@ if (!window.getJSON) throw 'fetchUtils.js not loaded!';
 if (!window.CalendarPicker) throw 'calendarPicker.js not loaded!';
 if (!window.uploadImage) throw 'fileUpload.js not loaded!';
 if (!window.EasyMDE) throw 'EasyMDE not loaded!';
+if (!window.deepCompare) throw 'jsUtils.js not loaded!';
 
 function getIdValue(id) {
   return document.getElementById(id).value;
@@ -18,6 +19,7 @@ function overwriteObjData(newState) {
   obj_data = { ...newState };
   const objDataInput = document.getElementById('obj_data');
   objDataInput.value = encodeURIComponent(JSON.stringify(obj_data));
+  onItemUpdate();
 }
 
 function updateObjData(newState) {
@@ -112,14 +114,7 @@ async function addTab(type, name, force=false) {
       createElement('div', {
         attrs: { innerText: 'delete', onclick: (e) => {
           e.stopPropagation();
-          if (type !== 'custom') {
-            const newState = { ...obj_data, [type]: {} }
-            if (type === 'body') {
-              delete newState.body;
-            }
-            overwriteObjData(newState);
-          }
-          removeTab(name);
+          removeTab(name, type);
         } },
         classList: ['material-symbols-outlined', 'badge', 'badge-large', 'hidden'],
       }),
@@ -142,7 +137,9 @@ async function addTab(type, name, force=false) {
   }
 
   if (type !== 'custom') {
-    document.querySelector(`#new_tab_type [value="${type}"]`)?.remove();
+    const option = document.querySelector(`#new_tab_type [value="${type}"]`);
+    if (option) option.disabled = true;
+    document.querySelector(`#new_tab_type`).selectedIndex = 0;
   }
 }
 
@@ -457,7 +454,7 @@ function timePickerModal(id, callback) {
   ];
 }
 
-function removeTab(name) {
+function removeTab(name, type) {
   const newState = {...obj_data};
   delete newState.tabs[name];
   overwriteObjData(newState);
@@ -468,6 +465,17 @@ function removeTab(name) {
     selectTab(firstTab.dataset.tabBtn);
   }
   document.querySelector(`#tabs [data-tab="${name}"]`).remove();
+
+  if (type !== 'custom') {
+    const newState = { ...obj_data, [type]: {} }
+    if (type === 'body') {
+      delete newState.body;
+    }
+    overwriteObjData(newState);
+  }
+
+  const option = document.querySelector(`#new_tab_type [value="${type}"]`);
+  if (option) option.disabled = false;
 }
 
 
@@ -518,4 +526,67 @@ async function resetTabs(toSelect=null) {
   }
   selectedTab = null;
   if (toSelect || firstTab) selectTab(toSelect ?? firstTab);
+}
+
+let needsSaving = false;
+function onItemUpdate() {
+  needsSaving = true;
+  const saveBtn = document.getElementById('save-btn');
+  saveBtn.firstChild.innerText = 'Save';
+  save();
+}
+window.onbeforeunload = (event) => {
+  if (needsSaving) {
+    event.preventDefault();
+    event.returnValue = true;
+  }
+};
+window.onload = () => {
+  for (const field of ['title', 'tags']) {
+    document.forms.edit[field].addEventListener('change', () => onItemUpdate());
+  }
+}
+
+let saveTimeout = null;
+let previousData = null;
+async function save(delay=5000) {
+  const saveBtn = document.getElementById('save-btn');
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+  }
+  saveTimeout = setTimeout(async () => {
+    saveBtn.firstChild.innerText = 'Saving...';
+    console.log('SAVING...');
+    const data = {
+      title: document.forms.edit.title.value,
+      tags: document.forms.edit.tags.value.split(' '),
+      obj_data: { ...obj_data },
+    };
+
+    if (deepCompare(data, previousData)) {
+      console.log('NO CHANGE');
+      saveBtn.firstChild.innerText = 'Saved';
+      needsSaving = false;
+      return;
+    }
+
+    try {
+      await putJSON(`/api/universes/${window.item.universe_short}/items/${window.item.shortname}`, data);
+      console.log('SAVED.');
+      saveBtn.firstChild.innerText = 'Saved';
+      previousData = data;
+      needsSaving = false;
+    } catch (err) {
+      console.error('Failed to save!');
+      console.error(err);
+      saveBtn.firstChild.innerText = 'Error';
+      previousData = null;
+    }
+  }, delay);
+}
+
+function preview() {
+  const saveBtn = document.getElementById('save-btn');
+  saveBtn.firstChild.innerText = 'Saving...';
+  document.forms.edit.submit();
 }

@@ -27,10 +27,6 @@ block scripts
     include /static/scripts/cardUtils.js
     //- include /static/scripts/editor/rich.js
 
-block append save
-  li#save-btn.navbarBtn.hidden
-    a.navbarBtnLink.navbarText Save
-
 block breadcrumbs
   a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
   |  / 

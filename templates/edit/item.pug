@@ -14,12 +14,14 @@ block scripts
     include /static/scripts/markdown/render.js
     include /static/scripts/calendarPicker.js
     include /static/scripts/fileUpload.js
+    include /static/scripts/jsUtils.js
     include /static/scripts/itemEditor.js
 
 block append save
   li#save-btn.navbarBtn
-    script.
-    a.navbarBtnLink.navbarText( onclick='document.forms.edit.submit()' ) Save &amp; Preview
+    a.navbarBtnLink.navbarText( onclick='save(0)' ) Save
+  li#save-btn.navbarBtn
+    a.navbarBtnLink.navbarText( onclick='preview()' ) Preview
 
 block content
   h2 Edit #{item.title}

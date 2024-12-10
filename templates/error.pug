@@ -1,20 +1,33 @@
 extends layout.pug
 
 block content
-  //- error msg table
-  -
-    const errorMsgTable = {
-      401: 'You are not authorized to view this page. If you believe you should be, make sure you are logged in and try again.',
-      403: 'Your account does not have sufficient permissions to view this page. If you believe this is an error, please contact the page owner.',
-      404: 'Uh oh! It looks like the page you\'re looking for doesn\'t exist. If you believe it should, go bug Carl about it :D',
-      500: 'Uh oh! Looks like something went wrong whilst trying to render this page. If you want something to be done about this shameful negligence, go bug Carl about it :D',
-    };
-    const defaultErrorMsg = 'Uh oh! There seems to have been an error so strange not even Carl could think of a bad joke to go with it. Apologies.'
   div
     div.error
       h1 Error #{code}
-      img(src=`https://http.cat/${code}` style={ height: '90%', 'object-fit': 'contain' })
-      p #{errorMsgTable[code] || defaultErrorMsg}
+      img(src=`https://http.cat/${code}` style={ height: '85%', 'object-fit': 'contain' })
+      p.center
+        case code
+          when 401
+            | You are not authorized to view this page. If you believe you should be, make sure you are logged in and try again.
+          when 403
+            | Your account does not have sufficient permissions to view this page. If you believe this is an error, please contact the page owner.
+          when 404
+            small
+              i Impossible. Perhaps the archives are incomplete.
+            br
+            | The page you're looking for doesn't seem to exist. If you believe it should, contact the 
+            a.link.link-animated( href="mailto:contact@archivium.net" ) site&nbsp;admin
+            | .
+          when 500
+            | Something went wrong on our servers while rendering this page.
+          default
+            | Something went wrong — that's all we know right now. 
+        case code
+          when 200
+          when 500
+            | If this error persists, please contact the 
+            a.link.link-animated( href="mailto:contact@archivium.net" ) site&nbsp;admin
+            | .
       if hint
         p.center
           span #{hint}

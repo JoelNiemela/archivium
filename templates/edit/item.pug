@@ -1,7 +1,9 @@
 extends ../layout.pug
 
-block scripts
+block styles
   link( rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" )
+
+block scripts
   script( src="https://unpkg.com/easymde/dist/easymde.min.js" )
   script
     include /static/scripts/domUtils.js
@@ -49,25 +51,28 @@ block content
             const name = type === 'custom' ? getIdValue('new_tab') : option.innerText;
             addTab(type, name);
             handleTypeChange();
+            hideModal('new-tab-modal');
           }
-        button( type='button' onclick=`addTabByType()` )= T('New Tab')
-        select( id='new_tab_type' onchange='handleTypeChange()' )
-          option( hidden disabled selected value ) #{T('Tab Type')}...
-          each type in ['lineage', 'location', 'timeline', 'gallery', 'comments']
-            option( value=type )= capitalize(T(type))
-          option( value='custom' )= T('Custom Data')
-        input( id='new_tab' type='text' placeholder='Tab Name' ).hidden
+        .sheet.d-flex.flex-col.gap-1( style={'min-width': '20rem'} )
+          select( id='new_tab_type' onchange='handleTypeChange()' )
+            option( hidden disabled selected value ) #{T('Tab Type')}...
+            each type in ['body', 'lineage', 'location', 'timeline', 'gallery', 'comments']
+              option( value=type )= type === 'body' ? 'Main Text' : capitalize(T(type))
+            option( value='custom' )= T('Custom Data')
+          input( id='new_tab' type='text' placeholder='Tab Name' ).hidden
+          button( type='button' onclick=`addTabByType()` )= T('New Tab')
       script.
         loadModal('new-tab-modal');
-      ul.tabs-buttons.navbarBtns.gap-1.scroll-x.mb-2
+      div.d-flex.align-start.mb-2
+        ul.tabs-buttons.navbarBtns.gap-1.grow-1.scroll-x
+        ul.navbarBtns
+          li.navbarBtn
+            h3.navbarBtnLink.navbarText.ma-0.material-symbols-outlined.heavy( onclick="showModal('new-tab-modal')" ) add
       div.tabs-content
 
       div#body.hidden
-        if 'body' in item.obj_data
-          textarea
-            | #{item.obj_data.body || ''}
-        else
-          button( type='button' onclick='createBody()' ) Add Body Text
+        textarea
+          | #{item.obj_data.body || ''}
       
     div
       input( id='obj_data' type='hidden' name='obj_data' value='{}' )

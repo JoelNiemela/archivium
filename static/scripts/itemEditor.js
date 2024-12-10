@@ -36,8 +36,8 @@ function bindDataValue(selector, setter) {
 
 function setupEasyMDE() {
   const textarea = document.querySelector('#body textarea');
-  textarea.parentNode.classList.remove('hidden');
   if (textarea) {
+    textarea.parentNode.classList.remove('hidden');
     const easyMDE = new EasyMDE({
       element: textarea,
       unorderedListStyle: '-',
@@ -73,18 +73,6 @@ function setupEasyMDE() {
     });
     textarea.parentNode.classList.add('hidden');
   }
-}
-
-function createBody() {
-  updateObjData({ body: '' });
-  const el = createElement('textarea');
-  document.querySelector('#body').appendChild(el);
-  bindDataValue('#body textarea', (body) => updateObjData({ body }));
-  el.addEventListener('input', () => {
-    el.parentNode.dataset.replicatedValue = el.value;
-  });
-  document.querySelector('#body button').remove();
-  setupEasyMDE();
 }
 
 
@@ -502,8 +490,8 @@ async function resetTabs(toSelect=null) {
   document.querySelector('#tabs .tabs-content').innerHTML = '';
   const bodyTabName = 'Main Text';
   document.querySelector('#body').dataset.tab = bodyTabName;
-  let firstTab = obj_data.body ? bodyTabName : null;
-  await addTab('body', bodyTabName, true);
+  let firstTab = ('body' in obj_data) ? bodyTabName : null;
+  if ('body' in obj_data) await addTab('body', bodyTabName, true);
   for (const type of ['lineage', 'location', 'timeline', 'gallery', 'comments']) {
     if (type in obj_data) {
       if (!firstTab) firstTab = type;
@@ -520,5 +508,5 @@ async function resetTabs(toSelect=null) {
     }
   }
   selectedTab = null;
-  selectTab(toSelect ?? firstTab ?? bodyTabName);
+  if (toSelect || firstTab) selectTab(toSelect ?? firstTab);
 }

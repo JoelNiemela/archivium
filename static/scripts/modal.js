@@ -33,9 +33,10 @@ if (!window.createElement) throw 'domUtils.js not loaded!';
     const modalEl = document.getElementById(id);
     modalEl.classList.add('modal', 'hidden');
     modalEl.addEventListener('click', () => hideModal(id));
-    const content = modalEl.children;
+    const content = [...modalEl.children];
     modalEl.innerHTML = '';
     modalEl.appendChild(createElement('div', { classList: ['modal-content'], attrs: {onclick: (e) => e.stopPropagation()}, children: content }));
+    modals[id] = modalEl;
     if (show) showModal(id);
   }
 

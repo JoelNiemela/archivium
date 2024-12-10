@@ -77,10 +77,14 @@ function setupEasyMDE() {
 
 
 function selectTab(name) {
-  if (selectedTab) document.querySelector(`#tabs [data-tab="${selectedTab}"]`).classList.add('hidden');
-  if (selectedTab) document.querySelector(`#tabs [data-tab-btn="${selectedTab}"]`).classList.remove('selected');
+  if (selectedTab) {
+    document.querySelector(`#tabs [data-tab="${selectedTab}"]`).classList.add('hidden');
+    document.querySelector(`#tabs [data-tab-btn="${selectedTab}"]`).classList.remove('selected');
+    document.querySelector(`#tabs [data-tab-btn="${selectedTab}"] .badge`).classList.add('hidden');
+  }
   document.querySelector(`#tabs [data-tab="${name}"]`).classList.remove('hidden');
   document.querySelector(`#tabs [data-tab-btn="${name}"]`).classList.add('selected');
+  document.querySelector(`#tabs [data-tab-btn="${name}"] .badge`).classList.remove('hidden');
   selectedTab = name;
 }
 
@@ -101,24 +105,29 @@ async function addTab(type, name, force=false) {
 
   const button = createElement('li', {
     attrs: { type: 'button', onclick: () => selectTab(name) },
-    classList: ['navbarBtn'],
+    classList: ['navbarBtn', 'badge-anchor'],
     dataset: { tabBtn: name },
-    children: [createElement('h3', { attrs: {innerText: name}, classList: ['navbarBtnLink', 'navbarText', 'ma-0'] })],
+    children: [
+      createElement('h3', {attrs: {innerText: name}, classList: ['navbarBtnLink', 'navbarText', 'ma-0'] }),
+      createElement('div', {
+        attrs: { innerText: 'delete', onclick: (e) => {
+          e.stopPropagation();
+          if (type !== 'custom') {
+            const newState = { ...obj_data, [type]: {} }
+            if (type === 'body') {
+              delete newState.body;
+            }
+            overwriteObjData(newState);
+          }
+          removeTab(name);
+        } },
+        classList: ['material-symbols-outlined', 'badge', 'badge-large', 'hidden'],
+      }),
+    ],
   });
 
   if (type !== 'body') {
     const content = createElement('div', { classList: ['hidden'], dataset: { tab: name }, children: [
-      createElement('button', { attrs: {
-        type: 'button',
-        innerText: 'Delete Tab',
-        onclick: () => {
-          if (type !== 'custom') {
-            updateObjData({ [type]: {} });
-          }
-          removeTab(name);
-        },
-      } }),
-      createElement('h3', { attrs: { innerText: name } }),
       type === 'custom' && customTab(name),
       type === 'lineage' && lineageTab(name),
       type === 'timeline' && await timelineTab(name),
@@ -451,14 +460,14 @@ function timePickerModal(id, callback) {
 function removeTab(name) {
   const newState = {...obj_data};
   delete newState.tabs[name];
-  updateObjData(newState);
-  if (Object.keys(newState.tabs).length > 0) {
-    selectTab(Object.keys(newState.tabs)[0]);
-  } else {
-    selectedTab = null;
+  overwriteObjData(newState);
+  document.querySelector(`#tabs [data-tab-btn="${name}"]`).remove();
+  selectedTab = null;
+  const firstTab = document.querySelector('.tabs-buttons').firstChild;
+  if (firstTab) {
+    selectTab(firstTab.dataset.tabBtn);
   }
   document.querySelector(`#tabs [data-tab="${name}"]`).remove();
-  document.querySelector(`#tabs [data-tab-btn="${name}"]`).remove();
 }
 
 

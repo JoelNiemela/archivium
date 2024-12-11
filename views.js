@@ -6,6 +6,7 @@ const { getPfpUrl, render } = require('./templates');
 const { perms, Cond } = require('./api/utils');
 const fs = require('fs/promises');
 const logger = require('./logger');
+const email = require('./email');
 
 module.exports = function(app) {
   app.use((req, res, next) => {
@@ -181,9 +182,13 @@ module.exports = function(app) {
   });
 
   get('/verify/:key', async (req, res) => {
-    const [code] = await api.user.verifyUser(req.params.key)
+    const [code, userId] = await api.user.verifyUser(req.params.key)
     res.status(code);
-    if (code === 200) return res.redirect(`${ADDR_PREFIX}/`);
+    const [_, user] = await api.user.getOne(req.session.user, { id: userId });
+    if (code === 200 && user) {
+      // email.sendTemplateEmail(email.templates.WELCOME, req.body.email, { username: user.username }, email.groups.NEWSLETTER);
+      return res.redirect(`${ADDR_PREFIX}/`);
+    }
   });
 
   /* Universe Pages */

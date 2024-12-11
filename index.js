@@ -135,6 +135,10 @@ app.post(`${ADDR_PREFIX}/signup`, async (req, res, next) => {
       const verifyEmailLink = `https://${DOMAIN}${ADDR_PREFIX}/verify/${verificationKey}`;
       email.sendTemplateEmail(email.templates.VERIFY, req.body.email, { username: req.body.username, verifyEmailLink }, email.groups.ACCOUNT_ALERTS);
 
+      if (!req.body.newsletter) {
+        email.unsubscribeUser([req.body.email], email.groups.NEWSLETTER);
+      }
+
       res.redirect(`${ADDR_PREFIX}${req.query.page || '/'}${req.query.search ? `?${req.query.search}` : ''}`);
     } catch (err) {
       logger.error(err);

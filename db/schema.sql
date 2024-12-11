@@ -25,16 +25,6 @@ CREATE TABLE userverification (
   UNIQUE(user_id)
 );
 
-CREATE TABLE usersettings (
-  user_id INT NOT NULL,
-  agree_tos BOOLEAN DEFAULT FALSE,
-  allow_email_updates BOOLEAN DEFAULT FALSE,
-  allow_email_notifications BOOLEAN DEFAULT FALSE,
-  allow_email_newsletter BOOLEAN DEFAULT FALSE,
-  FOREIGN KEY (user_id) REFERENCES user (id),
-  UNIQUE(user_id)
-);
-
 CREATE TABLE session (
   id INT NOT NULL AUTO_INCREMENT,
   hash VARCHAR(64) NOT NULL,

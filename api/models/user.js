@@ -196,7 +196,7 @@ async function verifyUser(verificationKey) {
   if (!user) return [code];
   await put(user.id, user.id, { verified: true });
 
-  return [200];
+  return [200, user.id];
 }
 
 module.exports = {

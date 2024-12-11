@@ -22,6 +22,7 @@
   },
   "homepage": "https://hmi.dynu.net/archivium",
   "dependencies": {
+    "@sendgrid/client": "^8.1.4",
     "@sendgrid/mail": "^8.1.4",
     "bluebird": "^3.7.2",
     "express": "^4.18.0",

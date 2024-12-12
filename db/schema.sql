@@ -186,3 +186,9 @@ CREATE TABLE tag (
   UNIQUE(item_id, tag),
   FOREIGN KEY (item_id) REFERENCES item (id)
 );
+
+CREATE TABLE sentemail (
+  recipient VARCHAR(64) NOT NULL,
+  topic VARCHAR(64) NOT NULL,
+  sent_at TIMESTAMP NOT NULL
+);

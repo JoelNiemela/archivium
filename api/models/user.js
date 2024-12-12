@@ -205,6 +205,7 @@ async function verifyUser(verificationKey) {
   const [code, user] = await getOne({ id: records[0].user_id });
   if (!user) return [code];
   await put(user.id, user.id, { verified: true });
+  await executeQuery('DELETE FROM userverification WHERE user_id = ?;', [user.id]);
 
   return [200, user.id];
 }

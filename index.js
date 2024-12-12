@@ -131,9 +131,7 @@ app.post(`${ADDR_PREFIX}/signup`, async (req, res, next) => {
       res.status(201);
 
       // Send verification email
-      const verificationKey = await api.user.prepareVerification(data.insertId);
-      const verifyEmailLink = `https://${DOMAIN}${ADDR_PREFIX}/verify/${verificationKey}`;
-      email.sendTemplateEmail(email.templates.VERIFY, req.body.email, { username: req.body.username, verifyEmailLink }, email.groups.ACCOUNT_ALERTS);
+      email.sendVerifyLink({ id: data.insertId, ...req.body });
 
       if (!req.body.newsletter) {
         email.unsubscribeUser([req.body.email], email.groups.NEWSLETTER);

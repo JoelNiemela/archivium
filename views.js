@@ -181,13 +181,26 @@ module.exports = function(app) {
     });
   });
 
+  get('/verify', async (req, res) => {
+    if (!req.session.user) return res.status(401);
+    if (req.session.user.verified) return res.redirect(`${ADDR_PREFIX}/`);
+    await email.trySendVerifyLink(req.session.user, req.session.user.username);
+    res.prepareRender('verify', { 
+      user: req.session.user,
+      gravatarLink: `https://www.gravatar.com/avatar/${md5(req.session.user.email)}.jpg`,
+      nextPage: `${req.query.page || '/'}${req.query.search ? `?${req.query.search}` : ''}`,
+    });
+  });
+
   get('/verify/:key', async (req, res) => {
     const [code, userId] = await api.user.verifyUser(req.params.key)
     res.status(code);
-    const [_, user] = await api.user.getOne(req.session.user, { id: userId });
-    if (code === 200 && user) {
-      // email.sendTemplateEmail(email.templates.WELCOME, req.body.email, { username: user.username }, email.groups.NEWSLETTER);
-      return res.redirect(`${ADDR_PREFIX}/`);
+    if (code === 200) {
+      const [_, user] = await api.user.getOne({ id: userId });
+      if (user) {
+        // email.sendTemplateEmail(email.templates.WELCOME, req.body.email, { username: user.username }, email.groups.NEWSLETTER);
+        return res.redirect(`${ADDR_PREFIX}/`);
+      }
     }
   });
 

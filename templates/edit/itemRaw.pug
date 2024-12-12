@@ -4,6 +4,10 @@ block content
   script
     include /static/scripts/domUtils.js
     include /static/scripts/searchableSelect.js
+    include /static/scripts/modal.js
+    include /static/scripts/fetchUtils.js
+    include /static/scripts/calendarPicker.js
+    include /static/scripts/fileUpload.js
     include /static/scripts/itemEditor.js
 
   h2 Edit #{item.title}
@@ -31,7 +35,7 @@ block content
   script.
     const editor = document.getElementById('obj_data_edit');
     editor.onchange = () => {
-      updateObjData(JSON.parse(editor.value));
+      overwriteObjData(JSON.parse(editor.value));
     };
     editor.onkeyup = editor.onchange;
   script!= `editor.value = JSON.stringify(${JSON.stringify(item.obj_data)}, null, 2); itemMap = ${JSON.stringify(itemMap)};`

@@ -2,7 +2,7 @@ async function getJSON(url) {
   return await fetch(url, {
     method: 'GET',
   })
-    .then(response => response.json());
+    .then(async (response) => [response, await response.json()]);
 }
 
 async function postJSON(url, body) {

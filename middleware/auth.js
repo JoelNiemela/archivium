@@ -74,7 +74,7 @@ async function refreshSession(user) {
 
 module.exports.verifySession = async (req, res, next) => {
   const user = req.session.user;
-  if (user) {
+  if (user && user.verified) {
     await refreshSession(user);
     next();
   } else {
@@ -84,14 +84,18 @@ module.exports.verifySession = async (req, res, next) => {
 
 module.exports.verifySessionOrRedirect = async (req, res, next) => {
   const user = req.session.user;
-  if (user) {
+  if (user && user.verified) {
     await refreshSession(user);
     next();
   } else {
     const searchQueries = new URLSearchParams(req.query);
     const pageQuery = new URLSearchParams();
-    pageQuery.append('page', req.path)
-    if (searchQueries.toString()) pageQuery.append('search', searchQueries.toString())
-    res.redirect(`${ADDR_PREFIX}/login?${pageQuery.toString()}`);
+    pageQuery.append('page', req.path);
+    if (searchQueries.toString()) pageQuery.append('search', searchQueries.toString());
+    if (user && !user.verified) {
+      res.redirect(`${ADDR_PREFIX}/verify?${pageQuery.toString()}`);
+    } else {
+      res.redirect(`${ADDR_PREFIX}/login?${pageQuery.toString()}`);
+    }
   }
 }

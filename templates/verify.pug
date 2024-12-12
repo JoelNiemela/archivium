@@ -1,0 +1,46 @@
+extends layout.pug
+
+block scripts
+  script
+    include /static/scripts/fetchUtils.js
+    include /static/scripts/cardUtils.js
+  script.
+    let updateRetryAfterInterval;
+    async function sendVerifyLink() {
+      clearInterval(updateRetryAfterInterval);
+      const [response, data] = await getJSON('#{ADDR_PREFIX}/api/users/#{user.username}/send-verify-link');
+      console.log(response)
+      const retryAfterText = document.querySelector('#retry-after');
+      if (response.status === 429) {
+        const retryAfter = new Date(data);
+        const secondsLeft = Math.round((retryAfter - new Date()) / 1000);
+        console.log(retryAfter, secondsLeft)
+        retryAfterText.textContent = `Please wait ${secondsLeft} seconds before trying again.`;
+        updateRetryAfterInterval = setInterval(() => {
+          const secondsLeft = Math.round((retryAfter - new Date()) / 1000);
+          retryAfterText.textContent = `Please wait ${secondsLeft} seconds before trying again.`;
+          if (secondsLeft < 1) {
+            clearInterval(updateRetryAfterInterval);
+            retryAfterText.classList.add('hidden');
+          }
+        }, 1000);
+        retryAfterText.classList.remove('hidden');
+      } else {
+        retryAfterText.classList.add('hidden');
+        if (data && data.alreadyVerified) {
+          goTo('#{ADDR_PREFIX}#{nextPage}');
+        }
+      }
+    }
+
+block content
+  h1.center Access Denied
+  .sheet
+    p Your account has not yet been verified. A verification link has been sent to your email (#{user.email}). 
+    p If you have not received this link, check your spam folder or request a new one below:
+    .d-flex.align-baseline.gap-2
+      button( onclick='sendVerifyLink()' ) Request a new verification link
+      small.hidden.color-error#retry-after
+    p Once you have verified your account you can 
+      a.link.link-animated( href=`${ADDR_PREFIX}${nextPage}` ) continue to Archivium
+      | .

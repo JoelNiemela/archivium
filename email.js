@@ -1,8 +1,10 @@
-const { SENDGRID_API_KEY } = require('./config');
+const { DOMAIN, ADDR_PREFIX, SENDGRID_API_KEY } = require('./config');
 const logger = require('./logger');
+const api = require('./api');
+const { executeQuery } = require('./api/utils');
 
 const templates = {
-  VERIFY: 'd-04ac9be5b7fb430ba3e23b7d93115644',
+  VERIFY: ['d-04ac9be5b7fb430ba3e23b7d93115644', 'verify'],
 };
 
 const groups = {
@@ -18,19 +20,21 @@ const sgClient = require('@sendgrid/client');
 sgMail.setApiKey(SENDGRID_API_KEY)
 sgClient.setApiKey(SENDGRID_API_KEY);
 
-async function sendEmail(msg) {
+async function sendEmail(topic, msg) {
   const { to } = msg;
   logger.info(`Sending email to ${to}...`);
   try {
     await sgMail.send(msg);
     logger.info('Email sent!');
+    await executeQuery('INSERT INTO sentemail (recipient, topic, sent_at) VALUES (?, ?, ?);', [to, topic, new Date()]);
   } catch (error) {
     logger.error(error);
   }
 }
 
-async function sendTemplateEmail(templateId, to, dynamicTemplateData, groupId, from='Archivium Team <contact@archivium.net>') {
-  await sendEmail({
+async function sendTemplateEmail(template, to, dynamicTemplateData, groupId, from='Archivium Team <contact@archivium.net>') {
+  const [templateId, topic] = template;
+  await sendEmail(topic, {
     to,
     from,
     templateId,
@@ -54,10 +58,40 @@ async function unsubscribeUser(emails, groupId) {
   }
 }
 
+async function sendVerifyLink({ id, username, email }) {
+  await executeQuery('DELETE FROM userverification WHERE user_id = ?;', [id]);
+
+  const verificationKey = await api.user.prepareVerification(id);
+  const verifyEmailLink = `https://${DOMAIN}${ADDR_PREFIX}/verify/${verificationKey}`;
+  await sendTemplateEmail(templates.VERIFY, email, { username, verifyEmailLink }, groups.ACCOUNT_ALERTS);
+}
+
+async function trySendVerifyLink(sessionUser, username) {
+  if (!sessionUser) return [401];
+  if (sessionUser.username != username) return [403];
+  if (sessionUser.verified) return [200, { alreadyVerified: true }];
+
+  const now = new Date();
+  const timeout = 60 * 60 * 1000;
+  const cutoff = new Date(now.getTime() - timeout);
+  const recentEmails = await executeQuery(
+    'SELECT * FROM sentemail WHERE recipient = ? AND topic = ? AND sent_at >= ? ORDER BY sent_at DESC;',
+    [sessionUser.email, 'verify', cutoff],
+  );
+  console.log(recentEmails)
+  if (recentEmails.length > 0) return [429, new Date(recentEmails[0].sent_at.getTime() + timeout)];
+
+  await sendVerifyLink(sessionUser);
+
+  return [200, { alreadyVerified: false }];
+}
+
 module.exports = {
   templates,
   groups,
   sendEmail,
   sendTemplateEmail,
   unsubscribeUser,
+  sendVerifyLink,
+  trySendVerifyLink,
 };

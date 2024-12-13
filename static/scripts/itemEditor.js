@@ -379,7 +379,7 @@ let eventMap = {};
 let fetchedEvents = false;
 async function importEventModal(callback) {
   if (!fetchedEvents) {
-    const events = await getJSON(`/api/universes/${universe}/events`);
+    const [, events] = await getJSON(`/api/universes/${universe}/events`);
     for (const { src_id, src_title, src_shortname, event_title, abstime } of events) {
       if (!(src_id in eventMap)) {
         eventMap[src_id] = [];

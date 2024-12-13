@@ -98,6 +98,12 @@ module.exports = function(app) {
     res.prepareRender('docs', { content });
   });
 
+  /* Help Pages */
+  get('/markdown-demo', async (_, res) => {
+    const content = (await fs.readFile('static/markdown_demo.md')).toString();
+    res.prepareRender('markdownDemo', { content });
+  });
+
   /* User Pages */
   get('/contacts', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code, contacts] = await api.contact.getAll(req.session.user);

@@ -9,7 +9,7 @@ if (!window.modal) throw 'modal not loaded!';
 if (!window.getJSON) throw 'fetchUtils.js not loaded!';
 if (!window.CalendarPicker) throw 'calendarPicker.js not loaded!';
 if (!window.uploadImage) throw 'fileUpload.js not loaded!';
-if (!window.EasyMDE) throw 'EasyMDE not loaded!';
+if (!window.setupEasyMDE) throw 'easyMDE.js not loaded!';
 if (!window.deepCompare) throw 'jsUtils.js not loaded!';
 
 function getIdValue(id) {
@@ -35,49 +35,6 @@ function bindDataValue(selector, setter) {
   };
   el.addEventListener('input', onInput);
   onInput();
-}
-
-
-function setupEasyMDE() {
-  const textarea = document.querySelector('#body textarea');
-  if (textarea) {
-    const easyMDE = new EasyMDE({
-      element: textarea,
-      unorderedListStyle: '-',
-      sideBySideFullscreen: true,
-      autoRefresh: { delay: 300 },
-      previewRender: (plainText, preview) => {
-        renderMarkdown(universe, plainText, { item }).then((html) => {
-            preview.innerHTML = html;
-        });
-
-        return 'Loading...';
-      },
-      toolbar: [
-        'bold', 'italic', 'heading',
-        '|',
-        /*'code', 'quote',*/ 'unordered-list', /*'ordered-list',*/
-        '|',
-        'link', 'image', /*'upload-image',*/
-        '|',
-        'undo', 'redo',
-        '|',
-        'preview', 'side-by-side', 'fullscreen',
-        '|',
-        {
-          name: 'guide',
-          action: '/help/markdown',
-          className: 'fa fa-question-circle',
-          title: 'Markdown Guide',
-        }
-      ],
-    });
-    easyMDE.codemirror.on('change', () => {
-      updateObjData({ body: easyMDE.value() });
-    });
-
-    return easyMDE;
-  }
 }
 
 

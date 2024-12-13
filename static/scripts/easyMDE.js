@@ -29,9 +29,15 @@ function setupEasyMDE(selector, renderContext = {}, extraSettings = {}) {
         '|',
         {
           name: 'guide',
-          action: '/help/markdown',
+          action: 'https://github.com/JoelNiemela/archivium/wiki/Markdown-Guide',
           className: 'fa fa-question-circle',
           title: 'Markdown Guide',
+        },
+        {
+          name: 'demo',
+          action: '/markdown-demo',
+          className: 'fa fa-flask',
+          title: 'Markdown Playground',
         }
       ],
       ...extraSettings,

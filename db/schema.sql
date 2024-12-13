@@ -6,7 +6,15 @@ CREATE TABLE user (
   salt VARCHAR(64) NOT NULL,
   created_at TIMESTAMP NOT NULL,
   updated_at TIMESTAMP NOT NULL,
+  verified BOOLEAN DEFAULT FALSE,
   PRIMARY KEY (id)
+);
+
+CREATE TABLE userverification (
+  user_id INT NOT NULL,
+  verification_key VARCHAR(64),
+  FOREIGN KEY (user_id) REFERENCES user (id),
+  UNIQUE(user_id)
 );
 
 CREATE TABLE session (
@@ -169,4 +177,10 @@ CREATE TABLE tag (
   tag VARCHAR(32),
   UNIQUE(item_id, tag),
   FOREIGN KEY (item_id) REFERENCES item (id)
+);
+
+CREATE TABLE sentemail (
+  recipient VARCHAR(64) NOT NULL,
+  topic VARCHAR(64) NOT NULL,
+  sent_at TIMESTAMP NOT NULL
 );

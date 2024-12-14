@@ -596,5 +596,6 @@ async function save(delay=5000) {
 function preview() {
   const saveBtn = document.getElementById('save-btn');
   saveBtn.firstChild.innerText = 'Saving...';
+  needsSaving = false;
   document.forms.edit.submit();
 }

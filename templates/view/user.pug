@@ -16,11 +16,25 @@ block scripts
     include /static/scripts/modal.js
     include /static/scripts/fileUpload.js
   script.
+    let firstOpen = true;
     function editPfp() {
       const container = document.querySelector('#pdfEditModal');
       uploadImage('/api/users/#{user.username}/pfp', container, (imageId, imageName) => {
         window.location.reload();
       });
+      if (firstOpen) {
+        container.querySelector('input').addEventListener('change', (event) => {
+          const file = event.target.files[0];
+          const maxSizeInMB = 1;
+          const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+
+          if (file.size > maxSizeInBytes) {
+            alert(`The file size should not exceed ${maxSizeInMB} MB.`);
+            event.target.value = '';
+          }
+        });
+        firstOpen = false;
+      }
     }
 
     async function clearPfp() {

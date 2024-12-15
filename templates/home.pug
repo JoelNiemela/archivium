@@ -8,9 +8,12 @@ block content
     function snooze(universe, item) {
       if (reloading) return;
       fetch(`/api/universes/${universe}/items/${item}/snooze`, { method: 'PUT' });
-      document.querySelector(`[data-item=${item}]`).parentNode.parentNode.parentNode.remove();
+      document.querySelector(`[data-item=${item}]`).parentNode.parentNode.parentNode.querySelectorAll('td').forEach(td => {
+        td.style.opacity = 0;
+      });
       if (snoozeTimeout) clearTimeout(snoozeTimeout);
       snoozeTimeout = setTimeout(() => {
+        document.querySelectorAll('[data-item]').forEach(button => button.disabled = true);
         reloading = true;
         window.location.reload();
       }, 1000);
@@ -81,7 +84,7 @@ block content
                 td
                   .d-flex.gap-1
                     button.pa-1( onclick=`snooze('${item.universe_short}', '${item.shortname}')` data-item=item.shortname )
-                      small Snooze
+                      small Dismiss
                     a.big-text.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}` ) #{item.title}
                 td
                   small

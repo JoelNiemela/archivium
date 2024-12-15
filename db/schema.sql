@@ -103,7 +103,7 @@ CREATE TABLE itemimage (
 );
 
 CREATE TABLE snooze (
-  snoozed_until TIMESTAMP NOT NULL,
+  snoozed_at TIMESTAMP NOT NULL,
   snoozed_by INT NOT NULL,
   item_id INT NOT NULL,
   FOREIGN KEY (snoozed_by) REFERENCES user (id),

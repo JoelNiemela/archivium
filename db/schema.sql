@@ -89,6 +89,15 @@ CREATE TABLE threadcomment (
   FOREIGN KEY (comment_id) REFERENCES comment (id)
 );
 
+CREATE TABLE note (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  body VARCHAR(2048) NOT NULL,
+  author_id INT NOT NULL,
+  created_at TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP NOT NULL,
+  FOREIGN KEY (author_id) REFERENCES user (id)
+);
+
 CREATE TABLE item (
   id INT NOT NULL AUTO_INCREMENT,
   title VARCHAR(64) NOT NULL,
@@ -114,6 +123,13 @@ CREATE TABLE itemcomment (
   comment_id INT NOT NULL,
   FOREIGN KEY (item_id) REFERENCES item (id),
   FOREIGN KEY (comment_id) REFERENCES comment (id)
+);
+
+CREATE TABLE itemnote (
+  item_id INT NOT NULL,
+  note_id INT NOT NULL,
+  FOREIGN KEY (item_id) REFERENCES item (id),
+  FOREIGN KEY (note_id) REFERENCES note (id)
 );
 
 CREATE TABLE itemimage (

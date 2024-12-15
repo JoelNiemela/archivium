@@ -130,6 +130,8 @@ header {
 .pfp {
   border-radius: 50%;
   height: 2.4375rem;
+  width: 2.4375rem;
+  object-fit: cover;
   margin: 0.25rem 0.5rem;
   margin-right: 0;
 }

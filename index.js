@@ -95,7 +95,7 @@ app.get(`${ADDR_PREFIX}/logout`, async (req, res, next) => {
 
 app.post(`${ADDR_PREFIX}/login`, async (req, res, next) => {
   try {  
-    const [errCode, user] = await api.user.getOne({ username: req.body.username }, true);
+    const [errCode, user] = await api.user.getOne({ 'user.username': req.body.username }, true);
     if (user) {
       req.loginId = user.id;
       const isCorrectLogin = api.user.validatePassword(req.body.password, user.password, user.salt);

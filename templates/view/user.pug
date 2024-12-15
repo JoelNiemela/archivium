@@ -8,13 +8,37 @@ block breadcrumbs
   |  / 
   span #{user.username}
 
-block content
+block scripts
   script
     include /static/scripts/contacts.js
+    include /static/scripts/domUtils.js
+    include /static/scripts/fetchUtils.js
+    include /static/scripts/modal.js
+    include /static/scripts/fileUpload.js
+  script.
+    function editPfp() {
+      const container = document.querySelector('#pdfEditModal');
+      uploadImage('/api/users/#{user.username}/pfp', container, (imageId, imageName) => {
+        window.location.reload();
+      });
+    }
 
+    async function clearPfp() {
+      await deleteJSON('/api/users/#{user.username}/pfp');
+      window.location.reload();
+    }
+
+block content
   h1.center Welcome to #{user.username}'s page
   div( align='center' )
-    img.userIcon( alt=user.username, src=gravatarLink )
+    .userIcon.badge-anchor
+      img( alt=user.username, src=(user.hasPfp ? `/api/users/${user.username}/pfp` : gravatarLink) )
+      if user.isMe
+        .pfpEdit( onclick='editPfp()' )
+          small #{user.hasPfp ? 'Change' : 'Upload'}
+        if user.hasPfp
+          .material-symbols-outlined.badge.badge-large.clickable( style=({ top: '-0.25rem', right: '-0.25rem'}) onclick='clearPfp()' ) delete
+        #pdfEditModal
   p.center
     small Joined
       |  #{formatDate(new Date(user.created_at))}

@@ -648,8 +648,8 @@ const image = (function() {
         FROM itemimage
       `;
       if (options) queryString += ` WHERE ${parsedOptions.strings.join(' AND ')}`;
-      const users = await executeQuery(queryString, parsedOptions.values);
-      return [200, users];
+      const images = await executeQuery(queryString, parsedOptions.values);
+      return [200, images];
     } catch (err) {
       logger.error(err);
       return [500];

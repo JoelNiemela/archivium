@@ -11,7 +11,7 @@ async function createUser(username, email, password) {
   if (!email) email = `${username}@archivium.net`;
   if (!password) password = username;
   const data = await api.user.post({ username, email, password });
-  const [_, user] = await api.user.getOne({ id: data.insertId });
+  const [_, user] = await api.user.getOne({ 'user.id': data.insertId });
   return user;
 }
 

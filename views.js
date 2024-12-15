@@ -113,7 +113,7 @@ module.exports = function(app) {
   });
 
   get('/users/:username', async (req, res) => {
-    const [code1, user] = await api.user.getOne({ username: req.params.username });
+    const [code1, user] = await api.user.getOne({ 'user.username': req.params.username });
     res.status(code1);
     if (!user) return;
     const [code2, universes] = await api.universe.getManyByAuthorId(req.session.user, user.id);
@@ -406,7 +406,7 @@ module.exports = function(app) {
   });
   post('/universes/:shortname/permissions', Auth.verifySessionOrRedirect, async (req, res) => {
     const { session, params, body } = req;
-    const [_, user] = await api.user.getOne({ username: req.body.username });
+    const [_, user] = await api.user.getOne({ 'user.username': req.body.username });
     const [code, data] = await api.universe.putPermissions(session.user, params.shortname, user, body.permission_level, perms.ADMIN);
     res.status(code);
     if (code !== 200) return;

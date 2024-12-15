@@ -44,8 +44,10 @@ async function getMany(options, includeEmail=false) {
     let queryString;
     if (options) queryString = `
       SELECT 
-        id, username, created_at, updated_at ${includeEmail ? ', email' : ''}
-      FROM user 
+        user.id, user.username, user.created_at, user.updated_at, ${includeEmail ? 'user.email, ' : ''}
+        (ui.user_id IS NOT NULL) as hasPfp
+      FROM user
+      LEFT JOIN userimage AS ui ON user.id = ui.user_id
       WHERE ${parsedOptions.strings.join(' AND ')};
     `;
     else queryString = `SELECT id, username, created_at, updated_at ${includeEmail ? ', email' : ''} FROM user;`;
@@ -59,7 +61,7 @@ async function getMany(options, includeEmail=false) {
 
 async function getByUniverseShortname(user, shortname) {
 
-  const [code, universe] = await universeapi.getOne(user, { 'user.shortname': shortname });
+  const [code, universe] = await universeapi.getOne(user, { shortname });
   if (!universe) return [code];
 
   try {
@@ -70,10 +72,12 @@ async function getByUniverseShortname(user, shortname) {
         user.created_at,
         user.updated_at,
         user.email,
-        COUNT(item.id) AS items_authored
+        COUNT(item.id) AS items_authored,
+        (ui.user_id IS NOT NULL) as hasPfp
       FROM user
       INNER JOIN authoruniverse AS au ON au.user_id = user.id
       LEFT JOIN item ON item.universe_id = au.universe_id AND item.author_id = user.id
+      LEFT JOIN userimage AS ui ON user.id = ui.user_id
       WHERE au.universe_id = ?
       GROUP BY user.id;
     `;

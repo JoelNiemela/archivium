@@ -242,7 +242,7 @@ header {
   position: relative;
 }
 
-.userIcon img {
+.userIcon img, img.userIcon {
   border-radius: 50%;
   height: 80px;
   width: 80px;

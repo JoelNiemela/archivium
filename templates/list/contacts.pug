@@ -20,7 +20,7 @@ block content
   .card-list
     each user in contacts
       .card.sheet.gap-4.align-start( onclick=`goTo('${ADDR_PREFIX}/users/${user.username}')` )
-        img.userIcon( alt=user.username, src=user.gravatarLink )
+        img.userIcon( alt=user.username, src=user.pfpUrl )
         .d-flex.flex-col.grow-1
           h2.ma-0
             a.link.link-animated( href=`${ADDR_PREFIX}/users/${user.username}` ) #{user.username}
@@ -37,7 +37,7 @@ block content
   .card-list
     each user in pending
       .card.sheet.gap-4.align-start( onclick=`goTo('${ADDR_PREFIX}/users/${user.username}')` )
-        img.userIcon( alt=user.username, src=user.gravatarLink )
+        img.userIcon( alt=user.username, src=user.pfpUrl )
         .d-flex.flex-col
           h2.ma-0
             a.link.link-animated( href=`${ADDR_PREFIX}/users/${user.username}` ) #{user.username}

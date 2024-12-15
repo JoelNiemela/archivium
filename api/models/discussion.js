@@ -72,10 +72,11 @@ async function getCommentsByThread(user, threadId, validate=true, inclCommenters
     const comments = await executeQuery(queryString1, [ threadId ]);
     if (inclCommenters) {
       const queryString2 = `
-        SELECT user.id, user.username, user.email
+        SELECT user.id, user.username, user.email, (ui.user_id IS NOT NULL) as hasPfp
         FROM user
         INNER JOIN comment ON user.id = comment.author_id
         INNER JOIN threadcomment AS tc ON tc.comment_id = comment.id
+        LEFT JOIN userimage AS ui ON user.id = ui.user_id
         WHERE tc.thread_id = ?
         GROUP BY user.id`;
       const users = await executeQuery(queryString2, [ threadId ]);

@@ -2,7 +2,7 @@ const { ADDR_PREFIX, DEV_MODE } = require('./config');
 const Auth = require('./middleware/auth');
 const api = require('./api');
 const md5 = require('md5');
-const { render } = require('./templates');
+const { getPfpUrl, render } = require('./templates');
 const { perms, Cond } = require('./api/utils');
 const fs = require('fs/promises');
 const logger = require('./logger');
@@ -104,7 +104,7 @@ module.exports = function(app) {
     if (!contacts) return;
     const gravatarContacts = contacts.map(user => ({
       ...user,
-      gravatarLink: `https://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
+      pfpUrl: getPfpUrl(user),
     }));
     res.prepareRender('contactList', {
       contacts: gravatarContacts.filter(contact => contact.accepted),
@@ -137,7 +137,7 @@ module.exports = function(app) {
     }
     res.prepareRender('user', { 
       user,
-      gravatarLink: `https://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
+      pfpUrl: getPfpUrl(user),
       universes,
       recentlyUpdated,
     });
@@ -178,7 +178,7 @@ module.exports = function(app) {
     authors.forEach(author => {
       authorMap[author.id] = {
         ...author,
-        gravatarLink: `https://www.gravatar.com/avatar/${md5(author.email)}.jpg`,
+        pfpUrl: getPfpUrl(author),
       };
     });
     const [code3, threads] = await api.discussion.getThreads(req.session.user, { 'discussion.universe_id': universe.id }, false, true);
@@ -246,7 +246,7 @@ module.exports = function(app) {
     if (!comments || !users) return [code3];
     const commenters = {};
     for (const user of users) {
-      user.gravatarLink = `https://www.gravatar.com/avatar/${md5(user.email)}.jpg`;
+      user.pfpUrl = getPfpUrl(user);
       delete user.email;
       commenters[user.id] = user;
     }
@@ -327,7 +327,7 @@ module.exports = function(app) {
     if (!comments || !users) return [code3];
     const commenters = {};
     for (const user of users) {
-      user.gravatarLink = `https://www.gravatar.com/avatar/${md5(user.email)}.jpg`;
+      user.pfpUrl = getPfpUrl(user);
       delete user.email;
       commenters[user.id] = user;
     }

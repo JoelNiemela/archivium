@@ -32,7 +32,7 @@ block content
   h1.center Welcome to #{user.username}'s page
   div( align='center' )
     .userIcon.badge-anchor
-      img( alt=user.username, src=(user.hasPfp ? `/api/users/${user.username}/pfp` : gravatarLink) )
+      img( alt=user.username, src=pfpUrl )
       if user.isMe
         .pfpEdit( onclick='editPfp()' )
           small #{user.hasPfp ? 'Change' : 'Upload'}

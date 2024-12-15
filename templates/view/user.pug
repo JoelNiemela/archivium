@@ -46,6 +46,6 @@ block content
           td
             a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
           td
-            +authorList(universe.authors)
+            +authorList(universe.authors, universe.author_permissions)
           td #{formatDate(universe.created_at)}
           td #{formatDate(universe.updated_at)}

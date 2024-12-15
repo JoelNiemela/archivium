@@ -22,22 +22,14 @@ block content
       if !user.isContact && !user.isMe
         |  - 
         a.link.link-animated( onclick=`addContact('${user.username}')` ) #{T('Add to contacts')}
+  
   hr
-  h3 #{user.username}'s items
-  table
-    thead
-      th Name
-      th Type
-      th Universe
-      th Authors
-      th Created
-      th Updated
 
   h3 #{user.username}'s universes
-  table
+  table.sheet.w-100
     thead
       th Name
-      th Authors
+      th Role
       th Created
       th Updated
     tbody
@@ -46,6 +38,23 @@ block content
           td
             a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
           td
-            +authorList(universe.authors, universe.author_permissions)
-          td #{formatDate(universe.created_at)}
-          td #{formatDate(universe.updated_at)}
+            //- +authorList(universe.authors, universe.author_permissions)
+            case universe.author_permissions[user.id]
+              when perms.READ
+              when perms.COMMENT
+                | Viewer
+              when perms.WRITE
+                | Author
+              when perms.ADMIN
+                | Admin
+          td #{formatDate(universe.created_at, true)}
+          td #{formatDate(universe.updated_at, true)}
+  
+  h3 #{user.username}'s recent updates
+  table.sheet.w-100
+    thead
+      th Name
+      th Type
+      th Universe
+      th Created
+      th Updated

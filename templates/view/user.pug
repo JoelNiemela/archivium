@@ -15,6 +15,7 @@ block scripts
     include /static/scripts/fetchUtils.js
     include /static/scripts/modal.js
     include /static/scripts/fileUpload.js
+    include /static/scripts/table.js
   script.
     let firstOpen = true;
     function editPfp() {
@@ -66,10 +67,10 @@ block content
   h3 #{user.username}'s universes
   table.sheet.w-100
     thead
-      th Name
-      th Role
-      th Created
-      th Updated
+      th.sortable Name
+      th.sortable Role
+      th.sortable Created
+      th.sortable Updated
     tbody
       if recentlyUpdated.length === 0
         tr
@@ -77,9 +78,9 @@ block content
       else
         each universe in universes
           tr
-            td
+            td( data-sort=universe.title )
               a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
-            td
+            td( data-sort=universe.author_permissions[user.id] )
               //- +authorList(universe.authors, universe.author_permissions)
               case universe.author_permissions[user.id]
                 when perms.READ
@@ -89,15 +90,15 @@ block content
                   | Author
                 when perms.ADMIN
                   | Admin
-            td #{formatDate(universe.created_at, true)}
-            td #{formatDate(universe.updated_at, true)}
+            td( data-sort=universe.created_at ) #{formatDate(universe.created_at, true)}
+            td( data-sort=universe.updated_at ) #{formatDate(universe.updated_at, true)}
   
   h3 #{user.username}'s recent edits
   table.sheet.w-100
     thead
-      th Name
-      th Universe
-      th Updated
+      th.sortable Name
+      th.sortable Universe
+      th.sortable Updated
     tbody
       if recentlyUpdated.length === 0
         tr
@@ -105,10 +106,10 @@ block content
       else
         each item in recentlyUpdated
           tr
-            td
+            td( data-sort=item.title )
               a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}` ) #{item.title}
               if !item.last_updated_by
                 small( style='font-size: x-small;' )  (New)
-            td
+            td( data-sort=item.universe )
               a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}` ) #{item.universe}
-            td #{formatDate(item.updated_at, true)}
+            td( data-sort=item.updated_at ) #{formatDate(item.updated_at, true)}

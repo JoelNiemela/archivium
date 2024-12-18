@@ -113,3 +113,26 @@ block content
             td( data-sort=item.universe )
               a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}` ) #{item.universe}
             td( data-sort=item.updated_at ) #{formatDate(item.updated_at, true)}
+  
+  h3 #{user.username}'s items
+  table.sheet.w-100
+    thead
+      th.sortable Name
+      th.sortable Universe
+      th.sortable Created
+      th.sortable Updated
+    tbody
+      if recentlyUpdated.length === 0
+        tr
+          td( colspan=3 ) No updates.
+      else
+        each item in items
+          tr
+            td( data-sort=item.title )
+              a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}` ) #{item.title}
+              if !item.last_updated_by
+                small( style='font-size: x-small;' )  (New)
+            td( data-sort=item.universe )
+              a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}` ) #{item.universe}
+            td( data-sort=item.created_at ) #{formatDate(item.created_at, true)}
+            td( data-sort=item.updated_at ) #{formatDate(item.updated_at, true)}

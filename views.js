@@ -122,13 +122,16 @@ module.exports = function(app) {
     const [code3, recentlyUpdated] = await api.item.getMany(req.session.user, null, perms.READ, {
       sort: 'updated_at',
       sortDesc: true,
-      limit: 25,
+      limit: 15,
       select: [['lub.username', 'last_updated_by']],
       join: [['LEFT', ['user', 'lub'], new Cond('lub.id = item.last_updated_by')]],
       where: new Cond('item.author_id = ?', user.id)
         .and(new Cond('lub.id <> ?', user.id).or('item.last_updated_by IS NULL')),
     });
     res.status(code3);
+    const [code4, items] = await api.item.getByAuthorUsername(req.session.user, user.username, perms.READ, { limit: 15 });
+    res.status(code4);
+    if (!items) return;
     if (req.session.user?.id !== user.id) {
       const [_, contact] = await api.contact.getOne(req.session.user, user.id);
       user.isContact = contact !== undefined;
@@ -137,6 +140,7 @@ module.exports = function(app) {
     }
     res.prepareRender('user', { 
       user,
+      items,
       pfpUrl: getPfpUrl(user),
       universes,
       recentlyUpdated,

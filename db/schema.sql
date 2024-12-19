@@ -25,6 +25,14 @@ CREATE TABLE userverification (
   UNIQUE(user_id)
 );
 
+CREATE TABLE usernamechange (
+  changed_for INT NOT NULL,
+  changed_from VARCHAR(32) NOT NULL,
+  changed_to VARCHAR(32) NOT NULL,
+  changed_at TIMESTAMP NOT NULL,
+  FOREIGN KEY (changed_for) REFERENCES user (id)
+);
+
 CREATE TABLE session (
   id INT NOT NULL AUTO_INCREMENT,
   hash VARCHAR(64) NOT NULL,

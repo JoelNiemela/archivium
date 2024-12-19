@@ -152,6 +152,45 @@ async function put(user_id, userIDToPut, { updated_at, verified }) {
   }
 }
 
+async function putUsername(sessionUser, oldUsername, newUsername) {
+  const [code, user] = await getOne({ 'user.username': oldUsername });
+  if (!user) return [code];
+  if (Number(sessionUser.id) !== Number(user.id)) return [403];
+
+  const now = new Date();
+  const cutoffInterval = 30 * 24 * 60 * 60 * 1000; // 30 Days
+  const cutoffDate = new Date(now.getTime() - cutoffInterval);
+  const recentChanges = await executeQuery(`
+    SELECT *
+    FROM usernamechange
+    WHERE changed_for = ? AND changed_at >= ?
+    ORDER BY changed_at DESC;
+  `, [user.id, cutoffDate]);
+  if (recentChanges.length > 0) return [429, new Date(recentChanges[0].changed_at.getTime() + cutoffInterval)];
+
+  try {
+    const queryString = `
+      UPDATE user
+      SET
+        username = ?
+      WHERE id = ?;
+    `;
+    const data = await executeQuery(queryString, [newUsername, user.id]);
+    await executeQuery(`
+      INSERT INTO usernamechange (
+        changed_for,
+        changed_from,
+        changed_to,
+        changed_at
+      ) VALUES (?, ?, ?, ?)
+    `, [user.id, oldUsername, newUsername, new Date()]);
+    return [200, data];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
 /**
  * WARNING: THIS METHOD IS *UNSAFE* AND SHOULD *ONLY* BE CALLED BY AUTHORIZED ROUTES!
  * @param {number} user_id id of user to delete 
@@ -282,6 +321,7 @@ module.exports = {
   post,
   validatePassword,
   put,
+  putUsername,
   del,
   prepareVerification,
   verifyUser,

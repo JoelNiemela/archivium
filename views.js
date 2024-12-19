@@ -151,6 +151,14 @@ module.exports = function(app) {
       recentlyUpdated,
     });
   });
+  
+  get('/settings', Auth.verifySessionOrRedirect, async (req, res) => {
+    const [code, user] = await api.user.getOne({ 'user.id': req.session.user.id });
+    res.status(code);
+    if (!user) return;
+    res.prepareRender('settings', { user });
+  });
+  
 
   get('/items', async (req, res) => {
     const [code1, universes] = await api.universe.getMany(req.session.user);
@@ -214,7 +222,7 @@ module.exports = function(app) {
     if (!universes) return;
     res.prepareRender('universeList', { universes });
   });
- 
+  
   get('/universes/create', Auth.verifySessionOrRedirect, async (_, res) => {
     res.prepareRender('createUniverse');
   });

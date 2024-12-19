@@ -99,6 +99,7 @@ function post({ username, email, password }) {
 
   if (!username) throw new Error('malformed username');
   if (!email) throw new Error('malformed email');
+  if (!password) throw new Error('empty password not allowed');
 
   const validationError = validateUsername(username);
   if (validationError) throw new Error(validationError);

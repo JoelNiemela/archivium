@@ -114,7 +114,10 @@ block content
               a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}` ) #{item.universe}
             td( data-sort=item.updated_at ) #{formatDate(item.updated_at, true)}
   
-  h3 #{user.username}'s items
+  h3 #{user.username}'s items 
+    small (
+      a.link.link-animated( href=`${ADDR_PREFIX}/items?author=${user.username}` ) see all
+    | )
   table.sheet.w-100
     thead
       th.sortable Name

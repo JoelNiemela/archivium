@@ -101,6 +101,18 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, options
     conditions.values.push(options.tag);
   }
 
+  if (options.universe) {
+    if (!conditions) conditions = { strings: [], values: [] };
+    conditions.strings.push('universe.shortname = ?');
+    conditions.values.push(options.universe);
+  }
+
+  if (options.author) {
+    if (!conditions) conditions = { strings: [], values: [] };
+    conditions.strings.push('user.username = ?');
+    conditions.values.push(options.author);
+  }
+
   if (options.sort && !options.forceSort) {
     const validSorts = { 'title': true, 'created_at': true, 'updated_at': true, 'author': true, 'item_type': true };
     if (!validSorts[options.sort]) {

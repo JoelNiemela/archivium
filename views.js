@@ -147,6 +147,35 @@ module.exports = function(app) {
     });
   });
 
+  get('/items', async (req, res) => {
+    const [code1, universes] = await api.universe.getMany(req.session.user);
+    const [code2, items] = await api.item.getMany(req.session.user, null, Math.max(perms.READ, Number(req.query.perms)) || perms.READ, {
+      sort: req.query.sort,
+      sortDesc: req.query.sort_order === 'desc',
+      limit: req.query.limit,
+      type: req.query.type,
+      tag: req.query.tag,
+      universe: req.query.universe,
+      author: req.query.author,
+    });
+    const code = code1 !== 200 ? code1 : code2;
+    res.status(code);
+    if (code !== 200) return;
+    const universeCats = universes.reduce((cats, universe) => {
+      universe.obj_data = JSON.parse(universe.obj_data);
+      return { ...cats, [universe.id]: universe.obj_data.cats };
+    }, {});
+    console.log(universeCats)
+    res.prepareRender('itemList', {
+      items: items.map(item => ({ ...item, itemTypeName: ((universeCats[item.universe_id] ?? {})[item.item_type] ?? ['missing_cat'])[0] })),
+      type: req.query.type,
+      tag: req.query.tag,
+      universe: req.query.universe,
+      author: req.query.author,
+      showUniverse: true,
+    });
+  });
+
   /* Universe Pages */
   get('/universes', async (req, res) => {
     const [code, universes] = await api.universe.getMany(req.session.user);

@@ -19,6 +19,7 @@ module.exports = function(app, upload) {
       });
       // app.all(path, Auth.verifySession, async (req, res) => {
       app.all(path, ...(this.methodFuncs.middleware ?? []), async (req, res, next) => {
+        console.log(req.body)
         req.isApiRequest = true;
         const method = req.method.toUpperCase();
         if (method in this.methodFuncs) {
@@ -63,6 +64,7 @@ module.exports = function(app, upload) {
             else return [code];
           }
         }),
+        new APIRoute('/username', { PUT: (req) => api.user.putUsername(req.session.user, req.params.username, req.body.username) }),
       ]),
     ]),
     new APIRoute('/contacts', {

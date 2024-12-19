@@ -38,6 +38,13 @@ async function putJSON(url, body) {
     .then(response => response.json());
 }
 
+async function deleteJSON(url) {
+  return await fetch(url, {
+    method: 'DELETE',
+  })
+    .then(response => response.json());
+}
+
 async function fetchJSON(url) {
   return await fetch('https://example.com/api/resource', {
     method: 'PUT', // Specify the request method as PUT

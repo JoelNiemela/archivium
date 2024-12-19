@@ -1,12 +1,14 @@
-mixin authorList(authors)
-  - let i = 0;
+mixin authorList(authors, author_permissions)
+  -
+    let i = 0;
+    const authorsList = Object.keys(authors).filter(key => author_permissions[key] >= perms.WRITE).map(key => authors[key]);
   span
-    each val, key in authors
+    each author in authorsList
       -
         let suff;
-        if (i === Object.keys(authors).length - 1) suff = '';
-        else if (i === Object.keys(authors).length - 2) suff = Object.keys(authors).length === 2 ? ' and ' : ', and ';
+        if (i === authorsList.length - 1) suff = '';
+        else if (i === authorsList.length - 2) suff = authorsList.length === 2 ? ' and ' : ', and ';
         else suff = ', ';
-      a.link.link-animated( href=`${ADDR_PREFIX}/users/${val}` )= val
+      a.link.link-animated( href=`${ADDR_PREFIX}/users/${author}` )= author
       | #{suff}
       - i++;

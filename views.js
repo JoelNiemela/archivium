@@ -2,7 +2,7 @@ const { ADDR_PREFIX, DEV_MODE } = require('./config');
 const Auth = require('./middleware/auth');
 const api = require('./api');
 const md5 = require('md5');
-const { render } = require('./templates');
+const { getPfpUrl, render } = require('./templates');
 const { perms, Cond } = require('./api/utils');
 const fs = require('fs/promises');
 const logger = require('./logger');
@@ -104,7 +104,7 @@ module.exports = function(app) {
     if (!contacts) return;
     const gravatarContacts = contacts.map(user => ({
       ...user,
-      gravatarLink: `https://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
+      pfpUrl: getPfpUrl(user),
     }));
     res.prepareRender('contactList', {
       contacts: gravatarContacts.filter(contact => contact.accepted),
@@ -113,12 +113,29 @@ module.exports = function(app) {
   });
 
   get('/users/:username', async (req, res) => {
-    const [code1, user] = await api.user.getOne({ username: req.params.username });
+    const [code1, user] = await api.user.getOne({ 'user.username': req.params.username });
     res.status(code1);
     if (!user) return;
     const [code2, universes] = await api.universe.getManyByAuthorId(req.session.user, user.id);
     res.status(code2);
     if (!universes) return;
+    const [code3, recentlyUpdated] = await api.item.getMany(req.session.user, null, perms.READ, {
+      sort: 'updated_at',
+      sortDesc: true,
+      limit: 15,
+      select: [['lub.username', 'last_updated_by']],
+      join: [['LEFT', ['user', 'lub'], new Cond('lub.id = item.last_updated_by')]],
+      where: new Cond('item.author_id = ?', user.id)
+        .and(new Cond('lub.id <> ?', user.id).or('item.last_updated_by IS NULL')),
+    });
+    res.status(code3);
+    const [code4, items] = await api.item.getByAuthorUsername(req.session.user, user.username, perms.READ, {
+      sort: 'updated_at',
+      sortDesc: true,
+      limit: 15
+    });
+    res.status(code4);
+    if (!items) return;
     if (req.session.user?.id !== user.id) {
       const [_, contact] = await api.contact.getOne(req.session.user, user.id);
       user.isContact = contact !== undefined;
@@ -127,8 +144,39 @@ module.exports = function(app) {
     }
     res.prepareRender('user', { 
       user,
-      gravatarLink: `https://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
+      items,
+      pfpUrl: getPfpUrl(user),
       universes,
+      recentlyUpdated,
+    });
+  });
+
+  get('/items', async (req, res) => {
+    const [code1, universes] = await api.universe.getMany(req.session.user);
+    const [code2, items] = await api.item.getMany(req.session.user, null, Math.max(perms.READ, Number(req.query.perms)) || perms.READ, {
+      sort: req.query.sort,
+      sortDesc: req.query.sort_order === 'desc',
+      limit: req.query.limit,
+      type: req.query.type,
+      tag: req.query.tag,
+      universe: req.query.universe,
+      author: req.query.author,
+    });
+    const code = code1 !== 200 ? code1 : code2;
+    res.status(code);
+    if (code !== 200) return;
+    const universeCats = universes.reduce((cats, universe) => {
+      universe.obj_data = JSON.parse(universe.obj_data);
+      return { ...cats, [universe.id]: universe.obj_data.cats };
+    }, {});
+    console.log(universeCats)
+    res.prepareRender('itemList', {
+      items: items.map(item => ({ ...item, itemTypeName: ((universeCats[item.universe_id] ?? {})[item.item_type] ?? ['missing_cat'])[0] })),
+      type: req.query.type,
+      tag: req.query.tag,
+      universe: req.query.universe,
+      author: req.query.author,
+      showUniverse: true,
     });
   });
 
@@ -167,7 +215,7 @@ module.exports = function(app) {
     authors.forEach(author => {
       authorMap[author.id] = {
         ...author,
-        gravatarLink: `https://www.gravatar.com/avatar/${md5(author.email)}.jpg`,
+        pfpUrl: getPfpUrl(author),
       };
     });
     const [code3, threads] = await api.discussion.getThreads(req.session.user, { 'discussion.universe_id': universe.id }, false, true);
@@ -235,7 +283,7 @@ module.exports = function(app) {
     if (!comments || !users) return [code3];
     const commenters = {};
     for (const user of users) {
-      user.gravatarLink = `https://www.gravatar.com/avatar/${md5(user.email)}.jpg`;
+      user.pfpUrl = getPfpUrl(user);
       delete user.email;
       commenters[user.id] = user;
     }
@@ -316,7 +364,7 @@ module.exports = function(app) {
     if (!comments || !users) return [code3];
     const commenters = {};
     for (const user of users) {
-      user.gravatarLink = `https://www.gravatar.com/avatar/${md5(user.email)}.jpg`;
+      user.pfpUrl = getPfpUrl(user);
       delete user.email;
       commenters[user.id] = user;
     }
@@ -381,7 +429,7 @@ module.exports = function(app) {
   get('/universes/:shortname/permissions', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname }, perms.ADMIN);
     const [code2, users] = await api.user.getMany();
-    const [code3, contacts] = await api.contact.getAll(req.session.user);
+    const [code3, contacts] = await api.contact.getAll(req.session.user, false);
     const code = code1 !== 200 ? code1 : (code2 !== 200 ? code2 : code3);
     res.status(code);
     if (code !== 200) return;
@@ -395,7 +443,7 @@ module.exports = function(app) {
   });
   post('/universes/:shortname/permissions', Auth.verifySessionOrRedirect, async (req, res) => {
     const { session, params, body } = req;
-    const [_, user] = await api.user.getOne({ username: req.body.username });
+    const [_, user] = await api.user.getOne({ 'user.username': req.body.username });
     const [code, data] = await api.universe.putPermissions(session.user, params.shortname, user, body.permission_level, perms.ADMIN);
     res.status(code);
     if (code !== 200) return;

@@ -100,7 +100,7 @@ block content
       each username, id in universe.authors
         if universe.author_permissions[id] >= perms.WRITE
           .card.sheet.gap-4( onclick=`goTo('${ADDR_PREFIX}/users/${username}')` )
-            img.userIcon( alt=username, src=authors[id].gravatarLink )
+            img.userIcon( alt=username, src=authors[id].pfpUrl )
             .d-flex.flex-col.grow-1
               h2.ma-0
                 a.link.link-animated( href=`${ADDR_PREFIX}/users/${username}` ) #{username}
@@ -122,7 +122,7 @@ block content
       each username, id in universe.authors
         if universe.author_permissions[id] < perms.WRITE && universe.author_permissions[id] >= perms.READ
           .card.sheet.gap-4( onclick=`goTo('${ADDR_PREFIX}/users/${username}')` )
-            img.userIcon( alt=username, src=authors[id].gravatarLink )
+            img.userIcon( alt=username, src=authors[id].pfpUrl )
             .d-flex.flex-col.grow-1
               h2.ma-0
                 a.link.link-animated( href=`${ADDR_PREFIX}/users/${username}` ) #{username}

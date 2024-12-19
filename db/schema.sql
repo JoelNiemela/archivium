@@ -9,6 +9,14 @@ CREATE TABLE user (
   PRIMARY KEY (id)
 );
 
+CREATE TABLE userimage (
+  user_id INT NOT NULL,
+  name VARCHAR(64) NOT NULL,
+  mimetype VARCHAR(32) NOT NULL,
+  data LONGBLOB NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES user (id)
+);
+
 CREATE TABLE session (
   id INT NOT NULL AUTO_INCREMENT,
   hash VARCHAR(64) NOT NULL,

@@ -38,7 +38,7 @@ block content
         .d-flex.flex-col.grow-3
             span 
               b #{T('Authors')}: 
-              +authorList(universe.authors)
+              +authorList(universe.authors, universe.author_permissions)
             .d-flex.gap-2
               span
                 b #{T('Created')}: 

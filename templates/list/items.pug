@@ -1,10 +1,27 @@
 extends ../layout.pug
 
+block scripts
+  script
+    include /static/scripts/cardUtils.js
+    include /static/scripts/listUtils.js
+
 block content
   h1.center Items
+  div
+    label( for='sort' )
+      b #{T('Sort by')}: 
+    select( id='sort' name='sort' )
+      option( value='created_at' ) Created
+      option( value='updated_at' ) Updated
+      option( value='item_type' ) Type
+      option( value='title' ) Title
+      option( value='author' ) Author
+    select( id='sort_order' name='sort_order' )
+      option( value='asc' ) Ascending
+      option( value='desc' ) Descending
   hr
-  p TODO this page needs to be fixed or deleted
-  //- table
+  include ../components/itemList.pug
+  //- table.sheet.w-100
   //-   thead
   //-     th Name
   //-     th Type
@@ -17,10 +34,10 @@ block content
   //-       tr
   //-         td
   //-           a.link.link-animated( href=`${ADDR_PREFIX}/items/${item.shortname}` ) #{item.title}
-  //-         td #{capitalize(item.itemType)}
+  //-         td #{capitalize(item.itemTypeName)}
   //-         td
-  //-           a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universeId}` ) #{item.universe}
+  //-           a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}` ) #{item.universe}
   //-         td
-  //-           a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.authorId}` ) #{item.author}
-  //-         td #{formatDate(item.createdAt)}
-  //-         td #{formatDate(item.updatedAt)}
+  //-           a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
+  //-         td #{formatDate(item.created_at, true)}
+  //-         td #{formatDate(item.updated_at, true)}

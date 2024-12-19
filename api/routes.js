@@ -55,14 +55,30 @@ module.exports = function(app, upload) {
   const apiRoutes = new APIRoute('/api', {}, [
     new APIRoute('/*'),
     new APIRoute('/users', { GET: () => api.user.getMany() }, [
-      new APIRoute('/:username', { GET: (req) => api.user.getOne({ username: req.params.username }) }, [
+      new APIRoute('/:username', { GET: (req) => api.user.getOne({ 'user.username': req.params.username }) }, [
         new APIRoute('/universes', {
           GET: async (req) => {
-            const [code, user] = await api.user.getOne({ username: req.params.username });
+            const [code, user] = await api.user.getOne({ 'user.username': req.params.username });
             if (code) return api.universe.getManyByAuthorId(req.session.user, user.id);
             else return [code];
           }
         }),
+        new APIRoute('/pfp', {
+          GET: (req) => frmtData(
+            api.user.image.getByUsername(req.params.username),
+            (image) => [image?.data, (res) => {
+              if (!image) return;
+              res.contentType(image.mimetype);
+              if (req.query.download === '1') res.setHeader('Content-Disposition', `attachment; filename="${image.name}"`);
+            }],
+          ),
+          DELETE: (req) => api.user.image.del(req.session.user, req.params.username),
+        }, [
+          new APIRoute('/upload', {
+            middleware: [upload.single('image')],
+            POST: (req) => api.user.image.post(req.session.user, req.file, req.params.username),
+          }),
+        ]),
       ]),
     ]),
     new APIRoute('/contacts', {

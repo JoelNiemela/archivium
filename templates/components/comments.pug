@@ -2,7 +2,7 @@ div
   .d-flex.flex-col.gap-4
     each comment in comments
       .sheet.d-flex.gap-4.align-start
-        img.userIcon( alt=commenters[comment.author_id].username, src=commenters[comment.author_id].gravatarLink )
+        img.userIcon( alt=commenters[comment.author_id].username, src=commenters[comment.author_id].pfpUrl )
         .d-flex.flex-col.grow-1
           div
             a.link.link-animated.mr-2( href=`/users/${commenters[comment.author_id].username}` ) 

@@ -33,13 +33,17 @@ const locale = {
   }
 };
 
+function getPfpUrl(user) {
+  return user.hasPfp ? `/api/users/${user.username}/pfp` : `https://www.gravatar.com/avatar/${md5(user.email)}.jpg`;
+}
+
 // Basic context information to be sent to the templates
 function contextData(req) {
   const user = req.session.user;
   const contextUser = user ? {
     id: user.id,
     username: user.username,
-    gravatarLink: `https://www.gravatar.com/avatar/${md5(user.email)}.jpg`,
+    pfpUrl: getPfpUrl(user),
   } : null;
 
   const lang = 'en';
@@ -114,5 +118,6 @@ function render(req, template, context = {}) {
 }
 
 module.exports = {
+  getPfpUrl,
   render,
 };

@@ -63,7 +63,7 @@ class QueryBuilder {
    }
 
    where(cond) {
-    this.whereCond = cond;
+    if ((cond instanceof MultiCond || cond.check)) this.whereCond = cond;
     return this;
    }
 

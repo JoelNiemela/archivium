@@ -129,7 +129,11 @@ module.exports = function(app) {
         .and(new Cond('lub.id <> ?', user.id).or('item.last_updated_by IS NULL')),
     });
     res.status(code3);
-    const [code4, items] = await api.item.getByAuthorUsername(req.session.user, user.username, perms.READ, { limit: 15 });
+    const [code4, items] = await api.item.getByAuthorUsername(req.session.user, user.username, perms.READ, {
+      sort: 'updated_at',
+      sortDesc: true,
+      limit: 15
+    });
     res.status(code4);
     if (!items) return;
     if (req.session.user?.id !== user.id) {

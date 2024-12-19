@@ -101,6 +101,7 @@ const templates = {
   contactList: compile('templates/list/contacts.pug'),
 
   search: compile('templates/list/search.pug'),
+  settings: compile('templates/edit/settings.pug'),
 };
 
 function render(req, template, context = {}) {

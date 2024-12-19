@@ -1,0 +1,18 @@
+extends ../layout.pug
+
+block content
+  h2 Settings
+  form#change-username( method='POST' )
+
+    .inputGroup
+      label( for='username' ) Username:
+      input( id='username' name='username' type='text' value=user.username )
+      small.row-2.col-2 You can only change your username once every 30 days, so choose carefully!
+      .d-flex
+        button( type='submit' ) Change Username
+
+    if error
+      div
+        small( style={color: 'red'} )= error 
+
+  hr.w-100.mb-0

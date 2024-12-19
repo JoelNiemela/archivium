@@ -131,6 +131,14 @@ module.exports = function(app) {
       universes,
     });
   });
+  
+  get('/settings', Auth.verifySessionOrRedirect, async (req, res) => {
+    const [code, user] = await api.user.getOne({ 'user.id': req.session.user.id });
+    res.status(code);
+    if (!user) return;
+    res.prepareRender('settings', { user });
+  });
+  
 
   /* Universe Pages */
   get('/universes', async (req, res) => {
@@ -139,7 +147,7 @@ module.exports = function(app) {
     if (!universes) return;
     res.prepareRender('universeList', { universes });
   });
- 
+  
   get('/universes/create', Auth.verifySessionOrRedirect, async (_, res) => {
     res.prepareRender('createUniverse');
   });

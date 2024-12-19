@@ -144,7 +144,7 @@ app.post(`${ADDR_PREFIX}/signup`, async (req, res, next) => {
     }
   } catch (err) {
     logger.error(err);
-    res.redirect(`${ADDR_PREFIX}/signup`);
+    res.end(render(req, 'signup', { username: req.body.username, email: req.body.email, error: err }));
   }
   next();
 });

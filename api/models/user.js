@@ -100,6 +100,9 @@ function post({ username, email, password }) {
   if (!username) throw new Error('malformed username');
   if (!email) throw new Error('malformed email');
 
+  const validationError = validateUsername(username);
+  if (validationError) throw new Error(validationError);
+
   const queryString = `
     INSERT INTO user (
       username,
@@ -131,6 +134,37 @@ function validatePassword(attempted, password, salt) {
   return utils.compareHash(attempted, password, salt);
 }
 
+function validateUsername(username) {
+  const RESERVED_USERNAMES = ['admin', 'moderator', 'root', 'support', 'system'];
+
+  if (username.length < 3 || username.length > 32) {
+    return 'Username must be between 3 and 32 characters long.';
+  }
+
+  if (RESERVED_USERNAMES.includes(username)) {
+      return 'This username is reserved and cannot be used.';
+  }
+
+  if (/^\d+$/.test(username)) {
+      return 'Usernames cannot be only numbers.';
+  }
+
+  if (/[-_]{2,}/.test(username)) {
+    return 'Usernames cannot have consecutive dashes or underscores.';
+  }
+
+  if (/^[-]|[-]$/.test(username)) {
+    return 'Usernames cannot start or end with a dash.';
+  }
+
+  // const USERNAME_REGEX = /^(?!.*[-_]{2,})(?!.*[_.-]$)(?!^[-_.])(?!^\d+$)[a-zA-Z0-9_-]{3,32}$/;
+  if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+      return 'Usernames can only contain letters, numbers, underscores, and hyphens.';
+  }
+
+  return null;
+}
+
 async function put(user_id, userIDToPut, { updated_at, verified }) {
   const changes = { updated_at, verified };
 
@@ -156,6 +190,9 @@ async function putUsername(sessionUser, oldUsername, newUsername) {
   const [code, user] = await getOne({ 'user.username': oldUsername });
   if (!user) return [code];
   if (Number(sessionUser.id) !== Number(user.id)) return [403];
+
+  const validationError = validateUsername(newUsername);
+  if (validationError) return [400, validationError];
 
   const now = new Date();
   const cutoffInterval = 30 * 24 * 60 * 60 * 1000; // 30 Days
@@ -186,6 +223,7 @@ async function putUsername(sessionUser, oldUsername, newUsername) {
     `, [user.id, oldUsername, newUsername, new Date()]);
     return [200, data];
   } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') return [400, 'Username already taken.'];
     logger.error(err);
     return [500];
   }
@@ -320,6 +358,7 @@ module.exports = {
   getByUniverseShortname,
   post,
   validatePassword,
+  validateUsername,
   put,
   putUsername,
   del,

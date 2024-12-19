@@ -1,6 +1,7 @@
 const pug = require('pug');
 const { ADDR_PREFIX } = require('../config');
 const { perms } = require('../api/utils');
+const api = require('../api');
 const md5 = require('md5');
 const path = require('path');
 
@@ -65,6 +66,7 @@ function contextData(req) {
     perms,
     locale: locale[lang],
     T,
+    validateUsername: api.user.validateUsername,
   };
 }
 

@@ -4,7 +4,8 @@ block scripts
   script
     include /static/scripts/fetchUtils.js
   script.
-    const formatDate = !{formatDate}
+    const formatDate = !{formatDate};
+    const validateUsername = !{validateUsername};
 
 block content
   h2 Settings
@@ -16,7 +17,7 @@ block content
       .d-flex
         button( type='submit' ) Change Username
 
-    small.hidden#username-error( style={color: 'red'} )
+    small.color-error.hidden#username-error
 
     script.
       (() => {
@@ -29,12 +30,23 @@ block content
           const value = form.username.value;
           if (value === '#{user.username}') return;
 
+          const error = validateUsername(value);
+          if (error) {
+            formError.innerText = error;
+            formError.classList.remove('hidden');
+            return;
+          }
+
           const [response, data] = await putJSON(`/api/users/#{user.username}/username`, { username: value });
           if (response.status === 429) {
             formError.innerText = `You have changed your username too recently. Try again ${formatDate(new Date(data))}.`;
             formError.classList.remove('hidden');
           } else if (response.status === 200) {
             window.location.reload();
+          } else {
+            console.log(data)
+            formError.innerText = data;
+            formError.classList.remove('hidden');
           }
         });
       })();

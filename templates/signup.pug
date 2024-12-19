@@ -5,10 +5,10 @@ block content
   form( method='post' )
     div.inputGroup
       label( for='username' ) Username: 
-      input( id='username' type='text' name='username' )
+      input( id='username' type='text' name='username' value=username )
     div.inputGroup
       label( for='email' ) Email: 
-      input( id='email' type='email' name='email' )
+      input( id='email' type='email' name='email' value=email )
     div.inputGroup
       label( for='password' ) Password: 
       input( id='password' type='password' name='password' )
@@ -26,5 +26,8 @@ block content
     br
     div
       button( type='submit' ) Sign Up
+    if error
+      div
+        small.color-error= error
   p
     a.link.link-animated( href=`${ADDR_PREFIX}/login${searchQueries ? `?${searchQueries}`: ''}` ) Login to your account

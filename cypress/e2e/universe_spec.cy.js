@@ -7,7 +7,7 @@ describe('Universe spec', () => {
     cy.visit('/universes/create');
 
     cy.get('#title').type('Duplicate Test Universe');
-    cy.get('#shortname').type('public-test-universe');
+    cy.get('#shortname').clear().type('public-test-universe');
     cy.get('button[type="submit"]').click();
     cy.get('.color-error').contains('universe.shortname must be unique.').should('exist');
   });
@@ -101,7 +101,7 @@ describe('Universe spec', () => {
     cy.get('h2').contains('New Universe').should('exist');
 
     cy.get('#title').type('Cypress Universe');
-    cy.get('#shortname').type('cypress-universe');
+    cy.get('#shortname').should('have.text', 'cypress-universe');
     cy.get('#visibility').select('private');
     cy.get('#discussion_enabled').select('disabled');
     cy.get('#discussion_open').select('disabled');
@@ -169,7 +169,7 @@ describe('Universe spec', () => {
     cy.get('h1').contains('Cypress Universe').should('exist');
     cy.get('#info-bar').contains('Delete').click();
 
-    cy.get('#shortname').type('cypress-universe');
+    cy.get('#shortname').clear().type('cypress-universe');
     cy.get('button').contains('Delete Universe').click();
 
     cy.url().should('eq', Cypress.config().baseUrl + '/universes');

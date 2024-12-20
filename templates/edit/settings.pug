@@ -23,6 +23,15 @@ block content
       (() => {
         const form = document.forms.changeUsername;
         const formError = document.querySelector('#username-error');
+        form.username.addEventListener('input', () => {
+          formError.classList.add('hidden');
+          const value = form.username.value;
+          const error = validateUsername(value);
+          if (error) {
+            formError.innerText = error;
+            formError.classList.remove('hidden');
+          }
+        });
         form.addEventListener('submit', async (e) => {
           formError.classList.add('hidden');
           e.preventDefault();

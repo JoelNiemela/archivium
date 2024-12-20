@@ -1,4 +1,5 @@
 const { QueryBuilder, Cond, executeQuery, parseData, perms } = require('../utils');
+const { getOne: getUniverse, validateShortname } = require('./universe');
 const logger = require('../../logger');
 
 async function getOne(user, conditions, permissionsRequired=perms.READ, basicOnly=false, options={}) {
@@ -267,18 +268,15 @@ async function getByUniverseAndItemShortnames(user, universeShortname, itemShort
 }
 
 async function post(user, body, universeShortName) {
-
-  let universeId;
-  try {
-    // TODO - ACTUALLY VALIDATE PERMISSIONS HERE!
-    universeId = (await executeQuery('SELECT id FROM universe WHERE shortname = ?', [ universeShortName ]))[0]?.id;
-    if (universeId === undefined) return [404];
-  } catch (err) {
-    logger.error(err);
-    return [500];
-  }
+  const { title, shortname, item_type, parent_id, obj_data } = body;
 
   try {
+    const shortnameError = validateShortname(shortname);
+    if (shortnameError) return [400, shortnameError];
+
+    const [code, universe] = await getUniverse(user, { 'universe.shortname': universeShortName }, perms.WRITE);
+    if (!universe) return [code];
+
     const queryString = `
       INSERT INTO item (
         title,
@@ -292,14 +290,13 @@ async function post(user, body, universeShortName) {
         updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
-    const { title, shortname, item_type, parent_id, obj_data } = body;
     if (!title || !shortname || !item_type || !obj_data) return [400];
     return [201, await executeQuery(queryString, [
       title,
       shortname,
       item_type,
       user.id,
-      universeId,
+      universe.id,
       parent_id ?? null,
       obj_data,
       new Date(),

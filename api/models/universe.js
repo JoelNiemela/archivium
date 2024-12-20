@@ -104,6 +104,28 @@ async function getEventsByUniverseShortname(user, shortname, permissionsRequired
   }
 }
 
+function validateShortname(shortname, reservedShortnames = []) {
+
+  if (shortname.length < 3 || shortname.length > 64) {
+    return 'Shortnames must be between 3 and 64 characters long.';
+  }
+
+  if (reservedShortnames.includes(shortname)) {
+      return 'This shortname is reserved and cannot be used.';
+  }
+
+  if (/^[-]|[-]$/.test(shortname)) {
+    return 'Shortnames cannot start or end with a dash.';
+  }
+
+  // const USERNAME_REGEX = /^(?!.*[-_]{2,})(?!.*[_.-]$)(?!^[-_.])(?!^\d+$)[a-zA-Z0-9_-]{3,32}$/;
+  if (!/^[a-zA-Z0-9-]+$/.test(shortname)) {
+      return 'Shortnames can only contain letters, numbers, and hyphens.';
+  }
+
+  return null;
+}
+
 async function post(user, body) {
   try {
     const { title, shortname, public, discussion_enabled, discussion_open, obj_data } = body;
@@ -248,6 +270,7 @@ module.exports = {
   getManyByAuthorId,
   getManyByAuthorName,
   getEventsByUniverseShortname,
+  validateShortname,
   post,
   put,
   putPermissions,

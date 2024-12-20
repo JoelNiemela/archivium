@@ -9,7 +9,7 @@ describe('Universe spec', () => {
     cy.get('#title').type('Duplicate Test Universe');
     cy.get('#shortname').clear().type('public-test-universe');
     cy.get('button[type="submit"]').click();
-    cy.get('.color-error').contains('universe.shortname must be unique.').should('exist');
+    cy.get('.color-error').contains('Universe shortname must be unique.').should('exist');
   });
 
   it('edits the public universe title and types', () => {
@@ -101,7 +101,7 @@ describe('Universe spec', () => {
     cy.get('h2').contains('New Universe').should('exist');
 
     cy.get('#title').type('Cypress Universe');
-    cy.get('#shortname').should('have.text', 'cypress-universe');
+    cy.get('#shortname').should('have.value', 'cypress-universe');
     cy.get('#visibility').select('private');
     cy.get('#discussion_enabled').select('disabled');
     cy.get('#discussion_open').select('disabled');

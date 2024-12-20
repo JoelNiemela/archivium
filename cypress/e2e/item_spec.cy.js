@@ -9,7 +9,7 @@ describe('Item spec', () => {
     cy.visit('/universes/public-test-universe/items/create');
 
     cy.get('#title').type('Duplicate Character');
-    cy.get('#shortname').type('test-character');
+    cy.get('#shortname').clear().type('test-character');
     cy.get('button[type="submit"]').click();
     cy.get('.color-error').contains('item.shortname must be unique within each universe.').should('exist');
   });
@@ -113,7 +113,7 @@ describe('Item spec', () => {
     cy.get('h2').contains('New Item for Public Test Universe').should('exist');
 
     cy.get('#title').type('Cypress Character');
-    cy.get('#shortname').type(`cypress-character`);
+    cy.get('#shortname').should('have.text', 'cypress-character');
     cy.get('select#item_type option:selected').should('have.text', 'Character');
 
     // TODO Don't actually create the item unil #70 is added.

@@ -118,7 +118,6 @@ function validateShortname(shortname, reservedShortnames = []) {
     return 'Shortnames cannot start or end with a dash.';
   }
 
-  // const USERNAME_REGEX = /^(?!.*[-_]{2,})(?!.*[_.-]$)(?!^[-_.])(?!^\d+$)[a-zA-Z0-9_-]{3,32}$/;
   if (!/^[a-zA-Z0-9-]+$/.test(shortname)) {
       return 'Shortnames can only contain letters, numbers, and hyphens.';
   }
@@ -129,7 +128,11 @@ function validateShortname(shortname, reservedShortnames = []) {
 async function post(user, body) {
   try {
     const { title, shortname, public, discussion_enabled, discussion_open, obj_data } = body;
-    if (!(title && shortname)) return [400, 'Missing parameters.'];
+
+    const shortnameError = validateShortname(shortname);
+    if (shortnameError) return [400, shortnameError];
+    if (!title) return [400, 'Title is required.'];
+
     const queryString1 = `
       INSERT INTO universe (
         title,
@@ -157,7 +160,7 @@ async function post(user, body) {
     const queryString2 = `INSERT INTO authoruniverse (universe_id, user_id, permission_level) VALUES (?, ?, ?)`;
     return [201, [data, await executeQuery(queryString2, [ data.insertId, user.id, perms.ADMIN ])]];
   } catch (err) {
-    if (err.code === 'ER_DUP_ENTRY') return [400, 'universe.shortname must be unique.'];
+    if (err.code === 'ER_DUP_ENTRY') return [400, 'Universe shortname must be unique.'];
     if (err.code === 'ER_BAD_NULL_ERROR') return [400, 'Missing parameters.'];
     logger.error(err);
     return [500];

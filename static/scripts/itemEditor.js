@@ -99,6 +99,7 @@ async function addTab(type, name, force=false) {
   if (!force) {
     const newState = {...obj_data};
     if (type === 'custom') newState.tabs[name] = {};
+    else if (type === 'body') newState.body = '';
     else {
       if (!(type in newState)) newState[type] = {};
       newState[type].title = name;

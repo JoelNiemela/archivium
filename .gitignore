@@ -2,7 +2,7 @@ node_modules/
 package-lock.json
 
 database/config.js
-config.js
+.env
 
 db/export/
 db/backups/

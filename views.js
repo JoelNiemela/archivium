@@ -203,7 +203,8 @@ module.exports = function(app) {
   });
  
   get('/universes/:shortname/discuss/create', Auth.verifySessionOrRedirect, async (req, res) => {
-    const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname }, perms.COMMENT);
+    const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname }, perms.READ);
+    if (!universe) return res.status(code);
     if (!universe.discussion_enabled) return res.status(403);
     if (!universe.discussion_open && universe.author_permissions[req.session.user.id] < perms.COMMENT) return res.status(403);
     res.status(code);

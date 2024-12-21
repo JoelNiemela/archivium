@@ -1,4 +1,4 @@
-const { DOMAIN, ADDR_PREFIX, SENDGRID_API_KEY } = require('./config');
+const { DOMAIN, ADDR_PREFIX, DEV_MODE, SENDGRID_API_KEY } = require('./config');
 const logger = require('./logger');
 const api = require('./api');
 const { executeQuery } = require('./api/utils');

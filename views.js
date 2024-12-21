@@ -204,6 +204,8 @@ module.exports = function(app) {
  
   get('/universes/:shortname/discuss/create', Auth.verifySessionOrRedirect, async (req, res) => {
     const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname }, perms.COMMENT);
+    if (!universe.discussion_enabled) return res.status(403);
+    if (!universe.discussion_open && universe.author_permissions[req.session.user.id] < perms.COMMENT) return res.status(403);
     res.status(code);
     if (code !== 200) return;
     res.prepareRender('createUniverseThread', { universe });

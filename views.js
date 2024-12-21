@@ -184,7 +184,10 @@ module.exports = function(app) {
   get('/verify', async (req, res) => {
     if (!req.session.user) return res.status(401);
     if (req.session.user.verified) return res.redirect(`${ADDR_PREFIX}/`);
-    await email.trySendVerifyLink(req.session.user, req.session.user.username);
+    const [code, data] = await email.trySendVerifyLink(req.session.user, req.session.user.username);
+    if (data && data.alreadyVerified) {
+      return res.redirect(`${ADDR_PREFIX}${req.query.page || '/'}${req.query.search ? `?${req.query.search}` : ''}`);
+    }
     res.prepareRender('verify', { 
       user: req.session.user,
       gravatarLink: `https://www.gravatar.com/avatar/${md5(req.session.user.email)}.jpg`,

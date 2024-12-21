@@ -207,6 +207,8 @@ async function verifyUser(verificationKey) {
   await put(user.id, user.id, { verified: true });
   await executeQuery('DELETE FROM userverification WHERE user_id = ?;', [user.id]);
 
+  logger.info(`User ${user.username} (${user.email}) verified!`);
+
   return [200, user.id];
 }
 

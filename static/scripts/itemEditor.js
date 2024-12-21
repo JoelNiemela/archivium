@@ -466,7 +466,9 @@ function removeTab(name, type) {
   if (firstTab) {
     selectTab(firstTab.dataset.tabBtn);
   }
-  document.querySelector(`#tabs [data-tab="${name}"]`).remove();
+  const tab = document.querySelector(`#tabs [data-tab="${name}"]`);
+  if (type === 'body') tab.classList.add('hidden');
+  else tab.remove();
 
   if (type !== 'custom') {
     const newState = { ...obj_data, [type]: {} }

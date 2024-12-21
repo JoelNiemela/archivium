@@ -99,6 +99,7 @@ async function addTab(type, name, force=false) {
   if (!force) {
     const newState = {...obj_data};
     if (type === 'custom') newState.tabs[name] = {};
+    else if (type === 'body') newState.body = '';
     else {
       if (!(type in newState)) newState[type] = {};
       newState[type].title = name;
@@ -465,7 +466,9 @@ function removeTab(name, type) {
   if (firstTab) {
     selectTab(firstTab.dataset.tabBtn);
   }
-  document.querySelector(`#tabs [data-tab="${name}"]`).remove();
+  const tab = document.querySelector(`#tabs [data-tab="${name}"]`);
+  if (type === 'body') tab.classList.add('hidden');
+  else tab.remove();
 
   if (type !== 'custom') {
     const newState = { ...obj_data, [type]: {} }
@@ -596,5 +599,6 @@ async function save(delay=5000) {
 function preview() {
   const saveBtn = document.getElementById('save-btn');
   saveBtn.firstChild.innerText = 'Saving...';
+  needsSaving = false;
   document.forms.edit.submit();
 }

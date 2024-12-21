@@ -103,20 +103,26 @@ if (!window.getJSON) throw 'fetchUtils.js not loaded!';
         this.addClass('img-container');
         // return this.children[0].evaluate();
       }
-      if ('href' in this.attrs && this.attrs.href[0] === '@') {
-        let [universe, itemHash] = this.attrs.href.substring(1).split('/');
-        if (universe) {
-          if (!itemHash) {
-            itemHash = universe;
-            universe = currentUniverse;
+      if ('href' in this.attrs) {
+        if (this.attrs.href[0] === '@') {
+          let [universe, itemHash] = this.attrs.href.substring(1).split('/');
+          if (universe) {
+            if (!itemHash) {
+              itemHash = universe;
+              universe = currentUniverse;
+            }
+            const [item, _] = itemHash.split('#');
+            this.attrs.href = `/universes/${universe}/items/${itemHash}`;
+            this.attrs['data-universe'] = universe;
+            this.attrs['data-item'] = item;
+            bulkCheckExists(universe, item, fetches, (exists) => {
+              if (!exists) this.addClass('link-broken');
+            });
           }
-          const [item, _] = itemHash.split('#');
-          this.attrs.href = `/universes/${universe}/items/${itemHash}`;
-          this.attrs['data-universe'] = universe;
-          this.attrs['data-item'] = item;
-          bulkCheckExists(universe, item, fetches, (exists) => {
-            if (!exists) this.addClass('link-broken');
-          });
+        } else {
+          if (!this.attrs.href.startsWith('/') && !this.attrs.href.startsWith(window.location.origin)) {
+            this.attrs.target = '_blank';
+          }
         }
       }
       if (transform) transform(this);

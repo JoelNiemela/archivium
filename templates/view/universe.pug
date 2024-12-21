@@ -134,8 +134,9 @@ block content
                 | #{formatDate(authors[id].updated_at)}
     
     .d-flex.flex-col.gap-4.hidden( data-tab='discuss' )
-      div
-        a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/discuss/create` ) Create New
+      if contextUser && universe.discussion_enabled && (universe.discussion_open || universe.author_permissions[id] >= perms.COMMENT)
+        div
+          a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/discuss/create` ) Create New
       each thread in threads
         .sheet.d-flex.flex-col.gap-2.align-start( onclick=`goTo('${ADDR_PREFIX}/universes/${universe.shortname}/discuss/${thread.id}')` )
           h2.ma-0

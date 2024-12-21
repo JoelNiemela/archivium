@@ -23,6 +23,9 @@ sgClient.setApiKey(SENDGRID_API_KEY);
 async function sendEmail(topic, msg) {
   const { to } = msg;
   logger.info(`Sending email to ${to}...`);
+  if (DEV_MODE) {
+    logger.warn('Email sending is disabled in test env.');
+  }
   try {
     await sgMail.send(msg);
     logger.info('Email sent!');
@@ -60,10 +63,17 @@ async function unsubscribeUser(emails, groupId) {
 
 async function sendVerifyLink({ id, username, email }) {
   await executeQuery('DELETE FROM userverification WHERE user_id = ?;', [id]);
-
+  
   const verificationKey = await api.user.prepareVerification(id);
+  if (DEV_MODE) {
+    // Can't send emails in dev mode, just auto-verify them instead.
+    await api.user.verifyUser(verificationKey);
+    return true;
+  }
+  
   const verifyEmailLink = `https://${DOMAIN}${ADDR_PREFIX}/verify/${verificationKey}`;
   await sendTemplateEmail(templates.VERIFY, email, { username, verifyEmailLink }, groups.ACCOUNT_ALERTS);
+  return false;
 }
 
 async function trySendVerifyLink(sessionUser, username) {
@@ -78,12 +88,11 @@ async function trySendVerifyLink(sessionUser, username) {
     'SELECT * FROM sentemail WHERE recipient = ? AND topic = ? AND sent_at >= ? ORDER BY sent_at DESC;',
     [sessionUser.email, 'verify', cutoff],
   );
-  console.log(recentEmails)
   if (recentEmails.length > 0) return [429, new Date(recentEmails[0].sent_at.getTime() + timeout)];
 
-  await sendVerifyLink(sessionUser);
+  const alreadyVerified = await sendVerifyLink(sessionUser);
 
-  return [200, { alreadyVerified: false }];
+  return [200, { alreadyVerified }];
 }
 
 module.exports = {

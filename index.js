@@ -37,13 +37,11 @@ cron.schedule('0 0 * * *', () => {
 });
 
 
-// Timer if in Dev Mode
-if (DEV_MODE) {
-  app.use('/', (req, res, next) => {
-    req.startTime = new Date();
-    next();
-  });
-}
+// Timer
+app.use('/', (req, res, next) => {
+  req.startTime = new Date();
+  next();
+});
 
 
 // Serve static assets
@@ -148,22 +146,20 @@ app.use((req, res, next) => {
   next();
 });
 
-// Logger if in Dev Mode
-if (DEV_MODE) {
-  app.use('/', (req, res, next) => {
-    // console.log(req.headers['x-subdomain'])
-    const endTime = new Date();
-    let clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    // If the IP is in IPv6-mapped IPv4 format, extract the IPv4 part
-    if (clientIp.startsWith('::ffff:')) {
-      clientIp = clientIp.split(':').pop();
-    }
-    const { method, path, query, session, startTime } = req;
-    const user = session.user?.username ?? 'anonymous';
-    logger.info(`${method} ${path} ${res.statusCode}${query ? ` ${JSON.stringify(query)}` : ''} ${user} ${clientIp} ${endTime - startTime}ms`);
-    next();
-  });
-}
+// Logger
+app.use('/', (req, res, next) => {
+  // console.log(req.headers['x-subdomain'])
+  const endTime = new Date();
+  let clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  // If the IP is in IPv6-mapped IPv4 format, extract the IPv4 part
+  if (clientIp.startsWith('::ffff:')) {
+    clientIp = clientIp.split(':').pop();
+  }
+  const { method, path, query, session, startTime } = req;
+  const user = session.user?.username ?? 'anonymous';
+  logger.info(`${method} ${path} ${res.statusCode}${query ? ` ${JSON.stringify(query)}` : ''} ${user} ${clientIp} ${endTime - startTime}ms`);
+  next();
+});
 
 app.use((err, req, res, next) => {
   logger.error(err);

@@ -230,12 +230,18 @@ module.exports = function(app) {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
     res.status(code1);
     if (code1 !== 200) return;
-    const [code2, threads] = await api.discussion.getThreads(req.session.user, { 'discussion.id': req.params.threadId });
-    if (!threads) return [code2];
+    const [code2, threads] = await api.discussion.getThreads(req.session.user, {
+      'discussion.id': req.params.threadId,
+      'universe.id': universe.id,
+    });
+    res.status(code2);
+    if (!threads) return;
+    if (threads.length === 0) return res.status(404);
     const thread = threads[0];
-    if (!thread) return [code2];
+    if (!thread) return;
     const [code3, comments, users] = await api.discussion.getCommentsByThread(req.session.user, thread.id, false, true);
-    if (!comments || !users) return [code3];
+    res.status(code3)
+    if (!comments || !users) return;
     const commenters = {};
     for (const user of users) {
       user.gravatarLink = `https://www.gravatar.com/avatar/${md5(user.email)}.jpg`;

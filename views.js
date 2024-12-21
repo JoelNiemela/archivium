@@ -61,7 +61,7 @@ module.exports = function(app) {
         select: [['lub.username', 'last_updated_by']],
         join: [['LEFT', ['user', 'lub'], new Cond('lub.id = item.last_updated_by')]],
         where: new Cond(`item.universe_id IN ${followedUniverseIds}`)
-          .and(new Cond('lub.id <> ?', user.id).or('item.last_updated_by IS NULL')),
+          .and(new Cond('lub.id <> ?', user.id).or(new Cond('item.last_updated_by IS NULL').and('item.author_id <> ?', user.id))),
       }) : [200, []];
       res.status(code3);
       const [code4, oldestUpdated] = await api.item.getMany(user, null, perms.WRITE, {

@@ -68,6 +68,11 @@ jobs:
 
       - name: Setup database
         run: npm run db:reset
+        env:
+          ARCHIVIUM_DB_HOST: localhost
+          ARCHIVIUM_DB_USER: testuser
+          ARCHIVIUM_DB_PASSWORD: testpassword
+          ARCHIVIUM_DB: archiviumtest
 
       - name: Run tests
         run: npm test

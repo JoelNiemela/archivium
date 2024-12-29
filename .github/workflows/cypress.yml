@@ -75,4 +75,4 @@ jobs:
 
       - name: Show server logs
         if: failure()
-        run: cat server.log
+        run: cat logs/current.log

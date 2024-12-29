@@ -54,17 +54,17 @@ jobs:
           nohup npm start &
           sleep 5
         env:
-          PORT=33004
-          DOMAIN=dev.archivium.net
-          ADDR_PREFIX=
-          DEV_MODE=true
-          SENDGRID_API_KEY=
-          OPENAI_API_KEY=
+          PORT: 33004
+          DOMAIN: dev.archivium.net
+          ADDR_PREFIX: 
+          DEV_MODE: true
+          SENDGRID_API_KEY: 
+          OPENAI_API_KEY: 
 
-          ARCHIVIUM_DB_HOST=localhost
-          ARCHIVIUM_DB_USER=testuser
-          ARCHIVIUM_DB_PASSWORD=testpassword
-          ARCHIVIUM_DB=archiviumtest
+          ARCHIVIUM_DB_HOST: localhost
+          ARCHIVIUM_DB_USER: testuser
+          ARCHIVIUM_DB_PASSWORD: testpassword
+          ARCHIVIUM_DB: archiviumtest
 
 
       - name: Run tests

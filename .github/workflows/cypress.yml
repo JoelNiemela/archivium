@@ -68,7 +68,7 @@ jobs:
 
       - name: Stream server logs
         run: |
-          tail -f server.log &
+          tail -f logs/current.log &
 
       - name: Run tests
         run: npm test

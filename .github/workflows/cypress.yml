@@ -66,6 +66,8 @@ jobs:
           ARCHIVIUM_DB_PASSWORD: testpassword
           ARCHIVIUM_DB: archiviumtest
 
+      - name: Stream server logs
+        run: tail -f server.log
 
       - name: Run tests
         run: npm test

@@ -19,9 +19,10 @@
   "author": "JoelNiemela",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/JoelNiemela/archivium/issues"
+    "url": "https://github.com/JoelNiemela/archivium/issues",
+    "email": "contact@archivium.net"
   },
-  "homepage": "https://hmi.dynu.net/archivium",
+  "homepage": "https://archivium.net",
   "dependencies": {
     "@sendgrid/client": "^8.1.4",
     "@sendgrid/mail": "^8.1.4",

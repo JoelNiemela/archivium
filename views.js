@@ -6,6 +6,7 @@ const { getPfpUrl, render } = require('./templates');
 const { perms, Cond } = require('./api/utils');
 const fs = require('fs/promises');
 const logger = require('./logger');
+const email = require('./email');
 
 module.exports = function(app) {
   app.use((req, res, next) => {
@@ -178,6 +179,32 @@ module.exports = function(app) {
       author: req.query.author,
       showUniverse: true,
     });
+  });
+
+  get('/verify', async (req, res) => {
+    if (!req.session.user) return res.status(401);
+    if (req.session.user.verified) return res.redirect(`${ADDR_PREFIX}/`);
+    const [code, data] = await email.trySendVerifyLink(req.session.user, req.session.user.username);
+    if (data && data.alreadyVerified) {
+      return res.redirect(`${ADDR_PREFIX}${req.query.page || '/'}${req.query.search ? `?${req.query.search}` : ''}`);
+    }
+    res.prepareRender('verify', { 
+      user: req.session.user,
+      gravatarLink: `https://www.gravatar.com/avatar/${md5(req.session.user.email)}.jpg`,
+      nextPage: `${req.query.page || '/'}${req.query.search ? `?${req.query.search}` : ''}`,
+    });
+  });
+
+  get('/verify/:key', async (req, res) => {
+    const [code, userId] = await api.user.verifyUser(req.params.key)
+    res.status(code);
+    if (code === 200) {
+      const [_, user] = await api.user.getOne({ id: userId });
+      if (user) {
+        // email.sendTemplateEmail(email.templates.WELCOME, req.body.email, { username: user.username }, email.groups.NEWSLETTER);
+        return res.redirect(`${ADDR_PREFIX}/`);
+      }
+    }
   });
 
   /* Universe Pages */

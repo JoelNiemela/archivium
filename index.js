@@ -11,7 +11,7 @@ const Auth = require('./middleware/auth');
 const cron = require('node-cron');
 const backup = require('./db/backup');
 
-const { PORT, ADDR_PREFIX, DEV_MODE } = require('./config');
+const { PORT, DOMAIN, ADDR_PREFIX, DEV_MODE } = require('./config');
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));
@@ -35,6 +35,9 @@ cron.schedule('0 0 * * *', () => {
     logger.info('Running daily DB export...');
     backup();
 });
+
+// Emails
+const email = require('./email');
 
 
 // Timer if in Dev Mode
@@ -126,6 +129,14 @@ app.post(`${ADDR_PREFIX}/signup`, async (req, res, next) => {
     try {
       await api.session.put({ id: req.session.id }, { user_id: data.insertId });
       res.status(201);
+
+      // Send verification email
+      email.sendVerifyLink({ id: data.insertId, ...req.body });
+
+      if (!req.body.newsletter) {
+        email.unsubscribeUser([req.body.email], email.groups.NEWSLETTER);
+      }
+
       res.redirect(`${ADDR_PREFIX}${req.query.page || '/'}${req.query.search ? `?${req.query.search}` : ''}`);
     } catch (err) {
       logger.error(err);
@@ -171,6 +182,6 @@ app.use((err, req, res, next) => {
   next();
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   logger.info(`Example app listening at http://localhost:${PORT}`);
 });

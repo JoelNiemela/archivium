@@ -1,5 +1,5 @@
 const mysql = require('mysql2');
-const dbConfig = require('./config');
+const { DB_CONFIG } = require('../config');
 const Promise = require('bluebird');
 const fsPromises = require('fs').promises;
 const readline = require('readline');
@@ -31,14 +31,14 @@ function askQuestion(query) {
 
 async function dropDb(db) {
   await db.ready;
-  const ans = await askQuestion(`This will DROP the ${dbConfig.database} database! Are you SURE? [y/N] `);
+  const ans = await askQuestion(`This will DROP the ${DB_CONFIG.database} database! Are you SURE? [y/N] `);
   if (ans.toUpperCase() === 'Y') {
-    const ans = await askQuestion(`Skip exporting ${dbConfig.database} database first? [y/N] `);
+    const ans = await askQuestion(`Skip exporting ${DB_CONFIG.database} database first? [y/N] `);
     if (ans.toUpperCase() === 'N') {
       await dbExport(db);
     }
-    await db.queryAsync(`DROP DATABASE IF EXISTS ${dbConfig.database};`);
-    await db.queryAsync(`CREATE DATABASE ${dbConfig.database};`);
+    await db.queryAsync(`DROP DATABASE IF EXISTS ${DB_CONFIG.database};`);
+    await db.queryAsync(`CREATE DATABASE ${DB_CONFIG.database};`);
     console.log('Dropped database.')
   } else {
     console.log('Aborting.');
@@ -49,7 +49,7 @@ async function dropDb(db) {
 async function loadSchema(db) {
   // drop old database and reload the schema
   await dropDb(db);
-  await db.queryAsync(`USE ${dbConfig.database};`);
+  await db.queryAsync(`USE ${DB_CONFIG.database};`);
   const schema = await fsPromises.readFile(path.join(__dirname, 'schema.sql'), { encoding: 'utf8' });
   await db.queryAsync(schema);
   console.log('Loaded schema.')
@@ -66,7 +66,7 @@ async function dbImport(db, reset=true) {
   // disable constraint checking
   await db.queryAsync('SET FOREIGN_KEY_CHECKS = 0;');
 
-  const tables = (await db.queryAsync('SHOW TABLES;'))[0].map(item => item[`Tables_in_${dbConfig.database}`]);
+  const tables = (await db.queryAsync('SHOW TABLES;'))[0].map(item => item[`Tables_in_${DB_CONFIG.database}`]);
   
   for (const table of tables) {
     if (table === 'session') continue;
@@ -93,7 +93,7 @@ async function dbImport(db, reset=true) {
   console.log('Done.');
 };
 async function main() {
-  const connection = mysql.createConnection({ ...dbConfig, multipleStatements: true });
+  const connection = mysql.createConnection({ ...DB_CONFIG, multipleStatements: true });
   const db = Promise.promisifyAll(connection, { multiArgs: true });
   await dbImport(db);
   db.end();

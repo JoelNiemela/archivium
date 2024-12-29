@@ -12,6 +12,18 @@ block content
     div.inputGroup
       label( for='password' ) Password: 
       input( id='password' type='password' name='password' )
+    br
+    .d-flex.gap-4
+      input( id='tos' type='checkbox' required )
+      small Yes, I agree to the 
+        a.link.link-animated( href='/privacy-policy' ) privacy policy
+        |  and 
+        a.link.link-animated( href='/terms-of-service' ) terms of service
+        | .
+    .d-flex.gap-4
+      input( id='newsletter' type='checkbox' name='newsletter' )
+      small Yes, I want to receive email updates about Archivium (optional).
+    br
     div
       button( type='submit' ) Sign Up
   p

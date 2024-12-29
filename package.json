@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node .",
     "test": "npx cypress run",
     "dev": "nodemon -e '.js,.pug' --delay 1000ms index.js",
     "db:export": "node db/export.js",
@@ -22,7 +23,10 @@
   },
   "homepage": "https://hmi.dynu.net/archivium",
   "dependencies": {
+    "@sendgrid/client": "^8.1.4",
+    "@sendgrid/mail": "^8.1.4",
     "bluebird": "^3.7.2",
+    "dotenv": "^16.4.7",
     "express": "^4.18.0",
     "lodash": "^4.17.21",
     "md5": "^2.3.0",

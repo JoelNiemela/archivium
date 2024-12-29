@@ -2,6 +2,7 @@ const { ADDR_PREFIX } = require('../config');
 const Auth = require('../middleware/auth');
 const api = require('./');
 const logger = require('../logger');
+const email = require('../email');
 
 module.exports = function(app, upload) {
   class APIRoute {
@@ -56,6 +57,7 @@ module.exports = function(app, upload) {
     new APIRoute('/*'),
     new APIRoute('/users', { GET: () => api.user.getMany() }, [
       new APIRoute('/:username', { GET: (req) => api.user.getOne({ 'user.username': req.params.username }) }, [
+        new APIRoute('/send-verify-link', { GET: (req) => email.trySendVerifyLink(req.session.user, req.params.username) }),
         new APIRoute('/universes', {
           GET: async (req) => {
             const [code, user] = await api.user.getOne({ 'user.username': req.params.username });

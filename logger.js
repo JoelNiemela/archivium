@@ -8,6 +8,7 @@ const rotateFileTransport = new winston.transports.DailyRotateFile({
   zippedArchive: false,
   maxSize: '20m',
   maxFiles: '28d',
+  createSymlink: true,
 });
 
 const logger = winston.createLogger({

@@ -5,6 +5,7 @@ const fsPromises = require('fs').promises;
 const readline = require('readline');
 const path = require('path');
 const dbExport = require('./export');
+const { DEV_MODE } = require('../config');
 
 function formatTypes(type, data) {
   if (type === 'datetime' || type === 'date' || type === 'timestamp') {
@@ -31,6 +32,10 @@ function askQuestion(query) {
 
 async function dropDb(db) {
   await db.ready;
+  if (!DEV_MODE) {
+    console.log('Dropping database on production system is not allowed (DEV_MODE=false).');
+    process.exit();
+  }
   const ans = await askQuestion(`This will DROP the ${DB_CONFIG.database} database! Are you SURE? [y/N] `);
   if (ans.toUpperCase() === 'Y') {
     const ans = await askQuestion(`Skip exporting ${DB_CONFIG.database} database first? [y/N] `);

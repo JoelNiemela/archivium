@@ -74,4 +74,5 @@ jobs:
         run: npm test
 
       - name: Show server logs
+        if: failure()
         run: cat server.log

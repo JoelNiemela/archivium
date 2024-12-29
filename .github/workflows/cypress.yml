@@ -67,7 +67,7 @@ jobs:
           ARCHIVIUM_DB: archiviumtest
 
       - name: Setup database
-        run: npm run db:reset
+        run: yes | npm run db:reset
         env:
           ARCHIVIUM_DB_HOST: localhost
           ARCHIVIUM_DB_USER: testuser

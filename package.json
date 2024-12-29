@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node .",
     "test": "npx cypress run",
     "dev": "nodemon -e '.js,.pug' --delay 1000ms index.js",
     "db:export": "node db/export.js",

@@ -8,13 +8,52 @@ block breadcrumbs
   |  / 
   span #{user.username}
 
-block content
+block scripts
   script
     include /static/scripts/contacts.js
+    include /static/scripts/domUtils.js
+    include /static/scripts/fetchUtils.js
+    include /static/scripts/modal.js
+    include /static/scripts/fileUpload.js
+    include /static/scripts/table.js
+  script.
+    let firstOpen = true;
+    function editPfp() {
+      const container = document.querySelector('#pdfEditModal');
+      uploadImage('/api/users/#{user.username}/pfp', container, (imageId, imageName) => {
+        window.location.reload();
+      });
+      if (firstOpen) {
+        container.querySelector('input').addEventListener('change', (event) => {
+          const file = event.target.files[0];
+          const maxSizeInMB = 1;
+          const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
 
+          if (file.size > maxSizeInBytes) {
+            alert(`The file size should not exceed ${maxSizeInMB} MB.`);
+            event.target.value = '';
+          }
+        });
+        firstOpen = false;
+      }
+    }
+
+    async function clearPfp() {
+      await deleteJSON('/api/users/#{user.username}/pfp');
+      window.location.reload();
+    }
+
+block content
   h1.center Welcome to #{user.username}'s page
   div( align='center' )
-    img.userIcon( alt=user.username, src=gravatarLink )
+    .userIcon.badge-anchor
+      img( alt=user.username, src=pfpUrl )
+      if user.isMe
+        .pfpEdit( onclick='editPfp()' )
+          small #{user.hasPfp ? 'Change' : 'Upload'}
+        if user.hasPfp
+          .material-symbols-outlined.badge.badge-large.clickable( style=({ top: '-0.25rem', right: '-0.25rem'}) onclick='clearPfp()' ) delete
+        #pdfEditModal
   p.center
     small Joined
       |  #{formatDate(new Date(user.created_at))}
@@ -22,30 +61,81 @@ block content
       if !user.isContact && !user.isMe
         |  - 
         a.link.link-animated( onclick=`addContact('${user.username}')` ) #{T('Add to contacts')}
+  
   hr
-  h3 #{user.username}'s items
-  table
-    thead
-      th Name
-      th Type
-      th Universe
-      th Authors
-      th Created
-      th Updated
 
   h3 #{user.username}'s universes
-  table
+  table.sheet.w-100
     thead
-      th Name
-      th Authors
-      th Created
-      th Updated
+      th.sortable Name
+      th.sortable Role
+      th.sortable Created
+      th.sortable Updated
     tbody
-      each universe in universes
+      if recentlyUpdated.length === 0
         tr
-          td
-            a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
-          td
-            +authorList(universe.authors)
-          td #{formatDate(universe.created_at)}
-          td #{formatDate(universe.updated_at)}
+          td( colspan=4 ) No universes.
+      else
+        each universe in universes
+          tr
+            td( data-sort=universe.title )
+              a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
+            td( data-sort=universe.author_permissions[user.id] )
+              //- +authorList(universe.authors, universe.author_permissions)
+              case universe.author_permissions[user.id]
+                when perms.READ
+                when perms.COMMENT
+                  | Viewer
+                when perms.WRITE
+                  | Author
+                when perms.ADMIN
+                  | Admin
+            td( data-sort=universe.created_at ) #{formatDate(universe.created_at, true)}
+            td( data-sort=universe.updated_at ) #{formatDate(universe.updated_at, true)}
+  
+  h3 #{user.username}'s recent edits
+  table.sheet.w-100
+    thead
+      th.sortable Name
+      th.sortable Universe
+      th.sortable Updated
+    tbody
+      if recentlyUpdated.length === 0
+        tr
+          td( colspan=3 ) No updates.
+      else
+        each item in recentlyUpdated
+          tr
+            td( data-sort=item.title )
+              a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}` ) #{item.title}
+              if !item.last_updated_by
+                small( style='font-size: x-small;' )  (New)
+            td( data-sort=item.universe )
+              a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}` ) #{item.universe}
+            td( data-sort=item.updated_at ) #{formatDate(item.updated_at, true)}
+  
+  h3 #{user.username}'s items 
+    small (
+      a.link.link-animated( href=`${ADDR_PREFIX}/items?author=${user.username}` ) see all
+    | )
+  table.sheet.w-100
+    thead
+      th.sortable Name
+      th.sortable Universe
+      th.sortable Created
+      th.sortable Updated
+    tbody
+      if recentlyUpdated.length === 0
+        tr
+          td( colspan=3 ) No updates.
+      else
+        each item in items
+          tr
+            td( data-sort=item.title )
+              a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}` ) #{item.title}
+              if !item.last_updated_by
+                small( style='font-size: x-small;' )  (New)
+            td( data-sort=item.universe )
+              a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}` ) #{item.universe}
+            td( data-sort=item.created_at ) #{formatDate(item.created_at, true)}
+            td( data-sort=item.updated_at ) #{formatDate(item.updated_at, true)}

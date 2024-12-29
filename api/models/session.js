@@ -13,7 +13,7 @@ async function getOne(options) {
   const data = await executeQuery(queryString, parsedOptions.values);
   const session = data[0];
   if (!session || !session.user_id) return session;
-  const [_, user] = await userapi.getOne({ id: session.user_id });
+  const [_, user] = await userapi.getOne({ 'user.id': session.user_id });
   session.user = user;
   return session;
 }

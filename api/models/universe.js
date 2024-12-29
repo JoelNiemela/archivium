@@ -1,10 +1,8 @@
 const { executeQuery, parseData, perms } = require('../utils');
 const logger = require('../../logger');
 
-async function getOne(user, options, permissionLevel) {
-  const parsedOptions = parseData(options);
-
-  const [code, data] = await getMany(user, parsedOptions, permissionLevel);
+async function getOne(user, options, permissionLevel=perms.READ) {
+  const [code, data] = await getMany(user, options && parseData(options), permissionLevel);
   if (code !== 200) return [code];
   const universe = data[0];
   if (!universe) return [user ? 403 : 401];

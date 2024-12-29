@@ -70,7 +70,7 @@ async function getAll(user, includePending=true, includeAccepted=true) {
 
 async function post(user, username) {
   
-  const [code, target] = await userapi.getOne({ username });
+  const [code, target] = await userapi.getOne({ 'user.username': username });
   if (!target) return [code];
   const [_, contact] = await getOne(user, target.id);
   if (contact) return [200];
@@ -88,7 +88,7 @@ async function post(user, username) {
 
 async function put(user, username, accepted) {
   
-  const [code, target] = await userapi.getOne({ username });
+  const [code, target] = await userapi.getOne({ 'user.username': username });
   if (!target) return [code];
   const [_, contact] = await getOne(user, target.id);
   if (!contact) return [404];
@@ -128,7 +128,7 @@ async function del(user, targetID) {
 }
 
 async function delByUsername(user, username) {
-  const [code, target] = await userapi.getOne({ username });
+  const [code, target] = await userapi.getOne({ 'user.username': username });
   if (!target) return [code];
 
   return await del(user, target.id);

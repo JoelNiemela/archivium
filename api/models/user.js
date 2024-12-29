@@ -13,7 +13,13 @@ async function getOne(options, includeAuth=false) {
   try {
     if (!options || Object.keys(options).length === 0) throw 'options required for api.get.user';
     const parsedOptions = parseData(options);
-    const queryString = `SELECT * FROM user WHERE ${parsedOptions.strings.join(' AND ')} LIMIT 1;`;
+    const queryString = `
+      SELECT user.*, (ui.user_id IS NOT NULL) as hasPfp
+      FROM user
+      LEFT JOIN userimage AS ui ON user.id = ui.user_id
+      WHERE ${parsedOptions.strings.join(' AND ')}
+      LIMIT 1;
+    `;
     const user = (await executeQuery(queryString, parsedOptions.values))[0];
     if (!user) return [404];
     if (!includeAuth) {
@@ -38,8 +44,10 @@ async function getMany(options, includeEmail=false) {
     let queryString;
     if (options) queryString = `
       SELECT 
-        id, username, created_at, updated_at ${includeEmail ? ', email' : ''}
-      FROM user 
+        user.id, user.username, user.created_at, user.updated_at, ${includeEmail ? 'user.email, ' : ''}
+        (ui.user_id IS NOT NULL) as hasPfp
+      FROM user
+      LEFT JOIN userimage AS ui ON user.id = ui.user_id
       WHERE ${parsedOptions.strings.join(' AND ')};
     `;
     else queryString = `SELECT id, username, created_at, updated_at ${includeEmail ? ', email' : ''} FROM user;`;
@@ -64,10 +72,12 @@ async function getByUniverseShortname(user, shortname) {
         user.created_at,
         user.updated_at,
         user.email,
-        COUNT(item.id) AS items_authored
+        COUNT(item.id) AS items_authored,
+        (ui.user_id IS NOT NULL) as hasPfp
       FROM user
       INNER JOIN authoruniverse AS au ON au.user_id = user.id
       LEFT JOIN item ON item.universe_id = au.universe_id AND item.author_id = user.id
+      LEFT JOIN userimage AS ui ON user.id = ui.user_id
       WHERE au.universe_id = ?
       GROUP BY user.id;
     `;
@@ -160,7 +170,7 @@ async function doDeleteUser(user_id) {
 
 async function del(req) {
   try {  
-    const [status, user] = await getOne({ id: req.params.id, email: req.body.email }, true);
+    const [status, user] = await getOne({ 'user.id': req.params.id, 'user.email': req.body.email }, true);
     if (user) {
       req.loginId = user.id;
       const isValidUser = validatePassword(req.body.password, user.password, user.salt);
@@ -179,7 +189,70 @@ async function del(req) {
   }
 }
 
+const image = (function() {
+  async function getByUsername(username) {
+    try {
+      const [code, user] = await getOne({ 'user.username': username });
+      if (!user) return [code];
+      let queryString = `
+        SELECT 
+          user_id, name, mimetype, data
+        FROM userimage
+        WHERE user_id = ?;
+      `;
+      const image = (await executeQuery(queryString, [user.id]))[0];
+      return [200, image];
+    } catch (err) {
+      logger.error(err);
+      return [500];
+    }
+  }
+
+  async function post(sessionUser, file, username) {
+    if (!file) return [400];
+    if (!sessionUser) return [401];
+    if (sessionUser.username !== username) return [403];
+
+    const { originalname, buffer, mimetype } = file;
+    const [code, user] = await getOne({ 'user.username': username });
+    if (!user) return [code];
+
+    try {
+      // We should do a transaction here, but I can't figure out how to make it work...
+      await executeQuery('DELETE FROM userimage WHERE user_id = ?', [user.id]);
+      const queryString = `INSERT INTO userimage (user_id, name, mimetype, data) VALUES (?, ?, ?, ?);`;
+      return [201, await executeQuery(queryString, [ user.id, originalname, mimetype, buffer ])];
+    } catch (err) {
+      logger.error(err);
+      return [500];
+    }
+
+  }
+
+  async function del(sessionUser, username) {
+    try {
+      if (!sessionUser) return [401];
+      if (sessionUser.username !== username) return [403];
+      
+      const [code, user] = await getOne({ 'user.username': username });
+      if (!user) return [code];
+
+      return [200, await executeQuery(`DELETE FROM userimage WHERE user_id = ?;`, [user.id])];
+    } catch (err) {
+      logger.error(err);
+      return [500];
+    }
+  }
+
+  return {
+    getByUsername,
+    post,
+    del,
+  };
+})();
+
 module.exports = {
+  image,
   getOne,
   getMany,
   getByUniverseShortname,

@@ -9,7 +9,7 @@
       .d-flex.flex-col.grow-3( style='grid-column: 2 / 4;' )
           span 
             b #{T('Authors')}: 
-            +authorList(universe.authors)
+            +authorList(universe.authors, universe.author_permissions)
           .d-flex.gap-2.flex-wrap
             span
               b #{T('Created')}: 

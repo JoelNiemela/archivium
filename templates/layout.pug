@@ -57,11 +57,13 @@ html(lang='en')
           li.navbarBtn
             a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/`) Home
           li.navbarBtn
+            a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/search`) Search
+          li.navbarBtn
             a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/contacts`) Contacts
           li.navbarBtn
             a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/universes`) Universes
           li.navbarBtn
-            a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/search`) Search
+            a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/items`) Items
         ul.navbarBtns
           block save
           if contextUser
@@ -72,7 +74,7 @@ html(lang='en')
                   drop.classList.toggle('hidden');
                 }
               a.navbarBtnLink.d-flex.align-center( onclick='toggleUserDropdown()' )
-                img.pfp( src=contextUser.gravatarLink )
+                img.pfp( src=contextUser.pfpUrl )
                 span.navbarText #{contextUser.username} &#x23F7;
               .user-dropdown.hidden
                 ul.navbarBtns.flex-col

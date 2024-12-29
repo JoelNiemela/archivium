@@ -67,7 +67,7 @@ jobs:
           ARCHIVIUM_DB: archiviumtest
 
       - name: Stream server logs
-        run: tail -f server.log
+        run: tail -f logs/current.log
 
       - name: Run tests
         run: npm test

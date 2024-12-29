@@ -20,7 +20,6 @@ module.exports = function(app, upload) {
       });
       // app.all(path, Auth.verifySession, async (req, res) => {
       app.all(path, ...(this.methodFuncs.middleware ?? []), async (req, res, next) => {
-        console.log(req.body)
         req.isApiRequest = true;
         const method = req.method.toUpperCase();
         if (method in this.methodFuncs) {

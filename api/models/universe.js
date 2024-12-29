@@ -104,10 +104,35 @@ async function getEventsByUniverseShortname(user, shortname, permissionsRequired
   }
 }
 
+function validateShortname(shortname, reservedShortnames = []) {
+
+  if (shortname.length < 3 || shortname.length > 64) {
+    return 'Shortnames must be between 3 and 64 characters long.';
+  }
+
+  if (reservedShortnames.includes(shortname)) {
+      return 'This shortname is reserved and cannot be used.';
+  }
+
+  if (/^[-]|[-]$/.test(shortname)) {
+    return 'Shortnames cannot start or end with a dash.';
+  }
+
+  if (!/^[a-zA-Z0-9-]+$/.test(shortname)) {
+      return 'Shortnames can only contain letters, numbers, and hyphens.';
+  }
+
+  return null;
+}
+
 async function post(user, body) {
   try {
     const { title, shortname, public, discussion_enabled, discussion_open, obj_data } = body;
-    if (!(title && shortname)) return [400, 'Missing parameters.'];
+
+    const shortnameError = validateShortname(shortname);
+    if (shortnameError) return [400, shortnameError];
+    if (!title) return [400, 'Title is required.'];
+
     const queryString1 = `
       INSERT INTO universe (
         title,
@@ -135,7 +160,7 @@ async function post(user, body) {
     const queryString2 = `INSERT INTO authoruniverse (universe_id, user_id, permission_level) VALUES (?, ?, ?)`;
     return [201, [data, await executeQuery(queryString2, [ data.insertId, user.id, perms.ADMIN ])]];
   } catch (err) {
-    if (err.code === 'ER_DUP_ENTRY') return [400, 'universe.shortname must be unique.'];
+    if (err.code === 'ER_DUP_ENTRY') return [400, 'Universe shortname must be unique.'];
     if (err.code === 'ER_BAD_NULL_ERROR') return [400, 'Missing parameters.'];
     logger.error(err);
     return [500];
@@ -248,6 +273,7 @@ module.exports = {
   getManyByAuthorId,
   getManyByAuthorName,
   getEventsByUniverseShortname,
+  validateShortname,
   post,
   put,
   putPermissions,

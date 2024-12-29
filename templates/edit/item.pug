@@ -20,7 +20,7 @@ block scripts
 block append save
   li#save-btn.navbarBtn
     a.navbarBtnLink.navbarText( onclick='save(0)' ) Save
-  li#save-btn.navbarBtn
+  li#preview-btn.navbarBtn
     a.navbarBtnLink.navbarText( onclick='preview()' ) Preview
 
 block content
@@ -86,4 +86,4 @@ block content
   script!= `updateObjData(${JSON.stringify(item.obj_data)}); itemMap = ${JSON.stringify(itemMap)}; universe = '${item.universe_short}'; item = ${JSON.stringify(item)}`
   script.
     resetTabs();
-    setupEasyMDE();
+    window.easyMDE = setupEasyMDE();

@@ -40,7 +40,7 @@ block breadcrumbs
 
 block content
   h1.center #{item.title}
-  p#action-bar.center #{capitalize(T(item.itemTypeName))} of 
+  p.center #{capitalize(T(item.itemTypeName))} of 
     a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{item.universe}
   p.center
     small Created by 
@@ -55,7 +55,7 @@ block content
           each tag in item.tags
             if tag
               | ##{tag} 
-    .d-flex.justify-end.align-end
+    #action-bar.d-flex.justify-end.align-end
       if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE/* || item.author === contextUser.username*/)
         a.link.link-animated.d-flex.align-end( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}/edit` )
           span.material-symbols-outlined edit

@@ -75,11 +75,14 @@ function setupEasyMDE() {
     easyMDE.codemirror.on('change', () => {
       updateObjData({ body: easyMDE.value() });
     });
+
+    return easyMDE;
   }
 }
 
 
 function selectTab(name) {
+  console.log(selectedTab, name)
   if (selectedTab) {
     document.querySelector(`#tabs [data-tab="${selectedTab}"]`).classList.add('hidden');
     document.querySelector(`#tabs [data-tab-btn="${selectedTab}"]`).classList.remove('selected');
@@ -522,7 +525,7 @@ async function resetTabs(toSelect=null) {
         overwriteObjData(newState);
         continue;
       }
-      if (!firstTab) firstTab = type;
+      if (!firstTab) firstTab = obj_data[type].title;
       await addTab(type, obj_data[type].title, true);
     }
   }

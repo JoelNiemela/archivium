@@ -1,14 +1,18 @@
 extends layout.pug
 
+block scripts
+  script.
+    const validateUsername = !{validateUsername};
+
 block content
   h2 Sign Up
-  form( method='post' )
+  form#signup( method='post' )
     div.inputGroup
       label( for='username' ) Username: 
-      input( id='username' type='text' name='username' )
+      input( id='username' type='text' name='username' value=username )
     div.inputGroup
       label( for='email' ) Email: 
-      input( id='email' type='email' name='email' )
+      input( id='email' type='email' name='email' value=email )
     div.inputGroup
       label( for='password' ) Password: 
       input( id='password' type='password' name='password' )
@@ -26,5 +30,34 @@ block content
     br
     div
       button( type='submit' ) Sign Up
+    div
+      small.color-error#error( class=(error ? '' : 'hidden') )= error
+
+    script.
+      (() => {
+        const form = document.forms.signup;
+        const formError = document.querySelector('#error');
+        form.username.addEventListener('input', () => {
+          formError.classList.add('hidden');
+          const value = form.username.value;
+          const error = validateUsername(value);
+          if (error) {
+            formError.innerText = error;
+            formError.classList.remove('hidden');
+          }
+        });
+        form.addEventListener('submit', async (e) => {
+          formError.classList.add('hidden');
+          const value = form.username.value;
+
+          const error = validateUsername(value);
+          if (error) {
+            formError.innerText = error;
+            formError.classList.remove('hidden');
+            return e.preventDefault();
+          }
+        });
+      })();
+
   p
     a.link.link-animated( href=`${ADDR_PREFIX}/login${searchQueries ? `?${searchQueries}`: ''}` ) Login to your account

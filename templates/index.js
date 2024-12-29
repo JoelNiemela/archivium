@@ -1,6 +1,7 @@
 const pug = require('pug');
 const { ADDR_PREFIX } = require('../config');
 const { perms } = require('../api/utils');
+const api = require('../api');
 const md5 = require('md5');
 const path = require('path');
 
@@ -65,6 +66,7 @@ function contextData(req) {
     perms,
     locale: locale[lang],
     T,
+    validateUsername: api.user.validateUsername,
   };
 }
 
@@ -106,6 +108,7 @@ const templates = {
 
   search: compile('templates/list/search.pug'),
   verify: compile('templates/verify.pug'),
+  settings: compile('templates/edit/settings.pug'),
 };
 
 function render(req, template, context = {}) {

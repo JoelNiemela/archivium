@@ -35,7 +35,7 @@ async function putJSON(url, body) {
     },
     body: JSON.stringify(body),
   })
-    .then(response => response.json());
+    .then(async (response) => [response, await response.json()]);
 }
 
 async function deleteJSON(url) {

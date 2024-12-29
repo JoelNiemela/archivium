@@ -81,6 +81,7 @@ module.exports = function(app, upload) {
             POST: (req) => api.user.image.post(req.session.user, req.file, req.params.username),
           }),
         ]),
+        new APIRoute('/username', { PUT: (req) => api.user.putUsername(req.session.user, req.params.username, req.body.username) }),
       ]),
     ]),
     new APIRoute('/contacts', {

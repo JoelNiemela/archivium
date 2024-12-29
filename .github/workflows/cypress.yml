@@ -9,8 +9,23 @@ on:
       - '**'
 
 jobs:
-  cypress-run:
+  cypress-test:
     runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: archiviumtest
+          MYSQL_USER: testuser
+          MYSQL_PASSWORD: testpassword
 
     steps:
       - name: Checkout
@@ -24,13 +39,33 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Cypress
-        run: npx cypress run
-        # env:
-        #   CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+      - name: Wait for MySQL
+        run: |
+          for i in {30..0}; do
+            if mysqladmin ping -h 127.0.0.1 --silent; then
+              break
+            fi
+            echo 'Waiting for MySQL...'
+            sleep 1
+          done
 
-      - name: Archive Cypress Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: cypress-artifacts
-          path: cypress/screenshots,cypress/videos
+      - name: Start server
+        run: |
+          nohup npm start &
+          sleep 5
+        env:
+          PORT=33004
+          DOMAIN=dev.archivium.net
+          ADDR_PREFIX=
+          DEV_MODE=true
+          SENDGRID_API_KEY=
+          OPENAI_API_KEY=
+
+          ARCHIVIUM_DB_HOST=localhost
+          ARCHIVIUM_DB_USER=testuser
+          ARCHIVIUM_DB_PASSWORD=testpassword
+          ARCHIVIUM_DB=archiviumtest
+
+
+      - name: Run tests
+        run: npm test

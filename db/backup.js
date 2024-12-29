@@ -1,7 +1,7 @@
 const db = require('.');
 const fsPromises = require('fs').promises;
 const path = require('path');
-const dbConfig = require('./config');
+const { DB_CONFIG } = require('../config');
 const logger = require('../logger');
 
 /**
@@ -10,7 +10,7 @@ const logger = require('../logger');
 async function backup() {
   logger.info('Backing up db...');
 
-  const tables = (await db.queryAsync('SHOW TABLES;'))[0].map(item => item[`Tables_in_${dbConfig.database}`]);
+  const tables = (await db.queryAsync('SHOW TABLES;'))[0].map(item => item[`Tables_in_${DB_CONFIG.database}`]);
   const blob = {};
   for (const table of tables) {
     if (table === 'session') continue;

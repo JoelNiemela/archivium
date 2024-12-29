@@ -1,5 +1,5 @@
 const mysql = require('mysql2');
-const dbConfig = require('../config');
+const { DB_CONFIG } = require('../../config');
 const Promise = require('bluebird');
 const { loadSchema, askQuestion } = require('../import');
 const api = require('../../api');
@@ -56,7 +56,7 @@ async function postComment(poster, thread, comment) {
 async function main() {
   await db.connectPromise;
 
-  const connection = mysql.createConnection({ ...dbConfig, multipleStatements: true });
+  const connection = mysql.createConnection({ ...DB_CONFIG, multipleStatements: true });
   const schemaConn = Promise.promisifyAll(connection, { multiArgs: true });
   await loadSchema(schemaConn);
 

@@ -232,7 +232,8 @@ header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: 70vh;
+  margin-top: 1rem;
+  margin-bottom: -2rem;
 }
 
 .color-error {
@@ -499,6 +500,7 @@ button:disabled {
 .markdown {
   font-size: 1.0625rem;
   line-height: 1.33;
+  overflow-wrap: break-word;
 }
 .rich-editor {
   padding: 0 1.75rem 0 2.5rem;
@@ -637,6 +639,7 @@ h4, h5 {
 }
 .link.link-animated {
   color: #069;
+  white-space: nowrap;
 }
 .link:not(.link-animated) {
   color: black;

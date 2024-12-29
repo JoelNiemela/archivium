@@ -467,7 +467,9 @@ async function updateEvent(eventId, changes) {
 }
 async function deleteEvents(eventIds) {
   if (!eventIds.length) return;
-  const [whereClause, values] = eventIds.reduce((cond, id) => cond.or('id = ?', id), new Cond()).export()
+  // Un-import deleted events
+  await deleteImports(null, eventIds);
+  const [whereClause, values] = eventIds.reduce((cond, id) => cond.or('id = ?', id), new Cond()).export();
   const queryString = `DELETE FROM itemevent WHERE ${whereClause};`;
   return await executeQuery(queryString, values.filter(val => val !== undefined));
 }
@@ -479,8 +481,9 @@ async function importEvents(itemId, eventIds) {
 }
 async function deleteImports(itemId, eventIds) {
   if (!eventIds.length) return;
-  const cond = eventIds.reduce((cond, id) => cond.or('event_id = ?', id), new Cond());
-  const [whereClause, values] = cond.and('timeline_id = ?', itemId).export();
+  let cond = eventIds.reduce((cond, id) => cond.or('event_id = ?', id), new Cond());
+  if (itemId !== null) cond = cond.and('timeline_id = ?', itemId);
+  const [whereClause, values] = cond.export();
   const queryString = `DELETE FROM timelineitem WHERE ${whereClause};`;
   return await executeQuery(queryString, values.filter(val => val !== undefined));
 }

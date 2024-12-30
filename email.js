@@ -62,8 +62,6 @@ async function unsubscribeUser(emails, groupId) {
 }
 
 async function sendVerifyLink({ id, username, email }) {
-  await executeQuery('DELETE FROM userverification WHERE user_id = ?;', [id]);
-  
   const verificationKey = await api.user.prepareVerification(id);
   if (DEV_MODE) {
     // Can't send emails in dev mode, just auto-verify them instead.

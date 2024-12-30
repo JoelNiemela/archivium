@@ -22,8 +22,7 @@ CREATE TABLE userimage (
 CREATE TABLE userverification (
   user_id INT NOT NULL,
   verification_key VARCHAR(64),
-  FOREIGN KEY (user_id) REFERENCES user (id),
-  UNIQUE(user_id)
+  FOREIGN KEY (user_id) REFERENCES user (id)
 );
 
 CREATE TABLE usernamechange (

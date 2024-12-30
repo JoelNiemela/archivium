@@ -80,7 +80,7 @@ async function trySendVerifyLink(sessionUser, username) {
   if (sessionUser.verified) return [200, { alreadyVerified: true }];
 
   const now = new Date();
-  const timeout = 60 * 60 * 1000;
+  const timeout = 60 * 1000;
   const cutoff = new Date(now.getTime() - timeout);
   const recentEmails = await executeQuery(
     'SELECT * FROM sentemail WHERE recipient = ? AND topic = ? AND sent_at >= ? ORDER BY sent_at DESC;',

@@ -36,7 +36,10 @@ block scripts
 block content
   h1.center Access Denied
   .sheet
-    p Your account has not yet been verified. A verification link has been sent to your email (#{user.email}). 
+    if reason === 'bad_key'
+      p Error: your verification link seems to be broken or have expired. A new one has been sent to your email (#{user.email}).
+    else
+      p Your account has not yet been verified. A verification link has been sent to your email (#{user.email}).
     p If you have not received this link, check your spam folder or request a new one below:
     .d-flex.align-baseline.gap-2
       button( onclick='sendVerifyLink()' ) Request a new verification link

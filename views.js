@@ -206,6 +206,7 @@ module.exports = function(app) {
       user: req.session.user,
       gravatarLink: `https://www.gravatar.com/avatar/${md5(req.session.user.email)}.jpg`,
       nextPage: `${req.query.page || '/'}${req.query.search ? `?${req.query.search}` : ''}`,
+      reason: req.query.reason,
     });
   });
 
@@ -218,6 +219,8 @@ module.exports = function(app) {
         // email.sendTemplateEmail(email.templates.WELCOME, req.body.email, { username: user.username }, email.groups.NEWSLETTER);
         return res.redirect(`${ADDR_PREFIX}/`);
       }
+    } else {
+      return res.redirect(`${ADDR_PREFIX}/verify?reason=bad_key`);
     }
   });
 

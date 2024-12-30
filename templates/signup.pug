@@ -1,8 +1,13 @@
 extends layout.pug
 
 block scripts
+  script( src='https://www.google.com/recaptcha/api.js' )
   script.
     const validateUsername = !{validateUsername};
+  script.
+    function onSubmit(token) {
+      document.querySelector('#signup').submit();
+    }
 
 block content
   h2 Sign Up
@@ -32,7 +37,7 @@ block content
       small Yes, I want to receive email updates about Archivium (optional).
     br
     div
-      button( type='submit' ) Sign Up
+      button( class='g-recaptcha' data-sitekey='6Lf35qkqAAAAAMnKLqoBJ9wIX30sodE4lWQS6Y3A' data-callback='onSubmit' data-action='submit' ) Sign Up
     div
       small.color-error#error( class=(error ? '' : 'hidden') )= error
 

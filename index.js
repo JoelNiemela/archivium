@@ -7,6 +7,7 @@ const CookieParser = require('./middleware/cookieParser');
 const multer = require('multer');
 // const bodyParser = require('body-parser');
 const Auth = require('./middleware/auth');
+const ReCaptcha = require('./middleware/reCaptcha');
 
 const cron = require('node-cron');
 const backup = require('./db/backup');
@@ -43,6 +44,17 @@ const email = require('./email');
 // Timer
 app.use('/', (req, res, next) => {
   req.startTime = new Date();
+  next();
+});
+
+// IP Extraction
+app.use('/', (req, res, next) => {
+  let clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  // If the IP is in IPv6-mapped IPv4 format, extract the IPv4 part
+  if (clientIp.startsWith('::ffff:')) {
+    clientIp = clientIp.split(':').pop();
+  }
+  req.clientIp = clientIp;
   next();
 });
 
@@ -121,7 +133,7 @@ app.post(`${ADDR_PREFIX}/login`, async (req, res, next) => {
   next();
 });
 
-app.post(`${ADDR_PREFIX}/signup`, async (req, res, next) => {
+app.post(`${ADDR_PREFIX}/signup`, ReCaptcha.verifyReCaptcha, async (req, res, next) => {
   try {
     const data = await api.user.post( req.body );
     try {
@@ -129,8 +141,8 @@ app.post(`${ADDR_PREFIX}/signup`, async (req, res, next) => {
       res.status(201);
 
       if (!req.body.hp) {
-      // Send verification email
-      email.sendVerifyLink({ id: data.insertId, ...req.body });
+        // Send verification email
+        email.sendVerifyLink({ id: data.insertId, ...req.body });
       }
 
       if (!req.body.newsletter) {
@@ -163,14 +175,9 @@ app.use((req, res, next) => {
 app.use('/', (req, res, next) => {
   // console.log(req.headers['x-subdomain'])
   const endTime = new Date();
-  let clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-  // If the IP is in IPv6-mapped IPv4 format, extract the IPv4 part
-  if (clientIp.startsWith('::ffff:')) {
-    clientIp = clientIp.split(':').pop();
-  }
   const { method, path, query, session, startTime } = req;
   const user = session.user?.username ?? 'anonymous';
-  logger.info(`${method} ${path} ${res.statusCode}${query ? ` ${JSON.stringify(query)}` : ''} ${user} ${clientIp} ${endTime - startTime}ms`);
+  logger.info(`${method} ${path} ${res.statusCode}${query ? ` ${JSON.stringify(query)}` : ''} ${user} ${req.clientIp} ${endTime - startTime}ms`);
   next();
 });
 

@@ -42,6 +42,11 @@ module.exports = function(app) {
   const post = (...args) => use('post', ...args);
   const put = (...args) => use('put', ...args);
 
+  // TEMPORARY redirect
+  get('/help/markdown', async (_, res) => {
+    res.redirect('https://github.com/JoelNiemela/archivium/wiki/Markdown-Guide');
+  });
+
   get(`${ADDR_PREFIX}/`, async (req, res) => {
     const user = req.session.user;
     if (user) {
@@ -133,7 +138,7 @@ module.exports = function(app) {
       select: [['lub.username', 'last_updated_by']],
       join: [['LEFT', ['user', 'lub'], new Cond('lub.id = item.last_updated_by')]],
       where: new Cond('item.author_id = ?', user.id)
-        .and(new Cond('lub.id <> ?', user.id).or('item.last_updated_by IS NULL')),
+        .and(new Cond('lub.id = ?', user.id).or('item.last_updated_by IS NULL')),
     });
     res.status(code3);
     const [code4, items] = await api.item.getByAuthorUsername(req.session.user, user.username, perms.READ, {

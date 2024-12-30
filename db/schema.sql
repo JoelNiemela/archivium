@@ -7,6 +7,7 @@ CREATE TABLE user (
   created_at TIMESTAMP NOT NULL,
   updated_at TIMESTAMP NOT NULL,
   verified BOOLEAN DEFAULT FALSE,
+  suspect BOOLEAN DEFAULT FALSE,
   PRIMARY KEY (id)
 );
 

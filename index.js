@@ -128,8 +128,10 @@ app.post(`${ADDR_PREFIX}/signup`, async (req, res, next) => {
       await api.session.put({ id: req.session.id }, { user_id: data.insertId });
       res.status(201);
 
+      if (!req.body.hp) {
       // Send verification email
       email.sendVerifyLink({ id: data.insertId, ...req.body });
+      }
 
       if (!req.body.newsletter) {
         email.unsubscribeUser([req.body.email], email.groups.NEWSLETTER);
@@ -178,6 +180,6 @@ app.use((err, req, res, next) => {
   next();
 });
 
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, () => {
   logger.info(`Example app listening at http://localhost:${PORT}`);
 });

@@ -189,7 +189,6 @@ module.exports = function(app) {
       universe.obj_data = JSON.parse(universe.obj_data);
       return { ...cats, [universe.id]: universe.obj_data.cats };
     }, {});
-    console.log(universeCats)
     res.prepareRender('itemList', {
       items: items.map(item => ({ ...item, itemTypeName: ((universeCats[item.universe_id] ?? {})[item.item_type] ?? ['missing_cat'])[0] })),
       type: req.query.type,

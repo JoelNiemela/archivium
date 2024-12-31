@@ -1,7 +1,6 @@
-const Promise = require('bluebird');
 const axios = require('axios');
-const api = require('../api');
 const { ADDR_PREFIX, RECAPTCHA_KEY } = require('../config');
+const { render } = require('../templates');
 const logger = require('../logger');
 
 module.exports.verifyReCaptcha = async (req, res, next) => {
@@ -23,6 +22,6 @@ module.exports.verifyReCaptcha = async (req, res, next) => {
       logger.warn('Bot also failed honeypot challenge.');
     }
     res.status(400);
-    res.end('This request has been blocked by our anti-spam system. If you believe this is an error, please report it by sending an email to contact@archivium.net.');
+    res.end(render(req, 'spamblock'));
   }
 }

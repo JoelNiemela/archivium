@@ -273,6 +273,7 @@ header {
   padding: 1.25rem;
   background-color: #fefefe;
   border-radius: 0.25rem;
+  box-shadow: silver 2px 2px 5px 0px;
 }
 
 .itemTab {

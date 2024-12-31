@@ -1,6 +1,8 @@
 SELECT 
     user.id, user.username, user.email, user.updated_at,
     (user.created_at = user.updated_at) AS once,
+    user.verified AS veri,
+    user.suspect AS sus,
     universes.count AS unis,
     items.count AS items,
     comments.count AS comments,
@@ -19,4 +21,4 @@ LEFT JOIN (
     SELECT DISTINCT author_id, COUNT(id) AS count FROM comment GROUP BY author_id
 ) AS comments ON comments.author_id = user.id
 GROUP BY user.id
-ORDER BY once, user.created_at;
+ORDER BY once, veri DESC, user.created_at;

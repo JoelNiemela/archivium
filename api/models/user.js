@@ -94,7 +94,7 @@ async function getByUniverseShortname(user, shortname) {
  * @param {*} userData 
  * @returns 
  */
-function post({ username, email, password }) {
+function post({ username, email, password, hp }) {
   const salt = utils.createRandom32String();
 
   if (!username) throw new Error('malformed username');
@@ -104,6 +104,8 @@ function post({ username, email, password }) {
   const validationError = validateUsername(username);
   if (validationError) throw new Error(validationError);
 
+  const suspect = hp !== '';
+
   const queryString = `
     INSERT INTO user (
       username,
@@ -111,8 +113,9 @@ function post({ username, email, password }) {
       salt,
       password,
       created_at,
-      updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?);
+      updated_at,
+      suspect
+    ) VALUES (?, ?, ?, ?, ?, ?, ?);
   `;
   return executeQuery(queryString, [
     username,
@@ -120,7 +123,8 @@ function post({ username, email, password }) {
     salt,
     utils.createHash(password, salt),
     new Date(),
-    new Date()
+    new Date(),
+    suspect
   ]);
 }
 

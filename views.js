@@ -42,6 +42,11 @@ module.exports = function(app) {
   const post = (...args) => use('post', ...args);
   const put = (...args) => use('put', ...args);
 
+  // TEMPORARY redirect
+  get('/help/markdown', async (_, res) => {
+    res.redirect('https://github.com/JoelNiemela/archivium/wiki/Markdown-Guide');
+  });
+
   get(`${ADDR_PREFIX}/`, async (req, res) => {
     const user = req.session.user;
     if (user) {
@@ -133,7 +138,7 @@ module.exports = function(app) {
       select: [['lub.username', 'last_updated_by']],
       join: [['LEFT', ['user', 'lub'], new Cond('lub.id = item.last_updated_by')]],
       where: new Cond('item.author_id = ?', user.id)
-        .and(new Cond('lub.id <> ?', user.id).or('item.last_updated_by IS NULL')),
+        .and(new Cond('lub.id = ?', user.id).or('item.last_updated_by IS NULL')),
     });
     res.status(code3);
     const [code4, items] = await api.item.getByAuthorUsername(req.session.user, user.username, perms.READ, {
@@ -184,7 +189,6 @@ module.exports = function(app) {
       universe.obj_data = JSON.parse(universe.obj_data);
       return { ...cats, [universe.id]: universe.obj_data.cats };
     }, {});
-    console.log(universeCats)
     res.prepareRender('itemList', {
       items: items.map(item => ({ ...item, itemTypeName: ((universeCats[item.universe_id] ?? {})[item.item_type] ?? ['missing_cat'])[0] })),
       type: req.query.type,
@@ -206,6 +210,7 @@ module.exports = function(app) {
       user: req.session.user,
       gravatarLink: `https://www.gravatar.com/avatar/${md5(req.session.user.email)}.jpg`,
       nextPage: `${req.query.page || '/'}${req.query.search ? `?${req.query.search}` : ''}`,
+      reason: req.query.reason,
     });
   });
 
@@ -218,6 +223,8 @@ module.exports = function(app) {
         // email.sendTemplateEmail(email.templates.WELCOME, req.body.email, { username: user.username }, email.groups.NEWSLETTER);
         return res.redirect(`${ADDR_PREFIX}/`);
       }
+    } else {
+      return res.redirect(`${ADDR_PREFIX}/verify?reason=bad_key`);
     }
   });
 

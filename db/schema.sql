@@ -91,11 +91,29 @@ CREATE TABLE threadcomment (
 
 CREATE TABLE note (
   id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  uuid VARCHAR(36) UNIQUE,
+  title VARCHAR(64),
   body VARCHAR(2048) NOT NULL,
+  public BOOLEAN,
   author_id INT NOT NULL,
   created_at TIMESTAMP NOT NULL,
   updated_at TIMESTAMP NOT NULL,
   FOREIGN KEY (author_id) REFERENCES user (id)
+);
+
+CREATE TABLE noteboard (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(64) NOT NULL,
+  shortname VARCHAR(64) UNIQUE NOT NULL,
+  universe_id INT NOT NULL,
+  FOREIGN KEY (universe_id) REFERENCES universe (id)
+);
+
+CREATE TABLE boardnote (
+  note_id INT NOT NULL,
+  board_id INT NOT NULL,
+  FOREIGN KEY (note_id) REFERENCES note (id),
+  FOREIGN KEY (board_id) REFERENCES noteboard (id)
 );
 
 CREATE TABLE item (

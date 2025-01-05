@@ -410,16 +410,27 @@ module.exports = function(app) {
     if (item.gallery.length > 0) {
       item.gallery = item.gallery.sort((a, b) => a.id > b.id ? 1 : -1);
     }
-    const [code3, comments, users] = await api.discussion.getCommentsByItem(req.session.user, item.id, false, true);
-    if (!comments || !users) return [code3];
+
+    const [code3, comments, commentUsers] = await api.discussion.getCommentsByItem(req.session.user, item.id, false, true);
+    if (!comments || !commentUsers) return res.status(code3);
     const commenters = {};
-    for (const user of users) {
+    for (const user of commentUsers) {
       user.pfpUrl = getPfpUrl(user);
       delete user.email;
       commenters[user.id] = user;
     }
+
+    const [code4, notes, noteUsers] = await api.note.getByItemShortname(req.session.user, universe.shortname, item.shortname, {}, false, true);
+    if (!notes || !noteUsers) return res.status(code4);
+    const noteAuthors = {};
+    for (const user of noteUsers) {
+      user.pfpUrl = getPfpUrl(user);
+      delete user.email;
+      noteAuthors[user.id] = user;
+    }
+
     res.prepareRender('item', {
-      item, universe, tab: req.query.tab, comments, commenters,
+      item, universe, tab: req.query.tab, comments, commenters, notes, noteAuthors,
       commentAction: `/universes/${universe.shortname}/items/${item.shortname}/comment`,
     });
   });

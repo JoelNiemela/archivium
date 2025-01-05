@@ -375,7 +375,7 @@ header {
 .notes {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 1rem;
+  gap: 0.25rem 1rem;
 }
 
 table {
@@ -988,6 +988,9 @@ input:checked + .slider:before {
 }
 .pa-1 {
   padding: 0.25rem;
+}
+.pa-2 {
+  padding: 0.5rem;
 }
 
 .w-100 {

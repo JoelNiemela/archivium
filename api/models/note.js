@@ -41,9 +41,8 @@ async function getMany(user, conditions, options) {
     const queryString = `
       SELECT
         note.id, note.uuid, note.title,
-        note.public, note.author_id,
+        note.body, note.public, note.author_id,
         note.created_at, note.updated_at
-      ${options?.inclBody ? ', note.body' : ''}
       FROM note
       ${options?.join ?? ''}
       WHERE ${parsedConds.strings.join(' AND ')}
@@ -171,6 +170,27 @@ async function post(user, { title, body, public }) {
   }
 }
 
+async function put(user, uuid, { title, body, public }) {
+  const [code, note] = await getOne(user, uuid);
+  if (!note) return [code];
+
+  try {
+    const queryString = `
+      UPDATE note
+      SET
+        title = ?,
+        body = ?,
+        public = ?
+      WHERE uuid = ?;
+    `;
+    const data = await executeQuery(queryString, [ title, body, public, note.uuid ]);
+    return [200, data];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
 async function linkToBoard(user, boardShortname, noteUuid) {
   if (!noteUuid) return [400];
   if (!user) return [401];
@@ -215,6 +235,7 @@ module.exports = {
   getByBoardShortname,
   postBoard,
   post,
+  put,
   linkToBoard,
   linkToItem,
 };

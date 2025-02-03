@@ -13,12 +13,19 @@
   div
     #note-list.card-list
       each note in notes
-        .card.sheet
-          | #{JSON.stringify(note)}
+        .sheet.card.d-flex.flex-col.gap-1( data-uuid=note.uuid data-note=note )
+          h2.ma-0 #{note.title}
+          span
+            b Author: 
+            a.link.link-animated( href=`/users/${noteAuthors[note.author_id].username}` ) #{noteAuthors[note.author_id].username}
+            |  — 
+            b Updated: 
+            | #{formatDate(note.updated_at)}
+          small.body( data-val=note.body )
     #note-edit.hidden
       textarea
     #note-display.sheet.hidden
-      .title
+      h1.title
       hr
       .body
 
@@ -35,9 +42,10 @@
             span.slider
         
         input.hidden( id='create' type='submit' value='Create' formaction=`${ADDR_PREFIX}/notes/create` )
-        input.hidden( id='save' type='submit' value='Save' formaction=`` )
+        input.hidden( id='save' type='submit' value='Save' formaction=`${ADDR_PREFIX}/notes/edit` )
         
         input( id='note_body' type='hidden' name='note_body' )
+        input( id='note_uuid' type='hidden' name='note_uuid' )
         input( id='note_universe' type='hidden' name='note_universe' value=(universe && universe.shortname) )
         input( id='note_item' type='hidden' name='note_item' value=(item && item.shortname) )
         input( id='note_board' type='hidden' name='note_board' value=(board && board.shortname) )
@@ -60,19 +68,15 @@
       const noteDisplay = document.querySelector('#note-display');
 
       const noteControls = document.querySelector('#note-controls');
-      const editControls = noteControls.querySelector('.edit');
+      const editForm = noteControls.querySelector('.edit');
 
       const controlTabs = document.querySelector('#note-control-tabs');
       const editTab = controlTabs.querySelector('.edit');
       const previewTab = controlTabs.querySelector('.preview');
 
-      const titleNodes = await loadMarkdown(noteDisplay.querySelector('.title'), '#{universe && universe.shortname}', '', null);
-      async function updateTitle(markdown) {
-        const data = await parseMarkdown(markdown).evaluate('#{universe && universe.shortname}', null, (tag) => {
-          if (tag.type === 'p') tag.type = 'h1';
-        });
-        titleNodes.update(data);
-        titleNodes.render();
+      const previewTitle = noteDisplay.querySelector('.title');
+      async function updateTitle(title) {
+        previewTitle.textContent = title;
       }
       const displayNodes = await loadMarkdown(noteDisplay.querySelector('.body'), '#{universe && universe.shortname}', '', null);
       async function updateDisplay(markdown) {
@@ -80,69 +84,125 @@
         displayNodes.update(data);
         displayNodes.render();
       }
-      editControls.note_title.addEventListener('change', () => {
-        updateTitle(editControls.note_title.value);
+      editForm.note_title.addEventListener('change', () => {
+        updateTitle(editForm.note_title.value);
       });
       const easyMDE = setupEasyMDE('#note-edit textarea', {universe, context: { item }});
       easyMDE.codemirror.on('change', () => {
+        const text = easyMDE.value();
+        if (text.length > 2000) easyMDE.value(text.substring(0, 2000));
         updateDisplay(easyMDE.value());
-        editControls.note_body.value = easyMDE.value();
+        editForm.note_body.value = easyMDE.value();
       });
+
 
       function showNoteEditControls() {
         noteList.classList.add('hidden');
-        noteDisplay.classList.add('hidden');
-        noteEdit.classList.remove('hidden');
-        editControls.classList.remove('hidden');
         controlTabs.classList.remove('hidden');
-        editTab.classList.add('selected');
         leftBtn.firstChild.innerText = 'Back to List';
       }
+
       function editNote() {
+        controlTabs.querySelectorAll('li').forEach(el => el.classList.remove('selected'));
+        editTab.classList.add('selected');
+        noteDisplay.classList.add('hidden');
+        noteEdit.classList.remove('hidden');
+        editForm.classList.remove('hidden');
+      }
+
+      function previewNote() {
+        controlTabs.querySelectorAll('li').forEach(el => el.classList.remove('selected'));
+        previewTab.classList.add('selected');
+        noteDisplay.classList.remove('hidden');
+        noteEdit.classList.add('hidden');
+        editForm.classList.add('hidden');
+      }
+
+      function openNote(uuid) {
         noteState = 'edit';
         showNoteEditControls();
-        editControls.create.classList.add('hidden');
-        editControls.save.classList.remove('hidden');
+        noteEdit.classList.remove('hidden');
+        editForm.create.classList.add('hidden');
+        editForm.save.classList.remove('hidden');
+        editForm.note_uuid.value = uuid;
+
+        const query = new URLSearchParams(window.location.search);
+        query.set('note', uuid);
+        const { protocol, host, pathname, hash } = window.location;
+        const newurl = `${protocol}//${host}${pathname}?${query.toString()}${hash}`;
+        window.history.pushState({ path: newurl }, '', newurl);
+
+        const noteCard = noteList.querySelector(`[data-uuid="${uuid}"]`);
+        const { title, public, body } = noteCard && JSON.parse(noteCard.dataset.note);
+        easyMDE.value(body);
+        editForm.note_title.value = title;
+        editForm.note_public.checked = public;
+        updateTitle(title);
+
+        previewNote();
       }
+
       function createNote() {
         noteState = 'new';
         showNoteEditControls();
-        editControls.create.classList.remove('hidden');
-        editControls.save.classList.add('hidden');
+        editNote();
+        editForm.create.classList.remove('hidden');
+        editForm.save.classList.add('hidden');
+
+        editForm.note_title.value = '';
+        editForm.note_public.checked = false;
+        easyMDE.value('');
+        updateTitle('');
       }
+
       function backToList() {
         if (noteState === 'new' || noteState === 'edit-unsaved') {
           if (!confirm('You have unsaved changes! Are you sure you want to go back?')) return;
         }
+
         noteState = 'list';
         noteList.classList.remove('hidden');
         noteEdit.classList.add('hidden');
-        editControls.classList.add('hidden');
+        noteDisplay.classList.add('hidden');
+        editForm.classList.add('hidden');
         controlTabs.classList.add('hidden');
         editTab.classList.remove('selected');
         leftBtn.firstChild.innerText = 'Create Note';
+
+        const query = new URLSearchParams(window.location.search);
+        query.delete('note');
+        const { protocol, host, pathname, hash } = window.location;
+        const newurl = `${protocol}//${host}${pathname}?${query.toString()}${hash}`;
+        window.history.pushState({ path: newurl }, '', newurl);
       }
+
 
       leftBtn.addEventListener('click', () => {
         if (noteState === 'list') createNote();
         else backToList();
       });
 
-      editTab.addEventListener('click', () => {
-        controlTabs.querySelectorAll('li').forEach(el => el.classList.remove('selected'));
-        editTab.classList.add('selected');
-        noteDisplay.classList.add('hidden');
-        noteEdit.classList.remove('hidden');
+      editTab.addEventListener('click', editNote);
+      previewTab.addEventListener('click', previewNote);
+
+      noteList.querySelectorAll('.card').forEach((el) => {
+        el.addEventListener('click', () => {
+          openNote(el.dataset.uuid);
+        });
       });
 
-      previewTab.addEventListener('click', () => {
-        controlTabs.querySelectorAll('li').forEach(el => el.classList.remove('selected'));
-        previewTab.classList.add('selected');
-        noteDisplay.classList.remove('hidden');
-        noteEdit.classList.add('hidden');
-      });
+      const query = new URLSearchParams(window.location.search);
+      const uuid = query.get('note');
+      if (uuid) {
+        openNote(uuid);
+      }
+
         
-      document.querySelectorAll('.note').forEach((el) => {
-        loadMarkdown(el, '#{universe.shortname}', el.dataset.val, null);
+      document.querySelectorAll('#note-list .body').forEach(async (el) => {
+        const tmp = createElement('div');
+        await loadMarkdown(tmp, '#{universe && universe.shortname}', el.dataset.val, null);
+        const text = tmp.textContent;
+        const maxLength = 100;
+        el.textContent = text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
       });
     })();

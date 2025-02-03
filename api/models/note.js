@@ -73,7 +73,7 @@ async function getByUsername(sessionUser, username, conditions) {
 
 async function getByItemShortname(user, universeShortname, itemShortname, conditions={}, validate=true, inclAuthors=false) {
   try {
-    const [code, item] = await itemapi.getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE, true);
+    const [code, item] = await itemapi.getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.READ, true);
     if (!item) return [code];
     const [_, notes] = await getMany(
       user,

@@ -21,7 +21,7 @@
             |  — 
             b Updated: 
             | #{formatDate(note.updated_at)}
-          small.body( data-val=note.body )
+          small.body
     #note-edit.hidden
       textarea
     #note-display.sheet.hidden
@@ -133,11 +133,12 @@
         window.history.pushState({ path: newurl }, '', newurl);
 
         const noteCard = noteList.querySelector(`[data-uuid="${uuid}"]`);
-        const { title, public, body } = noteCard && JSON.parse(noteCard.dataset.note);
+        const { title, public, body, author_id } = noteCard && JSON.parse(noteCard.dataset.note);
         easyMDE.value(body);
         editForm.note_title.value = title;
         editForm.note_public.checked = public;
         updateTitle(title);
+        if (author_id !== #{contextUser.id}) controlTabs.classList.add('hidden');
 
         previewNote();
       }
@@ -198,11 +199,12 @@
       }
 
         
-      document.querySelectorAll('#note-list .body').forEach(async (el) => {
+      document.querySelectorAll('#note-list .card').forEach(async (el) => {
+        const body = el.querySelector('.body');
         const tmp = createElement('div');
-        await loadMarkdown(tmp, '#{universe && universe.shortname}', el.dataset.val, null);
+        await loadMarkdown(tmp, '#{universe && universe.shortname}', JSON.parse(el.dataset.note).body, null);
         const text = tmp.textContent;
         const maxLength = 100;
-        el.textContent = text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+        body.textContent = text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
       });
     })();

@@ -10,7 +10,9 @@ async function getOne(user, uuid) {
   if (!user) return [401];
 
   try {
-    const note = (await getMany(user, { 'note.uuid': uuid }, { limit: 1, inclBody: true }))[0];
+    const [code, notes] = await getMany(user, { 'note.uuid': uuid }, { limit: 1, inclBody: true });
+    if (!notes) return [code];
+    const note = notes[0];
     if (!note) return [404];
     if (note.author_id !== user.id) return [403];
     return [200, note];
@@ -76,7 +78,7 @@ async function getByItemShortname(user, universeShortname, itemShortname, condit
     if (!item) return [code];
     const [_, notes] = await getMany(
       user,
-      { ...conditions, 'itemnote.item_id': user?.id },
+      { ...conditions, 'itemnote.item_id': item?.id },
       { join: 'INNER JOIN itemnote ON itemnote.note_id = note.id' },
     );
     if (inclAuthors) {
@@ -174,7 +176,7 @@ async function linkToBoard(user, boardShortname, noteUuid) {
   if (!user) return [401];
   const board = await executeQuery('SELECT * FROM noteboard WHERE shortname = ?', [ boardShortname ]);
   if (!board) return [404];
-  const [code2, note] = await getOne(user, { 'note.uuid': noteUuid });
+  const [code2, note] = await getOne(user, noteUuid);
   if (!note) return [code2];
 
   try {
@@ -192,7 +194,7 @@ async function linkToItem(user, universeShortname, itemShortname, noteUuid) {
   if (!user) return [401];
   const [code, item] = await itemapi.getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE, true)
   if (!item) return [code];
-  const [code2, note] = await getOne(user, { 'note.uuid': noteUuid });
+  const [code2, note] = await getOne(user, noteUuid);
   if (!note) return [code2];
 
   try {

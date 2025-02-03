@@ -56,12 +56,12 @@ class MarkdownElement {
   }
 }
 
-function loadMarkdown(container, universeShortname, body, ctx, frmt) {
-  parseMarkdown(body).evaluate(universeShortname, ctx, frmt).then(data => {
-    container.classList.add('markdown');
-    const nodes = new MarkdownElement({ getElement: () => container }, data);
-    nodes.render();
-  });
+async function loadMarkdown(container, universeShortname, body, ctx, frmt) {
+  const data = await parseMarkdown(body).evaluate(universeShortname, ctx, frmt);
+  container.classList.add('markdown');
+  const nodes = new MarkdownElement({ getElement: () => container }, data);
+  nodes.render();
+  return nodes;
 }
 
 async function renderMarkdown(universeShortname, body, ctx, frmt) {

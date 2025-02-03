@@ -184,7 +184,6 @@ module.exports = function(app) {
       universe.obj_data = JSON.parse(universe.obj_data);
       return { ...cats, [universe.id]: universe.obj_data.cats };
     }, {});
-    console.log(universeCats)
     res.prepareRender('itemList', {
       items: items.map(item => ({ ...item, itemTypeName: ((universeCats[item.universe_id] ?? {})[item.item_type] ?? ['missing_cat'])[0] })),
       type: req.query.type,
@@ -221,7 +220,7 @@ module.exports = function(app) {
     }
   });
 
-  /* Universe Pages */
+  /* Universe/item Pages */
   get('/universes', async (req, res) => {
     const [code, universes] = await api.universe.getMany(req.session.user);
     res.status(code);
@@ -429,6 +428,8 @@ module.exports = function(app) {
       noteAuthors[user.id] = user;
     }
 
+    console.log(notes)
+
     res.prepareRender('item', {
       item, universe, tab: req.query.tab, comments, commenters, notes, noteAuthors,
       commentAction: `/universes/${universe.shortname}/items/${item.shortname}/comment`,
@@ -511,6 +512,32 @@ module.exports = function(app) {
     res.redirect(`${ADDR_PREFIX}/universes/${params.shortname}/permissions`);
   });
 
+  /* Note pages */
+  post('/notes/create', Auth.verifySessionOrRedirect, async (req, res) => {
+    const { body, session } = req;
+    const [code, data, uuid] = await api.note.post(session.user, {
+      title: body.note_title,
+      public: body.note_public === 'on',
+      body: body.note_body,
+    });
+    let nextPage;
+    if (body.note_item && body.note_universe) {
+      const [code, data] = await api.note.linkToItem(session.user, body.note_universe, body.note_item, uuid);
+      if (code !== 201) throw new Error(`Error ${code}: ${data}`);
+      nextPage = nextPage || `${ADDR_PREFIX}/universes/${body.note_universe}/items/${body.note_item}?tab=notes&note=${uuid}`;
+    }
+    if (body.note_board && body.note_universe) {
+      const [code, data] = await api.note.linkToBoard(session.user, body.note_board, uuid);
+      if (code !== 201) throw new Error(`Error ${code}: ${data}`);
+      nextPage = nextPage || `${ADDR_PREFIX}/universes/${body.note_universe}/notes/${body.note_board}/${uuid}`;
+    }
+    res.status(code);
+    if (code === 201) return res.redirect(nextPage || `${ADDR_PREFIX}/notes/${uuid}`);
+    throw new Error(`Error ${code}: ${data}`);
+    // res.prepareRender('createUniverse', { error: data, ...req.body });
+  });
+
+  /* Misc pages */
   get('/search', async (req, res) => {
     const search = req.query.search;
     if (search) {

@@ -25,6 +25,7 @@ block scripts
     include /static/scripts/calendarPicker.js
     include /static/scripts/timelineRender.js
     include /static/scripts/cardUtils.js
+    include /static/scripts/easyMDE.js
     //- include /static/scripts/editor/rich.js
 
 block breadcrumbs
@@ -85,6 +86,7 @@ block content
 
   
   script!= `window.item = ${JSON.stringify(item)};`
+  script!= `window.universe = ${JSON.stringify(universe)};`
 
   .tabs
     if 'tabs' in item.obj_data
@@ -161,11 +163,6 @@ block content
           }
           if (tag.type === 'p') tag.type = 'span';
         });
-      });
-      
-      document.querySelectorAll('.comment').forEach((el) => {
-        console.log(el.dataset.val)
-        loadMarkdown(el, '#{universe.shortname}', el.dataset.val, null);
       });
 
       const galleryModalState = {}

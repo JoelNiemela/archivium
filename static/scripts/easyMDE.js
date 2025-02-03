@@ -9,6 +9,7 @@ function setupEasyMDE(selector, renderContext = {}, extraSettings = {}) {
       unorderedListStyle: '-',
       sideBySideFullscreen: true,
       autoRefresh: { delay: 300 },
+      spellChecker: false,
       previewRender: (plainText, preview) => {
         renderMarkdown(universe, plainText, context).then((html) => {
             preview.innerHTML = html;

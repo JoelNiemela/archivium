@@ -1,6 +1,46 @@
+block append styles
+  style.
+    #note-list .card>.body {
+      white-space: nowrap;
+      overflow: hidden;
+      mask-image: linear-gradient(135deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 1) 85%, rgba(0, 0, 0, 0) 97%);
+    }
+
+    #notes-left-btn.hidden {
+      display: inline !important;
+      visibility: hidden;
+    }
+
+    .loader {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 8px solid #0000;
+      border-right-color: #00669997;
+      position: relative;
+      animation: s4 1s infinite linear;
+    }
+    .loader:before,
+    .loader:after {
+      content: "";
+      position: absolute;
+      inset:-8px;
+      border-radius: 50%;
+      border:inherit;
+      animation:inherit;
+      animation-duration: 2s;
+    }
+    .loader:after {
+      animation-duration: 4s;
+    }
+
+    @keyframes s4 {
+      100% {transform: rotate(1turn)}
+    }
+
 .notes
-  p.ma-0.pa-1#notes-left-btn
-    a.link.link-animated Create Note
+  p.ma-0.pa-1
+    a.link.link-animated#notes-left-btn Create Note
 
   div
     #note-control-tabs.hidden
@@ -15,7 +55,7 @@
       each note in notes
         .sheet.card.d-flex.flex-col.gap-1( data-uuid=note.uuid data-note=note )
           h2.ma-0 #{note.title}
-          span
+          small
             b Author: 
             a.link.link-animated( href=`/users/${noteAuthors[note.author_id].username}` ) #{noteAuthors[note.author_id].username}
             |  — 
@@ -28,6 +68,8 @@
       h1.title
       hr
       .body
+    #note-loading.sheet.d-flex.justify-center.hidden
+      .loader
 
   div
     #note-controls.sheet( style={ position: 'sticky', top: '4rem' } )
@@ -54,8 +96,6 @@
   script.
     (async function() {
       if (!window.createElement) throw 'domUtils not loaded!';
-      if (!window.createSearchableSelect) throw 'searchableSelect not loaded!';
-      if (!window.modal) throw 'modal not loaded!';
       if (!window.getJSON) throw 'fetchUtils.js not loaded!';
       if (!window.setupEasyMDE) throw 'easyMDE.js not loaded!';
       if (!window.parseMarkdown) throw 'markdown/parse.js not loaded!';
@@ -66,6 +106,7 @@
       const noteList = document.querySelector('#note-list');
       const noteEdit = document.querySelector('#note-edit');
       const noteDisplay = document.querySelector('#note-display');
+      const noteLoading = document.querySelector('#note-loading');
 
       const noteControls = document.querySelector('#note-controls');
       const editForm = noteControls.querySelector('.edit');
@@ -80,17 +121,15 @@
       }
       const displayNodes = await loadMarkdown(noteDisplay.querySelector('.body'), '#{universe && universe.shortname}', '', null);
       async function updateDisplay(markdown) {
-        const data = await parseMarkdown(markdown).evaluate('#{universe.shortname}', null);
+        const data = await parseMarkdown(markdown).evaluate('#{universe && universe.shortname}', null);
         displayNodes.update(data);
         displayNodes.render();
       }
       editForm.note_title.addEventListener('change', () => {
         updateTitle(editForm.note_title.value);
       });
-      const easyMDE = setupEasyMDE('#note-edit textarea', {universe, context: { item }});
+      const easyMDE = setupEasyMDE('#note-edit textarea', { universe: !{JSON.stringify(universe || null)}, context: { item: !{JSON.stringify(item || null)} }});
       easyMDE.codemirror.on('change', () => {
-        const text = easyMDE.value();
-        if (text.length > 2000) easyMDE.value(text.substring(0, 2000));
         updateDisplay(easyMDE.value());
         editForm.note_body.value = easyMDE.value();
       });
@@ -99,10 +138,11 @@
       function showNoteEditControls() {
         noteList.classList.add('hidden');
         controlTabs.classList.remove('hidden');
-        leftBtn.firstChild.innerText = 'Back to List';
+        leftBtn.innerText = 'Back to List';
       }
 
       function editNote() {
+        noteLoading.classList.add('hidden');
         controlTabs.querySelectorAll('li').forEach(el => el.classList.remove('selected'));
         editTab.classList.add('selected');
         noteDisplay.classList.add('hidden');
@@ -111,6 +151,7 @@
       }
 
       function previewNote() {
+        noteLoading.classList.add('hidden');
         controlTabs.querySelectorAll('li').forEach(el => el.classList.remove('selected'));
         previewTab.classList.add('selected');
         noteDisplay.classList.remove('hidden');
@@ -118,8 +159,17 @@
         editForm.classList.add('hidden');
       }
 
-      function openNote(uuid) {
-        noteState = 'edit';
+      function loadingNote() {
+        noteLoading.classList.remove('hidden');
+        controlTabs.classList.add('hidden');
+        noteDisplay.classList.add('hidden');
+        noteEdit.classList.add('hidden');
+        editForm.classList.add('hidden');
+      }
+
+      async function openNote(uuid) {
+        noteState = 'loading';
+        leftBtn.classList.add('hidden');
         showNoteEditControls();
         noteEdit.classList.remove('hidden');
         editForm.create.classList.add('hidden');
@@ -132,13 +182,18 @@
         const newurl = `${protocol}//${host}${pathname}?${query.toString()}${hash}`;
         window.history.pushState({ path: newurl }, '', newurl);
 
-        const noteCard = noteList.querySelector(`[data-uuid="${uuid}"]`);
-        const { title, public, body, author_id } = noteCard && JSON.parse(noteCard.dataset.note);
+        //- const noteCard = noteList.querySelector(`[data-uuid="${uuid}"]`);
+        //- const { title, public, body, author_id } = noteCard && JSON.parse(noteCard.dataset.note);
+        loadingNote();
+        const [, note] = await getJSON(`#{noteBaseRoute}/${uuid}`);
+        const { title, public, body, author_id } = note;
         easyMDE.value(body);
         editForm.note_title.value = title;
         editForm.note_public.checked = public;
         updateTitle(title);
-        if (author_id !== #{contextUser.id}) controlTabs.classList.add('hidden');
+        if (author_id === #{contextUser.id}) controlTabs.classList.remove('hidden');
+        noteState = 'edit';
+        leftBtn.classList.remove('hidden');
 
         previewNote();
       }
@@ -162,13 +217,14 @@
         }
 
         noteState = 'list';
+        noteLoading.classList.add('hidden');
         noteList.classList.remove('hidden');
         noteEdit.classList.add('hidden');
         noteDisplay.classList.add('hidden');
         editForm.classList.add('hidden');
         controlTabs.classList.add('hidden');
         editTab.classList.remove('selected');
-        leftBtn.firstChild.innerText = 'Create Note';
+        leftBtn.innerText = 'Create Note';
 
         const query = new URLSearchParams(window.location.search);
         query.delete('note');
@@ -179,7 +235,8 @@
 
 
       leftBtn.addEventListener('click', () => {
-        if (noteState === 'list') createNote();
+        if (noteState === 'loading') return;
+        else if (noteState === 'list') createNote();
         else backToList();
       });
 
@@ -201,10 +258,8 @@
         
       document.querySelectorAll('#note-list .card').forEach(async (el) => {
         const body = el.querySelector('.body');
-        const tmp = createElement('div');
-        await loadMarkdown(tmp, '#{universe && universe.shortname}', JSON.parse(el.dataset.note).body, null);
-        const text = tmp.textContent;
-        const maxLength = 100;
-        body.textContent = text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+        const text = await renderMdPreview('#{universe && universe.shortname}', JSON.parse(el.dataset.note).body, null);
+        const maxLength = 127;
+        body.innerText = text.length >= maxLength ? `${text.substring(0, maxLength)}...` : text;
       });
     })();

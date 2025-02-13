@@ -119,7 +119,7 @@ module.exports = function(app, upload) {
           }, [
             new APIRoute('/:uuid', {
               GET: (req) => frmtData(
-                api.note.getByBoardShortname(req.session.user, req.params.boardShortname, { 'note.uuid': req.params.uuid }),
+                api.note.getByBoardShortname(req.session.user, req.params.boardShortname, { 'note.uuid': req.params.uuid }, { fullBody: true }),
                 (notes) => notes[0],
               ),
             }),
@@ -143,7 +143,13 @@ module.exports = function(app, upload) {
             }, [
               new APIRoute('/:uuid', {
                 GET: (req) => frmtData(
-                  api.note.getByItemShortname(req.session.user, req.params.universeShortName, req.params.itemShortName, { 'note.uuid': req.params.uuid }),
+                  api.note.getByItemShortname(
+                    req.session.user,
+                    req.params.universeShortName,
+                    req.params.itemShortName,
+                    { 'note.uuid': req.params.uuid },
+                    { fullBody: true },
+                  ),
                   (notes) => notes[0],
                 ),
               }),

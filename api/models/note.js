@@ -10,7 +10,7 @@ async function getOne(user, uuid) {
   if (!user) return [401];
 
   try {
-    const [code, notes] = await getMany(user, { 'note.uuid': uuid }, { limit: 1, inclBody: true });
+    const [code, notes] = await getMany(user, { 'note.uuid': uuid }, { limit: 1, fullBody: true });
     if (!notes) return [code];
     const note = notes[0];
     if (!note) return [404];
@@ -41,8 +41,9 @@ async function getMany(user, conditions, options) {
     const queryString = `
       SELECT
         note.id, note.uuid, note.title,
-        note.body, note.public, note.author_id,
-        note.created_at, note.updated_at
+        note.public, note.author_id,
+        note.created_at, note.updated_at,
+        ${options?.fullBody ? 'note.body' : 'SUBSTRING(note.body, 1, 255) AS body'}
       FROM note
       ${options?.join ?? ''}
       WHERE ${parsedConds.strings.join(' AND ')}
@@ -56,13 +57,14 @@ async function getMany(user, conditions, options) {
   }
 }
 
-async function getByUsername(sessionUser, username, conditions) {
+async function getByUsername(sessionUser, username, conditions, options) {
   try {
     const [code, user] = await userapi.getOne({ 'user.username': username });
     if (!user) return [code];
     const [_, notes] = await getMany(
       sessionUser,
       { ...(conditions ?? {}), 'note.author_id': user.id },
+      options ?? {},
     );
     return [200, notes];
   } catch (err) {
@@ -71,14 +73,14 @@ async function getByUsername(sessionUser, username, conditions) {
   }
 }
 
-async function getByItemShortname(user, universeShortname, itemShortname, conditions={}, validate=true, inclAuthors=false) {
+async function getByItemShortname(user, universeShortname, itemShortname, conditions, options, inclAuthors=false) {
   try {
     const [code, item] = await itemapi.getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.READ, true);
     if (!item) return [code];
     const [_, notes] = await getMany(
       user,
-      { ...conditions, 'itemnote.item_id': item?.id },
-      { join: 'INNER JOIN itemnote ON itemnote.note_id = note.id' },
+      { ...conditions ?? {}, 'itemnote.item_id': item?.id },
+      { ...options ?? {}, join: 'INNER JOIN itemnote ON itemnote.note_id = note.id' },
     );
     if (inclAuthors) {
       const queryString2 = `
@@ -100,7 +102,7 @@ async function getByItemShortname(user, universeShortname, itemShortname, condit
 
 async function getBoardsByUniverseShortname(user, shortname) {
   try {
-    const [code, universe] = await universeapi.getOne(user, { 'universe.shortname': shortname }, perms.WRITE);
+    const [code, universe] = await universeapi.getOne(user, { 'universe.shortname': shortname }, perms.READ);
     if (!universe) return [code];
     const boards = await executeQuery('SELECT * FROM noteboard WHERE universe_id = ?', [ universe.id ]);
     return [200, boards];
@@ -110,18 +112,18 @@ async function getBoardsByUniverseShortname(user, shortname) {
   }
 }
 
-async function getByBoardShortname(user, shortname, conditions={}, validate=true, inclAuthors=false) {
+async function getByBoardShortname(user, shortname, conditions, options, validate=true, inclAuthors=false) {
   try {
     const board = await executeQuery('SELECT * FROM noteboard WHERE shortname = ?', [ shortname ]);
     if (!board) return [404];
     if (validate) {
-      const [code, universe] = await universeapi.getOne(user, { 'universe.id': board.universe_id }, perms.WRITE);
+      const [code, universe] = await universeapi.getOne(user, { 'universe.id': board.universe_id }, perms.READ);
       if (!universe) return [code];
     }
     const [_, notes] = await getMany(
       user,
-      { ...conditions, 'boardnote.board_id': board.id },
-      { join: 'INNER JOIN boardnote ON boardnote.note_id = note.id' },
+      { ...conditions ?? {}, 'boardnote.board_id': board.id },
+      { ...options ?? {}, join: 'INNER JOIN boardnote ON boardnote.note_id = note.id' },
     );
     if (inclAuthors) {
       const queryString2 = `

@@ -419,7 +419,7 @@ module.exports = function(app) {
       commenters[user.id] = user;
     }
 
-    const [code4, notes, noteUsers] = await api.note.getByItemShortname(req.session.user, universe.shortname, item.shortname, {}, false, true);
+    const [code4, notes, noteUsers] = await api.note.getByItemShortname(req.session.user, universe.shortname, item.shortname, {}, {}, true);
     if (!notes || !noteUsers) return res.status(code4);
     const noteAuthors = {};
     for (const user of noteUsers) {
@@ -431,6 +431,7 @@ module.exports = function(app) {
     res.prepareRender('item', {
       item, universe, tab: req.query.tab, comments, commenters, notes, noteAuthors,
       commentAction: `/universes/${universe.shortname}/items/${item.shortname}/comment`,
+      noteBaseRoute: `/api/universes/${universe.shortname}/items/${item.shortname}/notes`,
     });
   });
   get('/universes/:universeShortname/items/:itemShortname/edit', Auth.verifySessionOrRedirect, async (req, res) => {

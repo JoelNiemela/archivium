@@ -93,7 +93,7 @@ CREATE TABLE note (
   id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   uuid VARCHAR(36) UNIQUE,
   title VARCHAR(64),
-  body VARCHAR(2048) NOT NULL,
+  body TEXT NOT NULL,
   public BOOLEAN,
   author_id INT NOT NULL,
   created_at TIMESTAMP NOT NULL,
@@ -105,6 +105,7 @@ CREATE TABLE noteboard (
   id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(64) NOT NULL,
   shortname VARCHAR(64) UNIQUE NOT NULL,
+  public BOOLEAN,
   universe_id INT NOT NULL,
   FOREIGN KEY (universe_id) REFERENCES universe (id)
 );

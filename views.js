@@ -512,6 +512,18 @@ module.exports = function(app) {
   });
 
   /* Note pages */
+  get('/notes', Auth.verifySessionOrRedirect, async (req, res) => {
+    const user = req.session.user;
+    const [code, notes] = await api.note.getByUsername(user, user.username);
+    const noteAuthors = { [user.id]: user };
+    res.status(code);
+    if (!notes) return;
+    res.prepareRender('notes', {
+      notes,
+      noteAuthors,
+      noteBaseRoute: `/api/users/${user.username}/notes`,
+    });
+  });
   post('/notes/create', Auth.verifySessionOrRedirect, async (req, res) => {
     const { body, session } = req;
     const [code, data, uuid] = await api.note.post(session.user, {

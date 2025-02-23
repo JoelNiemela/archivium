@@ -24,10 +24,10 @@ async function getOne(user, uuid) {
 
 /**
  * This should never be called on it's own.
- * Users should only have access to notes in one of the following ways:
+ * Users should have access to notes iff:
  * * they own the note,
  * * they have access to a board this note is pinned to, or,
- * * they have write access to an item this note is linked to.
+ * * they have access to an item this note is linked to.
  * @param {*} user 
  * @param {*} conditions 
  * @param {*} options 

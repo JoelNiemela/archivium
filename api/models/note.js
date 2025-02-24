@@ -10,7 +10,7 @@ async function getOne(user, uuid) {
   if (!user) return [401];
 
   try {
-    const [code, notes] = await getMany(user, { 'note.uuid': uuid }, { limit: 1, fullBody: true });
+    const [code, notes] = await getMany(user, { 'note.uuid': uuid }, { limit: 1, fullBody: true, connections: true });
     if (!notes) return [code];
     const note = notes[0];
     if (!note) return [404];
@@ -44,12 +44,25 @@ async function getMany(user, conditions, options) {
         note.public, note.author_id,
         note.created_at, note.updated_at,
         ${options?.fullBody ? 'note.body' : 'SUBSTRING(note.body, 1, 255) AS body'}
+        ${options?.connections ? ', JSON_ARRAYAGG(JSON_ARRAY(item.title, item.shortname, iu.title, iu.shortname)) as items' : ''}
+        ${options?.connections ? ', JSON_ARRAYAGG(JSON_ARRAY(noteboard.title, noteboard.shortname, nu.title, nu.shortname)) as boards' : ''}
       FROM note
-      ${options?.join ?? ''}
+        LEFT JOIN itemnote ON itemnote.note_id = note.id
+        LEFT JOIN boardnote ON boardnote.note_id = note.id
+        ${options?.join ?? ''}
+        ${options?.connections ? 'LEFT JOIN item ON itemnote.item_id = item.id' : ''}
+        ${options?.connections ? 'LEFT JOIN universe AS iu ON iu.id = item.universe_id' : ''}
+        ${options?.connections ? 'LEFT JOIN noteboard ON boardnote.board_id = noteboard.id' : ''}
+        ${options?.connections ? 'LEFT JOIN universe AS nu ON nu.id = noteboard.universe_id' : ''}
       WHERE ${parsedConds.strings.join(' AND ')}
+      ${options?.connections ? 'GROUP BY note.id' : ''}
       ${options?.limit ? `LIMIT ${options.limit}` : ''}
     `;
     const notes = await executeQuery(queryString, parsedConds.values);
+    if (options?.limit === 1 && options?.connections) {
+      notes[0].items = notes[0].items.filter(val => val[0] !== null);
+      notes[0].boards = notes[0].boards.filter(val => val[0] !== null);
+    }
     return [200, notes];
   } catch (err) {
     logger.error(err);
@@ -80,7 +93,7 @@ async function getByItemShortname(user, universeShortname, itemShortname, condit
     const [_, notes] = await getMany(
       user,
       { ...conditions ?? {}, 'itemnote.item_id': item?.id },
-      { ...options ?? {}, join: 'INNER JOIN itemnote ON itemnote.note_id = note.id' },
+      { ...options ?? {} },
     );
     if (inclAuthors) {
       const queryString2 = `
@@ -123,7 +136,7 @@ async function getByBoardShortname(user, shortname, conditions, options, validat
     const [_, notes] = await getMany(
       user,
       { ...conditions ?? {}, 'boardnote.board_id': board.id },
-      { ...options ?? {}, join: 'INNER JOIN boardnote ON boardnote.note_id = note.id' },
+      { ...options ?? {} },
     );
     if (inclAuthors) {
       const queryString2 = `
@@ -172,7 +185,7 @@ async function post(user, { title, body, public }) {
   }
 }
 
-async function put(user, uuid, { title, body, public }) {
+async function put(user, uuid, { title, body, public, items, boards }) {
   const [code, note] = await getOne(user, uuid);
   if (!note) return [code];
 
@@ -186,6 +199,12 @@ async function put(user, uuid, { title, body, public }) {
       WHERE uuid = ?;
     `;
     const data = await executeQuery(queryString, [ title, body, public, note.uuid ]);
+
+    await executeQuery('DELETE FROM itemnote WHERE note_id = ?', [ note.id ]);
+    for (const { item, universe } of items ?? []) {
+      this.linkToItem(user, universe, item, uuid);
+    }
+
     return [200, data];
   } catch (err) {
     logger.error(err);

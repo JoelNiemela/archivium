@@ -53,7 +53,7 @@ async function getMany(user, conditions, permissionLevel=perms.READ) {
   }
 }
 
-function getManyByAuthorId(user, authorId) {
+function getManyByAuthorId(user, authorId, permissionLevel=perms.WRITE) {
   return getMany(user, {
     strings: [`
       EXISTS (
@@ -64,7 +64,7 @@ function getManyByAuthorId(user, authorId) {
       )
     `], values: [
       authorId,
-      perms.READ,
+      permissionLevel,
     ] 
   });
 }

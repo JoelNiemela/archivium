@@ -3,6 +3,7 @@ const Auth = require('../middleware/auth');
 const api = require('./');
 const logger = require('../logger');
 const email = require('../email');
+const { perms } = require('./utils');
 
 module.exports = function(app, upload) {
   class APIRoute {
@@ -69,7 +70,7 @@ module.exports = function(app, upload) {
         new APIRoute('/universes', {
           GET: async (req) => {
             const [code, user] = await api.user.getOne({ 'user.username': req.params.username });
-            if (code) return api.universe.getManyByAuthorId(req.session.user, user.id);
+            if (user) return api.universe.getManyByAuthorId(req.session.user, user.id);
             else return [code];
           }
         }),
@@ -119,7 +120,12 @@ module.exports = function(app, upload) {
           }, [
             new APIRoute('/:uuid', {
               GET: (req) => frmtData(
-                api.note.getByBoardShortname(req.session.user, req.params.boardShortname, { 'note.uuid': req.params.uuid }, { fullBody: true }),
+                api.note.getByBoardShortname(
+                  req.session.user,
+                  req.params.boardShortname,
+                  { 'note.uuid': req.params.uuid },
+                  { fullBody: true, connections: true, limit: 1 },
+                ),
                 (notes) => notes[0],
               ),
             }),
@@ -148,7 +154,7 @@ module.exports = function(app, upload) {
                     req.params.universeShortName,
                     req.params.itemShortName,
                     { 'note.uuid': req.params.uuid },
-                    { fullBody: true },
+                    { fullBody: true, connections: true, limit: 1 },
                   ),
                   (notes) => notes[0],
                 ),
@@ -202,6 +208,9 @@ module.exports = function(app, upload) {
         }, []),
       ]),
     ]),
+    new APIRoute('/writable-items', {
+      GET: async (req) => api.item.getMany(req.session.user, null, perms.WRITE),
+    }),
     new APIRoute('/exists', { POST: async (req) => {
       try {
         const tuples = [];

@@ -1,24 +1,37 @@
-function createSearchableSelect(id, options, onchange) {
+function createSearchableSelect(id, options, onchange, groups={}) {
   const input = createElement('input');
   const valueInput = createElement('input', { attrs: { id, hidden: true } });
-  const optionsContainer = createElement('div', { classList: ['options-container'], children: [
-    ...Object.keys(options).map(option => (
-      createElement('div', { attrs: { value: option, innerText: options[option] } })
-    )),
-  ] });
+  const optionsContainer = createElement('div', { classList: ['options-container'] });
   const select = createElement('div', { classList: ['searchable-select'], children: [
     input,
     valueInput,
     optionsContainer,
   ] });
 
-  select.setOptions = (options) => {
+  select.setOptions = (options, groups={}) => {
     optionsContainer.innerHTML = '';
+    const groupOptions = {};
     for (const key in options) {
-      optionsContainer.appendChild(createElement('div', { attrs: { value: key, innerText: options[key] } }));
+      const option = createElement('div', { classList: ['option'], attrs: { value: key, innerText: options[key] } });
+      if (groups[key]) {
+        if (!(groups[key] in groupOptions)) {
+          groupOptions[groups[key]] = createElement('div');
+          groupOptions[groups[key]].appendChild(createElement('div', { classList: ['option-group-heading'], children: [
+            createElement('b', { attrs: { innerText: groups[key] } })
+          ] }));
+        }
+        groupOptions[groups[key]].appendChild(option);
+      } else {
+        optionsContainer.appendChild(option);
+      }
+    }
+    for (const group in groupOptions) {
+      optionsContainer.appendChild(groupOptions[group]);
     }
     setupListeners();
   };
+
+  select.setOptions(options, groups);
 
   input.addEventListener('input', function() {
     valueInput.value = '';
@@ -44,7 +57,7 @@ function createSearchableSelect(id, options, onchange) {
   });
 
   function setupListeners() {
-    optionsContainer.querySelectorAll('div').forEach(function(option) {
+    optionsContainer.querySelectorAll('.option').forEach(function(option) {
       option.addEventListener('click', function() {
         valueInput.value = this.value;
         if (onchange) onchange(this.value);
@@ -53,7 +66,6 @@ function createSearchableSelect(id, options, onchange) {
       });
     });
   }
-  setupListeners();
   
   return select;
 }

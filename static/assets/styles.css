@@ -378,6 +378,12 @@ header {
   gap: 0.25rem 1rem;
 }
 
+@media only screen and (max-device-width: 480px) {
+  .notes {
+    grid-template-columns: 1fr;
+  }
+}
+
 table {
   border-collapse: collapse;
   border-radius: 0.25rem;
@@ -767,12 +773,19 @@ header .badge {
   box-sizing: border-box;
 }
 
-.options-container div {
+.options-container .option-group-heading {
+  padding: 0.125rem;
+  position: sticky;
+  top: 0;
+  background-color: #fff;
+}
+
+.options-container .option {
   padding: 0.25rem;
   cursor: pointer;
 }
 
-.options-container div:hover {
+.options-container .option:hover {
   background-color: #f1f1f1;
 }
 
@@ -828,6 +841,32 @@ input:checked + .slider:before {
   -webkit-transform: translateX(24px);
   -ms-transform: translateX(24px);
   transform: translateX(24px);
+}
+
+@media only screen and (max-device-width: 480px) {
+  .switch {
+    width: 96px;
+    height: 48px;
+  }
+  
+  .slider {
+    border-radius: 48px;
+  }
+  
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 36px;
+    width: 36px;
+    left: 6px;
+    bottom: 6px;
+  }
+  
+  input:checked + .slider:before {
+    -webkit-transform: translateX(48px);
+    -ms-transform: translateX(48px);
+    transform: translateX(48px);
+  }
 }
 
 /* Generic classes */

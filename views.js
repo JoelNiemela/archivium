@@ -540,10 +540,10 @@ module.exports = function(app) {
     if (body.note_board && body.note_universe) {
       const [code, data] = await api.note.linkToBoard(session.user, body.note_board, uuid);
       if (code !== 201) return console.error(`Error ${code}: ${data}`);
-      nextPage = nextPage || `${ADDR_PREFIX}/universes/${body.note_universe}/notes/${body.note_board}/${uuid}`;
+      nextPage = nextPage || `${ADDR_PREFIX}/universes/${body.note_universe}/notes/${body.note_board}?note=${uuid}`;
     }
     res.status(code);
-    if (code === 201) return res.redirect(nextPage || `${ADDR_PREFIX}/notes/${uuid}`);
+    if (code === 201) return res.redirect(nextPage || `${ADDR_PREFIX}/notes?note=${uuid}`);
     return console.error(`Error ${code}: ${data}`);
     // res.prepareRender('createUniverse', { error: data, ...req.body });
   });
@@ -553,16 +553,18 @@ module.exports = function(app) {
       title: body.note_title,
       public: body.note_public === 'on',
       body: body.note_body,
+      items: body.items,
+      boards: body.boards,
     });
     let nextPage;
     if (body.note_item && body.note_universe) {
       nextPage = nextPage || `${ADDR_PREFIX}/universes/${body.note_universe}/items/${body.note_item}?tab=notes&note=${body.note_uuid}`;
     }
     if (body.note_board && body.note_universe) {
-      nextPage = nextPage || `${ADDR_PREFIX}/universes/${body.note_universe}/notes/${body.note_board}/${body.note_uuid}`;
+      nextPage = nextPage || `${ADDR_PREFIX}/universes/${body.note_universe}/notes/${body.note_board}?note=${body.note_uuid}`;
     }
     res.status(code);
-    if (code === 200) return res.redirect(nextPage || `${ADDR_PREFIX}/notes/${body.note_uuid}`);
+    if (code === 200) return res.redirect(nextPage || `${ADDR_PREFIX}/notes?note=${body.note_uuid}`);
     return console.error(`Error ${code}: ${data}`);
     // res.prepareRender('createUniverse', { error: data, ...req.body });
   });

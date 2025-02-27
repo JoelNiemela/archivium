@@ -56,6 +56,7 @@ module.exports = function(app, upload) {
 
   const apiRoutes = new APIRoute('/api', {}, [
     new APIRoute('/*'),
+    new APIRoute('/subscribe', { POST: (req) => api.notification.subscribe(req.session.user, req.body) }),
     new APIRoute('/users', { GET: () => api.user.getMany() }, [
       new APIRoute('/:username', { GET: (req) => api.user.getOne({ 'user.username': req.params.username }) }, [
         new APIRoute('/send-verify-link', { GET: (req) => email.trySendVerifyLink(req.session.user, req.params.username) }),

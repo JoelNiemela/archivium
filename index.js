@@ -12,7 +12,7 @@ const ReCaptcha = require('./middleware/reCaptcha');
 const cron = require('node-cron');
 const backup = require('./db/backup');
 
-const { PORT, DOMAIN, ADDR_PREFIX, DEV_MODE } = require('./config');
+const { PORT, DOMAIN, ADDR_PREFIX, DEV_MODE, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY } = require('./config');
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));
@@ -37,6 +37,7 @@ cron.schedule('0 0 * * *', () => {
     backup();
 });
 
+
 // Emails
 const email = require('./email');
 
@@ -59,6 +60,10 @@ app.use('/', (req, res, next) => {
 });
 
 
+// Workers
+app.use(`${ADDR_PREFIX}/notifworker.js`, express.static(path.join(__dirname, 'static/workers/notifworker.js')));
+
+
 // Serve static assets
 app.use(`${ADDR_PREFIX}/static`, express.static(path.join(__dirname, 'static/')));
 
@@ -67,6 +72,44 @@ require('./views')(app);
 
 // Load api routes
 require('./api/routes')(app, upload);
+
+
+// Push notifications
+const webpush = require("web-push");
+webpush.setVapidDetails(
+  "mailto:contact@archivium.net",
+  VAPID_PUBLIC_KEY,
+  VAPID_PRIVATE_KEY
+);
+
+let subscriptions = [];
+app.post(`${ADDR_PREFIX}/subscribe`, (req, res, next) => {
+  const subscription = req.body;
+
+  const exists = subscriptions.some(sub => sub.endpoint === subscription.endpoint);
+  if (!exists) {
+    subscriptions.push(subscription);
+    console.log("New subscription added:", subscription.endpoint);
+  } else {
+    console.log("Duplicate subscription ignored:", subscription.endpoint);
+  }
+
+  res.status(201).json({ message: "Subscribed successfully!" });
+  next();
+});
+app.post(`${ADDR_PREFIX}/send-notification`, (req, res, next) => {
+  const payload = JSON.stringify({ title: "Hello!", body: "You got a push notification!" });
+
+  subscriptions.forEach((subscription, index) => {
+    webpush.sendNotification(subscription, payload).catch(err => {
+      console.error("Push error:", err);
+      subscriptions.splice(index, 1); // Remove invalid subscriptions
+    });
+  });
+
+  res.status(200).json({ message: "Notification sent!" });
+  next();
+});
 
 
 /* 

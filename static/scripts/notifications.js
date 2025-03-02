@@ -1,0 +1,103 @@
+const publicVapidKey = 'BOf0VGyqgEzvlGkc2rHYUDw7D9fbJYHn6H4YWIWY6nb0KheDYZaIUUqTOFNha8FgE5SsO-dpHbkhyOGukiqkwcQ';
+      
+async function checkRegisterServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.getRegistration();
+
+      if (registration) {
+        console.log('Existing Service Worker found.');
+        return registration;
+      }
+
+      const newRegistration = await navigator.serviceWorker.register('/notifworker.js');
+      console.log('New Service Worker registered.');
+
+      return newRegistration;
+
+    } catch (error) {
+      console.error('Service Worker registration failed:', error);
+    }
+  }
+}
+
+async function setSubscribeStatus() {
+  const register = await checkRegisterServiceWorker();
+  const serviceWorkerReady = await navigator.serviceWorker.ready;
+
+  const existingSubscription = await serviceWorkerReady.pushManager.getSubscription();
+
+  if (isSubscribed) {
+    if (existingSubscription) {
+      await fetch(' /api/unsubscribe', {
+        method: 'POST',
+        body: JSON.stringify(existingSubscription),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      existingSubscription.unsubscribe();
+
+      const bell = document.querySelector('#notification-bell');
+      bell.classList.remove('solid');
+      bell.textContent = 'notifications';
+      isSubscribed = false;
+    }
+  } else {
+    if (!('serviceWorker' in navigator && 'PushManager' in window && Notification.permission !== "denied")) return;
+
+    try {
+      console.log(existingSubscription ? 'Resubmitting old subscription...' : 'Creating new subscription...')
+
+      const subscription = existingSubscription || await register.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicVapidKey),
+      });
+
+      const response = await fetch(' /api/subscribe', {
+        method: 'POST',
+        body: JSON.stringify(subscription),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const bell = document.querySelector('#notification-bell');
+      if (response.status === 201) {
+        isSubscribed = true;
+        bell.classList.add('solid');
+        bell.textContent = 'notifications_active';
+      }
+
+      console.log('User subscribed!');
+    } catch (err) {
+      console.error(err);
+    }
+  }
+}
+
+// Convert base64 VAPID key to Uint8Array
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return new Uint8Array([...rawData].map(char => char.charCodeAt(0)));
+}
+
+async function checkSubscribed(callback) {
+  if (isSubscribed === null) {
+    const serviceWorkerReady = await navigator.serviceWorker.ready;
+    const existingSubscription = await serviceWorkerReady.pushManager.getSubscription();
+
+    if (existingSubscription) {
+      isSubscribed = await (await fetch(' /api/is-subscribed', {
+        method: 'POST',
+        body: JSON.stringify(existingSubscription),
+        headers: { 'Content-Type': 'application/json' },
+      })).json();
+    } else {
+      isSubscribed = false;
+    }
+  }
+
+  return callback(isSubscribed);
+}
+
+let isSubscribed = null;

@@ -1006,6 +1006,13 @@ input:checked + .slider:before {
   margin-bottom: 1rem;
 }
 
+.ml-1 {
+  margin-left: 0.25rem;
+}
+.ml-2 {
+  margin-left: 0.5rem;
+}
+
 .mr-1 {
   margin-right: 0.25rem;
 }
@@ -1031,6 +1038,20 @@ input:checked + .slider:before {
 }
 .pa-2 {
   padding: 0.5rem;
+}
+
+.pl-1 {
+  padding-left: 0.25rem;
+}
+.pl-2 {
+  padding-left: 0.5rem;
+}
+
+.pr-1 {
+  padding-right: 0.25rem;
+}
+.pr-2 {
+  padding-right: 0.5rem;
 }
 
 .w-50 {

@@ -23,6 +23,18 @@ async function getOne(user, endpoint) {
   }
 }
 
+async function getByEndpoint(endpoint) {
+  const endpointHash = md5(endpoint);
+
+  try {
+    const subscription = (await executeQuery('SELECT * FROM notificationsubscription WHERE endpoint_hash = ?', [endpointHash]))[0];
+    return [200, subscription];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
 async function getByUser(user) {
   try {
     const subscriptions = await executeQuery('SELECT * FROM notificationsubscription WHERE user_id = ?', [user.id]);
@@ -33,12 +45,18 @@ async function getByUser(user) {
   }
 }
 
+async function isSubscribed(user, subscriptionData) {
+  const { endpoint } = subscriptionData;
+  if (!endpoint || !user) return [200, false];
+  const [_, subscription] = await getByEndpoint(endpoint);
+  return [200, Boolean(subscription && subscription.user_id === user.id)];
+}
+
 async function subscribe(user, subscriptionData) {
   if (!user) return [401];
   const { endpoint, keys } = subscriptionData;
   if (!endpoint || !keys) return [400];
-  const [code, subscription] = await getOne(user, endpoint);
-  console.log(subscription)
+  const [code, subscription] = await getByEndpoint(endpoint);
   if (code !== 200) return [code, subscription];
   const endpointHash = md5(endpoint);
   if (!subscription) {
@@ -48,14 +66,30 @@ async function subscribe(user, subscriptionData) {
       endpoint,
       keys,
     ]);
-    logger.info('New subscription added for', user.username);
+    logger.info(`New subscription added for ${user.username}`);
   } else if (subscription.user_id !== user.id) {
     await executeQuery('UPDATE notificationsubscription SET user_id = ? WHERE endpoint_hash = ?', [user.id, endpointHash]);
-    logger.info('Subscription user changed to', user.username);
+    logger.info(`Subscription user changed to ${user.username}`);
   } else {
-    logger.info('Duplicate subscription ignored for', user.username);
+    logger.info(`Duplicate subscription ignored for ${user.username}`);
   }
   return [201, endpointHash];
+}
+
+async function unsubscribe(user, subscriptionData) {
+  if (!user) return [401];
+  const { endpoint, keys } = subscriptionData;
+  if (!endpoint || !keys) return [400];
+  const [code, subscription] = await getByEndpoint(endpoint);
+  if (code !== 200) return [code, subscription];
+  if (subscription && subscription.user_id === user.id) {
+    const endpointHash = md5(endpoint);
+    await executeQuery('DELETE FROM notificationsubscription WHERE user_id = ? AND endpoint_hash = ?', [user.id, endpointHash]);
+    logger.info(`Unsubscribed ${user.username}`);
+    return [200];
+  } else {
+    return [404];
+  }
 }
 
 async function notify(target, message) {
@@ -76,6 +110,8 @@ async function notify(target, message) {
 }
 
 module.exports = {
+  isSubscribed,
   subscribe,
+  unsubscribe,
   notify,
 };

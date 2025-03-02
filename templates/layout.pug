@@ -76,7 +76,12 @@ html(lang='en')
             a.navbarBtnLink.navbarText(href=`https://github.com/JoelNiemela/archivium/wiki` target='_blank') Help
         ul.navbarBtns
           block save
-          li.navbarBtn
+          if contextUser
+            - const navbarBell = false;
+            if navbarBell
+              li.navbarBtn
+                a.navbarBtnLink.navbarText.d-flex.align-center( onclick='toggleNotifications()' )
+                  span.material-symbols-outlined#notification-bell.hidden(style={ 'margin': '-1rem -0.25rem', 'font-size': 'xx-large' }) notifications
             script.
               function toggleNotifications() {
                 setSubscribeStatus();
@@ -89,9 +94,6 @@ html(lang='en')
                   bell.classList.remove('hidden');
                 }
               })
-            a.navbarBtnLink.navbarText.d-flex.align-center( onclick='toggleNotifications()' )
-              span.material-symbols-outlined#notification-bell.hidden(style={ 'margin': '-1rem -0.25rem', 'font-size': 'xx-large' }) notifications
-          if contextUser
             li.navbarBtn( style={ position: 'relative' } )
               script.
                 function toggleUserDropdown(force=undefined) {
@@ -111,6 +113,11 @@ html(lang='en')
                     a.navbarBtnLink.navbarText.text-start.d-flex.align-center.gap-2(href=`${ADDR_PREFIX}/settings`)
                       span.material-symbols-outlined settings
                       | Settings
+                  if !navbarBell
+                    li.navbarBtn
+                      a.navbarBtnLink.navbarText.text-start.d-flex.align-center.gap-2(href=`${ADDR_PREFIX}/notifications`)
+                        span.material-symbols-outlined#notification-bell notifications
+                        | Notifications
                   li.navbarBtn
                     a.navbarBtnLink.navbarText.text-start.d-flex.align-center.gap-2(href=`${ADDR_PREFIX}/logout`)
                       span.material-symbols-outlined logout

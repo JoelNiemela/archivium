@@ -44,6 +44,7 @@ html(lang='en')
       function T(str) {
         return locale[str] ?? str;
       }
+      const VAPID_PUBLIC_KEY = '#{VAPID_PUBLIC_KEY}';
     script
       include /static/scripts/notifications.js
     block scripts

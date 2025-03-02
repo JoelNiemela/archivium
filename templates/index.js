@@ -1,5 +1,5 @@
 const pug = require('pug');
-const { ADDR_PREFIX } = require('../config');
+const { ADDR_PREFIX, VAPID_PUBLIC_KEY } = require('../config');
 const { perms } = require('../api/utils');
 const api = require('../api');
 const md5 = require('md5');
@@ -61,6 +61,7 @@ function contextData(req) {
   return {
     contextUser,
     ADDR_PREFIX,
+    VAPID_PUBLIC_KEY,
     encodedPath: pageQuery.toString(),
     searchQueries: searchQueries.toString(),
     perms,

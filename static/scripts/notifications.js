@@ -1,5 +1,3 @@
-const publicVapidKey = 'BOf0VGyqgEzvlGkc2rHYUDw7D9fbJYHn6H4YWIWY6nb0KheDYZaIUUqTOFNha8FgE5SsO-dpHbkhyOGukiqkwcQ';
-      
 async function checkRegisterServiceWorker() {
   if ('serviceWorker' in navigator) {
     try {
@@ -50,7 +48,7 @@ async function setSubscribeStatus() {
 
       const subscription = existingSubscription || await register.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicVapidKey),
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
       });
 
       const response = await fetch(' /api/subscribe', {

@@ -1,6 +1,6 @@
 const pug = require('pug');
 const { ADDR_PREFIX, VAPID_PUBLIC_KEY } = require('../config');
-const { perms } = require('../api/utils');
+const { perms, getPfpUrl } = require('../api/utils');
 const api = require('../api');
 const md5 = require('md5');
 const path = require('path');
@@ -33,10 +33,6 @@ const locale = {
     [`perms_${perms.ADMIN}`]: 'Admin',
   }
 };
-
-function getPfpUrl(user) {
-  return user.hasPfp ? `/api/users/${user.username}/pfp` : `https://www.gravatar.com/avatar/${md5(user.email)}.jpg`;
-}
 
 // Basic context information to be sent to the templates
 function contextData(req) {
@@ -113,6 +109,7 @@ const templates = {
   verify: compile('templates/verify.pug'),
   settings: compile('templates/edit/settings.pug'),
   spamblock: compile('templates/spamblock.pug'),
+  notifications: compile('templates/view/notifications.pug'),
 };
 
 function render(req, template, context = {}) {
@@ -126,6 +123,5 @@ function render(req, template, context = {}) {
 }
 
 module.exports = {
-  getPfpUrl,
   render,
 };

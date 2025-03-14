@@ -78,23 +78,6 @@ html(lang='en')
         ul.navbarBtns
           block save
           if contextUser
-            - const navbarBell = false;
-            if navbarBell
-              li.navbarBtn
-                a.navbarBtnLink.navbarText.d-flex.align-center( onclick='toggleNotifications()' )
-                  span.material-symbols-outlined#notification-bell.hidden(style={ 'margin': '-1rem -0.25rem', 'font-size': 'xx-large' }) notifications
-            script.
-              function toggleNotifications() {
-                setSubscribeStatus();
-              }
-              checkSubscribed((isSubscribed) => {
-                const bell = document.querySelector('#notification-bell');
-                if (isSubscribed) {
-                  bell.classList.add('solid');
-                  bell.textContent = 'notifications_active';
-                  bell.classList.remove('hidden');
-                }
-              })
             li.navbarBtn( style={ position: 'relative' } )
               script.
                 function toggleUserDropdown(force=undefined) {
@@ -114,11 +97,10 @@ html(lang='en')
                     a.navbarBtnLink.navbarText.text-start.d-flex.align-center.gap-2(href=`${ADDR_PREFIX}/settings`)
                       span.material-symbols-outlined settings
                       | Settings
-                  if !navbarBell
-                    li.navbarBtn
-                      a.navbarBtnLink.navbarText.text-start.d-flex.align-center.gap-2(href=`${ADDR_PREFIX}/notifications`)
-                        span.material-symbols-outlined#notification-bell notifications
-                        | Notifications
+                  li.navbarBtn
+                    a.navbarBtnLink.navbarText.text-start.d-flex.align-center.gap-2(href=`${ADDR_PREFIX}/notifications`)
+                      span.material-symbols-outlined notifications
+                      | Notifications
                   li.navbarBtn
                     a.navbarBtnLink.navbarText.text-start.d-flex.align-center.gap-2(href=`${ADDR_PREFIX}/logout`)
                       span.material-symbols-outlined logout

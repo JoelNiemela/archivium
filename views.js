@@ -2,8 +2,8 @@ const { ADDR_PREFIX, DEV_MODE } = require('./config');
 const Auth = require('./middleware/auth');
 const api = require('./api');
 const md5 = require('md5');
-const { getPfpUrl, render } = require('./templates');
-const { perms, Cond } = require('./api/utils');
+const { render } = require('./templates');
+const { perms, Cond, getPfpUrl } = require('./api/utils');
 const fs = require('fs/promises');
 const logger = require('./logger');
 const email = require('./email');
@@ -593,5 +593,14 @@ module.exports = function(app) {
       res.prepareRender('search', { items: [], universes: [], search: '' });
     }
     
+  });
+
+  get('/notifications', Auth.verifySessionOrRedirect, async (req, res) => {
+    if (req.session.user) {
+      const [code, notifications] = await api.notification.getSentNotifications(req.session.user);
+      res.status(code);
+      if (code !== 200) return;
+      res.prepareRender('notifications', { notifications });
+    }
   });
 }

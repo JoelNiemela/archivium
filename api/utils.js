@@ -1,5 +1,6 @@
 const db = require('../db');
 const _ = require('lodash');
+const md5 = require('md5');
 
 const perms = {
   NONE: 0,
@@ -182,10 +183,15 @@ class MultiCond extends Cond {
   }
 }
 
+function getPfpUrl(user) {
+  return user.hasPfp ? `/api/users/${user.username}/pfp` : `https://www.gravatar.com/avatar/${md5(user.email)}.jpg`;
+}
+
 module.exports = {
   perms,
   executeQuery,
   parseData,
   QueryBuilder,
   Cond,
+  getPfpUrl,
 };

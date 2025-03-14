@@ -1,0 +1,31 @@
+extends ../layout.pug
+include ../mixins.pug
+
+block breadcrumbs
+  a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
+  |  / 
+  span #{T('Notifications')}
+
+block content
+  script
+    include /static/scripts/cardUtils.js
+    include /static/scripts/listUtils.js
+
+  h1.center Notifications
+  hr
+  p
+    i #{notifications.length} notification(s)
+
+  .d-flex.flex-col.gap-4
+    each notification in notifications
+      .sheet.d-flex.gap-4.align-start
+        img.userIcon( src=notification.icon_url || '/static/assets/icons/archivium-192.png' )
+        .d-flex.flex-col.grow-1
+          div
+            if notification.click_url
+              a.link.link-animated.mr-2( href=notification.click_url ) 
+                b #{notification.title}
+            else
+              b #{notification.title} 
+            small #{formatDate(notification.sent_at)}
+          p #{notification.body}

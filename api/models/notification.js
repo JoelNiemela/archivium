@@ -92,11 +92,11 @@ async function unsubscribe(user, subscriptionData) {
   }
 }
 
-async function notify(target, message) {
-  const { title, body, icon, actions } = message;
+async function notify(target, notifType, message) {
+  const { title, body, icon, clickUrl } = message;
   if (!title || !body) return [400];
 
-  const payload = JSON.stringify({ title, body, icon, actions });
+  const payload = JSON.stringify({ title, body, icon, clickUrl });
   const [code, subscriptions] = await getByUser(target);
   if (!subscriptions) return [code];
   for (const { push_endpoint, push_keys } of subscriptions) {
@@ -106,12 +106,39 @@ async function notify(target, message) {
     });
   }
 
+  await executeQuery('INSERT INTO sentnotification (title, body, icon_url, click_url, notif_type, user_id, sent_at) VALUES (?, ?, ?, ?, ?, ?, ?)', [
+    title,
+    body,
+    icon,
+    clickUrl,
+    notifType,
+    target.id,
+    new Date(),
+  ]);
+
   return [200, true];
 }
 
+async function getSentNotifications(user) {
+  if (!user) return [401];
+  try {
+    const notifications = await executeQuery('SELECT * FROM sentnotification WHERE user_id = ? ORDER BY sent_at DESC', [user.id]);
+    return [200, notifications];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
+const types = {
+  CONTACTS: 'contacts',
+};
+
 module.exports = {
+  types,
   isSubscribed,
   subscribe,
   unsubscribe,
   notify,
+  getSentNotifications,
 };

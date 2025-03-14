@@ -267,3 +267,16 @@ CREATE TABLE notificationtype (
   is_enabled BOOLEAN NOT NULL,
   FOREIGN KEY (user_id) REFERENCES user (id)
 );
+
+CREATE TABLE sentnotification (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(128),
+  body TEXT NOT NULL,
+  icon_url TEXT,
+  click_url TEXT,
+  notif_type VARCHAR(16) NOT NULL,
+  user_id INT NOT NULL,
+  sent_at TIMESTAMP NOT NULL,
+  is_read BOOLEAN DEFAULT FALSE,
+  FOREIGN KEY (user_id) REFERENCES user (id)
+);

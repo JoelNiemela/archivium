@@ -258,6 +258,8 @@ block append styles
 
       let linkedItemCounter = 0;
       function addLinkedItem(shortname, title, universe_short, universe) {
+        const exists = noteItemsList.querySelectorAll(`li[data-item=${shortname}]`).length > 0;
+        if (exists) return;
         const i = linkedItemCounter++;
         noteItemsList.appendChild(createElement('li', { classList: ['d-flex', 'align-center'], dataset: {item: shortname}, children: [
           createElement('a', { attrs: {

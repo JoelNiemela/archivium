@@ -159,6 +159,7 @@ block append styles
         updateDisplay(easyMDE.value());
         editForm.note_body.value = easyMDE.value();
       });
+      let editorNeedsRefresh = false;
 
 
       function showNoteEditControls() {
@@ -175,6 +176,7 @@ block append styles
         noteEdit.classList.remove('hidden');
         editForm.classList.remove('hidden');
         previewPanel.classList.add('hidden');
+        if (editorNeedsRefresh) easyMDE.codemirror.refresh();
       }
 
       function previewNote() {
@@ -218,6 +220,7 @@ block append styles
         const { title, public, body, author_id, items, boards } = note;
         console.log(items, boards)
         easyMDE.value(body);
+        editorNeedsRefresh = true;
         editForm.note_title.value = title;
         editForm.note_public.checked = public;
         if (!itemsAndBoards.items) {

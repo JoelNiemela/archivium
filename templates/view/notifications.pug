@@ -11,10 +11,44 @@ block content
     include /static/scripts/cardUtils.js
     include /static/scripts/listUtils.js
 
-  h1.center Notifications
+  .center
+    h1 Notifications
+    small
+      i You can decide which things you will receive notifications for on the 
+        a.link.link-animated( href=`${ADDR_PREFIX}/settings` ) settings
+        |  page.
   hr
-  p
-    i #{notifications.length} notification(s)
+  .d-flex.align-center.gap-4.my-4
+    p.ma-0
+      i #{notifications.length} notification(s)
+    div
+      .d-flex.align-center.pa-2.pb-0
+        a.link( onclick='toggleNotifications()' )
+          span#notification-bell.material-symbols-outlined.mr-1(
+            style={ 'font-size': 'xx-large' }
+            title='Loading...'
+          ) notifications
+        small#notification-text Loading...
+      script.
+        function updateBell(isSubscribed) {
+          const bell = document.querySelector('#notification-bell');
+          const text = document.querySelector('#notification-text');
+          if (isSubscribed) {
+            bell.classList.add('solid');
+            bell.textContent = 'notifications_active';
+            bell.title = 'Click to disable push notifications';
+            text.textContent = 'Push Notifications On';
+          } else {
+            bell.classList.remove('solid');
+            bell.textContent = 'notifications';
+            bell.title = 'Click to enable push notifications';
+            text.textContent = 'Push Notifications Off';
+          }
+        }
+        function toggleNotifications() {
+          setSubscribeStatus(updateBell);
+        }
+        checkSubscribed(updateBell);
 
   .d-flex.flex-col.gap-4
     each notification in notifications

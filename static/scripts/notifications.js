@@ -19,7 +19,7 @@ async function checkRegisterServiceWorker() {
   }
 }
 
-async function setSubscribeStatus() {
+async function setSubscribeStatus(callback) {
   const register = await checkRegisterServiceWorker();
   const serviceWorkerReady = await navigator.serviceWorker.ready;
 
@@ -34,10 +34,6 @@ async function setSubscribeStatus() {
       });
 
       existingSubscription.unsubscribe();
-
-      const bell = document.querySelector('#notification-bell');
-      bell.classList.remove('solid');
-      bell.textContent = 'notifications';
       isSubscribed = false;
     }
   } else {
@@ -57,11 +53,8 @@ async function setSubscribeStatus() {
         headers: { 'Content-Type': 'application/json' },
       });
 
-      const bell = document.querySelector('#notification-bell');
       if (response.status === 201) {
         isSubscribed = true;
-        bell.classList.add('solid');
-        bell.textContent = 'notifications_active';
       }
 
       console.log('User subscribed!');
@@ -69,6 +62,8 @@ async function setSubscribeStatus() {
       console.error(err);
     }
   }
+
+  if (callback) callback(isSubscribed);
 }
 
 // Convert base64 VAPID key to Uint8Array
@@ -95,7 +90,7 @@ async function checkSubscribed(callback) {
     }
   }
 
-  return callback(isSubscribed);
+  if (callback) return callback(isSubscribed);
 }
 
 let isSubscribed = null;

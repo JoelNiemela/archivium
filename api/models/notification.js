@@ -1,15 +1,17 @@
 const { executeQuery, parseData } = require('../utils');
-const { VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY } = require('../../config');
+const { WEB_PUSH_ENABLED, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY } = require('../../config');
 const userapi = require('./user');
 const logger = require('../../logger');
 const md5 = require('md5');
 const webpush = require('web-push');
 
-webpush.setVapidDetails(
-  'mailto:contact@archivium.net',
-  VAPID_PUBLIC_KEY,
-  VAPID_PRIVATE_KEY
-);
+if (WEB_PUSH_ENABLED) {
+  webpush.setVapidDetails(
+    'mailto:contact@archivium.net',
+    VAPID_PUBLIC_KEY,
+    VAPID_PRIVATE_KEY
+  );
+}
 
 async function getOne(user, endpoint) {
   const endpointHash = md5(endpoint);
@@ -97,13 +99,15 @@ async function notify(target, notifType, message) {
   if (!title || !body) return [400];
 
   const payload = JSON.stringify({ title, body, icon, clickUrl });
-  const [code, subscriptions] = await getByUser(target);
-  if (!subscriptions) return [code];
-  for (const { push_endpoint, push_keys } of subscriptions) {
-    webpush.sendNotification({ endpoint: push_endpoint, keys: push_keys }, payload).catch(err => {
-      logger.error('Push error:', err);
-      // subscriptions.splice(index, 1); // Remove invalid subscriptions
-    });
+  if (WEB_PUSH_ENABLED) {
+    const [code, subscriptions] = await getByUser(target);
+    if (!subscriptions) return [code];
+    for (const { push_endpoint, push_keys } of subscriptions) {
+      webpush.sendNotification({ endpoint: push_endpoint, keys: push_keys }, payload).catch(err => {
+        logger.error('Push error:', err);
+        // subscriptions.splice(index, 1); // Remove invalid subscriptions
+      });
+    }
   }
 
   await executeQuery('INSERT INTO sentnotification (title, body, icon_url, click_url, notif_type, user_id, sent_at) VALUES (?, ?, ?, ?, ?, ?, ?)', [

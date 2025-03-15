@@ -60,6 +60,7 @@ jobs:
           DEV_MODE: true
           SENDGRID_API_KEY: 
           OPENAI_API_KEY: 
+          WEB_PUSH_ENABLED: false
 
           ARCHIVIUM_DB_HOST: localhost
           ARCHIVIUM_DB_USER: testuser

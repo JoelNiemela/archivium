@@ -12,6 +12,7 @@ const {
   ARCHIVIUM_DB_USER,
   ARCHIVIUM_DB_PASSWORD,
   ARCHIVIUM_DB,
+  WEB_PUSH_ENABLED,
   VAPID_PUBLIC_KEY,
   VAPID_PRIVATE_KEY,
 } = process.env;
@@ -23,6 +24,7 @@ module.exports.DEV_MODE = DEV_MODE === 'true';
 module.exports.SENDGRID_API_KEY = SENDGRID_API_KEY;
 module.exports.OPENAI_API_KEY = OPENAI_API_KEY;
 module.exports.RECAPTCHA_KEY = RECAPTCHA_KEY;
+module.exports.WEB_PUSH_ENABLED = Boolean(WEB_PUSH_ENABLED);
 module.exports.VAPID_PUBLIC_KEY = VAPID_PUBLIC_KEY;
 module.exports.VAPID_PRIVATE_KEY = VAPID_PRIVATE_KEY;
 

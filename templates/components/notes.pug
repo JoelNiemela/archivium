@@ -87,9 +87,9 @@ block append styles
         ul#note-items-edit.ma-0.pa-0
         #note-items
 
-        label Pinned boards:
-        ul#note-boards-edit.ma-0.pa-0
-        #note-boards
+        //- label Pinned boards:
+        //- ul#note-boards-edit.ma-0.pa-0
+        //- #note-boards
         
         input.hidden( id='create' type='submit' value='Create' formaction=`${ADDR_PREFIX}/notes/create` )
         input.hidden( id='save' type='submit' value='Save' formaction=`${ADDR_PREFIX}/notes/edit` )
@@ -105,9 +105,9 @@ block append styles
         ul#note-items-list.ma-0
         #note-items
 
-        h3 Pinned boards:
-        ul#note-boards-list.ma-0
-        #note-boards
+        //- h3 Pinned boards:
+        //- ul#note-boards-list.ma-0
+        //- #note-boards
 
 
   script.
@@ -130,11 +130,11 @@ block append styles
       const editForm = noteControls.querySelector('.edit');
       const previewPanel = noteControls.querySelector('.preview');
       const noteItems = document.querySelector('#note-items');
-      const noteBoards = document.querySelector('#note-boards');
+      //- const noteBoards = document.querySelector('#note-boards');
       const noteItemsList = document.querySelector('.edit #note-items-edit');
-      const noteBoardsList = document.querySelector('.edit #note-boards-edit');
+      //- const noteBoardsList = document.querySelector('.edit #note-boards-edit');
       const noteItemsPreviewList = document.querySelector('.preview #note-items-list');
-      const noteBoardsPreviewList = document.querySelector('.preview #note-boards-list');
+      //- const noteBoardsPreviewList = document.querySelector('.preview #note-boards-list');
       const itemsAndBoards = {};
 
       const controlTabs = document.querySelector('#note-control-tabs');
@@ -218,7 +218,6 @@ block append styles
         loadingNote();
         const [, note] = await getJSON(`#{noteBaseRoute}/${uuid}`);
         const { title, public, body, author_id, items, boards } = note;
-        console.log(items, boards)
         easyMDE.value(body);
         editorNeedsRefresh = true;
         editForm.note_title.value = title;

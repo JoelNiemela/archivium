@@ -249,7 +249,7 @@ block append styles
           addLinkedItem(itemShort, item, uniShort, uni);
         }
         updateTitle(title);
-        if (author_id === #{contextUser.id}) controlTabs.classList.remove('hidden');
+        if (#{contextUser ? `author_id === ${contextUser.id}` : 'false'}) controlTabs.classList.remove('hidden');
         noteState = 'edit';
         leftBtn.classList.remove('hidden');
 

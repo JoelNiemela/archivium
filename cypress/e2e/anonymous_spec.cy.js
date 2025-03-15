@@ -17,6 +17,7 @@ describe('Anonymous user spec', () => {
       '/search',
       '/universes/public-test-universe',
       '/universes/public-test-universe/items',
+      '/universes/public-test-universe/items/test-article',
       '/universes/public-test-universe/items/test-character',
     ];
     for (const page of pages) {

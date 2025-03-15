@@ -74,17 +74,6 @@ require('./views')(app);
 require('./api/routes')(app, upload);
 
 
-// for notif testing
-app.post(`${ADDR_PREFIX}/send-notification`, async (req, res, next) => {
-  const [code, user] = await api.user.getOne({ 'user.username': req.body.username });
-  if (!user ) return res.status(code);
-  api.notification.notify(user, { title: "Hello!", body: "You got a push notification!" })
-
-  res.status(200).json({ message: "Notification sent!" });
-  next();
-});
-
-
 /* 
   ACCOUNT ROUTES
 */

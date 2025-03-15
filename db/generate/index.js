@@ -53,6 +53,14 @@ async function postComment(poster, thread, comment) {
   await api.discussion.postCommentToThread(poster, thread.id, { body: comment });
 }
 
+async function createNote(owner, title, body, public, items=[], boards=[]) {
+  const [,, uuid] = await api.note.post(owner, { title, body, public });
+  const [, note] = await api.note.getOne(owner, uuid);
+  for (const item of items) {
+    await api.note.linkToItem(owner, item.universe_short, item.shortname, uuid);
+  }
+  return note;
+}
 async function main() {
   await db.connectPromise;
 
@@ -61,6 +69,13 @@ async function main() {
   await loadSchema(schemaConn);
 
   console.log('Generating testing database...');
+
+  const loremIpsum = `
+    Lorem ipsum odor amet, consectetuer adipiscing elit. Eleifend pellentesque eu; ipsum hendrerit facilisis luctus mauris netus.
+    Varius curabitur amet vel donec sed nullam. Vestibulum eget facilisi conubia montes scelerisque curae augue odio.
+    Facilisi elit velit erat nunc sem eu finibus finibus. Rutrum nec aliquet est montes laoreet fusce egestas.
+    Habitasse velit nec aenean aliquam mi dictum. Donec faucibus aliquam duis viverra amet lacus sit penatibus.
+  `;
 
   console.log('Creating users...');
   const users = {};
@@ -117,14 +132,15 @@ async function main() {
   await postComment(users.testcommenter, privateThread, 'Test question?');
   await postComment(users.testadmin, privateThread, 'Test answer.');
   await postComment(users.testuser, chatroomThread, 'Hello world!');
-  await postComment(users.testreader, chatroomThread, `
-    Lorem ipsum odor amet, consectetuer adipiscing elit.Eleifend pellentesque eu; ipsum hendrerit facilisis luctus mauris netus.
-    Varius curabitur amet vel donec sed nullam. Vestibulum eget facilisi conubia montes scelerisque curae augue odio.
-    Facilisi elit velit erat nunc sem eu finibus finibus. Rutrum nec aliquet est montes laoreet fusce egestas.
-    Habitasse velit nec aenean aliquam mi dictum. Donec faucibus aliquam duis viverra amet lacus sit penatibus.
-  `);
+  await postComment(users.testreader, chatroomThread, loremIpsum);
   await postComment(users.testcommenter, chatroomThread, 'Test comment.');
   await postComment(users.testwriter, chatroomThread, '# Markdown test\n- **bold**\n- *italics*\n- etc.');
+
+  console.log('Creating notes...');
+  await createNote(users.testwriter, 'Public Test Note', loremIpsum, true);
+  await createNote(users.testwriter, 'Public Article Note', loremIpsum, true, [testArticle]);
+  await createNote(users.testwriter, 'Private Test Note', loremIpsum, false);
+  await createNote(users.testwriter, 'Private Article Note', loremIpsum, false, [testArticle]);
 
   schemaConn.end();
   db.end();

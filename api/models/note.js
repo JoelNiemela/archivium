@@ -36,8 +36,12 @@ async function getOne(user, uuid) {
 async function getMany(user, conditions, options) {
   try {
     const parsedConds = parseData(conditions ?? {});
-    parsedConds.strings.push('(note.public OR note.author_id = ?)');
-    parsedConds.values.push(user?.id);
+    if (user) {
+      parsedConds.strings.push('(note.public OR note.author_id = ?)');
+      parsedConds.values.push(user.id);
+    } else {
+      parsedConds.strings.push('note.public');
+    }
     const queryString = `
       SELECT
         note.id, note.uuid, note.title,

@@ -22,6 +22,7 @@ describe('Anonymous user spec', () => {
     for (const page of pages) {
       cy.visit(page);
       cy.url().should('include', Cypress.config().baseUrl + page);
+      cy.get('.error').should('not.exist');
     }
   });
 

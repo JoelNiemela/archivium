@@ -80,9 +80,11 @@ block content
     if item.obj_data.comments
       li.navbarBtn( data-tab='comments' )
         h3.navbarBtnLink.navbarText.ma-0( onclick=`showTab('comments')` ) #{capitalize(T('comments'))}
-    if item.obj_data.notes
+    if item.obj_data.notes || (contextUser && universe.author_permissions[contextUser.id] >= perms.WRITE && notes.length > 0)
       li.navbarBtn( data-tab='notes' )
           h3.navbarBtnLink.navbarText.ma-0( onclick=`showTab('notes')` ) #{capitalize(T('notes'))}
+            if !item.obj_data.notes
+              |  (Hidden)
 
   
   script!= `window.item = ${JSON.stringify(item)};`
@@ -133,8 +135,14 @@ block content
       .hidden( data-tab='comments' )
         include ../components/comments.pug
         
-    if item.obj_data.notes
+    if item.obj_data.notes || (contextUser && universe.author_permissions[contextUser.id] >= perms.WRITE && notes.length > 0)
       .hidden( data-tab='notes' )
+        if !item.obj_data.notes
+          .center
+            .ma-auto.my-2( style={ 'max-width': '32rem' } )
+              small
+                i This tab is visible to you since this item has notes linked to it and you have edit access. 
+                  | To make this tab visible to everyone, enable notes for this item.
         include ../components/notes.pug
 
     if 'body' in item.obj_data

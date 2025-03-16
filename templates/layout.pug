@@ -25,7 +25,7 @@ html(lang='en')
     link(rel='stylesheet' href=`${ADDR_PREFIX}/static/assets/styles.css`)
     link(rel='icon' type='image/x-icon' href=`${ADDR_PREFIX}/static/assets/icons/archivium.ico`)
 
-    - const icons  = ['edit', 'add', 'delete', 'settings', 'logout', 'person', 'notifications_active', 'notifications'].sort();
+    - const icons  = ['edit', 'add', 'delete', 'settings', 'logout', 'person', 'notifications_active', 'notifications', 'mark_email_unread', 'drafts'].sort();
     link(rel='stylesheet' href=`https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=${icons.join(',')}`)
     style.
       .material-symbols-outlined {
@@ -112,7 +112,7 @@ html(lang='en')
                   const drop = document.querySelector('.user-dropdown');
                   drop.classList.toggle('hidden', force);
                   const badge = document.querySelector('.pfp .badge');
-                  badge.classList.toggle('invisible', force !== undefined ? !force : undefined);
+                  if (badge) badge.classList.toggle('invisible', force !== undefined ? !force : undefined);
                 }
                 window.addEventListener('click', () => toggleUserDropdown(true));
                 document.querySelector('#user-dropdown-btn').addEventListener('click', (e) => {

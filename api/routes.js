@@ -56,8 +56,11 @@ module.exports = function(app, upload) {
 
   const apiRoutes = new APIRoute('/api', {}, [
     new APIRoute('/*'),
-    new APIRoute('/subscribe', { POST: (req) => api.notification.subscribe(req.session.user, req.body) }),
-    new APIRoute('/unsubscribe', { POST: (req) => api.notification.unsubscribe(req.session.user, req.body) }),
+    new APIRoute('/notifications', {}, [
+      new APIRoute('/subscribe', { POST: (req) => api.notification.subscribe(req.session.user, req.body) }),
+      new APIRoute('/unsubscribe', { POST: (req) => api.notification.unsubscribe(req.session.user, req.body) }),
+      new APIRoute('/:id', { PUT: (req) => api.notification.markRead(req.session.user, req.params.id, req.body.isRead) }),
+    ]),
     new APIRoute('/is-subscribed', { POST: (req) => api.notification.isSubscribed(req.session.user, req.body) }),
     new APIRoute('/users', { GET: () => api.user.getMany() }, [
       new APIRoute('/:username', { GET: (req) => api.user.getOne({ 'user.username': req.params.username }) }, [

@@ -27,7 +27,7 @@ async function setSubscribeStatus(callback) {
 
   if (isSubscribed) {
     if (existingSubscription) {
-      await fetch(' /api/unsubscribe', {
+      await fetch(' /api/notifications/unsubscribe', {
         method: 'POST',
         body: JSON.stringify(existingSubscription),
         headers: { 'Content-Type': 'application/json' },
@@ -47,7 +47,7 @@ async function setSubscribeStatus(callback) {
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
       });
 
-      const response = await fetch(' /api/subscribe', {
+      const response = await fetch(' /api/notifications/subscribe', {
         method: 'POST',
         body: JSON.stringify(subscription),
         headers: { 'Content-Type': 'application/json' },

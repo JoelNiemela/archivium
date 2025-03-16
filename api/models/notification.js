@@ -134,6 +134,18 @@ async function getSentNotifications(user) {
   }
 }
 
+async function markRead(user, id, isRead) {
+  if (!user) return [401];
+  try {
+    const data = await executeQuery('UPDATE sentnotification SET is_read = ? WHERE id = ? AND user_id = ?', [isRead, id, user.id]);
+    if (data.changedRows === 0) return [404];
+    return [200];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
 const types = {
   CONTACTS: 'contacts',
 };
@@ -145,4 +157,5 @@ module.exports = {
   unsubscribe,
   notify,
   getSentNotifications,
+  markRead,
 };

@@ -600,7 +600,10 @@ module.exports = function(app) {
       const [code, notifications] = await api.notification.getSentNotifications(req.session.user);
       res.status(code);
       if (code !== 200) return;
-      res.prepareRender('notifications', { notifications });
+      res.prepareRender('notifications', {
+        read: notifications.filter(notif => notif.is_read),
+        unread: notifications.filter(notif => !notif.is_read),
+      });
     }
   });
 }

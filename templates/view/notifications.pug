@@ -6,10 +6,18 @@ block breadcrumbs
   |  / 
   span #{T('Notifications')}
 
+block scripts
+  script.
+    async function markNotification(isRead, id) {
+      await putJSON(`/api/notifications/${id}`, { isRead });
+      window.location.reload();
+    }
+
 block content
   script
     include /static/scripts/cardUtils.js
     include /static/scripts/listUtils.js
+    include /static/scripts/fetchUtils.js
 
   .center
     h1 Notifications
@@ -20,7 +28,7 @@ block content
   hr
   .d-flex.align-center.gap-4.my-4
     p.ma-0
-      i #{notifications.length} notification(s)
+      i #{unread.length} unread notification(s)
     div
       .d-flex.align-center.pa-2.pb-0
         a.link( onclick='toggleNotifications()' )
@@ -51,7 +59,7 @@ block content
         checkSubscribed(updateBell);
 
   .d-flex.flex-col.gap-4
-    each notification in notifications
+    each notification in unread
       .sheet.d-flex.gap-4.align-start
         img.userIcon( src=notification.icon_url || '/static/assets/icons/archivium-192.png' )
         .d-flex.flex-col.grow-1
@@ -63,3 +71,23 @@ block content
               b #{notification.title} 
             small #{formatDate(notification.sent_at)}
           p #{notification.body}
+        a.link.material-symbols-outlined( onclick=`markNotification(true, ${notification.id})` title='Mark as read' ) drafts
+
+  .d-flex.align-center.gap-4.my-4
+    p.ma-0
+      i #{read.length} read notification(s)
+
+  .d-flex.flex-col.gap-4
+    each notification in read
+      .sheet.d-flex.gap-4.align-start
+        img.userIcon( src=notification.icon_url || '/static/assets/icons/archivium-192.png' )
+        .d-flex.flex-col.grow-1
+          div
+            if notification.click_url
+              a.link.link-animated.mr-2( href=notification.click_url ) 
+                b #{notification.title}
+            else
+              b #{notification.title} 
+            small #{formatDate(notification.sent_at)}
+          p #{notification.body}
+        a.link.material-symbols-outlined( onclick=`markNotification(false, ${notification.id})` title='Mark as unread' ) mark_email_unread

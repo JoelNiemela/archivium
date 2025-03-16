@@ -135,10 +135,22 @@ async function getSentNotifications(user) {
 }
 
 async function markRead(user, id, isRead) {
+  if (!(typeof isRead === 'boolean')) return [400];
   if (!user) return [401];
   try {
     const data = await executeQuery('UPDATE sentnotification SET is_read = ? WHERE id = ? AND user_id = ?', [isRead, id, user.id]);
     if (data.changedRows === 0) return [404];
+    return [200];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
+async function markAllRead(user, isRead) {
+  if (!user) return [401];
+  try {
+    await executeQuery('UPDATE sentnotification SET is_read = ? WHERE user_id = ?', [isRead, user.id]);
     return [200];
   } catch (err) {
     logger.error(err);
@@ -158,4 +170,5 @@ module.exports = {
   notify,
   getSentNotifications,
   markRead,
+  markAllRead,
 };

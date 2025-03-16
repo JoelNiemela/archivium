@@ -9,7 +9,11 @@ block breadcrumbs
 block scripts
   script.
     async function markNotification(isRead, id) {
-      await putJSON(`/api/notifications/${id}`, { isRead });
+      await putJSON(`/api/notifications/sent/${id}`, { isRead });
+      window.location.reload();
+    }
+    async function markAllRead() {
+      await putJSON(`/api/notifications/mark-all`);
       window.location.reload();
     }
 
@@ -29,7 +33,7 @@ block content
   .d-flex.align-center.gap-4.my-4
     p.ma-0
       i #{unread.length} unread notification(s)
-    div
+    .grow-1
       .d-flex.align-center.pa-2.pb-0
         a.link( onclick='toggleNotifications()' )
           span#notification-bell.material-symbols-outlined.mr-1(
@@ -57,6 +61,8 @@ block content
           setSubscribeStatus(updateBell);
         }
         checkSubscribed(updateBell);
+    .navbarBtn
+      a.navbarBtnLink.navbarText.ma-0( onclick='markAllRead()' ) Mark all as read
 
   .d-flex.flex-col.gap-4
     each notification in unread

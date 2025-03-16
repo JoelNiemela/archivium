@@ -79,13 +79,12 @@ html(lang='en')
           block save
           if contextUser
             li.navbarBtn( style={ position: 'relative' } )
-              script.
-                function toggleUserDropdown(force=undefined) {
-                  const drop = document.querySelector('.user-dropdown');
-                  drop.classList.toggle('hidden', force);
-                }
-              a.navbarBtnLink.d-flex.align-center( onclick='toggleUserDropdown()' )
-                img.pfp( src=contextUser.pfpUrl )
+              a.navbarBtnLink.d-flex.align-center#user-dropdown-btn
+                .pfp.badge-anchor
+                  img( src=contextUser.pfpUrl )
+                  if contextUser.notifications > 0
+                    .badge.badge-left
+                      b #{contextUser.notifications}
                 span.navbarText #{contextUser.username} &#x23F7;
               .user-dropdown.hidden
                 ul.navbarBtns.flex-col
@@ -98,13 +97,29 @@ html(lang='en')
                       span.material-symbols-outlined settings
                       | Settings
                   li.navbarBtn
-                    a.navbarBtnLink.navbarText.text-start.d-flex.align-center.gap-2(href=`${ADDR_PREFIX}/notifications`)
+                    a.navbarBtnLink.navbarText.text-start.d-flex.align-center.gap-2.badge-anchor(href=`${ADDR_PREFIX}/notifications`)
                       span.material-symbols-outlined notifications
                       | Notifications
+                      if contextUser.notifications > 0
+                        .badge.badge-left
+                          b #{contextUser.notifications}
                   li.navbarBtn
                     a.navbarBtnLink.navbarText.text-start.d-flex.align-center.gap-2(href=`${ADDR_PREFIX}/logout`)
                       span.material-symbols-outlined logout
                       | Log Out
+              script.
+                function toggleUserDropdown(force=undefined) {
+                  const drop = document.querySelector('.user-dropdown');
+                  drop.classList.toggle('hidden', force);
+                  const badge = document.querySelector('.pfp .badge');
+                  badge.classList.toggle('invisible', force !== undefined ? !force : undefined);
+                }
+                window.addEventListener('click', () => toggleUserDropdown(true));
+                document.querySelector('#user-dropdown-btn').addEventListener('click', (e) => {
+                  e.stopPropagation();
+                  toggleUserDropdown();
+                })
+                document.querySelector('.user-dropdown').addEventListener('click', e => e.stopPropagation())
           else
             ul.navbarBtns
               if curTemplate !== 'login'

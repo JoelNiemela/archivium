@@ -40,6 +40,7 @@ function contextData(req) {
   const contextUser = user ? {
     id: user.id,
     username: user.username,
+    notifications: user.notifications,
     pfpUrl: getPfpUrl(user),
   } : null;
 

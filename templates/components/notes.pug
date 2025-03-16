@@ -164,6 +164,13 @@ block append styles
           if (noteTags[card.dataset.uuid][tag] || tag === null) card.classList.remove('hidden');
           else card.classList.add('hidden');
         });
+
+        const query = new URLSearchParams(window.location.search);
+        if (tag) query.set('note_tag', tag);
+        else query.delete('note_tag');
+        const { protocol, host, pathname, hash } = window.location;
+        const newurl = `${protocol}//${host}${pathname}?${query.toString()}${hash}`;
+        window.history.pushState({ path: newurl }, '', newurl);
       }
       noteCards.forEach(card => {
         noteTags[card.dataset.uuid] = {};
@@ -384,6 +391,10 @@ block append styles
       const uuid = query.get('note');
       if (uuid) {
         openNote(uuid);
+      }
+      const tag = query.get('note_tag');
+      if (tag) {
+        filterByTag(tag);
       }
 
         

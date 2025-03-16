@@ -62,6 +62,11 @@ block append styles
             b Updated: 
             | #{formatDate(note.updated_at)}
           small.body
+          if note.tags
+            small.d-flex.flex-wrap.gap-1.tags
+              each noteTag in note.tags
+                if noteTag
+                  a.link.link-animated( data-tag=noteTag ) ##{noteTag}
     #note-edit.hidden
       textarea
     #note-display.sheet.hidden
@@ -108,6 +113,8 @@ block append styles
         ul#note-items-list.ma-0
         #note-items
 
+        p.tags
+
         //- h3 Pinned boards:
         //- ul#note-boards-list.ma-0
         //- #note-boards
@@ -144,12 +151,40 @@ block append styles
       const editTab = controlTabs.querySelector('.edit');
       const previewTab = controlTabs.querySelector('.preview');
 
+      const noteCards = noteList.querySelectorAll('.card');
+      const noteTags = {};
+      const tagLinks = {};
+      let currentTagFilter = null;
+      function filterByTag(tag) {
+        if (tag === currentTagFilter) tag = null;
+        currentTagFilter = tag;
+        noteList.querySelectorAll('.card .tags a').forEach(tagLink => tagLink.classList.remove('link-selected'));
+        tagLinks[tag]?.forEach(tagLink => tagLink.classList.add('link-selected'));
+        noteCards.forEach(card => {
+          if (noteTags[card.dataset.uuid][tag] || tag === null) card.classList.remove('hidden');
+          else card.classList.add('hidden');
+        });
+      }
+      noteCards.forEach(card => {
+        noteTags[card.dataset.uuid] = {};
+        card.querySelectorAll('.tags a').forEach(tagLink => {
+          const tag = tagLink.dataset.tag;
+          noteTags[card.dataset.uuid][tag] = true;
+          if (!(tag in tagLinks)) tagLinks[tag] = [];
+          tagLinks[tag].push(tagLink);
+          tagLink.addEventListener('click', e => {
+            e.stopPropagation();
+            filterByTag(tag);
+          });
+        });
+      });
+
       const previewTitle = noteDisplay.querySelector('.title');
       async function updateTitle(title) {
         previewTitle.textContent = title;
       }
-      const previewTags = noteDisplay.querySelector('.tags');
-      async function updateTitle(tags) {
+      const previewTags = previewPanel.querySelector('.tags');
+      async function updateTags(tags) {
         previewTags.textContent = tags.split(' ').map(t => `#${t}`).join(' ');
       }
       const displayNodes = await loadMarkdown(noteDisplay.querySelector('.body'), '#{universe && universe.shortname}', '', null);

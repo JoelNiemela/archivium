@@ -91,4 +91,38 @@ describe('Note spec', () => {
     cy.visit('/universes/public-test-universe/items/test-article');
     cy.get('#tabBtns [data-tab=notes]').should('not.exist');
   });
+
+  it('adds a tag to the note', () => {
+    cy.login('testwriter');
+    cy.visit('/notes');
+    cy.get('#note-list').contains('Public Test Note').click();
+
+    cy.get('#note-control-tabs .edit').click();
+    cy.get('#note_tags').type(' cypress')
+    cy.get('#save').click();
+
+    cy.get('#note-controls .preview .tags').should('contain', '#cypress');
+  });
+
+  it('tries filtering notes by the tag', () => {
+    cy.login('testwriter');
+    cy.visit('/notes');
+    cy.get('#note-list .tags a').contains('cypress').click();
+
+    cy.get('#note-list').children().filter(':visible').should('have.length', 1);
+    cy.get('#note-list').get('h2').filter(':visible').should('have.text', 'Public Test Note');
+  });
+
+  it('removes the tag from the note', () => {
+    cy.login('testwriter');
+    cy.visit('/notes');
+    cy.get('#note-list').contains('Public Test Note').click();
+
+    cy.get('#note-control-tabs .edit').click();
+    cy.get('#note_tags').clear();
+    cy.get('#note_tags').type('{ctrl}a{backspace}test public');
+    cy.get('#save').click();
+
+    cy.get('#note-controls .preview .tags').should('not.contain', '#cypress');
+  });
 });

@@ -53,8 +53,8 @@ async function postComment(poster, thread, comment) {
   await api.discussion.postCommentToThread(poster, thread.id, { body: comment });
 }
 
-async function createNote(owner, title, body, public, items=[], boards=[]) {
-  const [,, uuid] = await api.note.post(owner, { title, body, public });
+async function createNote(owner, title, body, public, tags, items=[], boards=[]) {
+  const [,, uuid] = await api.note.post(owner, { title, body, public, tags });
   const [, note] = await api.note.getOne(owner, uuid);
   for (const item of items) {
     await api.note.linkToItem(owner, item.universe_short, item.shortname, uuid);
@@ -137,10 +137,10 @@ async function main() {
   await postComment(users.testwriter, chatroomThread, '# Markdown test\n- **bold**\n- *italics*\n- etc.');
 
   console.log('Creating notes...');
-  await createNote(users.testwriter, 'Public Test Note', loremIpsum, true);
-  await createNote(users.testwriter, 'Public Article Note', loremIpsum, true, [testArticle]);
-  await createNote(users.testwriter, 'Private Test Note', loremIpsum, false);
-  await createNote(users.testwriter, 'Private Article Note', loremIpsum, false, [testArticle]);
+  await createNote(users.testwriter, 'Public Test Note', loremIpsum, true, ['test', 'public']);
+  await createNote(users.testwriter, 'Public Article Note', loremIpsum, true, ['article', 'public'], [testArticle]);
+  await createNote(users.testwriter, 'Private Test Note', loremIpsum, false, ['test', 'private']);
+  await createNote(users.testwriter, 'Private Article Note', loremIpsum, false, ['article', 'private'], [testArticle]);
 
   schemaConn.end();
   db.end();

@@ -555,6 +555,7 @@ module.exports = function(app) {
       body: body.note_body,
       items: body.items,
       boards: body.boards,
+      tags: body.note_tags?.split(' ') ?? [],
     });
     let nextPage;
     if (body.note_item && body.note_universe) {

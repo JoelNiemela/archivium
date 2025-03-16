@@ -230,6 +230,13 @@ CREATE TABLE tag (
   FOREIGN KEY (item_id) REFERENCES item (id)
 );
 
+CREATE TABLE notetag (
+  note_id INT NOT NULL,
+  tag VARCHAR(32),
+  UNIQUE(note_id, tag),
+  FOREIGN KEY (note_id) REFERENCES note (id)
+);
+
 CREATE TABLE sentemail (
   recipient VARCHAR(64) NOT NULL,
   topic VARCHAR(64) NOT NULL,

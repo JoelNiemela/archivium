@@ -90,6 +90,9 @@ block append styles
         //- label Pinned boards:
         //- ul#note-boards-edit.ma-0.pa-0
         //- #note-boards
+
+        label( for='note_tags' ) Tags: 
+        textarea( id='note_tags' name='note_tags' )
         
         input.hidden( id='create' type='submit' value='Create' formaction=`${ADDR_PREFIX}/notes/create` )
         input.hidden( id='save' type='submit' value='Save' formaction=`${ADDR_PREFIX}/notes/edit` )
@@ -145,6 +148,10 @@ block append styles
       async function updateTitle(title) {
         previewTitle.textContent = title;
       }
+      const previewTags = noteDisplay.querySelector('.tags');
+      async function updateTitle(tags) {
+        previewTags.textContent = tags.split(' ').map(t => `#${t}`).join(' ');
+      }
       const displayNodes = await loadMarkdown(noteDisplay.querySelector('.body'), '#{universe && universe.shortname}', '', null);
       async function updateDisplay(markdown) {
         const data = await parseMarkdown(markdown).evaluate('#{universe && universe.shortname}', null);
@@ -153,6 +160,9 @@ block append styles
       }
       editForm.note_title.addEventListener('change', () => {
         updateTitle(editForm.note_title.value);
+      });
+      editForm.note_tags.addEventListener('change', () => {
+        updateTags(editForm.note_tags.value);
       });
       const easyMDE = setupEasyMDE('#note-edit textarea', { universe: !{JSON.stringify(universe || null)}, context: { item: !{JSON.stringify(item || null)} }});
       easyMDE.codemirror.on('change', () => {
@@ -222,6 +232,7 @@ block append styles
         editorNeedsRefresh = true;
         editForm.note_title.value = title;
         editForm.note_public.checked = public;
+        editForm.note_tags.value = (note.tags || []).join(' ');
         if (!itemsAndBoards.items) {
           const [, items] = await getJSON(`#{ADDR_PREFIX}/api/writable-items`);
           itemsAndBoards.items = {};
@@ -248,6 +259,7 @@ block append styles
           addLinkedItem(itemShort, item, uniShort, uni);
         }
         updateTitle(title);
+        updateTags(editForm.note_tags.value);
         if (#{contextUser ? `author_id === ${contextUser.id}` : 'false'}) controlTabs.classList.remove('hidden');
         noteState = 'edit';
         leftBtn.classList.remove('hidden');
@@ -288,6 +300,7 @@ block append styles
         editForm.note_public.checked = false;
         easyMDE.value('');
         updateTitle('');
+        updateTags('');
       }
 
       function backToList() {

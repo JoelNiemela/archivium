@@ -47,12 +47,18 @@ async function getMany(user, conditions, options) {
         note.id, note.uuid, note.title,
         note.public, note.author_id,
         note.created_at, note.updated_at,
+        tag.tags,
         ${options?.fullBody ? 'note.body' : 'SUBSTRING(note.body, 1, 255) AS body'}
         ${options?.connections ? ', JSON_ARRAYAGG(JSON_ARRAY(item.title, item.shortname, iu.title, iu.shortname)) as items' : ''}
         ${options?.connections ? ', JSON_ARRAYAGG(JSON_ARRAY(noteboard.title, noteboard.shortname, nu.title, nu.shortname)) as boards' : ''}
       FROM note
         LEFT JOIN itemnote ON itemnote.note_id = note.id
         LEFT JOIN boardnote ON boardnote.note_id = note.id
+        LEFT JOIN (
+          SELECT note_id, JSON_ARRAYAGG(tag) as tags
+          FROM notetag
+          GROUP BY note_id
+        ) tag ON tag.note_id = note.id
         ${options?.join ?? ''}
         ${options?.connections ? 'LEFT JOIN item ON itemnote.item_id = item.id' : ''}
         ${options?.connections ? 'LEFT JOIN universe AS iu ON iu.id = item.universe_id' : ''}
@@ -189,7 +195,8 @@ async function post(user, { title, body, public }) {
   }
 }
 
-async function put(user, uuid, { title, body, public, items, boards }) {
+async function put(user, uuid, changes) {
+  const { title, body, public, items, boards, tags } = changes;
   const [code, note] = await getOne(user, uuid);
   if (!note) return [code];
 
@@ -207,6 +214,19 @@ async function put(user, uuid, { title, body, public, items, boards }) {
     await executeQuery('DELETE FROM itemnote WHERE note_id = ?', [ note.id ]);
     for (const { item, universe } of items ?? []) {
       this.linkToItem(user, universe, item, uuid);
+    }
+    
+    if (tags) {
+      // If tags list is provided, we can just as well handle it here
+      putTags(user, uuid, tags);
+      const tagLookup = {};
+      note.tags?.forEach(tag => {
+        tagLookup[tag] = true;
+      });
+      tags.forEach(tag => {
+        delete tagLookup[tag];
+      });
+      delTags(user, uuid, Object.keys(tagLookup));
     }
 
     return [200, data];
@@ -252,6 +272,44 @@ async function linkToItem(user, universeShortname, itemShortname, noteUuid) {
   }
 }
 
+async function putTags(user, uuid, tags) {
+  if (!tags || tags.length === 0) return [400];
+  const [code, note] = await getOne(user, uuid);
+  if (!note) return [code];
+  try {
+    const tagLookup = {};
+    note.tags?.forEach(tag => {
+      tagLookup[tag] = true;
+    });
+    const filteredTags = tags.filter(tag => !tagLookup[tag]);
+    const valueString = filteredTags.map(() => `(?, ?)`).join(',');
+    const valueArray = filteredTags.reduce((arr, tag) => [...arr, note.id, tag], []);
+    if (!valueString) return [200];
+    const queryString = `INSERT INTO notetag (note_id, tag) VALUES ${valueString};`;
+    const data = await executeQuery(queryString, valueArray);
+    return [201, data];
+  } catch (e) {
+    logger.error(e);
+    return [500];
+  }
+}
+
+async function delTags(user, uuid, tags) {
+  if (!tags || tags.length === 0) return [400];
+  const [code, note] = await getOne(user, uuid);
+  if (!note) return [code];
+  try {
+    const whereString = tags.map(() => `tag = ?`).join(' OR ');
+    if (!whereString) return [200];
+    const queryString = `DELETE FROM notetag WHERE note_id = ? AND (${whereString});`;
+    const data = await executeQuery(queryString, [ note.id, ...tags ]);
+    return [200, data];
+  } catch (e) {
+    logger.error(e);
+    return [500];
+  }
+}
+
 module.exports = {
   getOne,
   getByUsername,
@@ -263,4 +321,6 @@ module.exports = {
   put,
   linkToBoard,
   linkToItem,
+  putTags,
+  delTags,
 };

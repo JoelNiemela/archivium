@@ -530,6 +530,7 @@ module.exports = function(app) {
       title: body.note_title,
       public: body.note_public === 'on',
       body: body.note_body,
+      tags: body.note_tags?.split(' ') ?? [],
     });
     let nextPage;
     if (body.note_item && body.note_universe) {

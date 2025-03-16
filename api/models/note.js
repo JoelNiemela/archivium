@@ -181,13 +181,16 @@ async function postBoard(user, { title, shortname }, universeShortname) {
   }
 }
 
-async function post(user, { title, body, public }) {
+async function post(user, { title, body, public, tags }) {
   if (!user) return [401];
   try {
     const uuid = crypto.randomUUID();
 
     const queryString = `INSERT INTO note (uuid, title, body, public, author_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?);`;
     const data = await executeQuery(queryString, [ uuid, title, body, public, user.id, new Date(), new Date() ]);
+
+    putTags(user, uuid, tags);
+
     return [201, data, uuid];
   } catch (err) {
     logger.error(err);

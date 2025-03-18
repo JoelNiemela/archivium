@@ -1,5 +1,5 @@
 describe('Contacts spec', () => {
-  it('sends some cotact requests', () => {
+  it('sends some contact requests', () => {
     cy.login('testuser');
     cy.get('.navbar').contains('Contacts').click();
     

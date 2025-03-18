@@ -64,7 +64,7 @@ block content
     .navbarBtn
       a.navbarBtnLink.navbarText.ma-0( onclick='markAllRead()' ) Mark all as read
 
-  .d-flex.flex-col.gap-4
+  #unread-notifications.d-flex.flex-col.gap-4
     each notification in unread
       .sheet.d-flex.gap-4.align-start
         img.userIcon( src=notification.icon_url || '/static/assets/icons/archivium-192.png' )
@@ -83,7 +83,7 @@ block content
     p.ma-0
       i #{read.length} read notification(s)
 
-  .d-flex.flex-col.gap-4
+  #read-notifications.d-flex.flex-col.gap-4
     each notification in read
       .sheet.d-flex.gap-4.align-start
         img.userIcon( src=notification.icon_url || '/static/assets/icons/archivium-192.png' )

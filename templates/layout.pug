@@ -83,7 +83,7 @@ html(lang='en')
                 .pfp.badge-anchor
                   img( src=contextUser.pfpUrl )
                   if contextUser.notifications > 0
-                    .badge.badge-left
+                    .badge
                       b #{contextUser.notifications}
                 span.navbarText #{contextUser.username} &#x23F7;
               .user-dropdown.hidden
@@ -97,12 +97,13 @@ html(lang='en')
                       span.material-symbols-outlined settings
                       | Settings
                   li.navbarBtn
-                    a.navbarBtnLink.navbarText.text-start.d-flex.align-center.gap-2.badge-anchor(href=`${ADDR_PREFIX}/notifications`)
-                      span.material-symbols-outlined notifications
+                    a.navbarBtnLink.navbarText.text-start.d-flex.align-center.gap-2(href=`${ADDR_PREFIX}/notifications`)
+                      .badge-anchor
+                        span.material-symbols-outlined notifications
+                        if contextUser.notifications > 0
+                          .badge
+                            b #{contextUser.notifications}
                       | Notifications
-                      if contextUser.notifications > 0
-                        .badge.badge-left
-                          b #{contextUser.notifications}
                   li.navbarBtn
                     a.navbarBtnLink.navbarText.text-start.d-flex.align-center.gap-2(href=`${ADDR_PREFIX}/logout`)
                       span.material-symbols-outlined logout

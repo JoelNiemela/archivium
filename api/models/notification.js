@@ -99,8 +99,12 @@ async function notify(target, notifType, message) {
   const { title, body, icon, clickUrl } = message;
   if (!title || !body) return [400];
 
+  const [code, settings] = await getTypeSettings(target);
+  if (!settings) return [code];
+  const enabledMethods = settings.filter(s => s.notif_type === notifType).reduce((acc, val) => ({ ...acc, [val.notif_method]: Boolean(val.is_enabled) }), {});
+
   const payload = JSON.stringify({ title, body, icon, clickUrl });
-  if (WEB_PUSH_ENABLED) {
+  if (WEB_PUSH_ENABLED && enabledMethods[methods.PUSH]) {
     const [code, subscriptions] = await getByUser(target);
     if (!subscriptions) return [code];
     for (const { push_endpoint, push_keys } of subscriptions) {
@@ -111,9 +115,12 @@ async function notify(target, notifType, message) {
     }
   }
 
-  await email.sendTemplateEmail(email.templates.NOTIFY, target.email, { title, body, icon, clickUrl: `https://${DOMAIN}${ADDR_PREFIX}${clickUrl}` }, email.groups.NOTIFICATIONS);
+  if (enabledMethods[methods.EMAIL]) {
+    await email.sendTemplateEmail(email.templates.NOTIFY, target.email, { title, body, icon, clickUrl: `https://${DOMAIN}${ADDR_PREFIX}${clickUrl}` }, email.groups.NOTIFICATIONS);
+  }
 
-  await executeQuery('INSERT INTO sentnotification (title, body, icon_url, click_url, notif_type, user_id, sent_at) VALUES (?, ?, ?, ?, ?, ?, ?)', [
+  const autoMark = enabledMethods[methods.WEB] === false;
+  await executeQuery('INSERT INTO sentnotification (title, body, icon_url, click_url, notif_type, user_id, sent_at, is_read) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
     title,
     body,
     icon,
@@ -121,6 +128,7 @@ async function notify(target, notifType, message) {
     notifType,
     target.id,
     new Date(),
+    autoMark,
   ]);
 
   return [200, true];

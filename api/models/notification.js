@@ -1,6 +1,7 @@
 const { executeQuery, parseData } = require('../utils');
-const { WEB_PUSH_ENABLED, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY } = require('../../config');
+const { WEB_PUSH_ENABLED, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, ADDR_PREFIX, DOMAIN } = require('../../config');
 const userapi = require('./user');
+const email = require('../../email');
 const logger = require('../../logger');
 const md5 = require('md5');
 const webpush = require('web-push');
@@ -109,6 +110,8 @@ async function notify(target, notifType, message) {
       });
     }
   }
+
+  await email.sendTemplateEmail(email.templates.NOTIFY, target.email, { title, body, icon, clickUrl: `https://${DOMAIN}${ADDR_PREFIX}${clickUrl}` }, email.groups.NOTIFICATIONS);
 
   await executeQuery('INSERT INTO sentnotification (title, body, icon_url, click_url, notif_type, user_id, sent_at) VALUES (?, ?, ?, ?, ?, ?, ?)', [
     title,

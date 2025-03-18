@@ -1,0 +1,407 @@
+block append styles
+  style.
+    #note-list .card>.body {
+      white-space: nowrap;
+      overflow: hidden;
+      mask-image: linear-gradient(135deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 1) 85%, rgba(0, 0, 0, 0) 97%);
+    }
+
+    #notes-left-btn.hidden {
+      display: inline !important;
+      visibility: hidden;
+    }
+
+    .loader {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 8px solid #0000;
+      border-right-color: #00669997;
+      position: relative;
+      animation: s4 1s infinite linear;
+    }
+    .loader:before,
+    .loader:after {
+      content: "";
+      position: absolute;
+      inset:-8px;
+      border-radius: 50%;
+      border:inherit;
+      animation:inherit;
+      animation-duration: 2s;
+    }
+    .loader:after {
+      animation-duration: 4s;
+    }
+
+    @keyframes s4 {
+      100% {transform: rotate(1turn)}
+    }
+
+.notes
+  p.ma-0.pa-1
+    a.link.link-animated#notes-left-btn Create Note
+
+  div
+    #note-control-tabs.hidden
+      ul.navbarBtns.gap-2
+        li.edit.navbarBtn.grow-1
+          b.navbarBtnLink.navbarText.ma-0.pa-1 Edit
+        li.preview.navbarBtn.grow-1
+          b.navbarBtnLink.navbarText.ma-0.pa-1 Preview
+
+  div
+    #note-list.card-list
+      each note in notes
+        .sheet.card.d-flex.flex-col.gap-1( data-uuid=note.uuid data-note=note )
+          h2.ma-0 #{note.title}
+          small
+            b Author: 
+            a.link.link-animated( href=`/users/${noteAuthors[note.author_id].username}` ) #{noteAuthors[note.author_id].username}
+            |  — 
+            b Updated: 
+            | #{formatDate(note.updated_at)}
+          small.body
+          if note.tags
+            small.d-flex.flex-wrap.gap-1.tags
+              each noteTag in note.tags
+                if noteTag
+                  a.link.link-animated( data-tag=noteTag ) ##{noteTag}
+    #note-edit.hidden
+      textarea
+    #note-display.sheet.hidden
+      h1.title
+      hr
+      .body
+    #note-loading.sheet.d-flex.justify-center.hidden
+      .loader
+
+  div
+    #note-controls.sheet( style={ position: 'sticky', top: '4rem' } )
+      form.edit.hidden( method='POST' )
+        .grid.align-baseline.gap-2( style={ 'grid-template-columns': 'auto auto' } )
+          label( for='note_title' ) Title:
+          input( id='note_title' type='text' name='note_title' )
+
+          label( for='note_public' ) Public:
+          label.switch
+            input( id='note_public' name='note_public' type='checkbox' )
+            span.slider
+        
+        label Linked items:
+        ul#note-items-edit.ma-0.pa-0
+        #note-items
+
+        //- label Pinned boards:
+        //- ul#note-boards-edit.ma-0.pa-0
+        //- #note-boards
+
+        label( for='note_tags' ) Tags: 
+        textarea( id='note_tags' name='note_tags' )
+        
+        input.hidden( id='create' type='submit' value='Create' formaction=`${ADDR_PREFIX}/notes/create` )
+        input.hidden( id='save' type='submit' value='Save' formaction=`${ADDR_PREFIX}/notes/edit` )
+        
+        input( id='note_body' type='hidden' name='note_body' )
+        input( id='note_uuid' type='hidden' name='note_uuid' )
+        input( id='note_universe' type='hidden' name='note_universe' value=(universe && universe.shortname) )
+        input( id='note_item' type='hidden' name='note_item' value=(item && item.shortname) )
+        input( id='note_board' type='hidden' name='note_board' value=(board && board.shortname) )
+      
+      .preview.hidden
+        h3 Linked items:
+        ul#note-items-list.ma-0
+        #note-items
+
+        p.tags
+
+        //- h3 Pinned boards:
+        //- ul#note-boards-list.ma-0
+        //- #note-boards
+
+
+  script.
+    (async function() {
+      if (!window.createElement) throw 'domUtils not loaded!';
+      if (!window.getJSON) throw 'fetchUtils.js not loaded!';
+      if (!window.setupEasyMDE) throw 'easyMDE.js not loaded!';
+      if (!window.parseMarkdown) throw 'markdown/parse.js not loaded!';
+      if (!window.loadMarkdown) throw 'markdown/render.js not loaded!';
+      if (!window.createSearchableSelect) throw 'searchableSelect not loaded!';
+
+      let noteState = 'list';
+      const leftBtn = document.querySelector('#notes-left-btn');
+      const noteList = document.querySelector('#note-list');
+      const noteEdit = document.querySelector('#note-edit');
+      const noteDisplay = document.querySelector('#note-display');
+      const noteLoading = document.querySelector('#note-loading');
+
+      const noteControls = document.querySelector('#note-controls');
+      const editForm = noteControls.querySelector('.edit');
+      const previewPanel = noteControls.querySelector('.preview');
+      const noteItems = document.querySelector('#note-items');
+      //- const noteBoards = document.querySelector('#note-boards');
+      const noteItemsList = document.querySelector('.edit #note-items-edit');
+      //- const noteBoardsList = document.querySelector('.edit #note-boards-edit');
+      const noteItemsPreviewList = document.querySelector('.preview #note-items-list');
+      //- const noteBoardsPreviewList = document.querySelector('.preview #note-boards-list');
+      const itemsAndBoards = {};
+
+      const controlTabs = document.querySelector('#note-control-tabs');
+      const editTab = controlTabs.querySelector('.edit');
+      const previewTab = controlTabs.querySelector('.preview');
+
+      const noteCards = noteList.querySelectorAll('.card');
+      const noteTags = {};
+      const tagLinks = {};
+      let currentTagFilter = null;
+      function filterByTag(tag) {
+        if (tag === currentTagFilter) tag = null;
+        currentTagFilter = tag;
+        noteList.querySelectorAll('.card .tags a').forEach(tagLink => tagLink.classList.remove('link-selected'));
+        tagLinks[tag]?.forEach(tagLink => tagLink.classList.add('link-selected'));
+        noteCards.forEach(card => {
+          if (noteTags[card.dataset.uuid][tag] || tag === null) card.classList.remove('hidden');
+          else card.classList.add('hidden');
+        });
+
+        const query = new URLSearchParams(window.location.search);
+        if (tag) query.set('note_tag', tag);
+        else query.delete('note_tag');
+        const { protocol, host, pathname, hash } = window.location;
+        const newurl = `${protocol}//${host}${pathname}?${query.toString()}${hash}`;
+        window.history.pushState({ path: newurl }, '', newurl);
+      }
+      noteCards.forEach(card => {
+        noteTags[card.dataset.uuid] = {};
+        card.querySelectorAll('.tags a').forEach(tagLink => {
+          const tag = tagLink.dataset.tag;
+          noteTags[card.dataset.uuid][tag] = true;
+          if (!(tag in tagLinks)) tagLinks[tag] = [];
+          tagLinks[tag].push(tagLink);
+          tagLink.addEventListener('click', e => {
+            e.stopPropagation();
+            filterByTag(tag);
+          });
+        });
+      });
+
+      const previewTitle = noteDisplay.querySelector('.title');
+      async function updateTitle(title) {
+        previewTitle.textContent = title;
+      }
+      const previewTags = previewPanel.querySelector('.tags');
+      async function updateTags(tags) {
+        previewTags.textContent = tags.split(' ').map(t => `#${t}`).join(' ');
+      }
+      const displayNodes = await loadMarkdown(noteDisplay.querySelector('.body'), '#{universe && universe.shortname}', '', null);
+      async function updateDisplay(markdown) {
+        const data = await parseMarkdown(markdown).evaluate('#{universe && universe.shortname}', null);
+        displayNodes.update(data);
+        displayNodes.render();
+      }
+      editForm.note_title.addEventListener('change', () => {
+        updateTitle(editForm.note_title.value);
+      });
+      editForm.note_tags.addEventListener('change', () => {
+        updateTags(editForm.note_tags.value);
+      });
+      const easyMDE = setupEasyMDE('#note-edit textarea', { universe: !{JSON.stringify(universe || null)}, context: { item: !{JSON.stringify(item || null)} }});
+      easyMDE.codemirror.on('change', () => {
+        updateDisplay(easyMDE.value());
+        editForm.note_body.value = easyMDE.value();
+      });
+      let editorNeedsRefresh = false;
+
+
+      function showNoteEditControls() {
+        noteList.classList.add('hidden');
+        controlTabs.classList.remove('hidden');
+        leftBtn.innerText = 'Back to List';
+      }
+
+      function editNote() {
+        noteLoading.classList.add('hidden');
+        controlTabs.querySelectorAll('li').forEach(el => el.classList.remove('selected'));
+        editTab.classList.add('selected');
+        noteDisplay.classList.add('hidden');
+        noteEdit.classList.remove('hidden');
+        editForm.classList.remove('hidden');
+        previewPanel.classList.add('hidden');
+        if (editorNeedsRefresh) easyMDE.codemirror.refresh();
+      }
+
+      function previewNote() {
+        noteLoading.classList.add('hidden');
+        controlTabs.querySelectorAll('li').forEach(el => el.classList.remove('selected'));
+        previewTab.classList.add('selected');
+        noteDisplay.classList.remove('hidden');
+        noteEdit.classList.add('hidden');
+        editForm.classList.add('hidden');
+        previewPanel.classList.remove('hidden');
+      }
+
+      function loadingNote() {
+        noteLoading.classList.remove('hidden');
+        controlTabs.classList.add('hidden');
+        noteDisplay.classList.add('hidden');
+        noteEdit.classList.add('hidden');
+        editForm.classList.add('hidden');
+        previewPanel.classList.add('hidden');
+      }
+
+      async function openNote(uuid) {
+        noteState = 'loading';
+        leftBtn.classList.add('hidden');
+        showNoteEditControls();
+        noteEdit.classList.remove('hidden');
+        editForm.create.classList.add('hidden');
+        editForm.save.classList.remove('hidden');
+        editForm.note_uuid.value = uuid;
+
+        const query = new URLSearchParams(window.location.search);
+        query.set('note', uuid);
+        const { protocol, host, pathname, hash } = window.location;
+        const newurl = `${protocol}//${host}${pathname}?${query.toString()}${hash}`;
+        window.history.pushState({ path: newurl }, '', newurl);
+
+        //- const noteCard = noteList.querySelector(`[data-uuid="${uuid}"]`);
+        //- const { title, public, body, author_id } = noteCard && JSON.parse(noteCard.dataset.note);
+        loadingNote();
+        const [, note] = await getJSON(`#{noteBaseRoute}/${uuid}`);
+        const { title, public, body, author_id, items, boards } = note;
+        easyMDE.value(body);
+        editorNeedsRefresh = true;
+        editForm.note_title.value = title;
+        editForm.note_public.checked = public;
+        editForm.note_tags.value = (note.tags || []).join(' ');
+        if (!itemsAndBoards.items) {
+          const [, items] = await getJSON(`#{ADDR_PREFIX}/api/writable-items`);
+          itemsAndBoards.items = {};
+          itemsAndBoards.itemOptions = {};
+          itemsAndBoards.itemGroups = {};
+          for (const item of items) {
+            const key = `${item.universe_short}/${item.shortname}`;
+            itemsAndBoards.items[key] = item;
+            itemsAndBoards.itemOptions[key] = item.title;
+            itemsAndBoards.itemGroups[key] = item.universe;
+          }
+          noteItems.innerHTML = '';
+          noteItems.appendChild(createSearchableSelect(
+            'note-items-select',
+            itemsAndBoards.itemOptions,
+            (value) => {
+              const item = itemsAndBoards.items[value];
+              addLinkedItem(item.shortname, item.title, item.universe_short, item.universe);
+            },
+            itemsAndBoards.itemGroups,
+          ));
+        }
+        for (const [item, itemShort, uni, uniShort] of items) {
+          addLinkedItem(itemShort, item, uniShort, uni);
+        }
+        updateTitle(title);
+        updateTags(editForm.note_tags.value);
+        if (#{contextUser ? `author_id === ${contextUser.id}` : 'false'}) controlTabs.classList.remove('hidden');
+        noteState = 'edit';
+        leftBtn.classList.remove('hidden');
+
+        previewNote();
+      }
+
+      let linkedItemCounter = 0;
+      function addLinkedItem(shortname, title, universe_short, universe) {
+        const exists = noteItemsList.querySelectorAll(`li[data-item=${shortname}]`).length > 0;
+        if (exists) return;
+        const i = linkedItemCounter++;
+        noteItemsList.appendChild(createElement('li', { classList: ['d-flex', 'align-center'], dataset: {item: shortname}, children: [
+          createElement('a', { attrs: {
+            innerText: 'delete',
+            onclick: () => noteItemsList.querySelector(`li[data-item=${shortname}]`).remove(),
+          }, classList: ['material-symbols-outlined', 'link'] }),
+          createElement('span', { attrs: { innerText: title } }),
+          createElement('input', { attrs: { type: 'hidden', name: `items[${i}][item]`, value: shortname } }),
+          createElement('input', { attrs: { type: 'hidden', name: `items[${i}][universe]`, value: universe_short } }),
+        ] }));
+        noteItemsPreviewList.appendChild(createElement('li', { classList: ['d-flex', 'align-center'], dataset: {item: shortname}, children: [
+          createElement('a', { attrs: {
+            innerText: title,
+            href: `#{ADDR_PREFIX}/universes/${universe_short}/items/${shortname}`,
+          }, classList: ['link', 'link-animated'] }),
+        ] }));
+      }
+
+      function createNote() {
+        noteState = 'new';
+        showNoteEditControls();
+        editNote();
+        editForm.create.classList.remove('hidden');
+        editForm.save.classList.add('hidden');
+
+        editForm.note_title.value = '';
+        editForm.note_public.checked = false;
+        easyMDE.value('');
+        updateTitle('');
+        updateTags('');
+      }
+
+      function backToList() {
+        if (noteState === 'new' || noteState === 'edit-unsaved') {
+          if (!confirm('You have unsaved changes! Are you sure you want to go back?')) return;
+        }
+
+        noteState = 'list';
+        noteLoading.classList.add('hidden');
+        noteList.classList.remove('hidden');
+        noteEdit.classList.add('hidden');
+        noteDisplay.classList.add('hidden');
+        editForm.classList.add('hidden');
+        previewPanel.classList.add('hidden');
+        controlTabs.classList.add('hidden');
+        editTab.classList.remove('selected');
+        leftBtn.innerText = 'Create Note';
+
+        noteItemsList.innerHTML = '';
+        noteItemsPreviewList.innerHTML = '';
+
+        const query = new URLSearchParams(window.location.search);
+        query.delete('note');
+        const { protocol, host, pathname, hash } = window.location;
+        const newurl = `${protocol}//${host}${pathname}?${query.toString()}${hash}`;
+        window.history.pushState({ path: newurl }, '', newurl);
+      }
+
+
+      leftBtn.addEventListener('click', () => {
+        if (noteState === 'loading') return;
+        else if (noteState === 'list') createNote();
+        else backToList();
+      });
+
+      editTab.addEventListener('click', editNote);
+      previewTab.addEventListener('click', previewNote);
+
+      noteList.querySelectorAll('.card').forEach((el) => {
+        el.addEventListener('click', () => {
+          openNote(el.dataset.uuid);
+        });
+      });
+
+      const query = new URLSearchParams(window.location.search);
+      const uuid = query.get('note');
+      if (uuid) {
+        openNote(uuid);
+      }
+      const tag = query.get('note_tag');
+      if (tag) {
+        filterByTag(tag);
+      }
+
+        
+      document.querySelectorAll('#note-list .card').forEach(async (el) => {
+        const body = el.querySelector('.body');
+        const text = await renderMdPreview('#{universe && universe.shortname}', JSON.parse(el.dataset.note).body, null);
+        const maxLength = 127;
+        body.innerText = text.length >= maxLength ? `${text.substring(0, maxLength)}...` : text;
+      });
+    })();

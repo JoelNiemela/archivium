@@ -19,6 +19,7 @@ async function getOne(user, options, permissionLevel=perms.READ) {
  */
 async function getMany(user, conditions, permissionLevel=perms.READ) {
   try {
+    if (!user && permissionLevel > perms.READ) return [400];
     const readOnlyQueryString = permissionLevel > perms.READ ? '' : `universe.public = 1`;
     const usrQueryString = user ? `(au_filter.user_id = ${user.id} AND au_filter.permission_level >= ${permissionLevel})` : '';
     const permsQueryString = `${readOnlyQueryString}${(readOnlyQueryString && usrQueryString) ? ' OR ' : ''}${usrQueryString}`;
@@ -52,7 +53,7 @@ async function getMany(user, conditions, permissionLevel=perms.READ) {
   }
 }
 
-function getManyByAuthorId(user, authorId) {
+function getManyByAuthorId(user, authorId, permissionLevel=perms.WRITE) {
   return getMany(user, {
     strings: [`
       EXISTS (
@@ -63,7 +64,7 @@ function getManyByAuthorId(user, authorId) {
       )
     `], values: [
       authorId,
-      perms.READ,
+      permissionLevel,
     ] 
   });
 }

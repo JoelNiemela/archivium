@@ -184,7 +184,6 @@ module.exports = function(app) {
       universe.obj_data = JSON.parse(universe.obj_data);
       return { ...cats, [universe.id]: universe.obj_data.cats };
     }, {});
-    console.log(universeCats)
     res.prepareRender('itemList', {
       items: items.map(item => ({ ...item, itemTypeName: ((universeCats[item.universe_id] ?? {})[item.item_type] ?? ['missing_cat'])[0] })),
       type: req.query.type,
@@ -221,7 +220,7 @@ module.exports = function(app) {
     }
   });
 
-  /* Universe Pages */
+  /* Universe/item Pages */
   get('/universes', async (req, res) => {
     const [code, universes] = await api.universe.getMany(req.session.user);
     res.status(code);
@@ -410,17 +409,29 @@ module.exports = function(app) {
     if (item.gallery.length > 0) {
       item.gallery = item.gallery.sort((a, b) => a.id > b.id ? 1 : -1);
     }
-    const [code3, comments, users] = await api.discussion.getCommentsByItem(req.session.user, item.id, false, true);
-    if (!comments || !users) return [code3];
+
+    const [code3, comments, commentUsers] = await api.discussion.getCommentsByItem(req.session.user, item.id, false, true);
+    if (!comments || !commentUsers) return res.status(code3);
     const commenters = {};
-    for (const user of users) {
+    for (const user of commentUsers) {
       user.pfpUrl = getPfpUrl(user);
       delete user.email;
       commenters[user.id] = user;
     }
+
+    const [code4, notes, noteUsers] = await api.note.getByItemShortname(req.session.user, universe.shortname, item.shortname, {}, {}, true);
+    if (!notes || !noteUsers) return res.status(code4);
+    const noteAuthors = {};
+    for (const user of noteUsers) {
+      user.pfpUrl = getPfpUrl(user);
+      delete user.email;
+      noteAuthors[user.id] = user;
+    }
+
     res.prepareRender('item', {
-      item, universe, tab: req.query.tab, comments, commenters,
+      item, universe, tab: req.query.tab, comments, commenters, notes, noteAuthors,
       commentAction: `/universes/${universe.shortname}/items/${item.shortname}/comment`,
+      noteBaseRoute: `/api/universes/${universe.shortname}/items/${item.shortname}/notes`,
     });
   });
   get('/universes/:universeShortname/items/:itemShortname/edit', Auth.verifySessionOrRedirect, async (req, res) => {
@@ -500,6 +511,67 @@ module.exports = function(app) {
     res.redirect(`${ADDR_PREFIX}/universes/${params.shortname}/permissions`);
   });
 
+  /* Note pages */
+  get('/notes', Auth.verifySessionOrRedirect, async (req, res) => {
+    const user = req.session.user;
+    const [code, notes] = await api.note.getByUsername(user, user.username);
+    const noteAuthors = { [user.id]: user };
+    res.status(code);
+    if (!notes) return;
+    res.prepareRender('notes', {
+      notes,
+      noteAuthors,
+      noteBaseRoute: `/api/users/${user.username}/notes`,
+    });
+  });
+  post('/notes/create', Auth.verifySessionOrRedirect, async (req, res) => {
+    const { body, session } = req;
+    const [code, data, uuid] = await api.note.post(session.user, {
+      title: body.note_title,
+      public: body.note_public === 'on',
+      body: body.note_body,
+      tags: body.note_tags?.split(' ') ?? [],
+    });
+    let nextPage;
+    if (body.note_item && body.note_universe) {
+      const [code, data] = await api.note.linkToItem(session.user, body.note_universe, body.note_item, uuid);
+      if (code !== 201) return console.error(`Error ${code}: ${data}`);
+      nextPage = nextPage || `${ADDR_PREFIX}/universes/${body.note_universe}/items/${body.note_item}?tab=notes&note=${uuid}`;
+    }
+    if (body.note_board && body.note_universe) {
+      const [code, data] = await api.note.linkToBoard(session.user, body.note_board, uuid);
+      if (code !== 201) return console.error(`Error ${code}: ${data}`);
+      nextPage = nextPage || `${ADDR_PREFIX}/universes/${body.note_universe}/notes/${body.note_board}?note=${uuid}`;
+    }
+    res.status(code);
+    if (code === 201) return res.redirect(nextPage || `${ADDR_PREFIX}/notes?note=${uuid}`);
+    return console.error(`Error ${code}: ${data}`);
+    // res.prepareRender('createUniverse', { error: data, ...req.body });
+  });
+  post('/notes/edit', Auth.verifySessionOrRedirect, async (req, res) => {
+    const { body, session } = req;
+    const [code, data] = await api.note.put(session.user, body.note_uuid, {
+      title: body.note_title,
+      public: body.note_public === 'on',
+      body: body.note_body,
+      items: body.items,
+      boards: body.boards,
+      tags: body.note_tags?.split(' ') ?? [],
+    });
+    let nextPage;
+    if (body.note_item && body.note_universe) {
+      nextPage = nextPage || `${ADDR_PREFIX}/universes/${body.note_universe}/items/${body.note_item}?tab=notes&note=${body.note_uuid}`;
+    }
+    if (body.note_board && body.note_universe) {
+      nextPage = nextPage || `${ADDR_PREFIX}/universes/${body.note_universe}/notes/${body.note_board}?note=${body.note_uuid}`;
+    }
+    res.status(code);
+    if (code === 200) return res.redirect(nextPage || `${ADDR_PREFIX}/notes?note=${body.note_uuid}`);
+    return console.error(`Error ${code}: ${data}`);
+    // res.prepareRender('createUniverse', { error: data, ...req.body });
+  });
+
+  /* Misc pages */
   get('/search', async (req, res) => {
     const search = req.query.search;
     if (search) {

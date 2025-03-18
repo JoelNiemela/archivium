@@ -1,6 +1,6 @@
 extends ../layout.pug
 
-block styles
+block append styles
   link( rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" )
   style.
     .tags-and-icons {
@@ -25,6 +25,7 @@ block scripts
     include /static/scripts/calendarPicker.js
     include /static/scripts/timelineRender.js
     include /static/scripts/cardUtils.js
+    include /static/scripts/easyMDE.js
     //- include /static/scripts/editor/rich.js
 
 block breadcrumbs
@@ -76,12 +77,18 @@ block content
       if dataType in item.obj_data && 'title' in item.obj_data[dataType]
         li.navbarBtn( data-tab=dataType )
           h3.navbarBtnLink.navbarText.ma-0( onclick=`showTab('${dataType}')` ) #{item.obj_data[dataType].title}
-    if 'comments' in item.obj_data && 'title' in item.obj_data.comments
+    if item.obj_data.comments
       li.navbarBtn( data-tab='comments' )
         h3.navbarBtnLink.navbarText.ma-0( onclick=`showTab('comments')` ) #{capitalize(T('comments'))}
+    if item.obj_data.notes || (contextUser && universe.author_permissions[contextUser.id] >= perms.WRITE && notes.length > 0)
+      li.navbarBtn( data-tab='notes' )
+          h3.navbarBtnLink.navbarText.ma-0( onclick=`showTab('notes')` ) #{capitalize(T('notes'))}
+            if !item.obj_data.notes
+              |  (Hidden)
 
   
   script!= `window.item = ${JSON.stringify(item)};`
+  script!= `window.universe = ${JSON.stringify(universe)};`
 
   .tabs
     if 'tabs' in item.obj_data
@@ -124,9 +131,19 @@ block content
             a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${child.child_shortname}` )
               | #{child.child_title}
         
-    if 'comments' in item.obj_data && 'title' in item.obj_data.comments
+    if item.obj_data.comments
       .hidden( data-tab='comments' )
         include ../components/comments.pug
+        
+    if item.obj_data.notes || (contextUser && universe.author_permissions[contextUser.id] >= perms.WRITE && notes.length > 0)
+      .hidden( data-tab='notes' )
+        if !item.obj_data.notes
+          .center
+            .ma-auto.my-2( style={ 'max-width': '32rem' } )
+              small
+                i This tab is visible to you since this item has notes linked to it and you have edit access. 
+                  | To make this tab visible to everyone, enable notes for this item.
+        include ../components/notes.pug
 
     if 'body' in item.obj_data
       .sheet.hidden( data-tab='body' )
@@ -154,11 +171,6 @@ block content
           }
           if (tag.type === 'p') tag.type = 'span';
         });
-      });
-      
-      document.querySelectorAll('.comment').forEach((el) => {
-        console.log(el.dataset.val)
-        loadMarkdown(el, '#{universe.shortname}', el.dataset.val, null);
       });
 
       const galleryModalState = {}

@@ -3,6 +3,7 @@ const Auth = require('../middleware/auth');
 const api = require('./');
 const logger = require('../logger');
 const email = require('../email');
+const { perms } = require('./utils');
 
 module.exports = function(app, upload) {
   class APIRoute {
@@ -58,10 +59,18 @@ module.exports = function(app, upload) {
     new APIRoute('/users', { GET: () => api.user.getMany() }, [
       new APIRoute('/:username', { GET: (req) => api.user.getOne({ 'user.username': req.params.username }) }, [
         new APIRoute('/send-verify-link', { GET: (req) => email.trySendVerifyLink(req.session.user, req.params.username) }),
+        new APIRoute('/notes', {
+          GET: (req) => api.note.getByUsername(req.session.user, req.params.username),
+          POST: (req) => api.note.post(req.session.user, req.body),
+        }, [
+          new APIRoute('/:uuid', {
+            GET: (req) => api.note.getOne(req.session.user, req.params.uuid),
+          }),
+        ]),
         new APIRoute('/universes', {
           GET: async (req) => {
             const [code, user] = await api.user.getOne({ 'user.username': req.params.username });
-            if (code) return api.universe.getManyByAuthorId(req.session.user, user.id);
+            if (user) return api.universe.getManyByAuthorId(req.session.user, user.id);
             else return [code];
           }
         }),
@@ -101,6 +110,27 @@ module.exports = function(app, upload) {
         GET: (req) => api.universe.getOne(req.session.user, { shortname: req.params.universeShortName }),
         DELETE: (req) => api.universe.del(req.session.user, req.params.universeShortName),
       }, [
+        new APIRoute('/notes', {
+          GET: (req) => api.note.getBoardsByUniverseShortname(req.session.user, req.params.universeShortName),
+          POST: (req) => api.note.postBoard(req.session.user, req.body, req.params.universeShortName),
+        }, [
+          new APIRoute('/:boardShortname', {
+            GET: (req) => api.note.getByBoardShortname(req.session.user, req.params.boardShortname),
+            POST: (req) => api.note.linkToBoard(req.session.user, req.params.boardShortname, req.body.uuid),
+          }, [
+            new APIRoute('/:uuid', {
+              GET: (req) => frmtData(
+                api.note.getByBoardShortname(
+                  req.session.user,
+                  req.params.boardShortname,
+                  { 'note.uuid': req.params.uuid },
+                  { fullBody: true, connections: true, limit: 1 },
+                ),
+                (notes) => notes[0],
+              ),
+            }),
+          ]),
+        ]),
         new APIRoute('/items', {
           GET: (req) => api.item.getByUniverseShortname(req.session.user, req.params.universeShortName),
           POST: (req) => api.item.post(req.session.user, req.body, req.params.universeShortName),
@@ -109,6 +139,27 @@ module.exports = function(app, upload) {
             GET: async (req) => api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortName, req.params.itemShortName),
             PUT: async (req) => api.item.save(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body, true),
           }, [
+            new APIRoute('/notes', {
+              GET: (req) => api.note.getByItemShortname(req.session.user, req.params.universeShortName, req.params.itemShortName),
+              POST: async (req) => {
+                const [code, data, uuid] = await api.note.post(req.session.user, req.body);
+                await api.note.linkToItem(req.session.user, req.params.universeShortName, req.params.itemShortName, uuid);
+                return [code, data];
+              },
+            }, [
+              new APIRoute('/:uuid', {
+                GET: (req) => frmtData(
+                  api.note.getByItemShortname(
+                    req.session.user,
+                    req.params.universeShortName,
+                    req.params.itemShortName,
+                    { 'note.uuid': req.params.uuid },
+                    { fullBody: true, connections: true, limit: 1 },
+                  ),
+                  (notes) => notes[0],
+                ),
+              }),
+            ]),
             new APIRoute('/data', {
               PUT: (req) => api.item.putData(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body),
             }),
@@ -157,6 +208,9 @@ module.exports = function(app, upload) {
         }, []),
       ]),
     ]),
+    new APIRoute('/writable-items', {
+      GET: async (req) => api.item.getMany(req.session.user, null, perms.WRITE),
+    }),
     new APIRoute('/exists', { POST: async (req) => {
       try {
         const tuples = [];

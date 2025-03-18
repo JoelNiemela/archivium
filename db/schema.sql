@@ -89,6 +89,34 @@ CREATE TABLE threadcomment (
   FOREIGN KEY (comment_id) REFERENCES comment (id)
 );
 
+CREATE TABLE note (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  uuid VARCHAR(36) UNIQUE,
+  title VARCHAR(64),
+  body TEXT NOT NULL,
+  public BOOLEAN,
+  author_id INT NOT NULL,
+  created_at TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP NOT NULL,
+  FOREIGN KEY (author_id) REFERENCES user (id)
+);
+
+CREATE TABLE noteboard (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(64) NOT NULL,
+  shortname VARCHAR(64) UNIQUE NOT NULL,
+  public BOOLEAN,
+  universe_id INT NOT NULL,
+  FOREIGN KEY (universe_id) REFERENCES universe (id)
+);
+
+CREATE TABLE boardnote (
+  note_id INT NOT NULL,
+  board_id INT NOT NULL,
+  FOREIGN KEY (note_id) REFERENCES note (id),
+  FOREIGN KEY (board_id) REFERENCES noteboard (id)
+);
+
 CREATE TABLE item (
   id INT NOT NULL AUTO_INCREMENT,
   title VARCHAR(64) NOT NULL,
@@ -114,6 +142,13 @@ CREATE TABLE itemcomment (
   comment_id INT NOT NULL,
   FOREIGN KEY (item_id) REFERENCES item (id),
   FOREIGN KEY (comment_id) REFERENCES comment (id)
+);
+
+CREATE TABLE itemnote (
+  item_id INT NOT NULL,
+  note_id INT NOT NULL,
+  FOREIGN KEY (item_id) REFERENCES item (id),
+  FOREIGN KEY (note_id) REFERENCES note (id)
 );
 
 CREATE TABLE itemimage (
@@ -193,6 +228,13 @@ CREATE TABLE tag (
   tag VARCHAR(32),
   UNIQUE(item_id, tag),
   FOREIGN KEY (item_id) REFERENCES item (id)
+);
+
+CREATE TABLE notetag (
+  note_id INT NOT NULL,
+  tag VARCHAR(32),
+  UNIQUE(note_id, tag),
+  FOREIGN KEY (note_id) REFERENCES note (id)
 );
 
 CREATE TABLE sentemail (

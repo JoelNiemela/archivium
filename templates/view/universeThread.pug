@@ -22,8 +22,3 @@ block content
   h2 #{thread.title}
 
   include ../components/comments.pug
-
-  script.
-    document.querySelectorAll('.comment').forEach((el) => {
-      loadMarkdown(el, '#{universe.shortname}', el.dataset.val, null);
-    });

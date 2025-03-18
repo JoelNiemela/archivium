@@ -178,6 +178,6 @@ app.use((err, req, res, next) => {
   next();
 });
 
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, () => {
   logger.info(`Example app listening at http://localhost:${PORT}`);
 });

@@ -19,13 +19,13 @@ async function checkRegisterServiceWorker() {
   }
 }
 
-async function setSubscribeStatus(callback) {
+async function setSubscribeStatus(callback, state=null) {
   const register = await checkRegisterServiceWorker();
   const serviceWorkerReady = await navigator.serviceWorker.ready;
 
   const existingSubscription = await serviceWorkerReady.pushManager.getSubscription();
 
-  if (isSubscribed) {
+  if (isSubscribed && state !== true) {
     if (existingSubscription) {
       await fetch(' /api/notifications/unsubscribe', {
         method: 'POST',
@@ -36,7 +36,7 @@ async function setSubscribeStatus(callback) {
       existingSubscription.unsubscribe();
       isSubscribed = false;
     }
-  } else {
+  } else if (state !== false) {
     if (!('serviceWorker' in navigator && 'PushManager' in window && Notification.permission !== "denied")) return;
 
     try {

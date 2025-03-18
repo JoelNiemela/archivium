@@ -9,6 +9,7 @@ block scripts
 
 block content
   h1.center Settings
+  h2 Account
   h3 Change Username
   form#changeUsername
     .inputGroup
@@ -62,3 +63,41 @@ block content
       })();
 
   hr.w-100.mb-0
+
+  h2 Notifications
+  .inputGroup
+    label( for='push_notifs' ) #{T('Push notifications')}: 
+    label.switch
+      input( id='push_notifs' name='push_notifs' type='checkbox' checked=false )
+      span.slider
+    script.
+      const checkbox = document.querySelector('#push_notifs');
+      function updateCheckbox(isSubscribed) {
+        checkbox.checked = isSubscribed;
+      }
+      checkbox.addEventListener('change', () => {
+        console.log(checkbox.checked);
+        setSubscribeStatus(updateCheckbox, checkbox.checked);
+      });
+      checkSubscribed(updateCheckbox);
+  form#notificationSettings
+    .inputGroup
+      label( for='email_notifs' ) #{T('Email notifications')}: 
+      label.switch
+        input( id='email_notifs' name='email_notifs' type='checkbox' checked=user.email_notifications )
+        span.slider
+
+    h3 Filter Notifications
+    table.sheet
+      thead
+        tr
+          th #{T('Notfication Type')}
+          each _, method_key in notificationMethods
+            th #{T(capitalize(method_key.toLowerCase()))}
+      tbody
+        each type in notificationTypes
+          tr
+            td #{T(`notif_${type}`)}
+            each method in notificationMethods
+              td.center
+                input( id=`notif_${type}_${method}` name=`notif_${type}_${method}` type='checkbox' checked=false )

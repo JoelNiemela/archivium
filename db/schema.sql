@@ -8,6 +8,7 @@ CREATE TABLE user (
   updated_at TIMESTAMP NOT NULL,
   verified BOOLEAN DEFAULT FALSE,
   suspect BOOLEAN DEFAULT FALSE,
+  email_notifications BOOLEAN DEFAULT FALSE,
   PRIMARY KEY (id)
 );
 
@@ -264,6 +265,7 @@ CREATE TABLE universenotification (
 CREATE TABLE notificationtype (
   user_id INT NOT NULL,
   notif_type VARCHAR(16) NOT NULL,
+  notif_method TINYINT NOT NULL,
   is_enabled BOOLEAN NOT NULL,
   FOREIGN KEY (user_id) REFERENCES user (id)
 );

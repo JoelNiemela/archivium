@@ -167,7 +167,15 @@ module.exports = function(app) {
     const [code, user] = await api.user.getOne({ 'user.id': req.session.user.id });
     res.status(code);
     if (!user) return;
-    res.prepareRender('settings', { user });
+    const [code2, typeSettings] = await api.notification.getTypeSettings(user);
+    res.status(code2);
+    if (!typeSettings) return;
+    res.prepareRender('settings', {
+      user,
+      typeSettings,
+      notificationTypes: api.notification.types,
+      notificationMethods: api.notification.methods,
+    });
   });
   
 

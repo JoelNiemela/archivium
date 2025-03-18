@@ -158,12 +158,31 @@ async function markAllRead(user, isRead) {
   }
 }
 
+async function getTypeSettings(user) {
+  if (!user) return [401];
+  try {
+    const settings = await executeQuery('SELECT * FROM notificationtype WHERE user_id = ?', [user.id]);
+    return [200, settings];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
 const types = {
   CONTACTS: 'contacts',
+  UNIVERSE: 'universe',
+  COMMENTS: 'comments',
+  FEATURES: 'features',
+};
+
+const methods = {
+  WEB: 0,
+  PUSH: 1,
+  EMAIL: 2,
 };
 
 module.exports = {
-  types,
   isSubscribed,
   subscribe,
   unsubscribe,
@@ -171,4 +190,7 @@ module.exports = {
   getSentNotifications,
   markRead,
   markAllRead,
+  getTypeSettings,
+  types,
+  methods,
 };

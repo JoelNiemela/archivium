@@ -7,6 +7,7 @@ const {
   DEV_MODE,
   SENDGRID_API_KEY,
   OPENAI_API_KEY,
+  RECAPTCHA_KEY,
   ARCHIVIUM_DB_HOST,
   ARCHIVIUM_DB_USER,
   ARCHIVIUM_DB_PASSWORD,
@@ -16,9 +17,10 @@ const {
 module.exports.PORT = Number(PORT);
 module.exports.DOMAIN = DOMAIN;
 module.exports.ADDR_PREFIX = ADDR_PREFIX;
-module.exports.DEV_MODE = Boolean(DEV_MODE);
+module.exports.DEV_MODE = DEV_MODE === 'true';
 module.exports.SENDGRID_API_KEY = SENDGRID_API_KEY;
 module.exports.OPENAI_API_KEY = OPENAI_API_KEY;
+module.exports.RECAPTCHA_KEY = RECAPTCHA_KEY;
 
 module.exports.DB_CONFIG = {
   host: ARCHIVIUM_DB_HOST,

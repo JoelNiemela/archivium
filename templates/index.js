@@ -111,6 +111,7 @@ const templates = {
   notes: compile('templates/list/notes.pug'),
   verify: compile('templates/verify.pug'),
   settings: compile('templates/edit/settings.pug'),
+  spamblock: compile('templates/spamblock.pug'),
 };
 
 function render(req, template, context = {}) {

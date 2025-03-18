@@ -62,8 +62,6 @@ async function unsubscribeUser(emails, groupId) {
 }
 
 async function sendVerifyLink({ id, username, email }) {
-  await executeQuery('DELETE FROM userverification WHERE user_id = ?;', [id]);
-  
   const verificationKey = await api.user.prepareVerification(id);
   if (DEV_MODE) {
     // Can't send emails in dev mode, just auto-verify them instead.
@@ -82,7 +80,7 @@ async function trySendVerifyLink(sessionUser, username) {
   if (sessionUser.verified) return [200, { alreadyVerified: true }];
 
   const now = new Date();
-  const timeout = 60 * 60 * 1000;
+  const timeout = 60 * 1000;
   const cutoff = new Date(now.getTime() - timeout);
   const recentEmails = await executeQuery(
     'SELECT * FROM sentemail WHERE recipient = ? AND topic = ? AND sent_at >= ? ORDER BY sent_at DESC;',

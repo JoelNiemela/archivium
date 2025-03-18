@@ -114,7 +114,7 @@ async function notify(target, notifType, message) {
     }
   }
 
-  if (enabledMethods[methods.EMAIL]) {
+  if (enabledMethods[methods.EMAIL] && target.email_notifications) {
     await email.sendTemplateEmail(email.templates.NOTIFY, target.email, { title, body, icon, clickUrl: `https://${DOMAIN}${ADDR_PREFIX}${clickUrl}` }, email.groups.NOTIFICATIONS);
   }
 

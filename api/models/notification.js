@@ -158,6 +158,38 @@ async function markAllRead(user, isRead) {
   }
 }
 
+async function putNotificationType(user, type, method, enabled) {
+  const setting = (await executeQuery('SELECT is_enabled FROM notificationtype WHERE user_id = ? AND notif_type = ? AND notif_method = ?', [user.id, type, method]))[0];
+  const wasEnabled = Boolean(setting?.is_enabled);
+  if (!setting) {
+    await executeQuery('INSERT INTO notificationtype (user_id, notif_type, notif_method, is_enabled) VALUES (?, ?, ?, ?)', [user.id, type, method, enabled]);
+  } else if (enabled !== wasEnabled) {
+    await executeQuery('UPDATE notificationtype SET is_enabled = ? WHERE user_id = ? AND notif_type = ? AND notif_method = ?', [enabled, user.id, type, method]);
+  }
+}
+
+async function putSettings(user, changes) {
+  if (!user) return [401];
+
+  if ('email_notifs' in changes) {
+    await executeQuery('UPDATE user SET email_notifications = ? WHERE id = ?', [Boolean(changes.email_notifs), user.id]);
+  }
+
+  try {
+    for (const type of Object.values(types)) {
+      for (const method of Object.values(methods)) {
+        if (`${type}_${method}` in changes) {
+          await putNotificationType(user, type, method, changes[`${type}_${method}`]);
+        }
+      }
+    }
+    return [200];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
 async function getTypeSettings(user) {
   if (!user) return [401];
   try {
@@ -190,6 +222,7 @@ module.exports = {
   getSentNotifications,
   markRead,
   markAllRead,
+  putSettings,
   getTypeSettings,
   types,
   methods,

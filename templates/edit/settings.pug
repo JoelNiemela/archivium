@@ -65,7 +65,7 @@ block content
   hr.w-100.mb-0
 
   h2 Notifications
-  .inputGroup
+  .inputGroup.mb-1
     label( for='push_notifs' ) #{T('Push notifications')}: 
     label.switch
       input( id='push_notifs' name='push_notifs' type='checkbox' checked=false )
@@ -80,11 +80,11 @@ block content
         setSubscribeStatus(updateCheckbox, checkbox.checked);
       });
       checkSubscribed(updateCheckbox);
-  form#notificationSettings
+  form#notificationSettings( method='POST' action=`${ADDR_PREFIX}/settings/notifications` )
     .inputGroup
       label( for='email_notifs' ) #{T('Email notifications')}: 
       label.switch
-        input( id='email_notifs' name='email_notifs' type='checkbox' checked=user.email_notifications )
+        input( id='email_notifs' name='email_notifs' type='checkbox' checked=Boolean(user.email_notifications) )
         span.slider
 
     h3 Filter Notifications
@@ -100,4 +100,7 @@ block content
             td #{T(`notif_${type}`)}
             each method in notificationMethods
               td.center
-                input( id=`notif_${type}_${method}` name=`notif_${type}_${method}` type='checkbox' checked=false )
+                input( id=`notif_${type}_${method}` name=`notif_${type}_${method}` type='checkbox' checked=(`${type}_${method}` in typeSettings ? typeSettings[`${type}_${method}`] : (method === 0)) )
+
+    .d-flex
+      button( type='submit' ) Update Preferences

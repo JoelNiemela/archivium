@@ -167,15 +167,32 @@ module.exports = function(app) {
     const [code, user] = await api.user.getOne({ 'user.id': req.session.user.id });
     res.status(code);
     if (!user) return;
-    const [code2, typeSettings] = await api.notification.getTypeSettings(user);
+    const [code2, typeSettingData] = await api.notification.getTypeSettings(user);
     res.status(code2);
-    if (!typeSettings) return;
+    if (!typeSettingData) return;
+    const typeSettings = {};
+    for (const setting of typeSettingData) {
+      typeSettings[`${setting.notif_type}_${setting.notif_method}`] = Boolean(setting.is_enabled);
+    }
     res.prepareRender('settings', {
       user,
       typeSettings,
       notificationTypes: api.notification.types,
       notificationMethods: api.notification.methods,
     });
+  });
+  post('/settings/notifications', Auth.verifySessionOrRedirect, async (req, res) => {
+    const { body, session } = req;
+    body['email_notifs'] = body['email_notifs'] === 'on';
+    for (const type of Object.values(api.notification.types)) {
+      for (const method of Object.values(api.notification.methods)) {
+        body[`${type}_${method}`] = body[`notif_${type}_${method}`] === 'on';
+        delete body[`notif_${type}_${method}`];
+      }
+    }
+    const [code, data] = await api.notification.putSettings(session.user, body);
+    res.status(code);
+    return res.redirect(`${ADDR_PREFIX}/settings`);
   });
   
 

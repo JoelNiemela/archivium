@@ -100,6 +100,7 @@ module.exports = function(app, upload) {
           }),
         ]),
         new APIRoute('/username', { PUT: (req) => api.user.putUsername(req.session.user, req.params.username, req.body.username) }),
+        new APIRoute('/notif-settings', { PUT: (req) => api.notification.putSettings((req.session?.user?.username === req.params.username) ? req.session.user : null, req.body.username) }),
       ]),
     ]),
     new APIRoute('/contacts', {

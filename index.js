@@ -38,10 +38,6 @@ cron.schedule('0 0 * * *', () => {
 });
 
 
-// Emails
-const email = require('./email');
-
-
 // Timer
 app.use('/', (req, res, next) => {
   req.startTime = new Date();
@@ -147,11 +143,11 @@ app.post(`${ADDR_PREFIX}/signup`, ReCaptcha.verifyReCaptcha, async (req, res, ne
 
       if (!req.body.hp) {
         // Send verification email
-        email.sendVerifyLink({ id: data.insertId, ...req.body });
+        api.email.sendVerifyLink({ id: data.insertId, ...req.body });
       }
 
       if (!req.body.newsletter) {
-        email.unsubscribeUser([req.body.email], email.groups.NEWSLETTER);
+        api.email.unsubscribeUser([req.body.email], api.email.groups.NEWSLETTER);
       }
 
       res.redirect(`${ADDR_PREFIX}${req.query.page || '/'}${req.query.search ? `?${req.query.search}` : ''}`);

@@ -6,7 +6,6 @@ const { render } = require('./templates');
 const { perms, Cond, getPfpUrl } = require('./api/utils');
 const fs = require('fs/promises');
 const logger = require('./logger');
-const email = require('./email');
 
 module.exports = function(app) {
   app.use((req, res, next) => {
@@ -227,7 +226,7 @@ module.exports = function(app) {
   get('/verify', async (req, res) => {
     if (!req.session.user) return res.status(401);
     if (req.session.user.verified) return res.redirect(`${ADDR_PREFIX}/`);
-    const [code, data] = await email.trySendVerifyLink(req.session.user, req.session.user.username);
+    const [code, data] = await api.email.trySendVerifyLink(req.session.user, req.session.user.username);
     if (data && data.alreadyVerified) {
       return res.redirect(`${ADDR_PREFIX}${req.query.page || '/'}${req.query.search ? `?${req.query.search}` : ''}`);
     }
@@ -245,7 +244,7 @@ module.exports = function(app) {
     if (code === 200) {
       const [_, user] = await api.user.getOne({ id: userId });
       if (user) {
-        // email.sendTemplateEmail(email.templates.WELCOME, req.body.email, { username: user.username }, email.groups.NEWSLETTER);
+        // api.email.sendTemplateEmail(api.email.templates.WELCOME, req.body.email, { username: user.username }, api.email.groups.NEWSLETTER);
         return res.redirect(`${ADDR_PREFIX}/`);
       }
     } else {

@@ -2,7 +2,6 @@ const { ADDR_PREFIX } = require('../config');
 const Auth = require('../middleware/auth');
 const api = require('./');
 const logger = require('../logger');
-const email = require('../email');
 const { perms } = require('./utils');
 
 module.exports = function(app, upload) {
@@ -67,7 +66,7 @@ module.exports = function(app, upload) {
     new APIRoute('/is-subscribed', { POST: (req) => api.notification.isSubscribed(req.session.user, req.body) }),
     new APIRoute('/users', { GET: () => api.user.getMany() }, [
       new APIRoute('/:username', { GET: (req) => api.user.getOne({ 'user.username': req.params.username }) }, [
-        new APIRoute('/send-verify-link', { GET: (req) => email.trySendVerifyLink(req.session.user, req.params.username) }),
+        new APIRoute('/send-verify-link', { GET: (req) => api.email.trySendVerifyLink(req.session.user, req.params.username) }),
         new APIRoute('/notes', {
           GET: (req) => api.note.getByUsername(req.session.user, req.params.username),
           POST: (req) => api.note.post(req.session.user, req.body),

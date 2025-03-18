@@ -1,7 +1,6 @@
 const { executeQuery, parseData } = require('../utils');
 const { WEB_PUSH_ENABLED, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, ADDR_PREFIX, DOMAIN } = require('../../config');
-const userapi = require('./user');
-const email = require('../../email');
+const email = require('./email');
 const logger = require('../../logger');
 const md5 = require('md5');
 const webpush = require('web-push');

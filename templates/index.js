@@ -38,6 +38,25 @@ const locale = {
   }
 };
 
+function itemLink(req, uniShort, itemShort) {
+  const displayUniverse = req.headers['x-subdomain'];
+  if (displayUniverse) {
+    if (displayUniverse === uniShort) return `${ADDR_PREFIX}/items/${itemShort}`;
+    else return `https://${DOMAIN}${ADDR_PREFIX}/universes/${uniShort}/items/${itemShort}`;
+  } else {
+    return `${ADDR_PREFIX}/universes/${uniShort}/items/${itemShort}`;
+  }
+}
+function universeLink(req, uniShort) {
+  const displayUniverse = req.headers['x-subdomain'];
+  if (displayUniverse) {
+    if (displayUniverse === uniShort) return ADDR_PREFIX;
+    else return `https://${DOMAIN}${ADDR_PREFIX}/universes/${uniShort}`;
+  } else {
+    return `${ADDR_PREFIX}/universes/${uniShort}`;
+  }
+}
+
 // Basic context information to be sent to the templates
 function contextData(req) {
   const user = req.session.user;
@@ -54,24 +73,6 @@ function contextData(req) {
     return locale[lang][str] ?? str;
   }
 
-  const displayUniverse = req.headers['x-subdomain'];
-  function itemLink(uniShort, itemShort) {
-    if (displayUniverse) {
-      if (displayUniverse === uniShort) return `${ADDR_PREFIX}/items/${itemShort}`;
-      else return `https://${DOMAIN}${ADDR_PREFIX}/universes/${uniShort}/items/${itemShort}`;
-    } else {
-      return `${ADDR_PREFIX}/universes/${uniShort}/items/${itemShort}`;
-    }
-  }
-  function universeLink(uniShort) {
-    if (displayUniverse) {
-      if (displayUniverse === uniShort) return ADDR_PREFIX;
-      else return `https://${DOMAIN}${ADDR_PREFIX}/universes/${uniShort}`;
-    } else {
-      return `${ADDR_PREFIX}/universes/${uniShort}`;
-    }
-  }
-
   const searchQueries = new URLSearchParams(req.query);
   const pageQuery = new URLSearchParams();
   pageQuery.append('page', req.path)
@@ -82,9 +83,9 @@ function contextData(req) {
     ADDR_PREFIX,
     VAPID_PUBLIC_KEY,
     encodedPath: pageQuery.toString(),
-    displayUniverse,
-    itemLink,
-    universeLink,
+    displayUniverse: req.headers['x-subdomain'],
+    itemLink: itemLink.bind(null, req),
+    universeLink: universeLink.bind(null, req),
     searchQueries: searchQueries.toString(),
     perms,
     locale: locale[lang],
@@ -150,4 +151,6 @@ function render(req, template, context = {}) {
 
 module.exports = {
   render,
+  itemLink,
+  universeLink,
 };

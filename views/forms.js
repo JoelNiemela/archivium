@@ -2,10 +2,8 @@ const { ADDR_PREFIX, DEV_MODE } = require('../config');
 const Auth = require('../middleware/auth');
 const api = require('../api');
 const md5 = require('md5');
-const { render } = require('../templates');
+const { itemLink, universeLink } = require('../templates');
 const { perms, Cond, getPfpUrl } = require('../api/utils');
-const fs = require('fs/promises');
-const logger = require('../logger');
 
 module.exports = {
   async notificationSettings(req, res) {
@@ -31,7 +29,7 @@ module.exports = {
       discussion_open: req.body.discussion_open === 'enabled',
     });
     res.status(code);
-    if (code === 201) return res.redirect(`${ADDR_PREFIX}/universes/${req.body.shortname}`);
+    if (code === 201) return res.redirect(`${universeLink(req, req.body.shortname)}/`);
     res.prepareRender('createUniverse', { error: data, ...req.body });
   },
 
@@ -45,7 +43,7 @@ module.exports = {
     }
     const [code, data] = await api.universe.put(req.session.user, req.params.shortname, req.body);
     res.status(code);
-    if (code === 200) return res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}`);
+    if (code === 200) return res.redirect(`${universeLink(req, req.params.shortname)}/`);
     res.prepareRender('editUniverse', { error: data, ...req.body });
   },
 
@@ -57,7 +55,7 @@ module.exports = {
         const [code2, _] = await api.discussion.postCommentToThread(req.session.user, data.insertId, { body: req.body.comment });
         res.status(code2);
       }
-      return res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}/discuss/${data.insertId}`);
+      return res.redirect(`${universeLink(req, req.params.shortname)}/discuss/${data.insertId}`);
     }
     const [code3, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
     res.status(code3);
@@ -68,7 +66,7 @@ module.exports = {
   async commentOnThread(req, res) {
     const [code, _] = await api.discussion.postCommentToThread(req.session.user, req.params.threadId, req.body);
     res.status(code);
-    return res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}/discuss/${req.params.threadId}`);
+    return res.redirect(`${universeLink(req, req.params.shortname)}/discuss/${req.params.threadId}`);
   },
  
   async createItem(req, res) {
@@ -76,7 +74,7 @@ module.exports = {
       ...req.body,
     }, req.params.shortname);
     res.status(userCode);
-    if (userCode === 201) return res.redirect(`${ADDR_PREFIX}/universes/${req.params.shortname}/items/${req.body.shortname}`);
+    if (userCode === 201) return res.redirect(`${universeLink(req, req.params.shortname)}/items/${req.body.shortname}`);
     const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
     res.status(code);
     if (code !== 200) return;
@@ -89,13 +87,13 @@ module.exports = {
     if (err) {
       return res.prepareRender('editItem', { error: err, ...body });
     }
-    res.redirect(`${ADDR_PREFIX}/universes/${req.params.universeShortname}/items/${req.params.itemShortname}`);
+    res.redirect(`${itemLink(req, req.params.universeShortname, req.params.itemShortname)}`);
   },
 
   async commentOnItem(req, res) {
     const [code, _] = await api.discussion.postCommentToItem(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
     res.status(code);
-    res.redirect(`${ADDR_PREFIX}/universes/${req.params.universeShortname}/items/${req.params.itemShortname}?tab=comments`);
+    res.redirect(`${itemLink(req, req.params.universeShortname, req.params.itemShortname)}?tab=comments`);
   },
 
   async editUniversePerms(req, res) {
@@ -104,7 +102,7 @@ module.exports = {
     const [code, data] = await api.universe.putPermissions(session.user, params.shortname, user, body.permission_level, perms.ADMIN);
     res.status(code);
     if (code !== 200) return;
-    res.redirect(`${ADDR_PREFIX}/universes/${params.shortname}/permissions`);
+    res.redirect(`${universeLink(req, params.shortname)}/permissions`);
   },
 
   async createNote(req, res) {
@@ -119,12 +117,12 @@ module.exports = {
     if (body.note_item && body.note_universe) {
       const [code, data] = await api.note.linkToItem(session.user, body.note_universe, body.note_item, uuid);
       if (code !== 201) return console.error(`Error ${code}: ${data}`);
-      nextPage = nextPage || `${ADDR_PREFIX}/universes/${body.note_universe}/items/${body.note_item}?tab=notes&note=${uuid}`;
+      nextPage = nextPage || `${itemLink(req, body.note_universe, body.note_item)}?tab=notes&note=${uuid}`;
     }
     if (body.note_board && body.note_universe) {
       const [code, data] = await api.note.linkToBoard(session.user, body.note_board, uuid);
       if (code !== 201) return console.error(`Error ${code}: ${data}`);
-      nextPage = nextPage || `${ADDR_PREFIX}/universes/${body.note_universe}/notes/${body.note_board}?note=${uuid}`;
+      nextPage = nextPage || `${universeLink(req, body.note_universe)}/notes/${body.note_board}?note=${uuid}`;
     }
     res.status(code);
     if (code === 201) return res.redirect(nextPage || `${ADDR_PREFIX}/notes?note=${uuid}`);
@@ -144,10 +142,10 @@ module.exports = {
     });
     let nextPage;
     if (body.note_item && body.note_universe) {
-      nextPage = nextPage || `${ADDR_PREFIX}/universes/${body.note_universe}/items/${body.note_item}?tab=notes&note=${body.note_uuid}`;
+      nextPage = nextPage || `${universeLink(body.note_universe)}/items/${body.note_item}?tab=notes&note=${body.note_uuid}`;
     }
     if (body.note_board && body.note_universe) {
-      nextPage = nextPage || `${ADDR_PREFIX}/universes/${body.note_universe}/notes/${body.note_board}?note=${body.note_uuid}`;
+      nextPage = nextPage || `${universeLink(body.note_universe)}/notes/${body.note_board}?note=${body.note_uuid}`;
     }
     res.status(code);
     if (code === 200) return res.redirect(nextPage || `${ADDR_PREFIX}/notes?note=${body.note_uuid}`);

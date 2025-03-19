@@ -51,15 +51,7 @@ html(lang='en')
 
   body
     header
-      nav.navbar
-        script.
-          window.onscroll = () => {
-            if (document.body.scrollTop > 8 || document.documentElement.scrollTop > 8) {
-              document.querySelector('header').classList.add('nav-fullwidth');
-            } else {
-              document.querySelector('header').classList.remove('nav-fullwidth');
-            }
-          }
+      nav.navbar.ma-2.mb-0
         ul.navbarBtns.shrink-1.scroll-x
           li.navbarBtn
             a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/`) Home

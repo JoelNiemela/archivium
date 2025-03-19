@@ -10,16 +10,20 @@ function showTab(tab) {
   window.history.pushState({ path: newurl }, '', newurl);
 }
 
-window.addEventListener('load', () => {
-  const query = new URLSearchParams(window.location.search);
-  const defaultTab = query.get('tab');
+const tabLoadPromise = new Promise((resolve) => {
+  window.addEventListener('load', () => {
+    const query = new URLSearchParams(window.location.search);
+    const defaultTab = query.get('tab');
 
-  const tabs = document.getElementById('tabBtns');
-  if (tabs.children.length > 0) {
-    showTab(defaultTab || tabs.children[0].dataset.tab)
-  }
+    const tabs = document.getElementById('tabBtns');
+    if (tabs.children.length > 0) {
+      showTab(defaultTab || tabs.children[0].dataset.tab)
+    }
 
-  if (tabs.children.length < 2) {
-    tabs.remove();
-  }
+    if (tabs.children.length < 2) {
+      tabs.remove();
+    }
+
+    resolve();
+  });
 });

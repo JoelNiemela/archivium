@@ -153,7 +153,15 @@ block content
     (function() {
       const body = document.getElementById('markdown-body');
       if (body) {
-        loadMarkdown(body, '#{universe.shortname}', item.obj_data.body, { item });
+        loadMarkdown(body, '#{universe.shortname}', item.obj_data.body, { item }).then(async () => {
+          await tabLoadPromise;
+          const hash = location.hash.substr(1);
+          if (hash) {
+            const el = document.getElementById(hash);
+            console.log(hash, el)
+            el.scrollIntoView();
+          }
+        });
       };
 
       document.querySelectorAll('.mdVal').forEach((el) => {

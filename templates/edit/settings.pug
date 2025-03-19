@@ -9,6 +9,7 @@ block scripts
 
 block content
   h1.center Settings
+  h2 Account
   h3 Change Username
   form#changeUsername
     .inputGroup
@@ -62,3 +63,73 @@ block content
       })();
 
   hr.w-100.mb-0
+
+  h2 Notifications
+  form#notificationSettings( method='POST' action=`${ADDR_PREFIX}/settings/notifications` )
+    .inputGroup
+      label( for='push_notifs' ) #{T('Push notifications')}: 
+      label.switch
+        input( id='push_notifs' name='push_notifs' type='checkbox' checked=false )
+        span.slider
+    .inputGroup
+      label( for='email_notifs' ) #{T('Email notifications')}: 
+      label.switch
+        input( id='email_notifs' name='email_notifs' type='checkbox' checked=Boolean(user.email_notifications) )
+        span.slider
+
+    h3 Filter Notifications
+    table.sheet#notificationFilters
+      thead
+        tr
+          th #{T('Notfication Type')}
+          each _, method_key in notificationMethods
+            th #{T(capitalize(method_key.toLowerCase()))}
+      tbody
+        each type in notificationTypes
+          tr
+            td #{T(`notif_${type}`)}
+            each method in notificationMethods
+              td.center
+                input(
+                  id=`notif_${type}_${method}`
+                  name=`notif_${type}_${method}`
+                  data-type=type
+                  data-method=method
+                  type='checkbox'
+                  checked=(`${type}_${method}` in typeSettings ? typeSettings[`${type}_${method}`] : (method === 0))
+                )
+
+    .d-flex
+      button( type='submit' ) Update Preferences
+
+    script.
+      const form = document.forms.notificationSettings;
+
+      function updatePushFilters() {
+        form.querySelectorAll('[data-method="#{notificationMethods.PUSH}"]').forEach(el => {
+          el.disabled = !form.push_notifs.checked;
+        });
+      }
+      form.push_notifs.addEventListener('change', updatePushFilters);
+      updatePushFilters();
+
+      function updateEmailFilters() {
+        form.querySelectorAll('[data-method="#{notificationMethods.EMAIL}"]').forEach(el => {
+          el.disabled = !form.email_notifs.checked;
+        });
+      }
+      form.email_notifs.addEventListener('change', updateEmailFilters);
+      updateEmailFilters();
+
+      function updateCheckbox(isSubscribed) {
+        form.push_notifs.checked = isSubscribed;
+        updatePushFilters();
+      }
+      form.push_notifs.addEventListener('change', () => {
+        setSubscribeStatus(updateCheckbox, form.push_notifs.checked);
+      });
+      checkSubscribed(updateCheckbox);
+
+      form.addEventListener('submit', async (e) => {
+        form.querySelectorAll('#notificationFilters input').forEach(el => el.disabled = false);
+      });

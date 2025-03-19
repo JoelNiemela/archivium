@@ -82,7 +82,7 @@ async function dbImport(db, reset=true) {
         for (const key of keys) {
           data.items[id][key] = formatTypes(data.types[key], data.items[id][key]);
         }
-        await db.queryAsync(
+        await db.executeAsync(
           `INSERT INTO ${table} (${keys.join(',')}) VALUES (${'?'.repeat(keys.length).split('').join(',')});`,
           Object.values(data.items[id])
         );

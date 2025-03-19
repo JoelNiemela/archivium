@@ -8,6 +8,7 @@ CREATE TABLE user (
   updated_at TIMESTAMP NOT NULL,
   verified BOOLEAN DEFAULT FALSE,
   suspect BOOLEAN DEFAULT FALSE,
+  email_notifications BOOLEAN DEFAULT FALSE,
   PRIMARY KEY (id)
 );
 
@@ -241,4 +242,43 @@ CREATE TABLE sentemail (
   recipient VARCHAR(64) NOT NULL,
   topic VARCHAR(64) NOT NULL,
   sent_at TIMESTAMP NOT NULL
+);
+
+CREATE TABLE notificationsubscription (
+  id INT NOT NULL AUTO_INCREMENT,
+  user_id INT NOT NULL,
+  endpoint_hash CHAR(32) UNIQUE NOT NULL,
+  push_endpoint TEXT NOT NULL,
+  push_keys JSON NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES user (id),
+  PRIMARY KEY (id)
+);
+
+CREATE TABLE universenotification (
+  universe_id INT NOT NULL,
+  user_id INT NOT NULL,
+  is_enabled BOOLEAN NOT NULL,
+  FOREIGN KEY (universe_id) REFERENCES universe (id),
+  FOREIGN KEY (user_id) REFERENCES user (id)
+);
+
+CREATE TABLE notificationtype (
+  user_id INT NOT NULL,
+  notif_type VARCHAR(16) NOT NULL,
+  notif_method TINYINT NOT NULL,
+  is_enabled BOOLEAN NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES user (id)
+);
+
+CREATE TABLE sentnotification (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(128),
+  body TEXT NOT NULL,
+  icon_url TEXT,
+  click_url TEXT,
+  notif_type VARCHAR(16) NOT NULL,
+  user_id INT NOT NULL,
+  sent_at TIMESTAMP NOT NULL,
+  is_read BOOLEAN DEFAULT FALSE,
+  FOREIGN KEY (user_id) REFERENCES user (id)
 );

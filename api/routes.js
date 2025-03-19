@@ -2,7 +2,6 @@ const { ADDR_PREFIX } = require('../config');
 const Auth = require('../middleware/auth');
 const api = require('./');
 const logger = require('../logger');
-const email = require('../email');
 const { perms } = require('./utils');
 
 module.exports = function(app, upload) {
@@ -56,9 +55,18 @@ module.exports = function(app, upload) {
 
   const apiRoutes = new APIRoute('/api', {}, [
     new APIRoute('/*'),
+    new APIRoute('/notifications', {}, [
+      new APIRoute('/subscribe', { POST: (req) => api.notification.subscribe(req.session.user, req.body) }),
+      new APIRoute('/unsubscribe', { POST: (req) => api.notification.unsubscribe(req.session.user, req.body) }),
+      new APIRoute('/mark-all', { PUT: (req) => api.notification.markAllRead(req.session.user, req.body?.isRead ?? true) }),
+      new APIRoute('/sent', {}, [
+        new APIRoute('/:id', { PUT: (req) => api.notification.markRead(req.session.user, req.params.id, req.body.isRead) }),
+      ]),
+    ]),
+    new APIRoute('/is-subscribed', { POST: (req) => api.notification.isSubscribed(req.session.user, req.body) }),
     new APIRoute('/users', { GET: () => api.user.getMany() }, [
       new APIRoute('/:username', { GET: (req) => api.user.getOne({ 'user.username': req.params.username }) }, [
-        new APIRoute('/send-verify-link', { GET: (req) => email.trySendVerifyLink(req.session.user, req.params.username) }),
+        new APIRoute('/send-verify-link', { GET: (req) => api.email.trySendVerifyLink(req.session.user, req.params.username) }),
         new APIRoute('/notes', {
           GET: (req) => api.note.getByUsername(req.session.user, req.params.username),
           POST: (req) => api.note.post(req.session.user, req.body),
@@ -91,6 +99,7 @@ module.exports = function(app, upload) {
           }),
         ]),
         new APIRoute('/username', { PUT: (req) => api.user.putUsername(req.session.user, req.params.username, req.body.username) }),
+        new APIRoute('/notif-settings', { PUT: (req) => api.notification.putSettings((req.session?.user?.username === req.params.username) ? req.session.user : null, req.body.username) }),
       ]),
     ]),
     new APIRoute('/contacts', {

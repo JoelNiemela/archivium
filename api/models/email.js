@@ -1,10 +1,11 @@
-const { DOMAIN, ADDR_PREFIX, DEV_MODE, SENDGRID_API_KEY } = require('./config');
-const logger = require('./logger');
-const api = require('./api');
-const { executeQuery } = require('./api/utils');
+const { DOMAIN, ADDR_PREFIX, DEV_MODE, SENDGRID_API_KEY } = require('../../config');
+const logger = require('../../logger');
+const userapi = require('./user');
+const { executeQuery } = require('../utils');
 
 const templates = {
   VERIFY: ['d-04ac9be5b7fb430ba3e23b7d93115644', 'verify'],
+  NOTIFY: ['d-32bf5e61b7d14239a80a00518b1824c0', 'notify'],
 };
 
 const groups = {
@@ -24,7 +25,7 @@ async function sendEmail(topic, msg) {
   const { to } = msg;
   logger.info(`Sending email to ${to}...`);
   if (DEV_MODE) {
-    logger.warn('Email sending is disabled in test env.');
+    logger.warn('Email sending may be disabled in test env.');
   }
   try {
     await sgMail.send(msg);
@@ -62,10 +63,10 @@ async function unsubscribeUser(emails, groupId) {
 }
 
 async function sendVerifyLink({ id, username, email }) {
-  const verificationKey = await api.user.prepareVerification(id);
+  const verificationKey = await userapi.prepareVerification(id);
   if (DEV_MODE) {
     // Can't send emails in dev mode, just auto-verify them instead.
-    await api.user.verifyUser(verificationKey);
+    await userapi.verifyUser(verificationKey);
     return true;
   }
   

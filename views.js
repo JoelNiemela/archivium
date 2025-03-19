@@ -2,11 +2,10 @@ const { ADDR_PREFIX, DEV_MODE } = require('./config');
 const Auth = require('./middleware/auth');
 const api = require('./api');
 const md5 = require('md5');
-const { getPfpUrl, render } = require('./templates');
-const { perms, Cond } = require('./api/utils');
+const { render } = require('./templates');
+const { perms, Cond, getPfpUrl } = require('./api/utils');
 const fs = require('fs/promises');
 const logger = require('./logger');
-const email = require('./email');
 
 module.exports = function(app) {
   app.use((req, res, next) => {
@@ -167,7 +166,32 @@ module.exports = function(app) {
     const [code, user] = await api.user.getOne({ 'user.id': req.session.user.id });
     res.status(code);
     if (!user) return;
-    res.prepareRender('settings', { user });
+    const [code2, typeSettingData] = await api.notification.getTypeSettings(user);
+    res.status(code2);
+    if (!typeSettingData) return;
+    const typeSettings = {};
+    for (const setting of typeSettingData) {
+      typeSettings[`${setting.notif_type}_${setting.notif_method}`] = Boolean(setting.is_enabled);
+    }
+    res.prepareRender('settings', {
+      user,
+      typeSettings,
+      notificationTypes: api.notification.types,
+      notificationMethods: api.notification.methods,
+    });
+  });
+  post('/settings/notifications', Auth.verifySessionOrRedirect, async (req, res) => {
+    const { body, session } = req;
+    body['email_notifs'] = body['email_notifs'] === 'on';
+    for (const type of Object.values(api.notification.types)) {
+      for (const method of Object.values(api.notification.methods)) {
+        body[`${type}_${method}`] = body[`notif_${type}_${method}`] === 'on';
+        delete body[`notif_${type}_${method}`];
+      }
+    }
+    const [code, data] = await api.notification.putSettings(session.user, body);
+    res.status(code);
+    return res.redirect(`${ADDR_PREFIX}/settings`);
   });
   
 
@@ -202,7 +226,7 @@ module.exports = function(app) {
   get('/verify', async (req, res) => {
     if (!req.session.user) return res.status(401);
     if (req.session.user.verified) return res.redirect(`${ADDR_PREFIX}/`);
-    const [code, data] = await email.trySendVerifyLink(req.session.user, req.session.user.username);
+    const [code, data] = await api.email.trySendVerifyLink(req.session.user, req.session.user.username);
     if (data && data.alreadyVerified) {
       return res.redirect(`${ADDR_PREFIX}${req.query.page || '/'}${req.query.search ? `?${req.query.search}` : ''}`);
     }
@@ -220,7 +244,7 @@ module.exports = function(app) {
     if (code === 200) {
       const [_, user] = await api.user.getOne({ id: userId });
       if (user) {
-        // email.sendTemplateEmail(email.templates.WELCOME, req.body.email, { username: user.username }, email.groups.NEWSLETTER);
+        // api.email.sendTemplateEmail(api.email.templates.WELCOME, req.body.email, { username: user.username }, api.email.groups.NEWSLETTER);
         return res.redirect(`${ADDR_PREFIX}/`);
       }
     } else {
@@ -593,5 +617,17 @@ module.exports = function(app) {
       res.prepareRender('search', { items: [], universes: [], search: '' });
     }
     
+  });
+
+  get('/notifications', Auth.verifySessionOrRedirect, async (req, res) => {
+    if (req.session.user) {
+      const [code, notifications] = await api.notification.getSentNotifications(req.session.user);
+      res.status(code);
+      if (code !== 200) return;
+      res.prepareRender('notifications', {
+        read: notifications.filter(notif => notif.is_read),
+        unread: notifications.filter(notif => !notif.is_read),
+      });
+    }
   });
 }

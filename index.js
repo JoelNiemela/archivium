@@ -37,9 +37,6 @@ cron.schedule('0 0 * * *', () => {
     backup();
 });
 
-// Emails
-const email = require('./email');
-
 
 // Timer
 app.use('/', (req, res, next) => {
@@ -57,6 +54,10 @@ app.use('/', (req, res, next) => {
   req.clientIp = clientIp;
   next();
 });
+
+
+// Workers
+app.use(`${ADDR_PREFIX}/notifworker.js`, express.static(path.join(__dirname, 'static/workers/notifworker.js')));
 
 
 // Serve static assets
@@ -142,11 +143,11 @@ app.post(`${ADDR_PREFIX}/signup`, ReCaptcha.verifyReCaptcha, async (req, res, ne
 
       if (!req.body.hp) {
         // Send verification email
-        email.sendVerifyLink({ id: data.insertId, ...req.body });
+        api.email.sendVerifyLink({ id: data.insertId, ...req.body });
       }
 
       if (!req.body.newsletter) {
-        email.unsubscribeUser([req.body.email], email.groups.NEWSLETTER);
+        api.email.unsubscribeUser([req.body.email], api.email.groups.NEWSLETTER);
       }
 
       res.redirect(`${ADDR_PREFIX}${req.query.page || '/'}${req.query.search ? `?${req.query.search}` : ''}`);

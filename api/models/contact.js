@@ -1,5 +1,6 @@
-const { executeQuery, parseData } = require('../utils');
+const { executeQuery, parseData, getPfpUrl } = require('../utils');
 const userapi = require('./user');
+const notification = require('./notification');
 const logger = require('../../logger');
 
 async function getOne(sessionUser, targetID) {
@@ -75,15 +76,29 @@ async function post(user, username) {
   const [_, contact] = await getOne(user, target.id);
   if (contact) return [200];
 
-  const queryString = `
-    INSERT INTO contact (
-      requesting_user,
-      accepting_user, 
-      accepted
-    ) VALUES (?, ?, ?);
-  `;
+  try {
+    const queryString = `
+      INSERT INTO contact (
+        requesting_user,
+        accepting_user, 
+        accepted
+      ) VALUES (?, ?, ?);
+    `;
 
-  return [201, await executeQuery(queryString, [user.id, target.id, false])];
+    const result = await executeQuery(queryString, [user.id, target.id, false]);
+
+    notification.notify(target, notification.types.CONTACTS, {
+      title: 'Contact Request',
+      body: `${user.username} has sent you a contact request.`,
+      icon: getPfpUrl(user),
+      clickUrl: '/contacts',
+    });
+
+    return [201, result];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
 }
 
 async function put(user, username, accepted) {
@@ -93,15 +108,30 @@ async function put(user, username, accepted) {
   const [_, contact] = await getOne(user, target.id);
   if (!contact) return [404];
 
-  if (accepted) {
-    return [201, await executeQuery(`
-      UPDATE contact SET accepted = ?
-      WHERE
-        requesting_user = ${contact.requesting_id}
-        AND accepting_user = ${contact.accepting_id};
-    `, [true])];
-  } else {
-    return await del(user, target.id);
+  try {
+    let result;
+    if (accepted) {
+      result = await executeQuery(`
+        UPDATE contact SET accepted = ?
+        WHERE
+          requesting_user = ${contact.requesting_id}
+          AND accepting_user = ${contact.accepting_id};
+      `, [true]);
+    } else {
+      result = await del(user, target.id);
+    }
+
+    notification.notify(target, notification.types.CONTACTS, {
+      title: `Contact Request ${accepted ? 'Accepted' : 'Rejected'}`,
+      body: `${user.username} has ${accepted ? 'accepted' : 'rejected'} your contact request.`,
+      icon: getPfpUrl(user),
+      clickUrl: '/contacts',
+    });
+
+    return [200, result];
+  } catch (err) {
+    logger.error(err);
+    return [500];
   }
 }
 

@@ -1,6 +1,6 @@
 const pug = require('pug');
-const { ADDR_PREFIX } = require('../config');
-const { perms } = require('../api/utils');
+const { ADDR_PREFIX, VAPID_PUBLIC_KEY } = require('../config');
+const { perms, getPfpUrl } = require('../api/utils');
 const api = require('../api');
 const md5 = require('md5');
 const path = require('path');
@@ -31,12 +31,12 @@ const locale = {
     [`perms_${perms.COMMENT}`]: 'Comment',
     [`perms_${perms.WRITE}`]: 'Write',
     [`perms_${perms.ADMIN}`]: 'Admin',
+    [`notif_${api.notification.types.CONTACTS}`]: 'Contact Requests',
+    [`notif_${api.notification.types.UNIVERSE}`]: 'Universe Updates',
+    [`notif_${api.notification.types.COMMENTS}`]: 'Comments & Discussion',
+    [`notif_${api.notification.types.FEATURES}`]: 'Archivium Updates',
   }
 };
-
-function getPfpUrl(user) {
-  return user.hasPfp ? `/api/users/${user.username}/pfp` : `https://www.gravatar.com/avatar/${md5(user.email)}.jpg`;
-}
 
 // Basic context information to be sent to the templates
 function contextData(req) {
@@ -44,6 +44,7 @@ function contextData(req) {
   const contextUser = user ? {
     id: user.id,
     username: user.username,
+    notifications: user.notifications,
     pfpUrl: getPfpUrl(user),
   } : null;
 
@@ -61,6 +62,7 @@ function contextData(req) {
   return {
     contextUser,
     ADDR_PREFIX,
+    VAPID_PUBLIC_KEY,
     encodedPath: pageQuery.toString(),
     searchQueries: searchQueries.toString(),
     perms,
@@ -112,6 +114,7 @@ const templates = {
   verify: compile('templates/verify.pug'),
   settings: compile('templates/edit/settings.pug'),
   spamblock: compile('templates/spamblock.pug'),
+  notifications: compile('templates/view/notifications.pug'),
 };
 
 function render(req, template, context = {}) {
@@ -125,6 +128,5 @@ function render(req, template, context = {}) {
 }
 
 module.exports = {
-  getPfpUrl,
   render,
 };

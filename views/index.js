@@ -11,8 +11,8 @@ const pages = require('./pages');
 const forms = require('./forms');
 
 const sites = {
-  DISPLAY: (req) => req.headers['x-subdomain'] !== '',
-  NORMAL: (req) => req.headers['x-subdomain'] === '',
+  DISPLAY: (req) => !!req.headers['x-subdomain'],
+  NORMAL: (req) => !req.headers['x-subdomain'],
   ALL: () => true,
 };
 
@@ -42,6 +42,7 @@ module.exports = function(app) {
     const handler = middleware.pop();
     if (!(['get', 'post', 'put'].includes(method))) throw `Illegal method: ${method}`;
     app[method](`${ADDR_PREFIX}${path}`, ...middleware, async (req, res, next) => {
+      console.log(req.headers['x-subdomain'])
       if (site(req)) {
         await handler(req, res);
         await doRender(req, res);
@@ -118,6 +119,11 @@ module.exports = function(app) {
 
   /* Display Mode Pages */
   get('/', sites.DISPLAY, params(pages.universe.view, (req) => ({ shortname: req.headers['x-subdomain'] })));
+  get('/edit', sites.DISPLAY, params(pages.universe.edit, (req) => ({ shortname: req.headers['x-subdomain'] })));
+  get('/delete', sites.DISPLAY, params(pages.universe.delete, (req) => ({ shortname: req.headers['x-subdomain'] })));
+  get('/permissions', sites.DISPLAY, params(pages.universe.editPerms, (req) => ({ shortname: req.headers['x-subdomain'] })));
+  get('/delete', sites.DISPLAY, params(pages.universe.delete, (req) => ({ shortname: req.headers['x-subdomain'] })));
   get('/items', sites.DISPLAY, params(pages.universe.itemList, (req) => ({ shortname: req.headers['x-subdomain'] })));
   get('/items/:itemShortname', sites.DISPLAY, params(pages.item.view, (req) => ({ universeShortname: req.headers['x-subdomain'] })));
+  get('/items/:itemShortname/edit', sites.DISPLAY, params(pages.item.edit, (req) => ({ universeShortname: req.headers['x-subdomain'] })));
 }

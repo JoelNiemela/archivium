@@ -42,7 +42,7 @@ block breadcrumbs
 block content
   h1.center #{item.title}
   p.center #{capitalize(T(item.itemTypeName))} of 
-    a.link.link-animated( href=`${universeLink(universe.shortname)}` ) #{item.universe}
+    a.link.link-animated( href=`${universeLink(universe.shortname)}/` ) #{item.universe}
   p.center
     small Created by 
       a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}

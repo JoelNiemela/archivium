@@ -65,7 +65,7 @@ function contextData(req) {
   }
   function universeLink(uniShort) {
     if (displayUniverse) {
-      if (displayUniverse === uniShort) return `${ADDR_PREFIX}/`;
+      if (displayUniverse === uniShort) return ADDR_PREFIX;
       else return `https://${DOMAIN}${ADDR_PREFIX}/universes/${uniShort}`;
     } else {
       return `${ADDR_PREFIX}/universes/${uniShort}`;

@@ -107,7 +107,7 @@ block content
         each item in recentlyUpdated
           tr
             td( data-sort=item.title )
-              a.link.link-animated( href=`${itemLink(item.universe_short, item.shortname)}` ) #{item.title}
+              a.link.link-animated( href=`${universeLink(item.universe_short)}/items/${item.shortname}` ) #{item.title}
               if !item.last_updated_by
                 small( style='font-size: x-small;' )  (New)
             td( data-sort=item.universe )
@@ -132,7 +132,7 @@ block content
         each item in items
           tr
             td( data-sort=item.title )
-              a.link.link-animated( href=`${itemLink(item.universe_short, item.shortname)}` ) #{item.title}
+              a.link.link-animated( href=`${universeLink(item.universe_short)}/items/${item.shortname}` ) #{item.title}
               if !item.last_updated_by
                 small( style='font-size: x-small;' )  (New)
             td( data-sort=item.universe )

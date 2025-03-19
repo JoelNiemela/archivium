@@ -2,7 +2,7 @@ const { ADDR_PREFIX, DEV_MODE } = require('../config');
 const Auth = require('../middleware/auth');
 const api = require('../api');
 const md5 = require('md5');
-const { itemLink, universeLink } = require('../templates');
+const { universeLink } = require('../templates');
 const { perms, Cond, getPfpUrl } = require('../api/utils');
 
 module.exports = {
@@ -87,13 +87,13 @@ module.exports = {
     if (err) {
       return res.prepareRender('editItem', { error: err, ...body });
     }
-    res.redirect(`${itemLink(req, req.params.universeShortname, req.params.itemShortname)}`);
+    res.redirect(`${universeLink(req, req.params.universeShortname)}/items/${req.params.itemShortname}`);
   },
 
   async commentOnItem(req, res) {
     const [code, _] = await api.discussion.postCommentToItem(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
     res.status(code);
-    res.redirect(`${itemLink(req, req.params.universeShortname, req.params.itemShortname)}?tab=comments`);
+    res.redirect(`${universeLink(req, req.params.universeShortname)}/items${req.params.itemShortname}?tab=comments`);
   },
 
   async editUniversePerms(req, res) {
@@ -117,7 +117,7 @@ module.exports = {
     if (body.note_item && body.note_universe) {
       const [code, data] = await api.note.linkToItem(session.user, body.note_universe, body.note_item, uuid);
       if (code !== 201) return console.error(`Error ${code}: ${data}`);
-      nextPage = nextPage || `${itemLink(req, body.note_universe, body.note_item)}?tab=notes&note=${uuid}`;
+      nextPage = nextPage || `${universeLink(req, body.note_universe)}/items/${body.note_item}?tab=notes&note=${uuid}`;
     }
     if (body.note_board && body.note_universe) {
       const [code, data] = await api.note.linkToBoard(session.user, body.note_board, uuid);

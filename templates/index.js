@@ -38,15 +38,6 @@ const locale = {
   }
 };
 
-function itemLink(req, uniShort, itemShort) {
-  const displayUniverse = req.headers['x-subdomain'];
-  if (displayUniverse) {
-    if (displayUniverse === uniShort) return `${ADDR_PREFIX}/items/${itemShort}`;
-    else return `https://${DOMAIN}${ADDR_PREFIX}/universes/${uniShort}/items/${itemShort}`;
-  } else {
-    return `${ADDR_PREFIX}/universes/${uniShort}/items/${itemShort}`;
-  }
-}
 function universeLink(req, uniShort) {
   const displayUniverse = req.headers['x-subdomain'];
   if (displayUniverse) {
@@ -84,7 +75,6 @@ function contextData(req) {
     VAPID_PUBLIC_KEY,
     encodedPath: pageQuery.toString(),
     displayUniverse: req.headers['x-subdomain'],
-    itemLink: itemLink.bind(null, req),
     universeLink: universeLink.bind(null, req),
     searchQueries: searchQueries.toString(),
     perms,
@@ -151,6 +141,5 @@ function render(req, template, context = {}) {
 
 module.exports = {
   render,
-  itemLink,
   universeLink,
 };

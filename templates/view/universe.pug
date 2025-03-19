@@ -3,12 +3,12 @@ include ../mixins.pug
 
 mixin typeCard(shortname, category)
   .card.item-type
-    a.cardLink.link( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items?type=${shortname}` )
+    a.cardLink.link( href=`${universeLink(universe.shortname)}/items?type=${shortname}` )
       div(style={ 'background-color': category[2] })
         h2(align='center')= capitalize(category[1])
     div
       if contextUser
-        a.cardBtn.link( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/create?type=${shortname}` ) &#x2795; New
+        a.cardBtn.link( href=`${universeLink(universe.shortname)}/items/create?type=${shortname}` ) &#x2795; New
         a.cardBtn.link( href=`${ADDR_PREFIX}/users/${contextUser.username}/items?type=${shortname}` ) My #{category[1]}
 
 block breadcrumbs
@@ -60,11 +60,11 @@ block content
             });
         if universe.author_permissions[contextUser.id] >= perms.ADMIN
           |  - 
-          a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/edit` ) Edit
+          a.link.link-animated( href=`${universeLink(universe.shortname)}/edit` ) Edit
           |  - 
-          a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/permissions` ) Set Permissions
+          a.link.link-animated( href=`${universeLink(universe.shortname)}/permissions` ) Set Permissions
           |  - 
-          a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/delete` ) Delete
+          a.link.link-animated( href=`${universeLink(universe.shortname)}/delete` ) Delete
 
   hr
 
@@ -91,7 +91,7 @@ block content
         p No item types have been defined yet — 
           if contextUser && (universe.author_permissions[contextUser.id] >= perms.ADMIN)
             | go to the 
-            a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/edit` ) edit
+            a.link.link-animated( href=`${universeLink(universe.shortname)}/edit` ) edit
             |  page to add some.
           else
             | ask the owner of this universe to add some.
@@ -136,11 +136,11 @@ block content
     .d-flex.flex-col.gap-4.hidden( data-tab='discuss' )
       if contextUser && universe.discussion_enabled && (universe.discussion_open || universe.author_permissions[id] >= perms.COMMENT)
         div
-          a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/discuss/create` ) Create New
+          a.link.link-animated( href=`${universeLink(universe.shortname)}/discuss/create` ) Create New
       each thread in threads
-        .sheet.d-flex.flex-col.gap-2.align-start( onclick=`goTo('${ADDR_PREFIX}/universes/${universe.shortname}/discuss/${thread.id}')` )
+        .sheet.d-flex.flex-col.gap-2.align-start( onclick=`goTo('${universeLink(universe.shortname)}/discuss/${thread.id}')` )
           h2.ma-0
-            a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/discuss/${thread.id}` ) #{thread.title}
+            a.link.link-animated( href=`${universeLink(universe.shortname)}/discuss/${thread.id}` ) #{thread.title}
           .d-flex.gap-4.flex-wrap
             span
               b #{T('Comments')}: 

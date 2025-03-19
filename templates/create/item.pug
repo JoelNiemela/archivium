@@ -65,5 +65,5 @@ block content
           span( style={'font-size': 'small'} ).color-error= error
   else
     p No item types have been defined for #{universe.title} yet — go to the 
-      a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/edit` ) edit universe
+      a.link.link-animated( href=`${universeLink(universe.shortname)}` ) edit universe
       |  page to add some.

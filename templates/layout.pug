@@ -126,8 +126,9 @@ html(lang='en')
 
     main
       .page
-        #breadcrumbs
-          block breadcrumbs
+        if !displayUniverse
+          #breadcrumbs
+            block breadcrumbs
         block content
 
     footer

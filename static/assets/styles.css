@@ -3,6 +3,7 @@
 
 :root {
   --navbar-height: 51px;
+  --page-margin-top: calc(var(--navbar-height) + 1rem);
 }
 
 * {
@@ -11,6 +12,7 @@
 
 h1, h2, h3, h4, h5, h6, .lora {
   font-family: 'Lora', serif;
+  scroll-margin-top: var(--page-margin-top);
 }
 
 body {
@@ -23,7 +25,7 @@ body {
 }
 
 main {
-  margin: calc(var(--navbar-height) + 1rem) 0 2rem;
+  margin: var(--page-margin-top) 0 2rem;
   flex-grow: 1;
 }
 

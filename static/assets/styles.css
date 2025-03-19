@@ -6,6 +6,12 @@
   --page-margin-top: calc(var(--navbar-height) + 1rem);
 }
 
+@media only screen and (max-device-width: 480px) {
+  :root {
+    --navbar-height: 102px;
+  }
+}
+
 * {
   box-sizing: border-box;
 }

@@ -2,7 +2,7 @@ const { ADDR_PREFIX, DEV_MODE } = require('../../config');
 const Auth = require('../../middleware/auth');
 const api = require('../../api');
 const md5 = require('md5');
-const { render } = require('../../templates');
+const { render, universeLink } = require('../../templates');
 const { perms, Cond, getPfpUrl } = require('../../api/utils');
 const fs = require('fs/promises');
 const logger = require('../../logger');
@@ -55,7 +55,7 @@ module.exports = {
         res.prepareRender('error', {
           code: 404,
           hint: 'Looks like this item doesn\'t exist yet. Follow the link below to create it:',
-          hintLink: `${ADDR_PREFIX}/universes/${req.params.universeShortname}/items/create?shortname=${req.params.itemShortname}`,
+          hintLink: `${universeLink(req, req.params.universeShortname)}/items/create?shortname=${req.params.itemShortname}`,
         });
       } else {
         res.status(code2);
@@ -88,7 +88,7 @@ module.exports = {
 
     res.prepareRender('item', {
       item, universe, tab: req.query.tab, comments, commenters, notes, noteAuthors,
-      commentAction: `/universes/${universe.shortname}/items/${item.shortname}/comment`,
+      commentAction: `${universeLink(req, universe.shortname)}/items/${item.shortname}/comment`,
       noteBaseRoute: `/api/universes/${universe.shortname}/items/${item.shortname}/notes`,
     });
   },

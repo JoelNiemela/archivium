@@ -71,6 +71,7 @@ function contextData(req) {
 
   return {
     contextUser,
+    DOMAIN,
     ADDR_PREFIX,
     VAPID_PUBLIC_KEY,
     encodedPath: pageQuery.toString(),

@@ -326,7 +326,7 @@ block append styles
         noteItemsPreviewList.appendChild(createElement('li', { classList: ['d-flex', 'align-center'], dataset: {item: shortname}, children: [
           createElement('a', { attrs: {
             innerText: title,
-            href: `#{ADDR_PREFIX}/universes/${universe_short}/items/${shortname}`,
+            href: `${universeLink(universe_short)}/items/${shortname}`,
           }, classList: ['link', 'link-animated'] }),
         ] }));
       }

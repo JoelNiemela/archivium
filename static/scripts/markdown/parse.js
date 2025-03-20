@@ -112,7 +112,7 @@ if (!window.getJSON) throw 'fetchUtils.js not loaded!';
               universe = currentUniverse;
             }
             const [item, _] = itemHash.split('#');
-            this.attrs.href = `/universes/${universe}/items/${itemHash}`;
+            this.attrs.href = `${universeLink(universe)}/items/${itemHash}`;
             this.attrs['data-universe'] = universe;
             this.attrs['data-item'] = item;
             bulkCheckExists(universe, item, fetches, (exists) => {

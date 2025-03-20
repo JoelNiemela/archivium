@@ -29,7 +29,7 @@ class Timeline {
               ...(event_title ? [createElement('span', { attrs: { innerText: `${event_title} of ` } })] : []),
               createElement('a', {
                 classList: ['link', 'link-animated'],
-                attrs: { innerText: src_title, href: `/universes/${item.universe_short}/items/${src_shortname}` }
+                attrs: { innerText: src_title, href: `${universeLink(item.universe_short)}/items/${src_shortname}` }
               }),
             ])
           ] }),

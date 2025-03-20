@@ -115,6 +115,7 @@ module.exports = function(app) {
   get('/universes/:universeShortname/items/:itemShortname', sites.NORMAL, pages.item.view);
   get('/universes/:universeShortname/items/:itemShortname/edit', sites.NORMAL, Auth.verifySessionOrRedirect, pages.item.edit);
   post('/universes/:universeShortname/items/:itemShortname/edit', sites.NORMAL, Auth.verifySessionOrRedirect, forms.editItem);
+  post('/universes/:universeShortname/items/:itemShortname/comment', sites.NORMAL, Auth.verifySessionOrRedirect, forms.commentOnItem);
 
   /* Display Mode Pages */
   get('/', sites.DISPLAY, subdomain(pages.universe.view, (sub) => ({ shortname: sub })));
@@ -134,4 +135,5 @@ module.exports = function(app) {
   get('/items/:itemShortname', sites.DISPLAY, subdomain(pages.item.view, (sub) => ({ universeShortname: sub })));
   get('/items/:itemShortname/edit', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(pages.item.edit, (sub) => ({ universeShortname: sub })));
   post('/items/:itemShortname/edit', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(forms.editItem, (sub) => ({ universeShortname: sub })));
+  post('/items/:itemShortname/comment', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(forms.commentOnItem, (sub) => ({ universeShortname: sub })));
 }

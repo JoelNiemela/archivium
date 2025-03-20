@@ -93,7 +93,7 @@ module.exports = {
   async commentOnItem(req, res) {
     const [code, _] = await api.discussion.postCommentToItem(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
     res.status(code);
-    res.redirect(`${universeLink(req, req.params.universeShortname)}/items${req.params.itemShortname}?tab=comments`);
+    res.redirect(`${universeLink(req, req.params.universeShortname)}/items/${req.params.itemShortname}?tab=comments`);
   },
 
   async editUniversePerms(req, res) {

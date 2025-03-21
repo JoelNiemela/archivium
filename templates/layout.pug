@@ -44,6 +44,16 @@ html(lang='en')
       function T(str) {
         return locale[str] ?? str;
       }
+      function universeLink(uniShort) {
+        const displayUniverse = '#{displayUniverse}';
+        console.log(displayUniverse)
+        if (displayUniverse) {
+          if (displayUniverse === uniShort) return '#{ADDR_PREFIX}';
+          else return `https://#{DOMAIN}#{ADDR_PREFIX}/universes/${uniShort}`;
+        } else {
+          return `#{ADDR_PREFIX}/universes/${uniShort}`;
+        }
+      }
       const VAPID_PUBLIC_KEY = '#{VAPID_PUBLIC_KEY}';
     script
       include /static/scripts/notifications.js
@@ -59,10 +69,11 @@ html(lang='en')
             a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/search`) Search
           li.navbarBtn
             a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/contacts`) Contacts
+          if !displayUniverse
+            li.navbarBtn
+              a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/universes`) Universes
           li.navbarBtn
-            a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/universes`) Universes
-          li.navbarBtn
-            a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/items`) Items
+            a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/items`) Items 
           li.navbarBtn
             a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/notes`) Notes
           li.navbarBtn
@@ -124,8 +135,9 @@ html(lang='en')
 
     main
       .page
-        #breadcrumbs
-          block breadcrumbs
+        if !displayUniverse
+          #breadcrumbs
+            block breadcrumbs
         block content
 
     footer

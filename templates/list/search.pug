@@ -29,10 +29,10 @@ block content
       i #{universes.length + items.length} result(s)
   .card-list
     each universe in universes
-      .card.sheet.gap-4.align-start( onclick=`goTo('${ADDR_PREFIX}/universes/${universe.shortname}')` )
+      .card.sheet.gap-4.align-start( onclick=`goTo('${universeLink(universe.shortname)}/')` )
         .d-flex.flex-col.grow-1
           h3.ma-0
-            a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
+            a.link.link-animated( href=`${universeLink(universe.shortname)}/` ) #{universe.title}
           .d-flex.gap-1
 
         .d-flex.flex-col.grow-3
@@ -50,13 +50,13 @@ block content
               | —
               span #{universe.public ? 'Public' : 'Private'}
     each item in items
-      .card.sheet.gap-4.align-start( onclick=`goTo('${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}')` )
+      .card.sheet.gap-4.align-start( onclick=`goTo('${universeLink(item.universe_short)}/items/${item.shortname}')` )
         .d-flex.flex-col.grow-1
           h3.ma-0
-            a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}` ) #{item.title}
+            a.link.link-animated( href=`${universeLink(item.universe_short)}/items${item.shortname}` ) #{item.title}
           span #{capitalize(item.item_type)}
           div
-            a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}` ) #{item.universe}
+            a.link.link-animated( href=`${universeLink(item.universe_short)}/` ) #{item.universe}
 
         .d-flex.flex-col.grow-3
             span 

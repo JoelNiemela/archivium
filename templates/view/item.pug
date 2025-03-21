@@ -42,7 +42,7 @@ block breadcrumbs
 block content
   h1.center #{item.title}
   p.center #{capitalize(T(item.itemTypeName))} of 
-    a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{item.universe}
+    a.link.link-animated( href=`${universeLink(universe.shortname)}/` ) #{item.universe}
   p.center
     small Created by 
       a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
@@ -58,7 +58,7 @@ block content
               | ##{tag} 
     #action-bar.d-flex.justify-end.align-end
       if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE/* || item.author === contextUser.username*/)
-        a.link.link-animated.d-flex.align-end( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${item.shortname}/edit` )
+        a.link.link-animated.d-flex.align-end( href=`${universeLink(universe.shortname)}/items/${item.shortname}/edit` )
           span.material-symbols-outlined edit
           |  Edit
           
@@ -122,13 +122,13 @@ block content
           .itemKey
             span #{parent.parent_label || T('Parent')}
             hr
-            a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${parent.parent_shortname}` )
+            a.link.link-animated( href=`${universeLink(universe.shortname)}/items/${parent.parent_shortname}` )
               | #{parent.parent_title}
         each child in item.children
           .itemKey
             span #{child.child_label || T('Child')}
             hr
-            a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items/${child.child_shortname}` )
+            a.link.link-animated( href=`${universeLink(universe.shortname)}/items/${child.child_shortname}` )
               | #{child.child_title}
         
     if item.obj_data.comments

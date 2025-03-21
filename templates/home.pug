@@ -57,12 +57,12 @@ block content
               each item in recentlyUpdated
                 tr
                   td
-                    a.big-text.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}` ) #{item.title}
+                    a.big-text.link.link-animated( href=`${universeLink(item.universe_short)}/items/${item.shortname}` ) #{item.title}
                     if !item.last_updated_by
                       small( style='font-size: x-small;' )  (New)
                   td
                     small
-                      a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}` ) #{item.universe}
+                      a.link.link-animated( href=`${universeLink(item.universe_short)}` ) #{item.universe}
                   td
                     small
                       a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.last_updated_by || item.author}` ) #{item.last_updated_by || item.author}
@@ -85,10 +85,10 @@ block content
                   .d-flex.gap-1
                     button.pa-1( onclick=`snooze('${item.universe_short}', '${item.shortname}')` data-item=item.shortname )
                       small Dismiss
-                    a.big-text.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}/items/${item.shortname}` ) #{item.title}
+                    a.big-text.link.link-animated( href=`${universeLink(item.universe_short)}/items/${item.shortname}` ) #{item.title}
                 td
                   small
-                    a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}` ) #{item.universe}
+                    a.link.link-animated( href=`${universeLink(item.universe_short)}` ) #{item.universe}
                 td
                   small #{formatDate(item.updated_at, true)}
       .grow-1.d-flex.flex-col.gap-1
@@ -97,10 +97,10 @@ block content
           ul
             each universe in universes
               li.big-text
-                a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
+                a.link.link-animated( href=`${universeLink(universe.shortname)}` ) #{universe.title}
         .sheet
           h2 Universes I Follow
           ul
             each universe in followedUniverses
               li.big-text
-                a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
+                a.link.link-animated( href=`${universeLink(universe.shortname)}` ) #{universe.title}

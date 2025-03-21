@@ -1,5 +1,5 @@
 const pug = require('pug');
-const { ADDR_PREFIX, VAPID_PUBLIC_KEY } = require('../config');
+const { ADDR_PREFIX, VAPID_PUBLIC_KEY, DOMAIN } = require('../config');
 const { perms, getPfpUrl } = require('../api/utils');
 const api = require('../api');
 const md5 = require('md5');
@@ -38,6 +38,16 @@ const locale = {
   }
 };
 
+function universeLink(req, uniShort) {
+  const displayUniverse = req.headers['x-subdomain'];
+  if (displayUniverse) {
+    if (displayUniverse === uniShort) return ADDR_PREFIX;
+    else return `https://${DOMAIN}${ADDR_PREFIX}/universes/${uniShort}`;
+  } else {
+    return `${ADDR_PREFIX}/universes/${uniShort}`;
+  }
+}
+
 // Basic context information to be sent to the templates
 function contextData(req) {
   const user = req.session.user;
@@ -61,9 +71,12 @@ function contextData(req) {
 
   return {
     contextUser,
+    DOMAIN,
     ADDR_PREFIX,
     VAPID_PUBLIC_KEY,
     encodedPath: pageQuery.toString(),
+    displayUniverse: req.headers['x-subdomain'],
+    universeLink: universeLink.bind(null, req),
     searchQueries: searchQueries.toString(),
     perms,
     locale: locale[lang],
@@ -129,4 +142,5 @@ function render(req, template, context = {}) {
 
 module.exports = {
   render,
+  universeLink,
 };

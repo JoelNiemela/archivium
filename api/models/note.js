@@ -43,15 +43,29 @@ async function getMany(user, conditions, options) {
       parsedConds.strings.push('note.public');
     }
     const queryString = `
-      SELECT
+      SELECT DISTINCT
         note.id, note.uuid, note.title,
         note.public, note.author_id,
         note.created_at, note.updated_at,
         tag.tags,
         ${options?.fullBody ? 'note.body' : 'SUBSTRING(note.body, 1, 255) AS body'}
-        ${options?.connections ? ', JSON_ARRAYAGG(JSON_ARRAY(item.title, item.shortname, iu.title, iu.shortname)) as items' : ''}
-        ${options?.connections ? ', JSON_ARRAYAGG(JSON_ARRAY(noteboard.title, noteboard.shortname, nu.title, nu.shortname)) as boards' : ''}
+        ${options?.connections ? ', item.items' : ''}
+        ${options?.connections ? ', board.boards' : ''}
       FROM note
+        ${options?.connections ? `LEFT JOIN (
+          SELECT itemnote.note_id, JSON_ARRAYAGG(JSON_ARRAY(item.title, item.shortname, iu.title, iu.shortname)) as items
+          FROM itemnote
+          INNER JOIN item ON itemnote.item_id = item.id
+          INNER JOIN universe AS iu ON iu.id = item.universe_id
+          GROUP BY itemnote.note_id
+        ) as item ON item.note_id = note.id` : ''}
+        ${options?.connections ? `LEFT JOIN (
+          SELECT boardnote.note_id, JSON_ARRAYAGG(JSON_ARRAY(noteboard.title, noteboard.shortname, nu.title, nu.shortname)) as boards
+          FROM boardnote
+          INNER JOIN noteboard ON boardnote.board_id = noteboard.id
+          INNER JOIN universe AS nu ON nu.id = noteboard.universe_id
+          GROUP BY boardnote.note_id
+        ) as board ON board.note_id = note.id` : ''}
         LEFT JOIN itemnote ON itemnote.note_id = note.id
         LEFT JOIN boardnote ON boardnote.note_id = note.id
         LEFT JOIN (
@@ -60,18 +74,14 @@ async function getMany(user, conditions, options) {
           GROUP BY note_id
         ) tag ON tag.note_id = note.id
         ${options?.join ?? ''}
-        ${options?.connections ? 'LEFT JOIN item ON itemnote.item_id = item.id' : ''}
-        ${options?.connections ? 'LEFT JOIN universe AS iu ON iu.id = item.universe_id' : ''}
-        ${options?.connections ? 'LEFT JOIN noteboard ON boardnote.board_id = noteboard.id' : ''}
-        ${options?.connections ? 'LEFT JOIN universe AS nu ON nu.id = noteboard.universe_id' : ''}
       WHERE ${parsedConds.strings.join(' AND ')}
       ${options?.connections ? 'GROUP BY note.id' : ''}
       ${options?.limit ? `LIMIT ${options.limit}` : ''}
     `;
     const notes = await executeQuery(queryString, parsedConds.values);
     if (options?.limit === 1 && options?.connections) {
-      notes[0].items = notes[0].items.filter(val => val[0] !== null);
-      notes[0].boards = notes[0].boards.filter(val => val[0] !== null);
+      notes[0].items = (notes[0].items ?? []).filter(val => val[0] !== null);
+      notes[0].boards = (notes[0].boards ?? []).filter(val => val[0] !== null);
     }
     return [200, notes];
   } catch (err) {

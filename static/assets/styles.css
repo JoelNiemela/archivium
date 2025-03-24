@@ -593,6 +593,7 @@ button:disabled {
 
 .markdown aside {
   float: right;
+  clear: right;
   width: 33%;
   padding: 0.25rem;
   margin: 0.5rem;
@@ -615,6 +616,7 @@ button:disabled {
 .markdown aside>div>.img-container>img {
   width: 100%;
   border-radius: 0.875rem !important;
+  display: flex;
 }
 
 .markdown ul {

@@ -27,6 +27,13 @@ module.exports = function(app) {
 
   const doRender = async (req, res) => {
     if (res.statusCode === 302) return; // We did a redirect, no need to render.
+    if (res.statusCode === 401) { // We don't have permission to be here, redirect to login page.
+      const searchQueries = new URLSearchParams(req.query);
+      const pageQuery = new URLSearchParams();
+      pageQuery.append('page', req.path);
+      if (searchQueries.toString()) pageQuery.append('search', searchQueries.toString());
+      return res.redirect(`${ADDR_PREFIX}/login?${pageQuery.toString()}`);;
+    }
     try {
       if (!res.templateData) throw `Code ${res.statusCode} returned by page handler.`;
       const [template, data] = res.templateData;

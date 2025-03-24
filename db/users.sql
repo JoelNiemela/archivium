@@ -5,8 +5,7 @@ SELECT
     user.suspect AS sus,
     universes.count AS unis,
     items.count AS items,
-    comments.count AS comments,
-    universes.titles AS universe_names
+    comments.count AS comments
 FROM user
 LEFT JOIN (
     SELECT DISTINCT au.user_id, COUNT(au.universe_id) AS count, JSON_ARRAYAGG(universe.title) AS titles

@@ -176,6 +176,13 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, options
           whereConds.and('search_tag.tag LIKE ?', `%${options.search}%`),
           options,
         ).innerJoin(['tag', 'search_tag'], new Cond('search_tag.item_id = item.id'))
+      ).union(
+        getQuery(
+          selects,
+          permsCond,
+          whereConds.and('item.obj_data LIKE ?', `%${options.search}%`),
+          options,
+        )
       );
       data = await query.execute();
     } else {
@@ -428,7 +435,7 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
     for (const img of existingImages) {
       oldImages[img.id] = img;
     }
-    for (const img of gallery.imgs) {
+    for (const img of gallery?.imgs ?? []) {
       newImages[img.id] = img;
       if (oldImages[img.id] && img.label !== oldImages[img.id].label) {
         await image.putLabel(user, img.id, img.label);

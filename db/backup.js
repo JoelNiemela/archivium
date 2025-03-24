@@ -1,8 +1,6 @@
-const db = require('.');
-const fsPromises = require('fs').promises;
-const path = require('path');
-const { DB_CONFIG } = require('../config');
+const { DB_CONFIG, DOMAIN } = require('../config');
 const logger = require('../logger');
+const { spawn } = require('child_process');
 
 /**
  * Back up contents of database to JSON in case the database is lost.
@@ -10,29 +8,46 @@ const logger = require('../logger');
 async function backup() {
   logger.info('Backing up db...');
 
-  const tables = (await db.queryAsync('SHOW TABLES;'))[0].map(item => item[`Tables_in_${DB_CONFIG.database}`]);
-  const blob = {};
-  for (const table of tables) {
-    if (table === 'session') continue;
-    const types = {};
-    (await db.queryAsync(`DESCRIBE ${table};`))[0].map(item => types[item.Field] = item.Type);
+  try {
+    const time = Date.now();
+    const r2Target = `cloudflare-r2:archivium-backups/${DOMAIN}/${time}.sql.gz`;
 
-    const itemArray = await db.queryAsync(`SELECT * FROM ${table};`);
-    const items = {};
-    itemArray[0].forEach((item, i) => {
-      items[i] = item;
+    logger.info('Starting DB backup...');
+
+    const dump = spawn('mysqldump', [
+      '-h', DB_CONFIG.host,
+      '-u', DB_CONFIG.user,
+      DB_CONFIG.database,
+    ], { env: { ...process.env, MYSQL_PWD: DB_CONFIG.password } });
+
+    const gzip = spawn('gzip');
+
+    const rclone = spawn('rclone', ['rcat', r2Target]);
+
+    dump.stdout.pipe(gzip.stdin);
+    gzip.stdout.pipe(rclone.stdin);
+
+    return new Promise((resolve, reject) => {
+      dump.stderr.on('data', (data) => logger.error(`mysqldump: ${data}`));
+      gzip.stderr.on('data', (data) => logger.error(`gzip: ${data}`));
+      rclone.stderr.on('data', (data) => logger.error(`rclone: ${data}`));
+
+      rclone.on('close', (code) => {
+        if (code === 0) {
+          logger.info(`Backup complete: ${DOMAIN}/${time}.sql.gz`);
+          resolve();
+        } else {
+          reject(new Error(`Backup failed, rclone exit code: ${code}`));
+        }
+      });
     });
-    blob[table] = { types, items };
+  } catch (err) {
+    logger.error('Backup failed:', err);
   }
-
-  const time = Number(new Date());
-  await fsPromises.writeFile(path.join(__dirname, `backups/backup-${time}.json`), JSON.stringify(blob));
-  logger.info('Backup complete.');
 };
 
 async function main() {
   await backup();
-  db.end();
 }
 
 if (require.main === module) {

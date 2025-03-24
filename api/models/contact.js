@@ -14,12 +14,14 @@ async function getOne(sessionUser, targetID) {
         user.email,
         user.created_at,
         user.updated_at,
+        (ui.user_id IS NOT NULL) as hasPfp,
         contact.accepted,
         (contact.accepting_user = ?) AS is_request,
         contact.requesting_user AS requesting_id,
         contact.accepting_user AS accepting_id
       FROM contact
       INNER JOIN user
+      LEFT JOIN userimage AS ui ON user.id = ui.user_id
       WHERE 
         user.id <> ? 
         AND (
@@ -49,9 +51,11 @@ async function getAll(user, includePending=true, includeAccepted=true) {
   try {
     const queryString = `
       SELECT 
-        user.id, user.username, user.email, user.created_at, user.updated_at, contact.accepted, (contact.accepting_user = ?) AS is_request
+        user.id, user.username, user.email, user.created_at, user.updated_at, contact.accepted,
+        (contact.accepting_user = ?) AS is_request, (ui.user_id IS NOT NULL) as hasPfp
       FROM contact
       INNER JOIN user
+      LEFT JOIN userimage AS ui ON user.id = ui.user_id
       WHERE 
         user.id <> ? 
         AND (

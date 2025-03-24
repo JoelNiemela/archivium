@@ -3,7 +3,7 @@ const logger = require('../logger');
 const { spawn } = require('child_process');
 
 /**
- * Back up contents of database to JSON in case the database is lost.
+ * Back up contents of database to Cloudflare R2 in case the database is lost.
  */
 async function backup() {
   logger.info('Backing up db...');

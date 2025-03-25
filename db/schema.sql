@@ -200,6 +200,13 @@ CREATE TABLE itemimage (
   FOREIGN KEY (item_id) REFERENCES item (id)
 );
 
+CREATE TABLE itemlink (
+  from_item INT NOT NULL,
+  to_item   INT NOT NULL,
+  FOREIGN KEY (from_item) REFERENCES item (id),
+  FOREIGN KEY (to_item) REFERENCES item (id)
+);
+
 CREATE TABLE snooze (
   snoozed_at TIMESTAMP NOT NULL,
   snoozed_by INT NOT NULL,

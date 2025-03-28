@@ -185,7 +185,7 @@ async function put(user, shortname, changes) {
         discussion_open = ?,
         obj_data = ?,
         updated_at = ?
-      WHERE id = ?;
+      WHERE id = ?
     `;
     return [200, await executeQuery(queryString, [ title, public, discussion_enabled, discussion_open, obj_data, new Date(), universe.id ])];
   } catch (err) {
@@ -203,12 +203,12 @@ async function putPermissions(user, shortname, targetUser, permission_level) {
     query = executeQuery(`
       UPDATE authoruniverse 
       SET permission_level = ? 
-      WHERE user_id = ? AND universe_id = ?;`,
+      WHERE user_id = ? AND universe_id = ?`,
       [ permission_level, targetUser.id, universe.id ],
     );
   } else {
     query = executeQuery(`
-      INSERT INTO authoruniverse (permission_level, universe_id, user_id) VALUES (?, ?, ?);`,
+      INSERT INTO authoruniverse (permission_level, universe_id, user_id) VALUES (?, ?, ?)`,
       [ permission_level, universe.id, targetUser.id ],
     );
   }
@@ -236,13 +236,54 @@ async function putUserFollowing(user, shortname, isFollowing) {
     );
   } else {
     query = executeQuery(`
-      INSERT INTO followeruniverse (is_following, universe_id, user_id) VALUES (?, ?, ?);`,
+      INSERT INTO followeruniverse (is_following, universe_id, user_id) VALUES (?, ?, ?)`,
       [ isFollowing, universe.id, user.id ],
     );
   }
 
   try {
     return [200, await query];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
+async function getAccessRequest(user, shortname) {
+  if (!user) return [401];
+  
+  try {
+    const universe = (await executeQuery('SELECT * FROM universe WHERE shortname = ?', [shortname]))[0];
+    if (!universe) return [404];
+
+    const request = (await executeQuery(
+      'SELECT * FROM universeaccessrequest WHERE universe_id = ? AND user_id = ?',
+      [universe.id, user.id],
+    ))[0];
+    if (!request) return [404];
+
+    return [200, request];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
+async function putAccessRequest(user, shortname, permissionLevel) {
+  if (!user) return [401];
+  
+  try {
+    const universe = (await executeQuery('SELECT * FROM universe WHERE shortname = ?', [shortname]))[0];
+    if (!universe) return [404];
+
+    const request = await getAccessRequest(user, shortname);
+    if (!request) return [200];
+
+    const data = await executeQuery(
+      'INSERT INTO universeaccessrequest (universe_id, user_id, permission_level) VALUES (?, ?, ?)',
+      [universe.id, user.id, permissionLevel],
+    );
+    return [201, data];
   } catch (err) {
     logger.error(err);
     return [500];
@@ -279,5 +320,7 @@ module.exports = {
   put,
   putPermissions,
   putUserFollowing,
+  getAccessRequest,
+  putAccessRequest,
   del,
 };

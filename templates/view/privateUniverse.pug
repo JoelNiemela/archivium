@@ -1,0 +1,22 @@
+extends ../layout.pug
+
+block scripts
+  script
+    include /static/scripts/fetchUtils.js
+
+block content
+  div
+    .center.d-flex.flex-col.align-center
+      span.mt-4.material-symbols-outlined( style={ 'font-size': '8rem' } ) visibility_off
+      h1.mt-0 Access Denied
+      p 
+        | Looks like the universe you're trying to reach is private.
+        br
+        | You can ask the owner of this universe for access by clicking the button below:
+
+      script.
+        async function requestAccess() {
+          await putJSON('/api/universes/#{shortname}/request', { permissionLevel: #{perms.READ} });
+          window.location.reload();
+        }
+      button.button.large( type='submit' onclick='requestAccess()' disabled=hasRequested ) #{hasRequested ? T('Request Pending') : T('Request Access')}

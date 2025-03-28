@@ -216,6 +216,14 @@ CREATE TABLE authoruniverse (
   PRIMARY KEY (id)
 );
 
+CREATE TABLE universeaccessrequest (
+  universe_id INT NOT NULL,
+  user_id INT NOT NULL,
+  permission_level TINYINT NOT NULL,
+  FOREIGN KEY (universe_id) REFERENCES universe (id),
+  FOREIGN KEY (user_id) REFERENCES user (id)
+);
+
 CREATE TABLE followeruniverse (
   universe_id INT NOT NULL,
   user_id INT NOT NULL,

@@ -215,6 +215,9 @@ module.exports = function(app, upload) {
           ),
           POST: (req) => api.discussion.postThread(req.session.user, req.params.universeShortName, req.body),
         }, []),
+        new APIRoute('/request', {
+          PUT: (req) => api.universe.putAccessRequest(req.session.user, req.params.universeShortName, req.body.permissionLevel),
+        }),
       ]),
     ]),
     new APIRoute('/writable-items', {

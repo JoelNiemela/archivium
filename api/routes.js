@@ -237,7 +237,7 @@ module.exports = function(app, upload) {
               if (target) {
                 api.notification.notify(target, api.notification.types.UNIVERSE, {
                   title: 'Universe Access Request',
-                  body: `${req.session.user.username} is requesting "${permText[req.body.permissionLevel]}" permissions on your universe ${universe.title}.`,
+                  body: `${req.session.user.username} is requesting ${permText[req.body.permissionLevel]} permissions on your universe ${universe.title}.`,
                   icon: getPfpUrl(req.session.user),
                   clickUrl: `/universes/${req.params.universeShortName}/permissions`,
                 });

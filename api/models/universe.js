@@ -219,6 +219,11 @@ async function putPermissions(user, shortname, targetUser, permission_level) {
   }
 
   try {
+    await executeQuery(
+      'DELETE FROM universeaccessrequest WHERE universe_id = ? AND user_id = ?',
+      [universe.id, targetUser.id],
+    );
+
     return [200, await query];
   } catch (err) {
     logger.error(err);

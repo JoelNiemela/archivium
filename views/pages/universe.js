@@ -23,6 +23,7 @@ module.exports = {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
     res.status(code1);
     if (code1 === 403) {
+      res.status(200);
       const [, request] = await api.universe.getUserAccessRequest(req.session.user, req.params.shortname);
       return res.prepareRender('privateUniverse', { shortname: req.params.shortname, hasRequested: Boolean(request) });
     }

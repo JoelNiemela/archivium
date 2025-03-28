@@ -145,4 +145,5 @@ function render(req, template, context = {}) {
 module.exports = {
   render,
   universeLink,
+  locale,
 };

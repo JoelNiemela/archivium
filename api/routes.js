@@ -2,7 +2,7 @@ const { ADDR_PREFIX } = require('../config');
 const Auth = require('../middleware/auth');
 const api = require('./');
 const logger = require('../logger');
-const { perms } = require('./utils');
+const { perms, executeQuery, getPfpUrl } = require('./utils');
 
 module.exports = function(app, upload) {
   class APIRoute {
@@ -216,7 +216,30 @@ module.exports = function(app, upload) {
           POST: (req) => api.discussion.postThread(req.session.user, req.params.universeShortName, req.body),
         }, []),
         new APIRoute('/request', {
-          PUT: (req) => api.universe.putAccessRequest(req.session.user, req.params.universeShortName, req.body.permissionLevel),
+          PUT: async (req) => {
+            const [code, data] = await api.universe.putAccessRequest(req.session.user, req.params.universeShortName, req.body.permissionLevel);
+            
+            const universe = (await executeQuery('SELECT * FROM universe WHERE shortname = ?', [req.params.universeShortName]))[0];
+            if (universe) {
+              const [, target] = await api.user.getOne({ 'user.id': universe.author_id });
+              const permText = {
+                [perms.READ]: 'read',
+                [perms.COMMENT]: 'comment',
+                [perms.WRITE]: 'write',
+                [perms.ADMIN]: 'admin',
+              };
+              if (target) {
+                api.notification.notify(target, api.notification.types.UNIVERSE, {
+                  title: 'Universe Access Request',
+                  body: `${req.session.user.username} is requesting "${permText[req.body.permissionLevel]}" permissions on your universe ${universe.title}.`,
+                  icon: getPfpUrl(req.session.user),
+                  clickUrl: `/universes/${req.params.universeShortName}/permissions`,
+                });
+              }
+            }
+
+            return [code, data];
+          },
         }),
       ]),
     ]),

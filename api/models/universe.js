@@ -1,4 +1,4 @@
-const { executeQuery, parseData, perms } = require('../utils');
+const { executeQuery, parseData, perms, getPfpUrl } = require('../utils');
 const logger = require('../../logger');
 
 async function getOne(user, options, permissionLevel=perms.READ) {
@@ -276,13 +276,14 @@ async function putAccessRequest(user, shortname, permissionLevel) {
     const universe = (await executeQuery('SELECT * FROM universe WHERE shortname = ?', [shortname]))[0];
     if (!universe) return [404];
 
-    const request = await getAccessRequest(user, shortname);
-    if (!request) return [200];
+    const [, request] = await getAccessRequest(user, shortname);
+    if (request && request.permission_level >= permissionLevel) return [200];
 
     const data = await executeQuery(
       'INSERT INTO universeaccessrequest (universe_id, user_id, permission_level) VALUES (?, ?, ?)',
       [universe.id, user.id, permissionLevel],
     );
+
     return [201, data];
   } catch (err) {
     logger.error(err);

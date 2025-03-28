@@ -29,7 +29,7 @@ async function createUniverse(owner, title, shortname, public=true, discussion_e
 }
 
 async function setUniversePerms(owner, universe, user, permsLvl) {
-  await api.universe.putPermissions(owner, universe.shortname, user, permsLvl);
+  await api.universe.putPermissions(owner, universe.shortname, user.username, permsLvl);
 }
 
 async function createItem(owner, universe, title, shortname, item_type, obj_data, tags=['testing'], parent_id=null) {

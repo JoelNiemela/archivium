@@ -9,6 +9,10 @@ block breadcrumbs
   |  / 
   span #{T('Set Permissions')}
 
+block scripts
+  script
+    include /static/scripts/fetchUtils.js
+
 block content
   script.
     window.addEventListener('load', () => {
@@ -29,3 +33,26 @@ block content
           select( class='permission_level' name='permission_level' style={ 'grid-column': '3 / 4' } )
             each permission_level in perms
               option( value=permission_level selected=(permission_level === perm) ) #{T(`perms_${permission_level}`)}
+      
+  br
+  hr
+  br
+
+  .d-flex.flex-col.gap-2
+    each request in requests
+      .d-flex.nowrap.gap-1.align-center
+        span
+          a.link.link-animated( href=`${ADDR_PREFIX}/users/${request.username}` ) #{request.username}
+          |  is requesting  
+          b #{T(`perms_${request.permission_level}`).toLowerCase()}
+          |  permissions.
+        button(
+          onclick=`putJSON(
+            '/api/universes/${universe.shortname}/perms', { username: '${request.username}', permission_level: ${request.permission_level} }
+          ).then(() => window.location.reload())`
+        ) Approve
+        button(
+          onclick=`deleteJSON(
+            '/api/universes/${universe.shortname}/request/${request.username}'
+          ).then(() => window.location.reload())`
+        ) Deny

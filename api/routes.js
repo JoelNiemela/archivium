@@ -215,6 +215,12 @@ module.exports = function(app, upload) {
           ),
           POST: (req) => api.discussion.postThread(req.session.user, req.params.universeShortName, req.body),
         }, []),
+        new APIRoute('/perms', {
+          PUT: async (req) => {
+            const [_, user] = await api.user.getOne({ 'user.username': req.body.username });
+            return await api.universe.putPermissions(req.session.user, req.params.universeShortName, user, req.body.permission_level, perms.ADMIN);
+          },
+        }),
         new APIRoute('/request', {
           PUT: async (req) => {
             const [code, data] = await api.universe.putAccessRequest(req.session.user, req.params.universeShortName, req.body.permissionLevel);
@@ -240,7 +246,14 @@ module.exports = function(app, upload) {
 
             return [code, data];
           },
-        }),
+        }, [
+          new APIRoute('/:requestingUser', {
+            DELETE: async (req) => {
+              const [_, user] = await api.user.getOne({ 'user.username': req.params.requestingUser ?? null });
+              return await api.universe.delAccessRequest(req.session.user, req.params.universeShortName, user);
+            },
+          }),
+        ]),
       ]),
     ]),
     new APIRoute('/writable-items', {

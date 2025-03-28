@@ -249,7 +249,7 @@ async function putUserFollowing(user, shortname, isFollowing) {
   }
 }
 
-async function getAccessRequest(user, shortname) {
+async function getUserAccessRequest(user, shortname) {
   if (!user) return [401];
   
   try {
@@ -269,6 +269,25 @@ async function getAccessRequest(user, shortname) {
   }
 }
 
+async function getAccessRequests(user, shortname) {
+  if (!user) return [401];
+  
+  try {
+    const [code, universe] = await getOne(user, { shortname }, perms.ADMIN);
+    if (!universe) return [code];
+
+    const requests = await executeQuery(
+      'SELECT ua.*, user.username FROM universeaccessrequest ua INNER JOIN user ON user.id = ua.user_id WHERE ua.universe_id = ?',
+      [universe.id],
+    );
+
+    return [200, requests];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
 async function putAccessRequest(user, shortname, permissionLevel) {
   if (!user) return [401];
   
@@ -276,8 +295,11 @@ async function putAccessRequest(user, shortname, permissionLevel) {
     const universe = (await executeQuery('SELECT * FROM universe WHERE shortname = ?', [shortname]))[0];
     if (!universe) return [404];
 
-    const [, request] = await getAccessRequest(user, shortname);
-    if (request && request.permission_level >= permissionLevel) return [200];
+    const [, request] = await getUserAccessRequest(user, shortname);
+    if (request) {
+      if (request.permission_level >= permissionLevel) return [200];
+      else await delAccessRequest(user, shortname, user);
+    } 
 
     const data = await executeQuery(
       'INSERT INTO universeaccessrequest (universe_id, user_id, permission_level) VALUES (?, ?, ?)',
@@ -285,6 +307,26 @@ async function putAccessRequest(user, shortname, permissionLevel) {
     );
 
     return [201, data];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
+async function delAccessRequest(user, shortname, requestingUser) {
+  if (!user) return [401];
+  if (!requestingUser) return [400];
+  const [code, permsUniverse] = await getOne(user, { shortname }, perms.ADMIN);
+  if (!(permsUniverse || (code === 403 && user.id === requestingUser.id))) return [code];
+  
+  try {
+    const universe = (await executeQuery('SELECT * FROM universe WHERE shortname = ?', [shortname]))[0];
+    await executeQuery(
+      'DELETE FROM universeaccessrequest WHERE universe_id = ? AND user_id = ?',
+      [universe.id, requestingUser.id],
+    );
+
+    return [200];
   } catch (err) {
     logger.error(err);
     return [500];
@@ -321,7 +363,9 @@ module.exports = {
   put,
   putPermissions,
   putUserFollowing,
-  getAccessRequest,
+  getUserAccessRequest,
+  getAccessRequests,
   putAccessRequest,
+  delAccessRequest,
   del,
 };

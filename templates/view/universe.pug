@@ -96,27 +96,38 @@ block content
           else
             | ask the owner of this universe to add some.
     
-    .card-list.hidden( data-tab='authors' )
-      each username, id in universe.authors
-        if universe.author_permissions[id] >= perms.WRITE
-          .card.sheet.gap-4( onclick=`goTo('${ADDR_PREFIX}/users/${username}')` )
-            img.userIcon( alt=username, src=authors[id].pfpUrl )
-            .d-flex.flex-col.grow-1
-              h2.ma-0
-                a.link.link-animated( href=`${ADDR_PREFIX}/users/${username}` ) #{username}
-              span
-                b #{T('Joined')}: 
-                | #{formatDate(authors[id].created_at)}
-              span 
-                b #{T('Last seen')}: 
-                | #{formatDate(authors[id].updated_at)}
-              span
-                b #{T('Items Owned')}: 
-                | #{authors[id].items_authored}
-            .d-flex.flex-col.grow-1
-              span.align-self-end.grow-1
-                if universe.author_permissions[id] === perms.ADMIN
-                  | Admin
+    .hidden( data-tab='authors' )
+      if contextUser && ((universe.author_permissions[contextUser.id] || 0) < perms.ADMIN)
+        .d-flex.justify-center.gap-4.mb-2
+          script.
+            async function requestAccess(permissionLevel) {
+              await putJSON('/api/universes/#{universe.shortname}/request', { permissionLevel });
+              window.location.reload();
+            }
+          if contextUser && ((universe.author_permissions[contextUser.id] || 0) < perms.WRITE)
+            button.button( type='submit' onclick=`requestAccess(${perms.WRITE})` disabled=hasRequested ) #{hasRequested ? T('Request Pending') : T('Request Write Access')}
+          button.button( type='submit' onclick=`requestAccess(${perms.ADMIN})` disabled=hasRequested ) #{hasRequested ? T('Request Pending') : T('Request Admin Access')}
+      .card-list
+        each username, id in universe.authors
+          if universe.author_permissions[id] >= perms.WRITE
+            .card.sheet.gap-4( onclick=`goTo('${ADDR_PREFIX}/users/${username}')` )
+              img.userIcon( alt=username, src=authors[id].pfpUrl )
+              .d-flex.flex-col.grow-1
+                h2.ma-0
+                  a.link.link-animated( href=`${ADDR_PREFIX}/users/${username}` ) #{username}
+                span
+                  b #{T('Joined')}: 
+                  | #{formatDate(authors[id].created_at)}
+                span 
+                  b #{T('Last seen')}: 
+                  | #{formatDate(authors[id].updated_at)}
+                span
+                  b #{T('Items Owned')}: 
+                  | #{authors[id].items_authored}
+              .d-flex.flex-col.grow-1
+                span.align-self-end.grow-1
+                  if universe.author_permissions[id] === perms.ADMIN
+                    | Admin
     
     .card-list.hidden( data-tab='viewers' )
       each username, id in universe.authors

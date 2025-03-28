@@ -2,10 +2,15 @@ const { executeQuery, parseData, perms, getPfpUrl } = require('../utils');
 const logger = require('../../logger');
 
 async function getOne(user, options, permissionLevel=perms.READ) {
-  const [code, data] = await getMany(user, options && parseData(options), permissionLevel);
+  if (!options) return [400];
+  const conditions = parseData(options);
+  const [code, data] = await getMany(user, conditions, permissionLevel);
   if (code !== 200) return [code];
   const universe = data[0];
-  if (!universe) return [user ? 403 : 401];
+  if (!universe) {
+    const exists = (await executeQuery(`SELECT 1 FROM universe WHERE ${conditions.strings.join(' AND ')}`, conditions.values)).length > 0;
+    return [exists ? (user ? 403 : 401) : 404];
+  }
   universe.obj_data = JSON.parse(universe.obj_data);
   return [200, universe];
 }

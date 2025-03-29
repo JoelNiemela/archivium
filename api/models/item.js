@@ -274,6 +274,25 @@ async function getByUniverseAndItemShortnames(user, universeShortname, itemShort
   return await getOne(user, conditions, permissionsRequired, basicOnly, { includeData: true });
 }
 
+async function getCountsByUniverse(user, universe, validate=true) {
+  if (!universe.public && validate) {
+    if (!user) return [401];
+    if (!(universe.author_permissions[user.id] >= perms.READ)) return [403];
+  }
+
+  try {
+    const data = await executeQuery('SELECT item_type, COUNT(*) AS count FROM item WHERE universe_id = ? GROUP BY item_type', [universe.id]);
+    const counts = {};
+    for (const row of data) {
+      counts[row.item_type] = row.count;
+    }
+    return [200, counts];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
 async function post(user, body, universeShortName) {
   const { title, shortname, item_type, parent_id, obj_data } = body;
 
@@ -744,6 +763,7 @@ module.exports = {
   getByUniverseAndItemIds,
   getByUniverseShortname,
   getByUniverseAndItemShortnames,
+  getCountsByUniverse,
   post,
   save,
   put,

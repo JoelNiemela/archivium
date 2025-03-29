@@ -29,8 +29,9 @@ if (!window.createElement) throw 'domUtils.js not loaded!';
     }[month];
   }
   function nameDay(day) {
-    if (day === 1) return '1st';
-    else if (day === 2) return '2nd';
+    if (day % 10 === 1 && day % 100 !== 11) return `${day}st`;
+    else if (day % 10 === 2 && day % 100 !== 12) return `${day}nd`;
+    else if (day % 10 === 3 && day % 100 !== 13) return `${day}rd`;
     else return `${day}th`;
   }
 

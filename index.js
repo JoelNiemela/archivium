@@ -174,7 +174,6 @@ app.use((req, res, next) => {
 
 // Logger
 app.use('/', (req, res, next) => {
-  // console.log(req.headers['x-subdomain'])
   const endTime = new Date();
   const { method, path, query, session, startTime } = req;
   const user = session.user?.username ?? 'anonymous';

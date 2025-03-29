@@ -44,7 +44,6 @@ module.exports = {
   },
 
   async view(req, res) {
-    console.log(req.params)
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.universeShortname });
     const [code2, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname);
     res.status(code1);

@@ -4,6 +4,7 @@ const api = require('../api');
 const md5 = require('md5');
 const { universeLink } = require('../templates');
 const { perms, Cond, getPfpUrl } = require('../api/utils');
+const logger = require('../logger');
 
 module.exports = {
   async notificationSettings(req, res) {
@@ -116,17 +117,17 @@ module.exports = {
     let nextPage;
     if (body.note_item && body.note_universe) {
       const [code, data] = await api.note.linkToItem(session.user, body.note_universe, body.note_item, uuid);
-      if (code !== 201) return console.error(`Error ${code}: ${data}`);
+      if (code !== 201) return logger.error(`Error ${code}: ${data}`);
       nextPage = nextPage || `${universeLink(req, body.note_universe)}/items/${body.note_item}?tab=notes&note=${uuid}`;
     }
     if (body.note_board && body.note_universe) {
       const [code, data] = await api.note.linkToBoard(session.user, body.note_board, uuid);
-      if (code !== 201) return console.error(`Error ${code}: ${data}`);
+      if (code !== 201) return logger.error(`Error ${code}: ${data}`);
       nextPage = nextPage || `${universeLink(req, body.note_universe)}/notes/${body.note_board}?note=${uuid}`;
     }
     res.status(code);
     if (code === 201) return res.redirect(nextPage || `${ADDR_PREFIX}/notes?note=${uuid}`);
-    return console.error(`Error ${code}: ${data}`);
+    return logger.error(`Error ${code}: ${data}`);
     // res.prepareRender('createUniverse', { error: data, ...req.body });
   },
 
@@ -149,7 +150,7 @@ module.exports = {
     }
     res.status(code);
     if (code === 200) return res.redirect(nextPage || `${ADDR_PREFIX}/notes?note=${body.note_uuid}`);
-    return console.error(`Error ${code}: ${data}`);
+    return logger.error(`Error ${code}: ${data}`);
     // res.prepareRender('createUniverse', { error: data, ...req.body });
   },
 };

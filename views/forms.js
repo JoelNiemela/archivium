@@ -142,10 +142,10 @@ module.exports = {
     });
     let nextPage;
     if (body.note_item && body.note_universe) {
-      nextPage = nextPage || `${universeLink(body.note_universe)}/items/${body.note_item}?tab=notes&note=${body.note_uuid}`;
+      nextPage = nextPage || `${universeLink(req, body.note_universe)}/items/${body.note_item}?tab=notes&note=${body.note_uuid}`;
     }
     if (body.note_board && body.note_universe) {
-      nextPage = nextPage || `${universeLink(body.note_universe)}/notes/${body.note_board}?note=${body.note_uuid}`;
+      nextPage = nextPage || `${universeLink(req, body.note_universe)}/notes/${body.note_board}?note=${body.note_uuid}`;
     }
     res.status(code);
     if (code === 200) return res.redirect(nextPage || `${ADDR_PREFIX}/notes?note=${body.note_uuid}`);

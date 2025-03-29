@@ -1,29 +1,29 @@
 .card-list
   each universe in universes
-    .card.sheet.gap-4.align-start( onclick=`goTo('${universeLink(universe.shortname)}')` )
+    .card.sheet.gap-4.align-start( data-goto=`${universeLink(universe.shortname)}/` )
       .d-flex.flex-col.grow-1
         h3.ma-0
-          a.link.link-animated( href=`${universeLink(universe.shortname)}` ) #{universe.title}
+          a.link.link-animated( href=`${universeLink(universe.shortname)}/` ) #{universe.title}
         .d-flex.gap-1
 
       .d-flex.flex-col.grow-3( style='grid-column: 2 / 4;' )
+        span 
+          b #{T('Authors')}: 
+          +authorList(universe.authors, universe.author_permissions)
+        .d-flex.gap-2.flex-wrap
+          span
+            b #{T('Created')}: 
+            | #{formatDate(universe.created_at, true)}
+          | — 
           span 
-            b #{T('Authors')}: 
-            +authorList(universe.authors, universe.author_permissions)
-          .d-flex.gap-2.flex-wrap
-            span
-              b #{T('Created')}: 
-              | #{formatDate(universe.created_at, true)}
-            | — 
-            span 
-              b #{T('Updated')}: 
-              | #{formatDate(universe.updated_at, true)}
+            b #{T('Updated')}: 
+            | #{formatDate(universe.updated_at, true)}
+          | —
+          span #{universe.public ? 'Public' : 'Private'}
+          if contextUser
             | —
-            span #{universe.public ? 'Public' : 'Private'}
-            if contextUser
-              | —
-              a.follow-btn.link.link-animated( data-following=universe.followers[contextUser.id] data-universe-short=universe.shortname )
-                | #{universe.followers[contextUser.id] ? 'Unfollow' : 'Follow'}
+            a.follow-btn.link.link-animated( data-following=universe.followers[contextUser.id] data-universe-short=universe.shortname )
+              | #{universe.followers[contextUser.id] ? 'Unfollow' : 'Follow'}
   
   script.
     document.querySelectorAll('.follow-btn').forEach((followBtn) => {

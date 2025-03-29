@@ -3,13 +3,14 @@ include ../mixins.pug
 
 mixin typeCard(shortname, category)
   .card.item-type
-    a.cardLink.link( href=`${universeLink(universe.shortname)}/items?type=${shortname}` )
-      div(style={ 'background-color': category[2] })
-        h2(align='center')= capitalize(category[1])
-    div
-      if contextUser
-        a.cardBtn.link( href=`${universeLink(universe.shortname)}/items/create?type=${shortname}` ) &#x2795; New
-        a.cardBtn.link( href=`${ADDR_PREFIX}/users/${contextUser.username}/items?type=${shortname}` ) My #{category[1]}
+    a.cardLink.link( href=`${universeLink(universe.shortname)}/items${shortname ? `?type=${shortname}` : ''}` )
+      div(style={ 'background-color': shortname ? category[2] : '#f3f3f3' })
+        h2.mb-0(align='center')= shortname ? capitalize(category[1]) : T('All Items')
+        h2.mt-0(align='center') (#{counts[shortname] || 0})
+    if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
+      div
+        a.cardBtn.link( href=`${universeLink(universe.shortname)}/items/create${shortname ? `?type=${shortname}` : ''}` ) &#x2795; New
+        a.cardBtn.link( href=`${ADDR_PREFIX}/items?author=${contextUser.username}&universe=${universe.shortname}${shortname ? `&type=${shortname}` : ''}` ) My #{shortname ? category[1] : 'Items'}
 
 block breadcrumbs
   a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
@@ -85,6 +86,7 @@ block content
     .container.hidden( data-tab='items' )
       if universe.obj_data.cats && Object.keys(universe.obj_data.cats).length
         .type-card-container
+          +typeCard(null, null)
           each category, shortname in universe.obj_data.cats
             +typeCard(shortname, category)
       else
@@ -110,7 +112,7 @@ block content
       .card-list
         each username, id in universe.authors
           if universe.author_permissions[id] >= perms.WRITE
-            .card.sheet.gap-4( onclick=`goTo('${ADDR_PREFIX}/users/${username}')` )
+            .card.sheet.gap-4( data-goto=`${ADDR_PREFIX}/users/${username}` )
               img.userIcon( alt=username, src=authors[id].pfpUrl )
               .d-flex.flex-col.grow-1
                 h2.ma-0
@@ -132,7 +134,7 @@ block content
     .card-list.hidden( data-tab='viewers' )
       each username, id in universe.authors
         if universe.author_permissions[id] < perms.WRITE && universe.author_permissions[id] >= perms.READ
-          .card.sheet.gap-4( onclick=`goTo('${ADDR_PREFIX}/users/${username}')` )
+          .card.sheet.gap-4( data-goto=`${ADDR_PREFIX}/users/${username}` )
             img.userIcon( alt=username, src=authors[id].pfpUrl )
             .d-flex.flex-col.grow-1
               h2.ma-0
@@ -149,7 +151,7 @@ block content
         div
           a.link.link-animated( href=`${universeLink(universe.shortname)}/discuss/create` ) Create New
       each thread in threads
-        .sheet.d-flex.flex-col.gap-2.align-start( onclick=`goTo('${universeLink(universe.shortname)}/discuss/${thread.id}')` )
+        .sheet.d-flex.flex-col.gap-2.align-start( data-goto=`${universeLink(universe.shortname)}/discuss/${thread.id}` )
           h2.ma-0
             a.link.link-animated( href=`${universeLink(universe.shortname)}/discuss/${thread.id}` ) #{thread.title}
           .d-flex.gap-4.flex-wrap

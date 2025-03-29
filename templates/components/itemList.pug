@@ -1,6 +1,6 @@
 .card-list
   each item in items
-    .card.sheet.gap-4.align-start( onclick=`goTo('${universeLink(item.universe_short)}/items/${item.shortname}')` )
+    .card.sheet.gap-4.align-start( data-goto=`${universeLink(item.universe_short)}/items/${item.shortname}` )
       .d-flex.flex-col.grow-1
         h3.ma-0
           a.link.link-animated( href=`${universeLink(item.universe_short)}/items/${item.shortname}` ) #{item.title}

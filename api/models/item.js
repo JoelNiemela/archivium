@@ -274,6 +274,28 @@ async function getByUniverseAndItemShortnames(user, universeShortname, itemShort
   return await getOne(user, conditions, permissionsRequired, basicOnly, { includeData: true });
 }
 
+async function getCountsByUniverse(user, universe, validate=true) {
+  if (!universe.public && validate) {
+    if (!user) return [401];
+    if (!(universe.author_permissions[user.id] >= perms.READ)) return [403];
+  }
+
+  try {
+    const data = await executeQuery('SELECT item_type, COUNT(*) AS count FROM item WHERE universe_id = ? GROUP BY item_type', [universe.id]);
+    const counts = {};
+    let total = 0;
+    for (const row of data) {
+      counts[row.item_type] = row.count;
+      total += row.count;
+    }
+    counts[null] = total;
+    return [200, counts];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
 async function post(user, body, universeShortName) {
   const { title, shortname, item_type, parent_id, obj_data } = body;
 
@@ -505,13 +527,15 @@ async function put(user, universeShortname, itemShortname, changes) {
   if (!item) return [code];
 
   if (tags) {
+    const trimmedTags = tags.map(tag => tag[0] === '#' ? tag.substring(1) : tag);
+
     // If tags list is provided, we can just as well handle it here
-    putTags(user, universeShortname, itemShortname, tags);
+    putTags(user, universeShortname, itemShortname, trimmedTags);
     const tagLookup = {};
     item.tags?.forEach(tag => {
       tagLookup[tag] = true;
     });
-    tags.forEach(tag => {
+    trimmedTags.forEach(tag => {
       delete tagLookup[tag];
     });
     delTags(user, universeShortname, itemShortname, Object.keys(tagLookup));
@@ -744,6 +768,7 @@ module.exports = {
   getByUniverseAndItemIds,
   getByUniverseShortname,
   getByUniverseAndItemShortnames,
+  getCountsByUniverse,
   post,
   save,
   put,

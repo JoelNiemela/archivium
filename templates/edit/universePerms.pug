@@ -30,7 +30,7 @@ block content
         form.grid.grid-inherit.align-center( method='POST' style={ 'grid-column': '1 / 4' } )
           input( class='username' name='username' type='hidden' value=universe.authors[aid] )
           b( style={ 'grid-column': '1 / 2' } ) #{universe.authors[aid]}
-          select( class='permission_level' name='permission_level' style={ 'grid-column': '3 / 4' } )
+          select( class='permission_level' name='permission_level' style={ 'grid-column': '3 / 4' } disabled=(perm === perms.ADMIN && adminCount === 1) )
             each permission_level in perms
               option( value=permission_level selected=(permission_level === perm) ) #{T(`perms_${permission_level}`)}
       

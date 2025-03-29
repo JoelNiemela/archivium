@@ -39,8 +39,10 @@ module.exports = {
       };
     });
     const [code3, threads] = await api.discussion.getThreads(req.session.user, { 'discussion.universe_id': universe.id }, false, true);
-    if (!threads) return [code3];
-    res.prepareRender('universe', { universe, authors: authorMap, threads });
+    if (!threads) return res.status(code3);
+    const [code4, counts] = await api.item.getCountsByUniverse(req.session.user, universe, false);
+    if (!counts) return res.status(code4);
+    res.prepareRender('universe', { universe, authors: authorMap, threads, counts });
   },
 
   async delete(req, res) {
@@ -130,6 +132,10 @@ module.exports = {
         universe.author_permissions[contact.id] = perms.NONE;
       }
     });
-    res.prepareRender('editUniversePerms', { universe, users, requests });
+    let adminCount = 0;
+    for (const userID in universe.author_permissions) {
+      if (universe.author_permissions[userID] === perms.ADMIN) adminCount++;
+    }
+    res.prepareRender('editUniversePerms', { universe, users, requests, adminCount });
   },
 };

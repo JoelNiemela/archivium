@@ -199,7 +199,8 @@ async function post(user, { title, body, public, tags }) {
     const queryString = `INSERT INTO note (uuid, title, body, public, author_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?);`;
     const data = await executeQuery(queryString, [ uuid, title, body, public, user.id, new Date(), new Date() ]);
 
-    putTags(user, uuid, tags);
+    const trimmedTags = tags.map(tag => tag[0] === '#' ? tag.substring(1) : tag);
+    putTags(user, uuid, trimmedTags);
 
     return [201, data, uuid];
   } catch (err) {
@@ -230,13 +231,15 @@ async function put(user, uuid, changes) {
     }
     
     if (tags) {
+      const trimmedTags = tags.map(tag => tag[0] === '#' ? tag.substring(1) : tag);
+
       // If tags list is provided, we can just as well handle it here
-      putTags(user, uuid, tags);
+      putTags(user, uuid, trimmedTags);
       const tagLookup = {};
       note.tags?.forEach(tag => {
         tagLookup[tag] = true;
       });
-      tags.forEach(tag => {
+      trimmedTags.forEach(tag => {
         delete tagLookup[tag];
       });
       delTags(user, uuid, Object.keys(tagLookup));

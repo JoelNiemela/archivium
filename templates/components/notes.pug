@@ -192,7 +192,7 @@ block append styles
       }
       const previewTags = previewPanel.querySelector('.tags');
       async function updateTags(tags) {
-        previewTags.textContent = tags.split(' ').map(t => `#${t}`).join(' ');
+        previewTags.textContent = tags.split(' ').filter(t => !!t).map(t => `#${t}`).join(' ');
       }
       const displayNodes = await loadMarkdown(noteDisplay.querySelector('.body'), '#{universe && universe.shortname}', '', null);
       async function updateDisplay(markdown) {

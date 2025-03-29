@@ -37,14 +37,13 @@ module.exports = {
   },
 
   async create(req, res) {
-    const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
+    const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname }, perms.WRITE);
     res.status(code);
     if (code !== 200) return;
     res.prepareRender('createItem', { universe, item_type: req.query.type, shortname: req.query.shortname });
   },
 
   async view(req, res) {
-    console.log(req.params)
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.universeShortname });
     const [code2, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname);
     res.status(code1);

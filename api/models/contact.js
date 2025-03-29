@@ -77,6 +77,7 @@ async function post(user, username) {
   
   const [code, target] = await userapi.getOne({ 'user.username': username });
   if (!target) return [code];
+  if (target.id === user.id) return [400];
   const [_, contact] = await getOne(user, target.id);
   if (contact) return [200];
 

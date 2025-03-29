@@ -3,14 +3,14 @@ include ../mixins.pug
 
 mixin typeCard(shortname, category)
   .card.item-type
-    a.cardLink.link( href=`${universeLink(universe.shortname)}/items?type=${shortname}` )
-      div(style={ 'background-color': category[2] })
-        h2.mb-0(align='center')= capitalize(category[1])
+    a.cardLink.link( href=`${universeLink(universe.shortname)}/items${shortname ? `?type=${shortname}` : ''}` )
+      div(style={ 'background-color': shortname ? category[2] : '#f3f3f3' })
+        h2.mb-0(align='center')= shortname ? capitalize(category[1]) : T('All Items')
         h2.mt-0(align='center') (#{counts[shortname] || 0})
     if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
       div
-        a.cardBtn.link( href=`${universeLink(universe.shortname)}/items/create?type=${shortname}` ) &#x2795; New
-        a.cardBtn.link( href=`${ADDR_PREFIX}/items?author=${contextUser.username}&universe=${universe.shortname}&type=${shortname}` ) My #{category[1]}
+        a.cardBtn.link( href=`${universeLink(universe.shortname)}/items/create${shortname ? `?type=${shortname}` : ''}` ) &#x2795; New
+        a.cardBtn.link( href=`${ADDR_PREFIX}/items?author=${contextUser.username}&universe=${universe.shortname}${shortname ? `&type=${shortname}` : ''}` ) My #{shortname ? category[1] : 'Items'}
 
 block breadcrumbs
   a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
@@ -86,6 +86,7 @@ block content
     .container.hidden( data-tab='items' )
       if universe.obj_data.cats && Object.keys(universe.obj_data.cats).length
         .type-card-container
+          +typeCard(null, null)
           each category, shortname in universe.obj_data.cats
             +typeCard(shortname, category)
       else

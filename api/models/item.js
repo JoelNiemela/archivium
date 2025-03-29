@@ -283,9 +283,12 @@ async function getCountsByUniverse(user, universe, validate=true) {
   try {
     const data = await executeQuery('SELECT item_type, COUNT(*) AS count FROM item WHERE universe_id = ? GROUP BY item_type', [universe.id]);
     const counts = {};
+    let total = 0;
     for (const row of data) {
       counts[row.item_type] = row.count;
+      total += row.count;
     }
+    counts[null] = total;
     return [200, counts];
   } catch (err) {
     logger.error(err);

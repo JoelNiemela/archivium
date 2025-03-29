@@ -527,13 +527,15 @@ async function put(user, universeShortname, itemShortname, changes) {
   if (!item) return [code];
 
   if (tags) {
+    const trimmedTags = tags.map(tag => tag[0] === '#' ? tag.substring(1) : tag);
+
     // If tags list is provided, we can just as well handle it here
-    putTags(user, universeShortname, itemShortname, tags);
+    putTags(user, universeShortname, itemShortname, trimmedTags);
     const tagLookup = {};
     item.tags?.forEach(tag => {
       tagLookup[tag] = true;
     });
-    tags.forEach(tag => {
+    trimmedTags.forEach(tag => {
       delete tagLookup[tag];
     });
     delTags(user, universeShortname, itemShortname, Object.keys(tagLookup));

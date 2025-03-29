@@ -203,6 +203,17 @@ async function putPermissions(user, shortname, targetUser, permission_level) {
   const [code, universe] = await getOne(user, { shortname }, perms.ADMIN);
   if (!universe) return [code];
 
+  if (universe.author_permissions[targetUser.id] === perms.ADMIN && permission_level < perms.ADMIN) {
+    let adminWouldStillExist = false;
+    for (const userID in universe.author_permissions) {
+      if (Number(userID) !== Number(targetUser.id) && universe.author_permissions[userID] === perms.ADMIN) {
+        adminWouldStillExist = true;
+        break;
+      }
+    }
+    if (!adminWouldStillExist) return [400];
+  }
+
   let query;
   if (targetUser.id in universe.author_permissions) {
     query = executeQuery(`

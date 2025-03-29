@@ -132,6 +132,10 @@ module.exports = {
         universe.author_permissions[contact.id] = perms.NONE;
       }
     });
-    res.prepareRender('editUniversePerms', { universe, users, requests });
+    let adminCount = 0;
+    for (const userID in universe.author_permissions) {
+      if (universe.author_permissions[userID] === perms.ADMIN) adminCount++;
+    }
+    res.prepareRender('editUniversePerms', { universe, users, requests, adminCount });
   },
 };

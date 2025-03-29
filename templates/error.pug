@@ -7,6 +7,12 @@ block content
       img(src=`https://http.cat/${code}` style={ height: '60vh', 'object-fit': 'contain' })
       p.center
         case code
+          when 400
+            | Either you have submitted a form with bad data, or the server is unwilling or unable to complete your request.
+            br
+            | If you need help with this, please contact the 
+            a.link.link-animated( href="mailto:contact@archivium.net" ) site&nbsp;admin
+            | .
           when 401
             | You are not authorized to view this page. If you believe you should be, make sure you are logged in and try again.
           when 403

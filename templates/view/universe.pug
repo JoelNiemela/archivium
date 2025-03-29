@@ -9,7 +9,7 @@ mixin typeCard(shortname, category)
     div
       if contextUser
         a.cardBtn.link( href=`${universeLink(universe.shortname)}/items/create?type=${shortname}` ) &#x2795; New
-        a.cardBtn.link( href=`${ADDR_PREFIX}/users/${contextUser.username}/items?type=${shortname}` ) My #{category[1]}
+        a.cardBtn.link( href=`${ADDR_PREFIX}/items?author=${contextUser.username}&universe=${universe.shortname}&type=${shortname}` ) My #{category[1]}
 
 block breadcrumbs
   a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}

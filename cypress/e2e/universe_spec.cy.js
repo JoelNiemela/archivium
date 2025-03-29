@@ -94,7 +94,7 @@ describe('Universe spec', () => {
     cy.get('.tabs [data-tab=authors] .card').contains('testwriter').should('exist');
   });
 
-  it('creates new private universe and adds a viewer', () => {
+  it('creates new private universe', () => {
     cy.visit('/universes');
     cy.get('a').contains('Create New').click();
 
@@ -109,13 +109,20 @@ describe('Universe spec', () => {
     cy.get('button[type="submit"]').click();
 
     cy.get('h1').contains('Cypress Universe').should('exist');
+  });
+
+  it('requests access to new universe as reader, admin approves', () => {
+    cy.login('testreader');
+    cy.visit('/universes/cypress-universe');
+    cy.get('button').contains('Request Access').click();
+
+    cy.login('testadmin');
+    cy.visit('/universes/cypress-universe');
     cy.get('#info-bar').contains('Set Permissions').click();
 
-    cy.intercept('POST', '/universes/cypress-universe/permissions').as('setperms');
-    cy.get('form').contains('testreader').parent().find('select').select('1');
-    cy.wait('@setperms');
-    cy.get('#breadcrumbs').contains('Cypress Universe').click();
+    cy.get('#requests').contains('testreader is requesting read permissions').parent().contains('Approve').click();
 
+    cy.get('#breadcrumbs').contains('Cypress Universe').click();
     cy.get('#tabBtns').contains('Viewers').click();
     cy.get('.tabs [data-tab=viewers] .card').contains('testreader').should('exist');
   });
@@ -126,7 +133,24 @@ describe('Universe spec', () => {
     cy.get('.card-list .card h3').contains('Cypress Universe').should('exist');
   });
 
-  it('removes the reader, the reader can no longer see the universe', () => {
+  it('requests write access as reader, admin approves', () => {
+    cy.login('testreader');
+    cy.visit('/universes/cypress-universe');
+    cy.get('#tabBtns').contains('Authors').click();
+    cy.get('[data-tab=authors]').contains('Request Write Access').click();
+
+    cy.login('testadmin');
+    cy.visit('/universes/cypress-universe');
+    cy.get('#info-bar').contains('Set Permissions').click();
+
+    cy.get('#requests').contains('testreader is requesting write permissions').parent().contains('Approve').click();
+
+    cy.get('#breadcrumbs').contains('Cypress Universe').click();
+    cy.get('#tabBtns').contains('Authors').click();
+    cy.get('.tabs [data-tab=authors] .card').contains('testreader').should('exist');
+  });
+
+  it('removes the reader\'s permissions, the reader can no longer see the universe', () => {
     cy.visit('/universes/cypress-universe');
     cy.get('#info-bar').contains('Set Permissions').click();
 

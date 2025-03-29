@@ -22,7 +22,12 @@ module.exports = {
   async view(req, res) {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
     res.status(code1);
-    if (!universe) return;
+    if (code1 === 403) {
+      res.status(200);
+      const [, request] = await api.universe.getUserAccessRequest(req.session.user, req.params.shortname);
+      return res.prepareRender('privateUniverse', { shortname: req.params.shortname, hasRequested: Boolean(request) });
+    }
+    else if (!universe) return;
     const [code2, authors] = await api.user.getByUniverseShortname(req.session.user, universe.shortname);
     res.status(code2);
     if (!authors) return;
@@ -115,7 +120,8 @@ module.exports = {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname }, perms.ADMIN);
     const [code2, users] = await api.user.getMany();
     const [code3, contacts] = await api.contact.getAll(req.session.user, false);
-    const code = code1 !== 200 ? code1 : (code2 !== 200 ? code2 : code3);
+    const [code4, requests] = await api.universe.getAccessRequests(req.session.user, req.params.shortname);
+    const code = code1 !== 200 ? code1 : (code2 !== 200 ? code2 : (code3 !== 200 ? code3 : code4));
     res.status(code);
     if (code !== 200) return;
     contacts.forEach(contact => {
@@ -124,6 +130,6 @@ module.exports = {
         universe.author_permissions[contact.id] = perms.NONE;
       }
     });
-    res.prepareRender('editUniversePerms', { universe, users });
+    res.prepareRender('editUniversePerms', { universe, users, requests });
   },
 };

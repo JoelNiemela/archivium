@@ -136,6 +136,23 @@ header {
   white-space: nowrap;
 }
 
+.button {
+  cursor: pointer;
+  border: 0.0625rem solid #e7e7e7;
+  border-radius: 0.25rem;
+  background-color: #f3f3f3;
+  padding: 0.5rem 0.75rem;
+  color: #666;
+  white-space: nowrap;
+}
+.button.large {
+  padding: 0.875rem 1rem;
+  font-size: large;
+}
+.button:disabled {
+  cursor: default;
+}
+
 .pfp {
   display: flex;
   margin: 0.25rem 0.5rem;
@@ -1054,6 +1071,22 @@ input:checked + .slider:before {
 }
 .mb-2 {
   margin-bottom: 0.5rem;
+}
+
+.mt-0 {
+  margin-top: 0;
+}
+.mt-1 {
+  margin-top: 0.25rem;
+}
+.mt-2 {
+  margin-top: 0.5rem;
+}
+.mt-3 {
+  margin-top: 0.75rem;
+}
+.mt-4 {
+  margin-top: 1rem;
 }
 
 .pa-0 {

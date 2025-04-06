@@ -1,3 +1,16 @@
+-- ARCHIVIUM DB
+--
+
+-- Schema version history
+CREATE TABLE schema_version (
+  version INTEGER PRIMARY KEY,
+  comment TEXT NOT NULL,
+  time TIMESTAMP
+);
+
+INSERT INTO schema_version (version, comment, time)
+VALUES (0, '', NULL);
+
 CREATE TABLE user (
   id INT NOT NULL AUTO_INCREMENT,
   username VARCHAR(32) UNIQUE NOT NULL,

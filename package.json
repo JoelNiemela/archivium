@@ -10,7 +10,8 @@
     "db:export": "node db/export.js",
     "db:import": "node db/import.js",
     "db:clean": "node db/updateSchema.js",
-    "db:reset": "node db/generate"
+    "db:reset": "node db/generate",
+    "db:upgrade": "node db/upgrade"
   },
   "repository": {
     "type": "git",

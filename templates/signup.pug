@@ -46,6 +46,7 @@ block content
         const form = document.forms.signup;
         const formError = document.querySelector('#error');
         form.username.addEventListener('input', () => {
+          form.username.value = form.username.value.trim();
           formError.classList.add('hidden');
           const value = form.username.value;
           const error = validateUsername(value);

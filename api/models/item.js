@@ -552,7 +552,7 @@ async function put(user, universeShortname, itemShortname, changes) {
         last_updated_by = ?
       WHERE id = ?;
     `;
-    return [200, await executeQuery(queryString, [ title, item_type, obj_data, new Date(), user.id, item.id ])];
+    return [200, await executeQuery(queryString, [ title, item_type ?? item.item_type, obj_data, new Date(), user.id, item.id ])];
   } catch (err) {
     logger.error(err);
     return [500];

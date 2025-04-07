@@ -116,10 +116,14 @@ block content
         const [catShortname, catTitle, catTitlePl, catColor] = catList[i];
 
         const titlePlInput = createElement('input', { attrs: { value: catTitlePl } });
-        titlePlInput.addEventListener('input', () => catList[i][2] = titlePlInput.value);
+        titlePlInput.addEventListener('input', () => {
+          titlePlInput.value = titlePlInput.value.toLowerCase();
+          catList[i][2] = titlePlInput.value;
+        });
 
         const titleInput = createElement('input', { attrs: { value: catTitle } });
         titleInput.addEventListener('input', () => {
+          titleInput.value = titleInput.value.toLowerCase();
           if (toPlural(catList[i][1]) === titlePlInput.value || !titlePlInput.value) {
             titlePlInput.value = toPlural(titleInput.value);
           }

@@ -106,9 +106,12 @@ block content
       return `${title}s`;
     }
 
-    const catList = [];
-    for (const catShortname in obj_data.cats) {
-      catList.push([catShortname, ...obj_data.cats[catShortname]]);
+    let catList;
+    function resetCatList() {
+      catList = [];
+      for (const catShortname in obj_data.cats) {
+        catList.push([catShortname, ...obj_data.cats[catShortname]]);
+      }
     }
 
     function updateCats() {
@@ -167,10 +170,12 @@ block content
 
     function resetCats() {
       setDefaultCats();
+      resetCatList();
       updateCats();
     }
 
     if (!('cats' in obj_data)) setDefaultCats();
+    resetCatList();
     updateCats();
 
     document.forms.edit.addEventListener('submit', (e) => {
@@ -180,7 +185,6 @@ block content
       const newCats = {};
       for (let i = 0; i < catList.length; i++) {
         let [catShortname, catTitle, catTitlePl, catColor] = catList[i];
-        console.log(catList[i])
 
         if (!catTitle) {
           // Title is missing, error

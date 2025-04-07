@@ -520,7 +520,7 @@ async function fetchImports(itemId) {
 }
 
 async function put(user, universeShortname, itemShortname, changes) {
-  const { title, obj_data, tags } = changes;
+  const { title, item_type, obj_data, tags } = changes;
 
   if (!title || !obj_data) return [400];
   const [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE);
@@ -546,12 +546,13 @@ async function put(user, universeShortname, itemShortname, changes) {
       UPDATE item
       SET
         title = ?,
+        item_type = ?,
         obj_data = ?,
         updated_at = ?,
         last_updated_by = ?
       WHERE id = ?;
     `;
-    return [200, await executeQuery(queryString, [ title, obj_data, new Date(), user.id, item.id ])];
+    return [200, await executeQuery(queryString, [ title, item_type, obj_data, new Date(), user.id, item.id ])];
   } catch (err) {
     logger.error(err);
     return [500];

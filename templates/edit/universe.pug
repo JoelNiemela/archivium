@@ -99,6 +99,11 @@ block content
       return shortname;
     }
 
+    function toPlural(title) {
+      // This function is very hacky and only works in english (and only sometimes), but it'll be good enough for most cases for now.
+      return `${title}s`;
+    }
+
     const catList = [];
     for (const catShortname in obj_data.cats) {
       catList.push([catShortname, ...obj_data.cats[catShortname]]);
@@ -110,8 +115,14 @@ block content
       for (let i = 0; i < catList.length; i++) {
         const [catShortname, catTitle, catTitlePl, catColor] = catList[i];
 
+        const titlePlInput = createElement('input', { attrs: { value: catTitlePl } });
+        titlePlInput.addEventListener('input', () => catList[i][2] = titlePlInput.value);
+
         const titleInput = createElement('input', { attrs: { value: catTitle } });
         titleInput.addEventListener('input', () => {
+          if (toPlural(catList[i][1]) === titlePlInput.value || !titlePlInput.value) {
+            titlePlInput.value = toPlural(titleInput.value);
+          }
           catList[i][1] = titleInput.value;
         });
         titleInput.addEventListener('change', () => {
@@ -120,9 +131,6 @@ block content
             updateCats();
           }
         });
-
-        const titlePlInput = createElement('input', { attrs: { value: catTitlePl } });
-        titlePlInput.addEventListener('input', () => catList[i][2] = titlePlInput.value);
 
         const colorInput = createElement('input', { attrs: { id: `color${i}`, value: catColor, type: 'color', style: 'padding: 0; min-width: 3rem;' } });
         colorInput.addEventListener('input', () => catList[i][3] = colorInput.value);

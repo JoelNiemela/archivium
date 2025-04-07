@@ -15,7 +15,7 @@ block append styles
 block append save
   li#save-btn.navbarBtn
     script.
-    a.navbarBtnLink.navbarText( onclick='document.forms.edit.submit()' ) Save Changes
+    a.navbarBtnLink.navbarText( onclick='document.forms.edit.requestSubmit()' ) Save Changes
 
 block content
   script
@@ -81,6 +81,7 @@ block content
       input( id='obj_data' type='hidden' name='obj_data' value='{}' )
       button( type='submit' ) Save Changes
 
+    small.color-error.hidden#validation-error
     if error
       div
         span( style={color: 'red', 'font-size': 'small'} )= error
@@ -127,6 +128,7 @@ block content
           titleInput.value = titleInput.value.toLowerCase();
           if (toPlural(catList[i][1]) === titlePlInput.value || !titlePlInput.value) {
             titlePlInput.value = toPlural(titleInput.value);
+            catList[i][2] = titlePlInput.value;
           }
           catList[i][1] = titleInput.value;
         });
@@ -171,7 +173,33 @@ block content
     if (!('cats' in obj_data)) setDefaultCats();
     updateCats();
 
-    const form = document.getElementById('edit');
-    form.addEventListener('submit', () => {
+    document.forms.edit.addEventListener('submit', (e) => {
+      const formError = document.querySelector('#validation-error');
+      formError.classList.add('hidden');
 
+      const newCats = {};
+      for (let i = 0; i < catList.length; i++) {
+        let [catShortname, catTitle, catTitlePl, catColor] = catList[i];
+        console.log(catList[i])
+
+        if (!catTitle) {
+          // Title is missing, error
+          formError.innerText = 'Make sure the name fields for all item types are filled out, or remove unwanted ones!';
+          formError.classList.remove('hidden');
+          return e.preventDefault();
+        }
+
+        if (!catShortname) {
+          // Shortname is missing, autofill it
+          catShortname = toShortname(catTitle);
+        }
+
+        if (!catTitlePl) {
+          // Title plural is missing, autofill it
+          catTitlePl = toPlural(catTitle);
+        }
+
+        newCats[catShortname] = [catTitle.trim(), catTitlePl.trim(), catColor];
+      }
+      updateObjData({ cats: newCats });
     });

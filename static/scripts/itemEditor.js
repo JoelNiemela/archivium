@@ -530,6 +530,7 @@ async function save(delay=5000) {
     console.log('SAVING...');
     const data = {
       title: document.forms.edit.title.value,
+      item_type: document.forms.edit.item_type.value,
       tags: document.forms.edit.tags.value.split(' '),
       obj_data: { ...obj_data },
     };

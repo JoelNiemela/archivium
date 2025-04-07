@@ -556,6 +556,9 @@ async function save(delay=5000) {
   }, delay);
 }
 
+/**
+ * Note that this is *not* the only way that the edit form can be submitted!
+ */
 function preview() {
   const saveBtn = document.getElementById('save-btn');
   saveBtn.firstChild.innerText = 'Saving...';

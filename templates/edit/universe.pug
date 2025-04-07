@@ -86,6 +86,19 @@ block content
 
   script!= `updateObjData(${JSON.stringify(universe.obj_data)});`
   script.
+    function toShortname(title) {
+      let shortname = title.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+
+      if (shortname.length > 64) {
+          shortname = shortname.substring(0, 64);
+      }
+
+      return shortname;
+    }
+
     const catList = [];
     for (const catShortname in obj_data.cats) {
       catList.push([catShortname, ...obj_data.cats[catShortname]]);
@@ -96,13 +109,29 @@ block content
       catsTable.innerHTML = '';
       for (let i = 0; i < catList.length; i++) {
         const [catShortname, catTitle, catTitlePl, catColor] = catList[i];
+
+        const titleInput = createElement('input', { attrs: { value: catTitle } });
+        titleInput.addEventListener('input', () => {
+          catList[i][1] = titleInput.value;
+        });
+        titleInput.addEventListener('change', () => {
+          if (!catList[i][0]) {
+            catList[i][0] = toShortname(titleInput.value);
+            updateCats();
+          }
+        });
+
+        const titlePlInput = createElement('input', { attrs: { value: catTitlePl } });
+        titlePlInput.addEventListener('input', () => catList[i][2] = titlePlInput.value);
+
+        const colorInput = createElement('input', { attrs: { id: `color${i}`, value: catColor, type: 'color', style: 'padding: 0; min-width: 3rem;' } });
+        colorInput.addEventListener('input', () => catList[i][3] = colorInput.value);
+
         const catRow = createElement('tr', { children: [
           createElement('td', { attrs: { innerText: catShortname } }),
-          createElement('td', { children: [createElement('input', { attrs: { id: `title${i}`, value: catTitle } })] }),
-          createElement('td', { children: [createElement('input', { attrs: { id: `titlePl${i}`, value: catTitlePl } })] }),
-          createElement('td', { children: [createElement('div', { classList: ['d-flex'], children: [
-            createElement('input', { attrs: { id: `color${i}`, value: catColor, type: 'color', style: 'padding: 0; min-width: 3rem;' } }),
-          ] })] }),
+          createElement('td', { children: [titleInput] }),
+          createElement('td', { children: [titlePlInput] }),
+          createElement('td', { children: [createElement('div', { classList: ['d-flex'], children: [colorInput] })] }),
           createElement('td', { children: [createElement('button', { attrs: {
             innerText: T('Remove'),
             onclick: (e) => {
@@ -128,3 +157,8 @@ block content
 
     if (!('cats' in obj_data)) setDefaultCats();
     updateCats();
+
+    const form = document.getElementById('edit');
+    form.addEventListener('submit', () => {
+
+    });

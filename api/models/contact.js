@@ -92,7 +92,7 @@ async function post(user, username) {
 
     const result = await executeQuery(queryString, [user.id, target.id, false]);
 
-    notification.notify(target, notification.types.CONTACTS, {
+    await notification.notify(target, notification.types.CONTACTS, {
       title: 'Contact Request',
       body: `${user.username} has sent you a contact request.`,
       icon: getPfpUrl(user),
@@ -126,7 +126,7 @@ async function put(user, username, accepted) {
       result = await del(user, target.id);
     }
 
-    notification.notify(target, notification.types.CONTACTS, {
+    await notification.notify(target, notification.types.CONTACTS, {
       title: `Contact Request ${accepted ? 'Accepted' : 'Rejected'}`,
       body: `${user.username} has ${accepted ? 'accepted' : 'rejected'} your contact request.`,
       icon: getPfpUrl(user),

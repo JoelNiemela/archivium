@@ -236,7 +236,7 @@ module.exports = function(app, upload) {
                   [perms.ADMIN]: 'admin',
                 };
                 if (target) {
-                  api.notification.notify(target, api.notification.types.UNIVERSE, {
+                  await api.notification.notify(target, api.notification.types.UNIVERSE, {
                     title: 'Universe Access Request',
                     body: `${req.session.user.username} is requesting ${permText[req.body.permissionLevel]} permissions on your universe ${universe.title}.`,
                     icon: getPfpUrl(req.session.user),

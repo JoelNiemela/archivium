@@ -1,6 +1,8 @@
-const { executeQuery, parseData, perms } = require('../utils');
+const { executeQuery, parseData, perms, getPfpUrl } = require('../utils');
 const logger = require('../../logger');
+const notification = require('./notification');
 const universeapi = require('./universe');
+const userapi = require('./user');
 const itemapi = require('./item');
 
 async function getThreads(user, options, canPost=false, includeExtra=false) {
@@ -163,7 +165,18 @@ async function postCommentToItem(user, universeShortname, itemShortname, { body,
     const queryString1 = `INSERT INTO comment (body, author_id, reply_to, created_at) VALUES (?, ?, ?, ?);`;
     const data = await executeQuery(queryString1, [ body, user.id, reply_to ?? null, new Date() ]);
     const queryString2 = `INSERT INTO itemcomment (item_id, comment_id) VALUES (?, ?)`;
-    await executeQuery(queryString2, [ item.id, data.insertId ])
+    await executeQuery(queryString2, [ item.id, data.insertId ]);
+
+    const [, target] = await userapi.getOne({ 'user.username': item.author });
+    if (target) {
+      await notification.notify(target, notification.types.COMMENTS, {
+        title: `${user.username} commented on ${item.title}:`,
+        body: body,
+        icon: getPfpUrl(user),
+        clickUrl: `/universes/${universeShortname}/items/${itemShortname}`,
+      });
+    }
+
     return [201, data];
   } catch (err) {
     logger.error(err);

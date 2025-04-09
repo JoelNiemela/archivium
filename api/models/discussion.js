@@ -157,8 +157,17 @@ async function postCommentToThread(user, threadId, { body, reply_to }) {
 }
 
 async function postCommentToItem(user, universeShortname, itemShortname, { body, reply_to }) {
-  const [code, item] = await itemapi.getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.COMMENT, true)
-  if (!item) return [code];
+  const [code1, universe] = await universeapi.getOne(user, { shortname: universeShortname }, perms.READ);
+  if (!universe) return [code1];
+  if (!universe.discussion_enabled) return [403];
+  const [code2, item] = await itemapi.getByUniverseAndItemShortnames(
+    user,
+    universeShortname,
+    itemShortname,
+    universe.discussion_open ? perms.READ : perms.COMMENT,
+    true,
+  );
+  if (!item) return [code2];
   if (!body) return [400];
 
   try {

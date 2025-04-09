@@ -1,6 +1,8 @@
-const { executeQuery, parseData, perms } = require('../utils');
+const { executeQuery, parseData, perms, getPfpUrl } = require('../utils');
 const logger = require('../../logger');
+const notification = require('./notification');
 const universeapi = require('./universe');
+const userapi = require('./user');
 const itemapi = require('./item');
 
 async function getThreads(user, options, canPost=false, includeExtra=false) {
@@ -155,15 +157,35 @@ async function postCommentToThread(user, threadId, { body, reply_to }) {
 }
 
 async function postCommentToItem(user, universeShortname, itemShortname, { body, reply_to }) {
-  const [code, item] = await itemapi.getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.COMMENT, true)
-  if (!item) return [code];
+  const [code1, universe] = await universeapi.getOne(user, { shortname: universeShortname }, perms.READ);
+  if (!universe) return [code1];
+  if (!universe.discussion_enabled) return [403];
+  const [code2, item] = await itemapi.getByUniverseAndItemShortnames(
+    user,
+    universeShortname,
+    itemShortname,
+    universe.discussion_open ? perms.READ : perms.COMMENT,
+    true,
+  );
+  if (!item) return [code2];
   if (!body) return [400];
 
   try {
     const queryString1 = `INSERT INTO comment (body, author_id, reply_to, created_at) VALUES (?, ?, ?, ?);`;
     const data = await executeQuery(queryString1, [ body, user.id, reply_to ?? null, new Date() ]);
     const queryString2 = `INSERT INTO itemcomment (item_id, comment_id) VALUES (?, ?)`;
-    await executeQuery(queryString2, [ item.id, data.insertId ])
+    await executeQuery(queryString2, [ item.id, data.insertId ]);
+
+    const [, target] = await userapi.getOne({ 'user.username': item.author });
+    if (target) {
+      await notification.notify(target, notification.types.COMMENTS, {
+        title: `${user.username} commented on ${item.title}:`,
+        body: body,
+        icon: getPfpUrl(user),
+        clickUrl: `/universes/${universeShortname}/items/${itemShortname}`,
+      });
+    }
+
     return [201, data];
   } catch (err) {
     logger.error(err);

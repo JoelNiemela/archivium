@@ -100,8 +100,8 @@ async function getByUniverseShortname(user, shortname) {
 function post({ username, email, password, hp }) {
   const salt = utils.createRandom32String();
 
-  if (!username) throw new Error('malformed username');
-  if (!email) throw new Error('malformed email');
+  if (!username) throw new Error('username is required');
+  if (!email) throw new Error('email is required');
   if (!password) throw new Error('empty password not allowed');
 
   const validationError = validateUsername(username);
@@ -165,7 +165,6 @@ function validateUsername(username) {
     return 'Usernames cannot start or end with a dash.';
   }
 
-  // const USERNAME_REGEX = /^(?!.*[-_]{2,})(?!.*[_.-]$)(?!^[-_.])(?!^\d+$)[a-zA-Z0-9_-]{3,32}$/;
   if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
       return 'Usernames can only contain letters, numbers, underscores, and hyphens.';
   }

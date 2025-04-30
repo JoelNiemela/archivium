@@ -4,7 +4,7 @@ describe('User spec', () => {
     cy.visit('/');
 
     cy.get('.navbarBtnLink').contains('Log In').should('have.attr', 'href', '/login');
-    cy.get('.navbarBtnLink').contains('Create Account').should('have.attr', 'href', '/signup?page=%2Funiverses%2Fcreate').click();
+    cy.get('main .navbarBtnLink').contains('Create Account').should('have.attr', 'href', '/signup?page=%2Funiverses%2Fcreate').click();
 
     // Fill in signup form
     cy.get('#username').type(`cypressuser`);

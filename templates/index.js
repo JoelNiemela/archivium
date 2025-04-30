@@ -130,6 +130,8 @@ const templates = {
   settings: compile('templates/edit/settings.pug'),
   spamblock: compile('templates/spamblock.pug'),
   notifications: compile('templates/view/notifications.pug'),
+  forgotPassword: compile('templates/edit/forgotPassword.pug'),
+  resetPassword: compile('templates/edit/resetPassword.pug'),
 };
 
 function render(req, template, context = {}) {

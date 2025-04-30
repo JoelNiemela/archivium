@@ -296,6 +296,34 @@ async function verifyUser(verificationKey) {
   return [200, user.id];
 }
 
+async function preparePasswordReset(userId) {
+  const resetKey = utils.createRandom32String();
+
+  const now = new Date();
+  const expiresIn = 7 * 24 * 60 * 60 * 1000;
+  await executeQuery('INSERT INTO userpasswordreset (user_id, reset_key, expires_at) VALUES (?, ?, ?);', [userId, resetKey, new Date(now.getTime() + expiresIn)]);
+
+  return resetKey;
+}
+
+async function resetPassword(resetKey, newPassword) {
+  const records = await executeQuery('SELECT user_id FROM userpasswordreset WHERE reset_key = ? AND expires_at > NOW();', [resetKey]);
+  if (records.length === 0) return [404];
+  const [code, user] = await getOne({ id: records[0].user_id });
+  if (!user) return [code];
+
+  // TODO This should definitely also be in a transaction...
+  const salt = utils.createRandom32String();
+  const newHashedPass = utils.createHash(newPassword, salt);
+  await executeQuery('UPDATE user SET salt = ?, password = ? WHERE id = ?;', [salt, newHashedPass, user.id]);
+  await executeQuery('DELETE FROM session WHERE user_id = ?;', [user.id]);
+  await executeQuery('DELETE FROM userpasswordreset WHERE user_id = ?;', [user.id]);
+
+  logger.info(`Reset password for user ${user.username}.`);
+
+  return [200, user.id];
+}
+
 const image = (function() {
   async function getByUsername(username) {
     try {
@@ -371,4 +399,6 @@ module.exports = {
   del,
   prepareVerification,
   verifyUser,
+  preparePasswordReset,
+  resetPassword,
 };

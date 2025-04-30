@@ -62,6 +62,23 @@ block content
         });
       })();
 
+  h3 Change Password
+  form#changeUsername
+    .inputGroup
+      label( for='old-password' ) Old password:
+      input( id='old-password' name='old-password' type='password' )
+    .inputGroup
+      label( for='new-password' ) New password:
+      input( id='new-password' name='new-password' type='password' )
+    .inputGroup
+      label( for='confirm-password' ) Confirm new password:
+      input( id='confirm-password' name='confirm-password' type='password' )
+    .inputGroup
+      .d-flex.col-2
+        button( type='submit' ) Change Password
+
+    small.color-error.hidden#username-error
+
   hr.w-100.mb-0
 
   h2 Notifications

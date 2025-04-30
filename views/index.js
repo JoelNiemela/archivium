@@ -90,6 +90,10 @@ module.exports = function(app) {
   get('/verify', sites.ALL, pages.user.requestVerify);
   get('/verify/:key', sites.ALL, pages.user.verifyUser);
   get('/notifications', sites.ALL, pages.user.notifications);
+  get('/forgot-password', sites.ALL, (_, res) => res.prepareRender('forgotPassword'));
+  post('/forgot-password', sites.ALL, forms.passwordResetRequest);
+  get('/reset-password/:key', sites.ALL,  (_, res) => res.prepareRender('resetPassword'));
+  post('/reset-password/:key', sites.ALL, forms.resetPassword);
 
   /* Misc pages */
   get('/search', sites.ALL, pages.misc.search);

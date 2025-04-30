@@ -20,4 +20,6 @@ block content
       div
         span( style={'font-size': 'small'} ).color-error= error
   p
+    a.link.link-animated( href=`${ADDR_PREFIX}/forgot-password` ) Forgot password?
+  p
     a.link.link-animated( href=`${ADDR_PREFIX}/signup${searchQueries ? `?${searchQueries}`: ''}` ) Create an Account

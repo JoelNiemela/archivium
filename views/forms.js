@@ -166,7 +166,7 @@ module.exports = {
       }
     } else {
       res.status(code);
-      return res.prepareRender('forgotPassword', { error: user });
+      return res.prepareRender('forgotPassword', { error: `Error: ${code}` });
     }
   },
 

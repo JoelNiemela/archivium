@@ -120,13 +120,13 @@ block content
       for (let i = 0; i < catList.length; i++) {
         const [catShortname, catTitle, catTitlePl, catColor] = catList[i];
 
-        const titlePlInput = createElement('input', { attrs: { value: catTitlePl } });
+        const titlePlInput = createElement('input', { dataset: { name: 'titlePl' }, attrs: { value: catTitlePl } });
         titlePlInput.addEventListener('input', () => {
           titlePlInput.value = titlePlInput.value.toLowerCase();
           catList[i][2] = titlePlInput.value;
         });
 
-        const titleInput = createElement('input', { attrs: { value: catTitle } });
+        const titleInput = createElement('input', { dataset: { name: 'title' }, attrs: { value: catTitle } });
         titleInput.addEventListener('input', () => {
           titleInput.value = titleInput.value.toLowerCase();
           if (toPlural(catList[i][1]) === titlePlInput.value || !titlePlInput.value) {
@@ -142,11 +142,14 @@ block content
           }
         });
 
-        const colorInput = createElement('input', { attrs: { id: `color${i}`, value: catColor, type: 'color', style: 'padding: 0; min-width: 3rem;' } });
+        const colorInput = createElement('input', {
+          dataset: { name: 'color' },
+          attrs: { id: `color${i}`, value: catColor, type: 'color', style: 'padding: 0; min-width: 3rem;' }
+        });
         colorInput.addEventListener('input', () => catList[i][3] = colorInput.value);
 
         const catRow = createElement('tr', { children: [
-          createElement('td', { attrs: { innerText: catShortname } }),
+          createElement('td', { dataset: { name: 'shortname' }, attrs: { innerText: catShortname } }),
           createElement('td', { children: [titleInput] }),
           createElement('td', { children: [titlePlInput] }),
           createElement('td', { children: [createElement('div', { classList: ['d-flex'], children: [colorInput] })] }),

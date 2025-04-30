@@ -34,10 +34,10 @@ describe('Universe spec', () => {
     cy.get('#info-bar').contains('Edit').click();
 
     // Add a new item type
-    cy.contains('Add type').parent().as('newType');
-    cy.get('@newType').find('[name=title]').type('test');
-    cy.get('@newType').find('[name=titlePl]').type('tests');
-    cy.get('@newType').find('button').click();
+    cy.contains('Add Type').click();
+    cy.get('#cats tr').last().as('newType');
+    cy.get('@newType').find('[data-name=title]').type('test');
+    cy.get('@newType').find('[data-name=titlePl]').should('have.value', 'tests');
     cy.get('#save-btn').click();
 
     // Confirm that the new type exists
@@ -50,7 +50,7 @@ describe('Universe spec', () => {
     cy.get('#info-bar').contains('Edit').click();
 
     cy.get('#title').clear().type('Public Test Universe');
-    cy.get('#cats button').contains('Reset to default types').click();
+    cy.contains('Reset to default types').click();
 
     cy.get('#save-btn').click();
   });

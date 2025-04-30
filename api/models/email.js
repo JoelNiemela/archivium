@@ -6,6 +6,7 @@ const { executeQuery } = require('../utils');
 const templates = {
   VERIFY: ['d-04ac9be5b7fb430ba3e23b7d93115644', 'verify'],
   NOTIFY: ['d-32bf5e61b7d14239a80a00518b1824c0', 'notify'],
+  RESET:  ['d-ef568fa2f9934ea0b26b9b5e0c8da03a', 'reset'],
 };
 
 const groups = {
@@ -94,6 +95,28 @@ async function trySendVerifyLink(sessionUser, username) {
   return [200, { alreadyVerified }];
 }
 
+async function sendPasswordReset({ id, username, email }) {
+  const resetKey = await userapi.preparePasswordReset(id);
+  
+  const resetPasswordLink = `https://${DOMAIN}${ADDR_PREFIX}/reset-password/${resetKey}`;
+  await sendTemplateEmail(templates.RESET, email, { username, resetPasswordLink }, groups.ACCOUNT_ALERTS);
+}
+
+async function trySendPasswordReset(user) {
+  const now = new Date();
+  const timeout = 60 * 1000;
+  const cutoff = new Date(now.getTime() - timeout);
+  const recentEmails = await executeQuery(
+    'SELECT * FROM sentemail WHERE recipient = ? AND topic = ? AND sent_at >= ? ORDER BY sent_at DESC;',
+    [user.email, 'reset', cutoff],
+  );
+  if (recentEmails.length > 0) return [429, new Date(recentEmails[0].sent_at.getTime() + timeout)];
+
+  await sendPasswordReset(user);
+
+  return [200];
+}
+
 module.exports = {
   templates,
   groups,
@@ -102,4 +125,6 @@ module.exports = {
   unsubscribeUser,
   sendVerifyLink,
   trySendVerifyLink,
+  sendPasswordReset,
+  trySendPasswordReset,
 };

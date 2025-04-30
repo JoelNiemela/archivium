@@ -8,7 +8,7 @@ describe('Anonymous user spec', () => {
 
     cy.get('h1').contains('Welcome to Archivium').should('exist');
     cy.get('.navbarBtnLink').contains('Log In').should('have.attr', 'href', '/login');
-    cy.get('.navbarBtnLink').contains('Create Account').should('have.attr', 'href', '/signup?page=%2Funiverses%2Fcreate');
+    cy.get('main .navbarBtnLink').contains('Create Account').should('have.attr', 'href', '/signup?page=%2Funiverses%2Fcreate');
   });
 
   it('vists unprotected pages and doesn\'t get redirected', () => {

@@ -10,7 +10,7 @@ block scripts
     }
 
 block content
-  h2 Sign Up
+  h2 Create Account
   form#signup( method='post' )
     div.inputGroup
       label( for='username' ) Username: 
@@ -37,7 +37,7 @@ block content
       small Yes, I want to receive email updates about Archivium (optional).
     br
     div
-      button( class='g-recaptcha' data-sitekey='6Lf35qkqAAAAAMnKLqoBJ9wIX30sodE4lWQS6Y3A' data-callback='onSubmit' data-action='submit' ) Sign Up
+      button( class='g-recaptcha' data-sitekey='6Lf35qkqAAAAAMnKLqoBJ9wIX30sodE4lWQS6Y3A' data-callback='onSubmit' data-action='submit' ) Create Account
     div
       small.color-error#error( class=(error ? '' : 'hidden') )= error
 

@@ -153,4 +153,38 @@ module.exports = {
     return logger.error(`Error ${code}: ${data}`);
     // res.prepareRender('createUniverse', { error: data, ...req.body });
   },
+
+  async passwordResetRequest(req, res) {
+    const { body } = req;
+    const [code, user] = await api.user.getOne({ email: body.email });
+    if (user) {
+      const [code2, data] = await api.email.trySendPasswordReset(user);
+      if (code2 === 429) {
+        return res.prepareRender('forgotPassword', { error: `Please wait ${(data - new Date()) / 1000} seconds before trying again.` });
+      } else {
+        return res.prepareRender('forgotPassword', { success: 'Email sent!' });
+      }
+    } else {
+      res.status(code);
+      return res.prepareRender('forgotPassword', { error: `Error: ${code}` });
+    }
+  },
+
+  async resetPassword(req, res) {
+    const { body } = req;
+    if (body.newPassword !== body.confirmPassword) {
+      res.status(400);
+      return res.prepareRender('resetPassword', { error: 'New password and confirmation do not match.' });
+    }
+    const [code, userId] = await api.user.resetPassword(req.params.key, body.newPassword);
+    res.status(code);
+    if (code === 200) {
+      const [_, user] = await api.user.getOne({ id: userId });
+      if (user) {
+        return res.redirect(`${ADDR_PREFIX}/`);
+      }
+    } else {
+      return res.prepareRender('resetPassword', { error: 'This password reset link seems to be broken or expired — try requesting a new one.' });
+    }
+  },
 };

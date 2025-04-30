@@ -156,7 +156,6 @@ module.exports = {
 
   async passwordResetRequest(req, res) {
     const { body } = req;
-    console.log(body)
     const [code, user] = await api.user.getOne({ email: body.email });
     if (user) {
       const [code2, data] = await api.email.trySendPasswordReset(user);

@@ -6,6 +6,7 @@ const { render } = require('../templates');
 const { perms, Cond, getPfpUrl } = require('../api/utils');
 const fs = require('fs/promises');
 const logger = require('../logger');
+const ReCaptcha = require('../middleware/reCaptcha');
 
 const pages = require('./pages');
 const forms = require('./forms');
@@ -91,7 +92,7 @@ module.exports = function(app) {
   get('/verify/:key', sites.ALL, pages.user.verifyUser);
   get('/notifications', sites.ALL, pages.user.notifications);
   get('/forgot-password', sites.ALL, (_, res) => res.prepareRender('forgotPassword'));
-  post('/forgot-password', sites.ALL, forms.passwordResetRequest);
+  post('/forgot-password', sites.ALL, ReCaptcha.verifyReCaptcha, forms.passwordResetRequest);
   get('/reset-password/:key', sites.ALL,  (_, res) => res.prepareRender('resetPassword'));
   post('/reset-password/:key', sites.ALL, forms.resetPassword);
 

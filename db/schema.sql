@@ -39,6 +39,13 @@ CREATE TABLE userverification (
   FOREIGN KEY (user_id) REFERENCES user (id)
 );
 
+CREATE TABLE userpasswordreset (
+  user_id INT NOT NULL,
+  reset_key VARCHAR(64) NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES user (id)
+);
+
 CREATE TABLE usernamechange (
   changed_for INT NOT NULL,
   changed_from VARCHAR(32) NOT NULL,

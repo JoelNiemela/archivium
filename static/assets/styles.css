@@ -269,6 +269,9 @@ header {
 .color-error {
   color: red;
 }
+.color-success {
+  color: green;
+}
 
 .userIcon {
   display: inline-flex;

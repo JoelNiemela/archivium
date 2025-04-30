@@ -161,6 +161,8 @@ module.exports = {
       const [code2, data] = await api.email.trySendPasswordReset(user);
       if (code2 === 429) {
         return res.prepareRender('forgotPassword', { error: `Please wait ${(data - new Date()) / 1000} seconds before trying again.` });
+      } else {
+        return res.prepareRender('forgotPassword', { success: 'Email sent!' });
       }
     } else {
       res.status(code);

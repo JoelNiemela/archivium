@@ -1,9 +1,21 @@
 extends ../layout.pug
 
+block append styles
+  style.
+    #cats td {
+      padding: 0.125rem 0;
+    }
+
+    #cats td input {
+      border-radius: 0;
+      border: none;
+      width: 100%;
+    }
+
 block append save
   li#save-btn.navbarBtn
     script.
-    a.navbarBtnLink.navbarText( onclick='document.forms.edit.submit()' ) Save Changes
+    a.navbarBtnLink.navbarText( onclick='document.forms.edit.requestSubmit()' ) Save Changes
 
 block content
   script
@@ -36,79 +48,165 @@ block content
         option( value='disabled' selected=(!universe.discussion_open) ) Only with COMMENT permission level
 
     h3 Item Types
-    #cats
+    small
+      b Note: 
+      | be aware that removing or renaming item types will not update any existing items with that type.
+    table
+      thead
+        tr
+          th Shortname
+          th Singular Type Name
+          th Plural Type Name
+          th Color
+          th
+        tr
+          td
+          td.center
+            small (e.g. "This is an 
+              b item
+              |  of #{universe.title}")
+          td.center
+            small (e.g. "These are 
+              b items
+              |  of #{universe.title}")
+          td
+          td
+      tbody#cats
+
+    .d-flex.gap-2.mt-2
+      button( type='button' onclick='addCat()' ) Add Type
+      button( type='button' onclick='resetCats()' ) Reset to default types
 
     div
       input( id='obj_data' type='hidden' name='obj_data' value='{}' )
+      button( type='submit' ) Save Changes
 
+    small.color-error.hidden#validation-error
     if error
       div
         span( style={color: 'red', 'font-size': 'small'} )= error
 
   script!= `updateObjData(${JSON.stringify(universe.obj_data)});`
   script.
-    function updateCats() {
-      const catsList = document.getElementById('cats');
-      catsList.innerHTML = '';
-      for (const catShortname in obj_data.cats) {
-        const [catTitle, catTitlePl, catColor] = obj_data.cats[catShortname];
-        const catForm = createElement('form', { children: [
-          createElement('h4', { attrs: { innerText: catShortname } }),
-          createElement('div', { classList: ['d-flex', 'align-stretch', 'flex-wrap'], children: [
-            createElement('input', { attrs: { name: 'title', value: catTitle } }),
-            createElement('input', { attrs: { name: 'titlePl', value: catTitlePl } }),
-            createElement('input', { attrs: { name: 'color', value: catColor, type: 'color', style: 'height: auto; padding: 0; min-width: 3rem;' } }),
-            createElement('button', { attrs: {
-              innerText: T('Remove'),
-              onclick: (e) => {
-                e.preventDefault();
-                const newState = { ...obj_data.cats };
-                delete newState[catShortname];
-                updateObjData({ cats: newState });
-                updateCats();
-              },
-            } }),
-          ] }),
-        ] });
-        catForm.onchange = () => {
-          let [title, titlePl, color] = catForm;
-          [title, titlePl, color] = [title, titlePl, color].map(i => i.value);
-          const newState = { ...obj_data.cats };
-          newState[catShortname] = [title.toLowerCase(), titlePl.toLowerCase(), color];
-          updateObjData({ cats: newState });
-        };
-        catsList.appendChild(catForm);
+    function toShortname(title) {
+      let shortname = title.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+
+      if (shortname.length > 64) {
+          shortname = shortname.substring(0, 64);
       }
 
-      const addBtn = createElement('button', { attrs: { innerText: T('Add type') } });
-      const addForm = createElement('form', { children: [
-        createElement('div', { classList: ['d-flex', 'align-stretch', 'flex-wrap'], children: [
-          addBtn,
-          createElement('input', { attrs: { name: 'title', placeholder: T('Title') } }),
-          createElement('input', { attrs: { name: 'titlePl', placeholder: T('Title (Plural)') } }),
-        ] }),
-      ] });
-      addBtn.onclick = (e) => {
-        e.preventDefault();
-        let { title, titlePl } = addForm;
-        [title, titlePl] = [title, titlePl].map(i => i.value);
-        console.log(title, titlePl)
-        const newState = { ...obj_data.cats };
-        newState[title.toLowerCase()] = [title.toLowerCase(), titlePl.toLowerCase(), '#ffffff'];
-        updateObjData({ cats: newState });
-        updateCats();
-      };
-      catsList.appendChild(addForm);
-      
-      catsList.appendChild(createElement('button', { attrs: {
-        innerText: 'Reset to default types',
-        onclick: (e) => {
-          e.preventDefault();
-          setDefaultCats();
-          updateCats();
-        },
-      } }));
+      return shortname;
+    }
+
+    function toPlural(title) {
+      // This function is very hacky and only works in english (and only sometimes), but it'll be good enough for most cases for now.
+      return `${title}s`;
+    }
+
+    let catList;
+    function resetCatList() {
+      catList = [];
+      for (const catShortname in obj_data.cats) {
+        catList.push([catShortname, ...obj_data.cats[catShortname]]);
+      }
+    }
+
+    function updateCats() {
+      const catsTable = document.getElementById('cats');
+      catsTable.innerHTML = '';
+      for (let i = 0; i < catList.length; i++) {
+        const [catShortname, catTitle, catTitlePl, catColor] = catList[i];
+
+        const titlePlInput = createElement('input', { dataset: { name: 'titlePl' }, attrs: { value: catTitlePl } });
+        titlePlInput.addEventListener('input', () => {
+          titlePlInput.value = titlePlInput.value.toLowerCase();
+          catList[i][2] = titlePlInput.value;
+        });
+
+        const titleInput = createElement('input', { dataset: { name: 'title' }, attrs: { value: catTitle } });
+        titleInput.addEventListener('input', () => {
+          titleInput.value = titleInput.value.toLowerCase();
+          if (toPlural(catList[i][1]) === titlePlInput.value || !titlePlInput.value) {
+            titlePlInput.value = toPlural(titleInput.value);
+            catList[i][2] = titlePlInput.value;
+          }
+          catList[i][1] = titleInput.value;
+        });
+        titleInput.addEventListener('change', () => {
+          if (!catList[i][0]) {
+            catList[i][0] = toShortname(titleInput.value);
+            updateCats();
+          }
+        });
+
+        const colorInput = createElement('input', {
+          dataset: { name: 'color' },
+          attrs: { id: `color${i}`, value: catColor, type: 'color', style: 'padding: 0; min-width: 3rem;' }
+        });
+        colorInput.addEventListener('input', () => catList[i][3] = colorInput.value);
+
+        const catRow = createElement('tr', { children: [
+          createElement('td', { dataset: { name: 'shortname' }, attrs: { innerText: catShortname } }),
+          createElement('td', { children: [titleInput] }),
+          createElement('td', { children: [titlePlInput] }),
+          createElement('td', { children: [createElement('div', { classList: ['d-flex'], children: [colorInput] })] }),
+          createElement('td', { children: [createElement('button', { attrs: {
+            innerText: T('Remove'),
+            onclick: (e) => {
+              e.preventDefault();
+              catList.splice(i, 1);
+              updateCats();
+            },
+          } })] }),
+        ] });
+        catsTable.appendChild(catRow);
+      }
+    }
+
+    function addCat() {
+      catList.push(['', '', '', '#ffffff']);
+      updateCats();
+    }
+
+    function resetCats() {
+      setDefaultCats();
+      resetCatList();
+      updateCats();
     }
 
     if (!('cats' in obj_data)) setDefaultCats();
+    resetCatList();
     updateCats();
+
+    document.forms.edit.addEventListener('submit', (e) => {
+      const formError = document.querySelector('#validation-error');
+      formError.classList.add('hidden');
+
+      const newCats = {};
+      for (let i = 0; i < catList.length; i++) {
+        let [catShortname, catTitle, catTitlePl, catColor] = catList[i];
+
+        if (!catTitle) {
+          // Title is missing, error
+          formError.innerText = 'Make sure the name fields for all item types are filled out, or remove unwanted ones!';
+          formError.classList.remove('hidden');
+          return e.preventDefault();
+        }
+
+        if (!catShortname) {
+          // Shortname is missing, autofill it
+          catShortname = toShortname(catTitle);
+        }
+
+        if (!catTitlePl) {
+          // Title plural is missing, autofill it
+          catTitlePl = toPlural(catTitle);
+        }
+
+        newCats[catShortname] = [catTitle.trim(), catTitlePl.trim(), catColor];
+      }
+      updateObjData({ cats: newCats });
+    });

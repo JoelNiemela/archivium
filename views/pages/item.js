@@ -99,6 +99,9 @@ module.exports = {
     const [code2, itemList] = await api.item.getByUniverseId(req.session.user, item.universe_id, perms.READ, { type: 'character' });
     res.status(code2);
     if (code2 !== 200) return;
+    const [code3, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.universeShortname });
+    res.status(code3);
+    if (code3 !== 200) return;
     item.obj_data = JSON.parse(item.obj_data);
     if (item.parents.length > 0 || item.children.length > 0) {
       item.obj_data.lineage = { ...item.obj_data.lineage };
@@ -129,6 +132,6 @@ module.exports = {
     }
     const itemMap = {};
     itemList.forEach(item => itemMap[item.shortname] = item.title);
-    res.prepareRender(req.query.mode === 'raw' ? 'editItemRaw' : 'editItem', { item, itemMap });
+    res.prepareRender(req.query.mode === 'raw' ? 'editItemRaw' : 'editItem', { item, itemMap, universe });
   },
 };

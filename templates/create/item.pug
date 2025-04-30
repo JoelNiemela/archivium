@@ -30,7 +30,7 @@ block scripts
     window.addEventListener('load', () => {
       const titleInput = document.querySelector('#title');
       const shortnameInput = document.querySelector('#shortname');
-      let hasEditedShortname = false;
+      let hasEditedShortname = !!shortnameInput.value;
 
       titleInput.addEventListener('input', () => {
         if (!hasEditedShortname) {

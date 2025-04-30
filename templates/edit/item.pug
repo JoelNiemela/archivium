@@ -33,6 +33,13 @@ block content
       input( id='title' type='text' name='title' value=item.title )
 
     div.inputGroup
+      label( for='item_type' ) Type: 
+      select( id='item_type' name='item_type' )
+        option( hidden disabled selected value ) #{T('Select one')}...
+        each arr, type in universe.obj_data.cats
+          option( value=type, selected=(item.item_type === type) )= capitalize(T(arr[0]))
+
+    div.inputGroup
       label( for='tags' ) Tags: 
       textarea( id='tags' name='tags' ) #{(item.tags || []).join(' ')}
 
@@ -47,6 +54,9 @@ block content
       label.switch
         input( id='notes' name='notes' type='checkbox' checked=item.obj_data.notes onchange='updateObjData({ notes: this.checked })' )
         span.slider
+
+    div.mt-2
+      button( type='submit' ) Save Changes
     
     hr.w-100.mb-0
 
@@ -96,7 +106,12 @@ block content
       div
         span( style={color: 'red', 'font-size': 'small'} )= error 
 
-  script!= `updateObjData(${JSON.stringify(item.obj_data)}); itemMap = ${JSON.stringify(itemMap)}; universe = '${item.universe_short}'; item = ${JSON.stringify(item)}`
+  script.
+    updateObjData(!{JSON.stringify(item.obj_data)});
+    itemMap = !{JSON.stringify(itemMap)};
+    universe = '!{item.universe_short}';
+    item = !{JSON.stringify(item)};
+
   script.
     resetTabs();
     window.easyMDE = setupEasyMDE('#body textarea', {universe, context: { item }});

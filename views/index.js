@@ -90,7 +90,7 @@ module.exports = function(app) {
   post('/settings/notifications', sites.ALL, Auth.verifySessionOrRedirect, forms.notificationSettings);
   get('/verify', sites.ALL, pages.user.requestVerify);
   get('/verify/:key', sites.ALL, pages.user.verifyUser);
-  get('/notifications', sites.ALL, pages.user.notifications);
+  get('/notifications', sites.ALL, Auth.verifySessionOrRedirect, pages.user.notifications);
   get('/forgot-password', sites.ALL, (_, res) => res.prepareRender('forgotPassword'));
   post('/forgot-password', sites.ALL, ReCaptcha.verifyReCaptcha, forms.passwordResetRequest);
   get('/reset-password/:key', sites.ALL,  (_, res) => res.prepareRender('resetPassword'));

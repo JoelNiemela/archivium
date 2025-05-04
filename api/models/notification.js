@@ -61,21 +61,26 @@ async function subscribe(user, subscriptionData) {
   const [code, subscription] = await getByEndpoint(endpoint);
   if (code !== 200) return [code, subscription];
   const endpointHash = md5(endpoint);
-  if (!subscription) {
-    await executeQuery('INSERT INTO notificationsubscription (user_id, endpoint_hash, push_endpoint, push_keys) VALUES (?, ?, ?, ?)', [
-      user.id,
-      endpointHash,
-      endpoint,
-      keys,
-    ]);
-    logger.info(`New subscription added for ${user.username}`);
-  } else if (subscription.user_id !== user.id) {
-    await executeQuery('UPDATE notificationsubscription SET user_id = ? WHERE endpoint_hash = ?', [user.id, endpointHash]);
-    logger.info(`Subscription user changed to ${user.username}`);
-  } else {
-    logger.info(`Duplicate subscription ignored for ${user.username}`);
+  try {
+    if (!subscription) {
+      await executeQuery('INSERT INTO notificationsubscription (user_id, endpoint_hash, push_endpoint, push_keys) VALUES (?, ?, ?, ?)', [
+        user.id,
+        endpointHash,
+        endpoint,
+        keys,
+      ]);
+      logger.info(`New subscription added for ${user.username}`);
+    } else if (subscription.user_id !== user.id) {
+      await executeQuery('UPDATE notificationsubscription SET user_id = ? WHERE endpoint_hash = ?', [user.id, endpointHash]);
+      logger.info(`Subscription user changed to ${user.username}`);
+    } else {
+      logger.info(`Duplicate subscription ignored for ${user.username}`);
+    }
+    return [201, endpointHash];
+  } catch (err) {
+    logger.error(err);
+    return [500];
   }
-  return [201, endpointHash];
 }
 
 async function unsubscribe(user, subscriptionData) {

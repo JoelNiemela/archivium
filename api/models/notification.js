@@ -125,8 +125,8 @@ async function notify(target, notifType, message) {
       const [code, subscriptions] = await getByUser(target);
       if (!subscriptions) return [code];
       for (const { push_endpoint, push_keys } of subscriptions) {
-        webpush.sendNotification({ endpoint: push_endpoint, keys: push_keys }, payload).catch(err => {
-          logger.error('Push error:', err);
+        await webpush.sendNotification({ endpoint: push_endpoint, keys: push_keys }, payload).catch(err => {
+          logger.error(err);
           // subscriptions.splice(index, 1); // Remove invalid subscriptions
         });
       }

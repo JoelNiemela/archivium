@@ -345,7 +345,7 @@ async function post(user, body, universeShortName) {
 
     return [201, data];
   } catch (err) {
-    if (err.code === 'ER_DUP_ENTRY') return [400, 'item.shortname must be unique within each universe.'];
+    if (err.code === 'ER_DUP_ENTRY') return [400, `Shortname "${shortname}" already in use in this universe, please choose another.`];
     logger.error(err);
     return [500];
   }

@@ -22,18 +22,17 @@ module.exports = {
   async view(req, res) {
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.universeShortname });
     res.status(code1);
-    if (code1 === 403) {
+    if (code1 === 403 || code1 === 401) {
+      const [code, publicBody] = await api.universe.getPublicBodyByShortname(req.params.universeShortname);
+      if (!publicBody && code1 === 401) {
+        res.status(code);
+        req.forceLogin = true;
+        req.useExQuery = true;
+        return;
+      }
       res.status(200);
       const [, request] = await api.universe.getUserAccessRequest(req.session.user, req.params.universeShortname);
-      return res.prepareRender('privateUniverse', { shortname: req.params.universeShortname, hasRequested: Boolean(request) });
-    } else if (code1 === 401) {
-      const [code, publicPage] = await api.universe.getPublicPageByShortname(req.params.universeShortname);
-      res.status(code);
-      req.forceLogin = true;
-      req.useExQuery = true;
-      console.log(publicPage, req.path, req.query)
-      console.log(req.path)
-      return;
+      return res.prepareRender('privateUniverse', { shortname: req.params.universeShortname, hasRequested: Boolean(request), publicBody });
     }
     else if (!universe) return;
     const [code2, authors] = await api.user.getByUniverseShortname(req.session.user, universe.shortname);

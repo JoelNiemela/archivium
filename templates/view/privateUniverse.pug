@@ -1,22 +1,40 @@
 extends ../layout.pug
 
 block scripts
-  script
+  script 
+    include /static/scripts/domUtils.js
     include /static/scripts/fetchUtils.js
+    include /static/scripts/markdown/parse.js
+    include /static/scripts/markdown/render.js
 
 block content
-  div
+  if publicBody
+    br
+    .sheet
+      #md-body
+        script!= `window.content = ${JSON.stringify(publicBody)};`
+        script.
+          loadMarkdown(document.getElementById('md-body'), null, window.content);
+    br
+  else
     .center.d-flex.flex-col.align-center
       span.mt-4.material-symbols-outlined( style={ 'font-size': '8rem' } ) visibility_off
       h1.mt-0 Access Denied
       p 
         | Looks like the universe you're trying to reach is private.
         br
-        | You can ask the owner of this universe for access by clicking the button below:
-
-      script.
-        async function requestAccess() {
-          await putJSON('/api/universes/#{shortname}/request', { permissionLevel: #{perms.READ} });
-          window.location.reload();
-        }
-      button.button.large( type='submit' onclick='requestAccess()' disabled=hasRequested ) #{hasRequested ? T('Request Pending') : T('Request Access')}
+        if contextUser
+          | You can ask the owner of this universe for access by clicking the button below:
+  
+  .center.d-flex.flex-col.align-center
+    if contextUser
+        script.
+          async function requestAccess() {
+            await putJSON('/api/universes/#{shortname}/request', { permissionLevel: #{perms.READ} });
+            window.location.reload();
+          }
+        button.button.large( type='submit' onclick='requestAccess()' disabled=hasRequested ) #{hasRequested ? T('Request Pending') : T('Request Access')}
+    else
+      p
+        a.link.link-animated( href=`${ADDR_PREFIX}/login?${encodedPath}` ) Log in
+        |  to request full access to this universe.

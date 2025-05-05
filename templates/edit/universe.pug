@@ -53,14 +53,14 @@ block content
     #home-body
       h3 Home Page
       .mb-2
-        small This markdown will be shown in the "home" tab of your universe page.
+        small This markdown will be shown in the "Home" tab of your universe page.
       textarea
         | #{universe.obj_data.homeBody || ''}
 
     #public-body
       h3 Public Page
       .mb-2
-        small This markdown will be shown to users that don't have access to your universe.
+        small This markdown will be shown to users that don't have access to your universe instead of the "Access Denied" page.
       textarea
         | #{universe.obj_data.publicBody || ''}
 

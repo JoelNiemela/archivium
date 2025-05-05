@@ -172,6 +172,9 @@ module.exports = function(app, upload) {
             new APIRoute('/data', {
               PUT: (req) => api.item.putData(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body),
             }),
+            new APIRoute('/subscribe', {
+              PUT: (req) => api.item.subscribeNotifs(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body.isSubscribed),
+            }),
             new APIRoute('/tags', {
               PUT: (req) => api.item.putTags(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body.tags),
               DELETE: (req) => api.item.delTags(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body.tags),

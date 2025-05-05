@@ -51,6 +51,13 @@ async function getOne(user, conditions, permissionsRequired=perms.READ, basicOnl
       WHERE lineage.child_id = ?
     `, [item.id]);
     item.parents = parents;
+
+    if (user) {
+      const notifs = await executeQuery(`
+        SELECT 1 FROM itemnotification WHERE item_id = ? AND user_id = ? AND is_enabled
+      `, [item.id, user.id]);
+      item.notifs_enabled = notifs.length === 1;
+    }
   }
 
   return [200, item];
@@ -672,6 +679,21 @@ async function snoozeUntil(user, universeShortname, itemShortname) {
   }
 }
 
+async function subscribeNotifs(user, universeShortname, itemShortname, isSubscribed) {
+  const [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.READ);
+  if (!item) return [code];
+
+  try {
+    return [200, await executeQuery(`
+      INSERT INTO itemnotification (item_id, user_id, is_enabled) VALUES (?, ?, ?)
+      ON DUPLICATE KEY UPDATE is_enabled = ?
+    `, [item.id, user.id, isSubscribed, isSubscribed])];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
 const image = (function() {
   async function getOneByItemShort(user, universeShortname, itemShortname, options) {
     const [code1, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.READ, true);
@@ -780,4 +802,5 @@ module.exports = {
   putTags,
   delTags,
   snoozeUntil,
+  subscribeNotifs,
 };

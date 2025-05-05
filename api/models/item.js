@@ -307,7 +307,7 @@ async function getCountsByUniverse(user, universe, validate=true) {
 async function forEachUserToNotify(item, callback) {
   const targetIDs = (await executeQuery(`SELECT user_id FROM itemnotification WHERE item_id = ? AND is_enabled`, [ item.id ])).map(row => row.user_id);
   for (const userID of targetIDs) {
-    const [_, user] = await getUser({ id: userID });
+    const [_, user] = await getUser({ 'user.id': userID });
     if (user) {
       callback(user);
     }

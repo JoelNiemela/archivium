@@ -217,7 +217,13 @@ module.exports = function(app, upload) {
             (data) => data[0],
           ),
           POST: (req) => api.discussion.postThread(req.session.user, req.params.universeShortName, req.body),
-        }, []),
+        }, [
+          new APIRoute('/:id', {}, [
+            new APIRoute('/subscribe', {
+              PUT: (req) => api.discussion.subscribeToThread(req.session.user, req.params.id, req.body.isSubscribed),
+            }),
+          ]),
+        ]),
         new APIRoute('/perms', {
           PUT: async (req) => {
             const [_, user] = await api.user.getOne({ 'user.username': req.body.username });

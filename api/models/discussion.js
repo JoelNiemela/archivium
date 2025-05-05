@@ -28,6 +28,7 @@ async function getThreads(user, options, canPost=false, includeExtra=false) {
     const queryString = `
       SELECT
         ${includeExtra ? 'comments.*,' : ''}
+        ${user ? 'tn.is_enabled AS notifs_enabled,' : ''}
         discussion.*
       FROM discussion
       INNER JOIN universe ON universe.id = discussion.universe_id
@@ -47,6 +48,9 @@ async function getThreads(user, options, canPost=false, includeExtra=false) {
           INNER JOIN threadcomment AS tc ON tc.comment_id = comment.id
           GROUP BY thread_id
         ) comments ON comments.thread_id = discussion.id
+      ` : ''}
+      ${user ? `
+        LEFT JOIN threadnotification AS tn ON tn.thread_id = discussion.id AND tn.user_id = ${user.id}
       ` : ''}
       WHERE universe.discussion_enabled
       ${conditionString}
@@ -192,6 +196,23 @@ async function postCommentToItem(user, universeShortname, itemShortname, { body,
   }
 }
 
+async function subscribeToThread(user, threadId, isSubscribed) {
+  if (!user) return [401];
+  const [code, threads] = await getThreads(user, { 'discussion.id': threadId }, true);
+  const thread = threads[0];
+  if (!thread) return [code];
+
+  try {
+    return [200, await executeQuery(`
+      INSERT INTO threadnotification (thread_id, user_id, is_enabled) VALUES (?, ?, ?)
+      ON DUPLICATE KEY UPDATE is_enabled = ?
+    `, [thread.id, user.id, isSubscribed, isSubscribed])];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
 module.exports = {
   getThreads,
   getCommentsByThread,
@@ -199,4 +220,5 @@ module.exports = {
   postUniverseThread,
   postCommentToThread,
   postCommentToItem,
+  subscribeToThread,
 };

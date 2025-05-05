@@ -19,6 +19,34 @@ block scripts
     include /static/scripts/markdown/render.js
 
 block content
-  h2 #{thread.title}
+  .d-flex.justify-between
+    h2 #{thread.title}
+
+    if contextUser
+      a.link.d-flex.align-center
+        span#notification-bell.material-symbols-outlined.mr-1(
+          style={ 'font-size': 'xx-large' }
+          title='Thread Notifications'
+          class={ solid: thread.notifs_enabled }
+        ) #{thread.notifs_enabled ? 'notifications_active' : 'notifications'}
+      script.
+        (() => {
+          let isSubscribed = #{Boolean(thread.notifs_enabled)};
+          const bell = document.getElementById('notification-bell');
+          bell.addEventListener('click', async () => {
+            isSubscribed = !isSubscribed;
+            bell.classList.add('disabled');
+            try {
+              await putJSON(`/api/universes/#{universe.shortname}/discussion/#{thread.id}/subscribe`, { isSubscribed: isSubscribed });
+            } catch (err) {
+              console.error(err);
+              isSubscribed = !isSubscribed;
+            } finally {
+              bell.textContent = isSubscribed ? 'notifications_active' : 'notifications';
+              bell.classList.toggle('solid', isSubscribed);
+              bell.classList.remove('disabled');
+            }
+          });
+        })();
 
   include ../components/comments.pug

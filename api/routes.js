@@ -172,6 +172,9 @@ module.exports = function(app, upload) {
             new APIRoute('/data', {
               PUT: (req) => api.item.putData(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body),
             }),
+            new APIRoute('/subscribe', {
+              PUT: (req) => api.item.subscribeNotifs(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body.isSubscribed),
+            }),
             new APIRoute('/tags', {
               PUT: (req) => api.item.putTags(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body.tags),
               DELETE: (req) => api.item.delTags(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body.tags),
@@ -214,7 +217,13 @@ module.exports = function(app, upload) {
             (data) => data[0],
           ),
           POST: (req) => api.discussion.postThread(req.session.user, req.params.universeShortName, req.body),
-        }, []),
+        }, [
+          new APIRoute('/:id', {}, [
+            new APIRoute('/subscribe', {
+              PUT: (req) => api.discussion.subscribeToThread(req.session.user, req.params.id, req.body.isSubscribed),
+            }),
+          ]),
+        ]),
         new APIRoute('/perms', {
           PUT: async (req) => {
             const [_, user] = await api.user.getOne({ 'user.username': req.body.username });
@@ -236,7 +245,7 @@ module.exports = function(app, upload) {
                   [perms.ADMIN]: 'admin',
                 };
                 if (target) {
-                  api.notification.notify(target, api.notification.types.UNIVERSE, {
+                  await api.notification.notify(target, api.notification.types.UNIVERSE, {
                     title: 'Universe Access Request',
                     body: `${req.session.user.username} is requesting ${permText[req.body.permissionLevel]} permissions on your universe ${universe.title}.`,
                     icon: getPfpUrl(req.session.user),

@@ -61,21 +61,26 @@ async function subscribe(user, subscriptionData) {
   const [code, subscription] = await getByEndpoint(endpoint);
   if (code !== 200) return [code, subscription];
   const endpointHash = md5(endpoint);
-  if (!subscription) {
-    await executeQuery('INSERT INTO notificationsubscription (user_id, endpoint_hash, push_endpoint, push_keys) VALUES (?, ?, ?, ?)', [
-      user.id,
-      endpointHash,
-      endpoint,
-      keys,
-    ]);
-    logger.info(`New subscription added for ${user.username}`);
-  } else if (subscription.user_id !== user.id) {
-    await executeQuery('UPDATE notificationsubscription SET user_id = ? WHERE endpoint_hash = ?', [user.id, endpointHash]);
-    logger.info(`Subscription user changed to ${user.username}`);
-  } else {
-    logger.info(`Duplicate subscription ignored for ${user.username}`);
+  try {
+    if (!subscription) {
+      await executeQuery('INSERT INTO notificationsubscription (user_id, endpoint_hash, push_endpoint, push_keys) VALUES (?, ?, ?, ?)', [
+        user.id,
+        endpointHash,
+        endpoint,
+        keys,
+      ]);
+      logger.info(`New subscription added for ${user.username}`);
+    } else if (subscription.user_id !== user.id) {
+      await executeQuery('UPDATE notificationsubscription SET user_id = ? WHERE endpoint_hash = ?', [user.id, endpointHash]);
+      logger.info(`Subscription user changed to ${user.username}`);
+    } else {
+      logger.info(`Duplicate subscription ignored for ${user.username}`);
+    }
+    return [201, endpointHash];
+  } catch (err) {
+    logger.error(err);
+    return [500];
   }
-  return [201, endpointHash];
 }
 
 async function unsubscribe(user, subscriptionData) {
@@ -102,24 +107,8 @@ async function notify(target, notifType, message) {
   if (!settings) return [code];
   const enabledMethods = settings.filter(s => s.notif_type === notifType).reduce((acc, val) => ({ ...acc, [val.notif_method]: Boolean(val.is_enabled) }), {});
 
-  const payload = JSON.stringify({ title, body, icon, clickUrl });
-  if (WEB_PUSH_ENABLED && enabledMethods[methods.PUSH]) {
-    const [code, subscriptions] = await getByUser(target);
-    if (!subscriptions) return [code];
-    for (const { push_endpoint, push_keys } of subscriptions) {
-      webpush.sendNotification({ endpoint: push_endpoint, keys: push_keys }, payload).catch(err => {
-        logger.error('Push error:', err);
-        // subscriptions.splice(index, 1); // Remove invalid subscriptions
-      });
-    }
-  }
-
-  if (enabledMethods[methods.EMAIL] && target.email_notifications) {
-    await email.sendTemplateEmail(email.templates.NOTIFY, target.email, { title, body, icon, clickUrl: `https://${DOMAIN}${ADDR_PREFIX}${clickUrl}` }, email.groups.NOTIFICATIONS);
-  }
-
   const autoMark = enabledMethods[methods.WEB] === false;
-  await executeQuery('INSERT INTO sentnotification (title, body, icon_url, click_url, notif_type, user_id, sent_at, is_read) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
+  const { insertId } = await executeQuery('INSERT INTO sentnotification (title, body, icon_url, click_url, notif_type, user_id, sent_at, is_read) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
     title,
     body,
     icon,
@@ -130,7 +119,28 @@ async function notify(target, notifType, message) {
     autoMark,
   ]);
 
-  return [200, true];
+  const payload = JSON.stringify({ id: insertId, title, body, icon, clickUrl });
+  try {
+    if (WEB_PUSH_ENABLED && enabledMethods[methods.PUSH]) {
+      const [code, subscriptions] = await getByUser(target);
+      if (!subscriptions) return [code];
+      for (const { push_endpoint, push_keys } of subscriptions) {
+        await webpush.sendNotification({ endpoint: push_endpoint, keys: push_keys }, payload).catch(err => {
+          logger.error(err);
+          // subscriptions.splice(index, 1); // Remove invalid subscriptions
+        });
+      }
+    }
+  
+    if (enabledMethods[methods.EMAIL] && target.email_notifications) {
+      await email.sendTemplateEmail(email.templates.NOTIFY, target.email, { title, body, icon, clickUrl: `https://${DOMAIN}${ADDR_PREFIX}${clickUrl}` }, email.groups.NOTIFICATIONS);
+    }
+
+    return [200, true];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
 }
 
 async function getSentNotifications(user) {

@@ -11,7 +11,7 @@ describe('Item spec', () => {
     cy.get('#title').type('Duplicate Character');
     cy.get('#shortname').clear().type('test-character');
     cy.get('button[type="submit"]').click();
-    cy.get('.color-error').contains('item.shortname must be unique within each universe.').should('exist');
+    cy.get('.color-error').contains('Shortname "test-character" already in use in this universe, please choose another.').should('exist');
   });
 
   it('adds a link from the test character to the test event, then follows it', () => {

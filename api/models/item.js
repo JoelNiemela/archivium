@@ -1,5 +1,6 @@
 const { QueryBuilder, Cond, executeQuery, parseData, perms } = require('../utils');
 const { getOne: getUniverse, validateShortname } = require('./universe');
+const { getOne: getUser } = require('./user');
 const logger = require('../../logger');
 
 async function getOne(user, conditions, permissionsRequired=perms.READ, basicOnly=false, options={}) {
@@ -51,6 +52,13 @@ async function getOne(user, conditions, permissionsRequired=perms.READ, basicOnl
       WHERE lineage.child_id = ?
     `, [item.id]);
     item.parents = parents;
+
+    if (user) {
+      const notifs = await executeQuery(`
+        SELECT 1 FROM itemnotification WHERE item_id = ? AND user_id = ? AND is_enabled
+      `, [item.id, user.id]);
+      item.notifs_enabled = notifs.length === 1;
+    }
   }
 
   return [200, item];
@@ -296,6 +304,16 @@ async function getCountsByUniverse(user, universe, validate=true) {
   }
 }
 
+async function forEachUserToNotify(item, callback) {
+  const targetIDs = (await executeQuery(`SELECT user_id FROM itemnotification WHERE item_id = ? AND is_enabled`, [ item.id ])).map(row => row.user_id);
+  for (const userID of targetIDs) {
+    const [_, user] = await getUser({ 'user.id': userID });
+    if (user) {
+      callback(user);
+    }
+  }
+}
+
 async function post(user, body, universeShortName) {
   const { title, shortname, item_type, parent_id, obj_data } = body;
 
@@ -320,7 +338,7 @@ async function post(user, body, universeShortName) {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
     if (!title || !shortname || !item_type || !obj_data) return [400];
-    return [201, await executeQuery(queryString, [
+    const data = await executeQuery(queryString, [
       title,
       shortname,
       item_type,
@@ -330,9 +348,15 @@ async function post(user, body, universeShortName) {
       obj_data,
       new Date(),
       new Date(),
-    ])];
+    ]);
+
+    await executeQuery(`
+      INSERT INTO itemnotification (item_id, user_id, is_enabled) VALUES (?, ?, ?)
+    `, [data.insertId, user.id, true]);
+
+    return [201, data];
   } catch (err) {
-    if (err.code === 'ER_DUP_ENTRY') return [400, 'item.shortname must be unique within each universe.'];
+    if (err.code === 'ER_DUP_ENTRY') return [400, `Shortname "${shortname}" already in use in this universe, please choose another.`];
     logger.error(err);
     return [500];
   }
@@ -672,6 +696,21 @@ async function snoozeUntil(user, universeShortname, itemShortname) {
   }
 }
 
+async function subscribeNotifs(user, universeShortname, itemShortname, isSubscribed) {
+  const [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.READ);
+  if (!item) return [code];
+
+  try {
+    return [200, await executeQuery(`
+      INSERT INTO itemnotification (item_id, user_id, is_enabled) VALUES (?, ?, ?)
+      ON DUPLICATE KEY UPDATE is_enabled = ?
+    `, [item.id, user.id, isSubscribed, isSubscribed])];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
 const image = (function() {
   async function getOneByItemShort(user, universeShortname, itemShortname, options) {
     const [code1, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.READ, true);
@@ -770,6 +809,7 @@ module.exports = {
   getByUniverseShortname,
   getByUniverseAndItemShortnames,
   getCountsByUniverse,
+  forEachUserToNotify,
   post,
   save,
   put,
@@ -780,4 +820,5 @@ module.exports = {
   putTags,
   delTags,
   snoozeUntil,
+  subscribeNotifs,
 };

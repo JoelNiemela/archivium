@@ -2,7 +2,7 @@ const { ADDR_PREFIX, DEV_MODE } = require('../config');
 const Auth = require('../middleware/auth');
 const api = require('../api');
 const md5 = require('md5');
-const { render } = require('../templates');
+const { render, universeLink } = require('../templates');
 const { perms, Cond, getPfpUrl } = require('../api/utils');
 const fs = require('fs/promises');
 const logger = require('../logger');
@@ -90,7 +90,7 @@ module.exports = function(app) {
   post('/settings/notifications', sites.ALL, Auth.verifySessionOrRedirect, forms.notificationSettings);
   get('/verify', sites.ALL, pages.user.requestVerify);
   get('/verify/:key', sites.ALL, pages.user.verifyUser);
-  get('/notifications', sites.ALL, pages.user.notifications);
+  get('/notifications', sites.ALL, Auth.verifySessionOrRedirect, pages.user.notifications);
   get('/forgot-password', sites.ALL, (_, res) => res.prepareRender('forgotPassword'));
   post('/forgot-password', sites.ALL, ReCaptcha.verifyReCaptcha, forms.passwordResetRequest);
   get('/reset-password/:key', sites.ALL,  (_, res) => res.prepareRender('resetPassword'));
@@ -140,6 +140,11 @@ module.exports = function(app) {
   post('/discuss/:threadId/comment', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(forms.commentOnThread, (sub) => ({ shortname: sub })));
   get('/permissions', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(pages.universe.editPerms, (sub) => ({ shortname: sub })));
   post('/permissions', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(forms.editUniversePerms, (sub) => ({ shortname: sub })));
+
+  // Redirect (for notification links)
+  get('/universes/:shortname*', sites.DISPLAY, (req, res) => {
+    res.redirect(`${universeLink(req, req.params.shortname)}${req.params[0] || '/'}`);
+  });
   
   get('/items', sites.DISPLAY, subdomain(pages.universe.itemList, (sub) => ({ shortname: sub })));
   get('/items/create', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(pages.item.create, (sub) => ({ shortname: sub })));

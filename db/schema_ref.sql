@@ -39,13 +39,6 @@ CREATE TABLE userverification (
   FOREIGN KEY (user_id) REFERENCES user (id)
 );
 
-CREATE TABLE userpasswordreset (
-  user_id INT NOT NULL,
-  reset_key VARCHAR(64) NOT NULL,
-  expires_at TIMESTAMP NOT NULL,
-  FOREIGN KEY (user_id) REFERENCES user (id)
-);
-
 CREATE TABLE usernamechange (
   changed_for INT NOT NULL,
   changed_from VARCHAR(32) NOT NULL,
@@ -91,15 +84,6 @@ CREATE TABLE discussion (
   title VARCHAR(256) NOT NULL,
   universe_id INT NOT NULL,
   FOREIGN KEY (universe_id) REFERENCES universe (id)
-);
-
-CREATE TABLE threadnotification (
-  thread_id INT NOT NULL,
-  user_id INT NOT NULL,
-  UNIQUE(thread_id, user_id),
-  is_enabled BOOLEAN NOT NULL,
-  FOREIGN KEY (thread_id) REFERENCES discussion (id),
-  FOREIGN KEY (user_id) REFERENCES user (id)
 );
 
 CREATE TABLE comment (
@@ -165,15 +149,6 @@ CREATE TABLE item (
   FOREIGN KEY (parent_id) REFERENCES item (id),
   FOREIGN KEY (last_updated_by) REFERENCES user (id),
   PRIMARY KEY (id)
-);
-
-CREATE TABLE itemnotification (
-  item_id INT NOT NULL,
-  user_id INT NOT NULL,
-  UNIQUE(item_id, user_id),
-  is_enabled BOOLEAN NOT NULL,
-  FOREIGN KEY (item_id) REFERENCES item (id),
-  FOREIGN KEY (user_id) REFERENCES user (id)
 );
 
 CREATE TABLE itemcomment (

@@ -1,5 +1,6 @@
 const { QueryBuilder, Cond, executeQuery, parseData, perms } = require('../utils');
 const { getOne: getUniverse, validateShortname } = require('./universe');
+const { getOne: getUser } = require('./user');
 const logger = require('../../logger');
 
 async function getOne(user, conditions, permissionsRequired=perms.READ, basicOnly=false, options={}) {
@@ -300,6 +301,16 @@ async function getCountsByUniverse(user, universe, validate=true) {
   } catch (err) {
     logger.error(err);
     return [500];
+  }
+}
+
+async function forEachUserToNotify(item, callback) {
+  const targetIDs = (await executeQuery(`SELECT user_id FROM itemnotification WHERE item_id = ? AND is_enabled`, [ item.id ])).map(row => row.user_id);
+  for (const userID of targetIDs) {
+    const [_, user] = await getUser({ id: userID });
+    if (user) {
+      callback(user);
+    }
   }
 }
 
@@ -798,6 +809,7 @@ module.exports = {
   getByUniverseShortname,
   getByUniverseAndItemShortnames,
   getCountsByUniverse,
+  forEachUserToNotify,
   post,
   save,
   put,

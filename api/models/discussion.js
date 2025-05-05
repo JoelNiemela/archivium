@@ -176,15 +176,14 @@ async function postCommentToItem(user, universeShortname, itemShortname, { body,
     const queryString2 = `INSERT INTO itemcomment (item_id, comment_id) VALUES (?, ?)`;
     await executeQuery(queryString2, [ item.id, data.insertId ]);
 
-    const [, target] = await userapi.getOne({ 'user.username': item.author });
-    if (target) {
+    itemapi.forEachUserToNotify(item, async (target) => {
       await notification.notify(target, notification.types.COMMENTS, {
         title: `${user.username} commented on ${item.title}:`,
         body: body,
         icon: getPfpUrl(user),
         clickUrl: `/universes/${universeShortname}/items/${itemShortname}`,
       });
-    }
+    })
 
     return [201, data];
   } catch (err) {

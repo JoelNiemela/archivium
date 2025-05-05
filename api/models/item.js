@@ -327,7 +327,7 @@ async function post(user, body, universeShortName) {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
     if (!title || !shortname || !item_type || !obj_data) return [400];
-    return [201, await executeQuery(queryString, [
+    const data = await executeQuery(queryString, [
       title,
       shortname,
       item_type,
@@ -337,7 +337,13 @@ async function post(user, body, universeShortName) {
       obj_data,
       new Date(),
       new Date(),
-    ])];
+    ]);
+
+    await executeQuery(`
+      INSERT INTO itemnotification (item_id, user_id, is_enabled) VALUES (?, ?, ?)
+    `, [data.insertId, user.id, true]);
+
+    return [201, data];
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') return [400, 'item.shortname must be unique within each universe.'];
     logger.error(err);

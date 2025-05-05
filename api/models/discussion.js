@@ -166,6 +166,7 @@ async function postCommentToThread(user, threadId, { body, reply_to }) {
     await executeQuery(queryString2, [ thread.id, data.insertId ])
 
     forEachUserToNotify(thread, async (target) => {
+      if (target.id === user.id) return;
       await notification.notify(target, notification.types.COMMENTS, {
         title: `${user.username} commented in ${thread.title}:`,
         body: body,
@@ -202,6 +203,7 @@ async function postCommentToItem(user, universeShortname, itemShortname, { body,
     await executeQuery(queryString2, [ item.id, data.insertId ]);
 
     itemapi.forEachUserToNotify(item, async (target) => {
+      if (target.id === user.id) return;
       await notification.notify(target, notification.types.COMMENTS, {
         title: `${user.username} commented on ${item.title}:`,
         body: body,

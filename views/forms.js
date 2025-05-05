@@ -42,23 +42,23 @@ module.exports = {
       discussion_enabled: req.body.discussion_enabled === 'enabled',
       discussion_open: req.body.discussion_open === 'enabled',
     }
-    const [code, data] = await api.universe.put(req.session.user, req.params.shortname, req.body);
+    const [code, data] = await api.universe.put(req.session.user, req.params.universeShortname, req.body);
     res.status(code);
-    if (code === 200) return res.redirect(`${universeLink(req, req.params.shortname)}/`);
+    if (code === 200) return res.redirect(`${universeLink(req, req.params.universeShortname)}/`);
     res.prepareRender('editUniverse', { error: data, ...req.body });
   },
 
   async createUniverseThread(req, res) {
-    const [code1, data] = await api.discussion.postUniverseThread(req.session.user, req.params.shortname, { title: req.body.title });
+    const [code1, data] = await api.discussion.postUniverseThread(req.session.user, req.params.universeShortname, { title: req.body.title });
     res.status(code1);
     if (code1 === 201) {
       if (req.body.comment) {
         const [code2, _] = await api.discussion.postCommentToThread(req.session.user, data.insertId, { body: req.body.comment });
         res.status(code2);
       }
-      return res.redirect(`${universeLink(req, req.params.shortname)}/discuss/${data.insertId}`);
+      return res.redirect(`${universeLink(req, req.params.universeShortname)}/discuss/${data.insertId}`);
     }
-    const [code3, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
+    const [code3, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.universeShortname });
     res.status(code3);
     if (code3 !== 200) return;
     res.prepareRender('createUniverseThread', { error: data, ...req.body, universe });
@@ -67,16 +67,16 @@ module.exports = {
   async commentOnThread(req, res) {
     const [code, _] = await api.discussion.postCommentToThread(req.session.user, req.params.threadId, req.body);
     res.status(code);
-    return res.redirect(`${universeLink(req, req.params.shortname)}/discuss/${req.params.threadId}`);
+    return res.redirect(`${universeLink(req, req.params.universeShortname)}/discuss/${req.params.threadId}`);
   },
  
   async createItem(req, res) {
     const [userCode, data] = await api.item.post(req.session.user, {
       ...req.body,
-    }, req.params.shortname);
+    }, req.params.universeShortname);
     res.status(userCode);
-    if (userCode === 201) return res.redirect(`${universeLink(req, req.params.shortname)}/items/${req.body.shortname}`);
-    const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.shortname });
+    if (userCode === 201) return res.redirect(`${universeLink(req, req.params.universeShortname)}/items/${req.body.shortname}`);
+    const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.universeShortname });
     res.status(code);
     if (code !== 200) return;
     res.prepareRender('createItem', { error: data, ...req.body, universe });
@@ -100,10 +100,10 @@ module.exports = {
   async editUniversePerms(req, res) {
     const { session, params, body } = req;
     const [_, user] = await api.user.getOne({ 'user.username': req.body.username });
-    const [code, data] = await api.universe.putPermissions(session.user, params.shortname, user, body.permission_level, perms.ADMIN);
+    const [code, data] = await api.universe.putPermissions(session.user, params.universeShortname, user, body.permission_level, perms.ADMIN);
     res.status(code);
     if (code !== 200) return;
-    res.redirect(`${universeLink(req, params.shortname)}/permissions`);
+    res.redirect(`${universeLink(req, params.universeShortname)}/permissions`);
   },
 
   async createNote(req, res) {

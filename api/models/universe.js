@@ -110,6 +110,20 @@ async function getEventsByUniverseShortname(user, shortname, permissionsRequired
   }
 }
 
+async function getPublicPageByShortname(shortname) {
+  try {
+    const queryString = `SELECT obj_data FROM universe WHERE shortname = ?`;
+    const data = (await executeQuery(queryString, [shortname]))[0];
+    if (!data) return 404;
+    const page = data.obj_data?.publicPage;
+    if (!page) return [401];
+    return [200, page];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
 function validateShortname(shortname, reservedShortnames = []) {
 
   if (shortname.length < 3 || shortname.length > 64) {
@@ -379,6 +393,7 @@ module.exports = {
   getManyByAuthorId,
   getManyByAuthorName,
   getEventsByUniverseShortname,
+  getPublicPageByShortname,
   validateShortname,
   post,
   put,

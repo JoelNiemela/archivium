@@ -29,7 +29,8 @@ async function getThreads(user, options, canPost=false, includeExtra=false) {
       SELECT
         ${includeExtra ? 'comments.*,' : ''}
         ${user ? 'tn.is_enabled AS notifs_enabled,' : ''}
-        discussion.*
+        discussion.*,
+        universe.shortname AS universe_short
       FROM discussion
       INNER JOIN universe ON universe.id = discussion.universe_id
       INNER JOIN authoruniverse as au_filter
@@ -142,6 +143,16 @@ async function postUniverseThread(user, universeShortname, { title }) {
   }
 }
 
+async function forEachUserToNotify(thread, callback) {
+  const targetIDs = (await executeQuery(`SELECT user_id FROM threadnotification WHERE thread_id = ? AND is_enabled`, [ thread.id ])).map(row => row.user_id);
+  for (const userID of targetIDs) {
+    const [_, user] = await userapi.getOne({ 'user.id': userID });
+    if (user) {
+      callback(user);
+    }
+  }
+}
+
 async function postCommentToThread(user, threadId, { body, reply_to }) {
   const [code, threads] = await getThreads(user, { 'discussion.id': threadId }, true);
   const thread = threads[0];
@@ -153,6 +164,16 @@ async function postCommentToThread(user, threadId, { body, reply_to }) {
     const data = await executeQuery(queryString1, [ body, user.id, reply_to ?? null, new Date() ]);
     const queryString2 = `INSERT INTO threadcomment (thread_id, comment_id) VALUES (?, ?)`;
     await executeQuery(queryString2, [ thread.id, data.insertId ])
+
+    forEachUserToNotify(thread, async (target) => {
+      await notification.notify(target, notification.types.COMMENTS, {
+        title: `${user.username} commented in ${thread.title}:`,
+        body: body,
+        icon: getPfpUrl(user),
+        clickUrl: `/universes/${thread.universe_short}/discuss/${thread.id}`,
+      });
+    })
+
     return [201, data];
   } catch (err) {
     logger.error(err);

@@ -1,13 +1,23 @@
-const fs = require('fs');
-const join = require('path').join;
+const contact = require('./models/contact');
+const discussion = require('./models/discussion');
+const email = require('./models/email');
+const item = require('./models/item');
+const note = require('./models/note');
+const notification = require('./models/notification');
+const session = require('./models/session');
+const universe = require('./models/universe');
+const user = require('./models/user');
 
-const api = {};
-const models = join(__dirname, 'models');
-
-fs.readdirSync(models)
-  .filter(file => ~file.indexOf('.js'))
-  .forEach(file => {
-    api[file.substring(0, file.length - 3)] = require(join(models, file))
-  });
+const api = {
+  contact,
+  discussion,
+  email,
+  item,
+  note,
+  notification,
+  session,
+  universe,
+  user,
+};
 
 module.exports = api;

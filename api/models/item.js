@@ -54,6 +54,23 @@ async function getOne(user, conditions, permissionsRequired=perms.READ, basicOnl
     `, [item.id]);
     item.parents = parents;
 
+    const links = await executeQuery(`
+      SELECT to_universe_short, to_item_short, href
+      FROM itemlink
+      WHERE from_item = ?
+    `, [item.id]);
+    const objData = JSON.parse(item.obj_data);
+    for (const { to_universe_short, to_item_short, href } of links) {
+      objData.body = objData.body.replace(/(\[[^\]]*?\])\(([^)]+)\)/g, (match, brackets, parens) => {
+        if (parens === href) {
+          const replacement = to_universe_short === item.universe_short ? `${to_item_short}` : `${to_universe_short}/${to_item_short}`;
+          return `${brackets}(@${replacement})`;
+        }
+        return match;
+      });
+    }
+    item.obj_data = JSON.stringify(objData);
+
     if (user) {
       const notifs = await executeQuery(`
         SELECT 1 FROM itemnotification WHERE item_id = ? AND user_id = ? AND is_enabled
@@ -517,7 +534,6 @@ async function handleLinks(item, objData) {
     const bodyText = objData.body;
     const links = await extractLinks(item.universe_short, bodyText, { item: { ...item, obj_data: objData } });
     const oldLinks = await _getLinks(item);
-    console.log(oldLinks)
     const existingLinks = {};
     const newLinks = {};
     for (const { to_universe_short, to_item_short, href } of oldLinks) {
@@ -534,7 +550,6 @@ async function handleLinks(item, objData) {
         await executeQuery('DELETE FROM itemlink WHERE from_item = ? AND href = ?', [ item.id, href ]);
       }
     }
-    console.log(await _getLinks(item))
   }
 }
 

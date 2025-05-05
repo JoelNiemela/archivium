@@ -22,8 +22,11 @@ block breadcrumbs
 block scripts
   script
     include /static/scripts/tabs.js
+    include /static/scripts/domUtils.js
     include /static/scripts/cardUtils.js
     include /static/scripts/fetchUtils.js
+    include /static/scripts/markdown/parse.js
+    include /static/scripts/markdown/render.js
 
 block content
   h1.center #{universe.title}
@@ -71,6 +74,9 @@ block content
 
   //- Tab buttons
   ul.navbarBtns#tabBtns.gap-1
+    if universe.obj_data.homeBody
+      li.navbarBtn#bodyBtn( data-tab='home' )
+        h3.navbarBtnLink.navbarText( onclick=`showTab('home')` ) Home
     li.navbarBtn#bodyBtn( data-tab='items' )
       h3.navbarBtnLink.navbarText( onclick=`showTab('items')` ) Items
     li.navbarBtn#bodyBtn( data-tab='authors' )
@@ -83,6 +89,14 @@ block content
         h3.navbarBtnLink.navbarText( onclick=`showTab('discuss')` ) Discuss
 
   .tabs
+    .hidden( data-tab='home' )
+      if universe.obj_data.homeBody
+        .sheet
+          #home-body
+            script!= `window.content = ${JSON.stringify(universe.obj_data.homeBody)};`
+            script.
+              loadMarkdown(document.getElementById('home-body'), '#{universe.shortname}', window.content);
+
     .container.hidden( data-tab='items' )
       if universe.obj_data.cats && Object.keys(universe.obj_data.cats).length
         .type-card-container

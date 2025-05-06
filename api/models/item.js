@@ -60,15 +60,17 @@ async function getOne(user, conditions, permissionsRequired=perms.READ, basicOnl
       WHERE from_item = ?
     `, [item.id]);
     const objData = JSON.parse(item.obj_data);
+    const replacements = {};
     for (const { to_universe_short, to_item_short, href } of links) {
-      objData.body = objData.body.replace(/(?<!\\)(\[[^\]]*?\])\(([^)]+)\)/g, (match, brackets, parens) => {
-        if (parens === href) {
-          const replacement = to_universe_short === item.universe_short ? `${to_item_short}` : `${to_universe_short}/${to_item_short}`;
-          return `${brackets}(@${replacement})`;
-        }
-        return match;
-      });
+      const replacement = to_universe_short === item.universe_short ? `${to_item_short}` : `${to_universe_short}/${to_item_short}`;
+      replacements[href] = replacement;
     }
+    objData.body = objData.body.replace(/(?<!\\)(\[[^\]]*?\])\(([^)]+)\)/g, (match, brackets, parens) => {
+      if (parens in replacements) {
+        return `${brackets}(@${replacements[parens]})`;
+      }
+      return match;
+    });
     item.obj_data = JSON.stringify(objData);
 
     if (user) {
@@ -536,7 +538,7 @@ async function handleLinks(item, objData) {
     const oldLinks = await _getLinks(item);
     const existingLinks = {};
     const newLinks = {};
-    for (const { to_universe_short, to_item_short, href } of oldLinks) {
+    for (const { href } of oldLinks) {
       existingLinks[href] = true;
     }
     for (const [universeShort, itemShort, href] of links) {

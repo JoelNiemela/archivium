@@ -134,7 +134,7 @@ if (!window.postJSON) throw 'fetchUtils.js not loaded!';
             }
           }
         } else {
-          if (!this.attrs.href.startsWith('/') && !this.attrs.href.startsWith('#') && !this.attrs.href.startsWith(window.location.origin)) {
+          if (!this.attrs.href.startsWith('/') && !this.attrs.href.startsWith('#') && !this.attrs.href.startsWith(window.location?.origin)) {
             this.attrs.target = '_blank';
           }
         }

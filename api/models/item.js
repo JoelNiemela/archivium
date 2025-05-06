@@ -875,6 +875,8 @@ module.exports = {
   forEachUserToNotify,
   post,
   save,
+  getLinks,
+  handleLinks,
   put,
   putData,
   exists,
@@ -882,7 +884,6 @@ module.exports = {
   delLineage,
   putTags,
   delTags,
-  getLinks,
   snoozeUntil,
   subscribeNotifs,
 };

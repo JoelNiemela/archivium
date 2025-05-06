@@ -61,7 +61,7 @@ async function getOne(user, conditions, permissionsRequired=perms.READ, basicOnl
     `, [item.id]);
     const objData = JSON.parse(item.obj_data);
     for (const { to_universe_short, to_item_short, href } of links) {
-      objData.body = objData.body.replace(/(\[[^\]]*?\])\(([^)]+)\)/g, (match, brackets, parens) => {
+      objData.body = objData.body.replace(/(?<!\\)(\[[^\]]*?\])\(([^)]+)\)/g, (match, brackets, parens) => {
         if (parens === href) {
           const replacement = to_universe_short === item.universe_short ? `${to_item_short}` : `${to_universe_short}/${to_item_short}`;
           return `${brackets}(@${replacement})`;

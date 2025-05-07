@@ -54,24 +54,26 @@ async function getOne(user, conditions, permissionsRequired=perms.READ, basicOnl
     `, [item.id]);
     item.parents = parents;
 
-    const links = await executeQuery(`
-      SELECT to_universe_short, to_item_short, href
-      FROM itemlink
-      WHERE from_item = ?
-    `, [item.id]);
     const objData = JSON.parse(item.obj_data);
-    const replacements = {};
-    for (const { to_universe_short, to_item_short, href } of links) {
-      const replacement = to_universe_short === item.universe_short ? `${to_item_short}` : `${to_universe_short}/${to_item_short}`;
-      replacements[href] = replacement;
-    }
-    objData.body = objData.body.replace(/(?<!\\)(\[[^\]]*?\])\(([^)]+)\)/g, (match, brackets, parens) => {
-      if (parens in replacements) {
-        return `${brackets}(@${replacements[parens]})`;
+    if (objData.body) {
+      const links = await executeQuery(`
+        SELECT to_universe_short, to_item_short, href
+        FROM itemlink
+        WHERE from_item = ?
+      `, [item.id]);
+      const replacements = {};
+      for (const { to_universe_short, to_item_short, href } of links) {
+        const replacement = to_universe_short === item.universe_short ? `${to_item_short}` : `${to_universe_short}/${to_item_short}`;
+        replacements[href] = replacement;
       }
-      return match;
-    });
-    item.obj_data = JSON.stringify(objData);
+      objData.body = objData.body.replace(/(?<!\\)(\[[^\]]*?\])\(([^)]+)\)/g, (match, brackets, parens) => {
+        if (parens in replacements) {
+          return `${brackets}(@${replacements[parens]})`;
+        }
+        return match;
+      });
+      item.obj_data = JSON.stringify(objData);
+    }
 
     if (user) {
       const notifs = await executeQuery(`

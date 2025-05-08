@@ -1,6 +1,7 @@
 extends ../layout.pug
 
 block append styles
+  link( rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" )
   style.
     #cats td {
       padding: 0.125rem 0;
@@ -18,9 +19,11 @@ block append save
     a.navbarBtnLink.navbarText( onclick='document.forms.edit.requestSubmit()' ) Save Changes
 
 block content
+  script( src="https://unpkg.com/easymde/dist/easymde.min.js" )
   script
     include /static/scripts/domUtils.js
     include /static/scripts/universes.js
+    include /static/scripts/easyMDE.js
 
   h2 Edit #{universe.title}
   form#edit( method='POST' )
@@ -46,6 +49,20 @@ block content
       select( id='discussion_open' name='discussion_open' )
         option( value='enabled' selected=(universe.discussion_open) ) Anyone
         option( value='disabled' selected=(!universe.discussion_open) ) Only with COMMENT permission level
+
+    #home-body
+      h3 Home Page
+      .mb-2
+        small This markdown will be shown in the "Home" tab of your universe page.
+      textarea
+        | #{universe.obj_data.homeBody || ''}
+
+    #public-body
+      h3 Public Page
+      .mb-2
+        small This markdown will be shown to users that don't have access to your universe instead of the "Access Denied" page.
+      textarea
+        | #{universe.obj_data.publicBody || ''}
 
     h3 Item Types
     small
@@ -86,7 +103,26 @@ block content
       div
         span( style={color: 'red', 'font-size': 'small'} )= error
 
-  script!= `updateObjData(${JSON.stringify(universe.obj_data)});`
+  script.
+    updateObjData(!{JSON.stringify(universe.obj_data)});
+    universe = '!{universe.shortname}';
+
+  script.
+    window.homeMDE = setupEasyMDE('#home-body textarea', { universe });
+    homeMDE.codemirror.on('change', () => {
+      updateObjData({ homeBody: homeMDE.value() });
+    });
+    window.publicMDE = setupEasyMDE('#public-body textarea', { universe });
+    publicMDE.codemirror.on('change', () => {
+      updateObjData({ publicBody: publicMDE.value() });
+    });
+    const publicBodyContainer = document.querySelector('#public-body');
+    publicBodyContainer.classList.toggle('hidden', #{universe.public});
+    const visibilitySelect = document.querySelector('#visibility');
+    visibilitySelect.addEventListener('change', () => {
+      publicBodyContainer.classList.toggle('hidden', visibilitySelect.value !== 'private');
+    });
+
   script.
     function toShortname(title) {
       let shortname = title.toLowerCase()

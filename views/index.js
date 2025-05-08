@@ -29,11 +29,20 @@ module.exports = function(app) {
   const doRender = async (req, res) => {
     if (res.statusCode === 302) return; // We did a redirect, no need to render.
     if (res.statusCode === 401) { // We don't have permission to be here, redirect to login page.
-      const searchQueries = new URLSearchParams(req.query);
       const pageQuery = new URLSearchParams();
-      pageQuery.append('page', req.path);
-      if (searchQueries.toString()) pageQuery.append('search', searchQueries.toString());
-      return res.redirect(`${ADDR_PREFIX}/login?${pageQuery.toString()}`);;
+      if (req.useExQuery) {
+        pageQuery.append('page', req.query.page);
+        pageQuery.append('search', req.query.search);
+      } else {
+        const searchQueries = new URLSearchParams(req.query);
+        pageQuery.append('page', req.targetPage ?? req.path);
+        if (searchQueries.toString()) pageQuery.append('search', searchQueries.toString());
+      }
+      if (req.params.universeShortname && !req.forceLogin) {
+        return res.redirect(`${universeLink(req, req.params.universeShortname)}/?${pageQuery.toString()}`);
+      } else {
+        return res.redirect(`${ADDR_PREFIX}/login?${pageQuery.toString()}`);
+      }
     }
     try {
       if (!res.templateData) throw `Code ${res.statusCode} returned by page handler.`;
@@ -108,47 +117,47 @@ module.exports = function(app) {
   get('/universes', sites.NORMAL, pages.universe.list);
   get('/universes/create', sites.NORMAL, Auth.verifySessionOrRedirect, pages.universe.create);
   post('/universes/create', sites.NORMAL, Auth.verifySessionOrRedirect, forms.createUniverse);
-  get('/universes/:shortname', sites.NORMAL, pages.universe.view);
-  get('/universes/:shortname/delete', sites.NORMAL, Auth.verifySessionOrRedirect, pages.universe.delete);
-  get('/universes/:shortname/edit', sites.NORMAL, Auth.verifySessionOrRedirect, pages.universe.edit);
-  post('/universes/:shortname/edit', sites.NORMAL, Auth.verifySessionOrRedirect, forms.editUniverse);
-  get('/universes/:shortname/discuss/create', sites.NORMAL, Auth.verifySessionOrRedirect, pages.universe.createDiscussionThread);
-  post('/universes/:shortname/discuss/create', sites.NORMAL, Auth.verifySessionOrRedirect, forms.createUniverseThread);
-  get('/universes/:shortname/discuss/:threadId', sites.NORMAL, pages.universe.discussionThread);
-  post('/universes/:shortname/discuss/:threadId/comment', sites.NORMAL, Auth.verifySessionOrRedirect, forms.commentOnThread);
-  get('/universes/:shortname/items', sites.NORMAL, pages.universe.itemList);
-  get('/universes/:shortname/permissions', sites.NORMAL, Auth.verifySessionOrRedirect, pages.universe.editPerms);
-  post('/universes/:shortname/permissions', sites.NORMAL, Auth.verifySessionOrRedirect, forms.editUniversePerms);
+  get('/universes/:universeShortname', sites.NORMAL, pages.universe.view);
+  get('/universes/:universeShortname/delete', sites.NORMAL, Auth.verifySessionOrRedirect, pages.universe.delete);
+  get('/universes/:universeShortname/edit', sites.NORMAL, Auth.verifySessionOrRedirect, pages.universe.edit);
+  post('/universes/:universeShortname/edit', sites.NORMAL, Auth.verifySessionOrRedirect, forms.editUniverse);
+  get('/universes/:universeShortname/discuss/create', sites.NORMAL, Auth.verifySessionOrRedirect, pages.universe.createDiscussionThread);
+  post('/universes/:universeShortname/discuss/create', sites.NORMAL, Auth.verifySessionOrRedirect, forms.createUniverseThread);
+  get('/universes/:universeShortname/discuss/:threadId', sites.NORMAL, pages.universe.verifySessionUniverse);
+  post('/universes/:universeShortname/discuss/:threadId/comment', sites.NORMAL, Auth.verifySessionOrRedirect, forms.commentOnThread);
+  get('/universes/:universeShortname/items', sites.NORMAL, pages.universe.itemList);
+  get('/universes/:universeShortname/permissions', sites.NORMAL, Auth.verifySessionOrRedirect, pages.universe.editPerms);
+  post('/universes/:universeShortname/permissions', sites.NORMAL, Auth.verifySessionOrRedirect, forms.editUniversePerms);
 
   /* Item Pages */
   get('/items', sites.NORMAL, pages.item.list);
-  get('/universes/:shortname/items/create', sites.NORMAL, Auth.verifySessionOrRedirect, pages.item.create);
-  post('/universes/:shortname/items/create', sites.NORMAL, Auth.verifySessionOrRedirect, forms.createItem);
+  get('/universes/:universeShortname/items/create', sites.NORMAL, Auth.verifySessionOrRedirect, pages.item.create);
+  post('/universes/:universeShortname/items/create', sites.NORMAL, Auth.verifySessionOrRedirect, forms.createItem);
   get('/universes/:universeShortname/items/:itemShortname', sites.NORMAL, pages.item.view);
   get('/universes/:universeShortname/items/:itemShortname/edit', sites.NORMAL, Auth.verifySessionOrRedirect, pages.item.edit);
   post('/universes/:universeShortname/items/:itemShortname/edit', sites.NORMAL, Auth.verifySessionOrRedirect, forms.editItem);
   post('/universes/:universeShortname/items/:itemShortname/comment', sites.NORMAL, Auth.verifySessionOrRedirect, forms.commentOnItem);
 
   /* Display Mode Pages */
-  get('/', sites.DISPLAY, subdomain(pages.universe.view, (sub) => ({ shortname: sub })));
-  get('/delete', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(pages.universe.delete, (sub) => ({ shortname: sub })));
-  get('/edit', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(pages.universe.edit, (sub) => ({ shortname: sub })));
-  post('/edit', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(forms.editUniverse, (sub) => ({ shortname: sub })));
-  get('/discuss/create', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(pages.universe.createDiscussionThread, (sub) => ({ shortname: sub })));
-  post('/discuss/create', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(forms.createUniverseThread, (sub) => ({ shortname: sub })));
-  get('/discuss/:threadId', sites.DISPLAY, subdomain(pages.universe.discussionThread, (sub) => ({ shortname: sub })));
-  post('/discuss/:threadId/comment', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(forms.commentOnThread, (sub) => ({ shortname: sub })));
-  get('/permissions', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(pages.universe.editPerms, (sub) => ({ shortname: sub })));
-  post('/permissions', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(forms.editUniversePerms, (sub) => ({ shortname: sub })));
+  get('/', sites.DISPLAY, subdomain(pages.universe.view, (sub) => ({ universeShortname: sub })));
+  get('/delete', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(pages.universe.delete, (sub) => ({ universeShortname: sub })));
+  get('/edit', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(pages.universe.edit, (sub) => ({ universeShortname: sub })));
+  post('/edit', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(forms.editUniverse, (sub) => ({ universeShortname: sub })));
+  get('/discuss/create', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(pages.universe.createDiscussionThread, (sub) => ({ universeShortname: sub })));
+  post('/discuss/create', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(forms.createUniverseThread, (sub) => ({ universeShortname: sub })));
+  get('/discuss/:threadId', sites.DISPLAY, subdomain(pages.universe.discussionThread, (sub) => ({ universeShortname: sub })));
+  post('/discuss/:threadId/comment', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(forms.commentOnThread, (sub) => ({ universeShortname: sub })));
+  get('/permissions', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(pages.universe.editPerms, (sub) => ({ universeShortname: sub })));
+  post('/permissions', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(forms.editUniversePerms, (sub) => ({ universeShortname: sub })));
 
   // Redirect (for notification links)
-  get('/universes/:shortname*', sites.DISPLAY, (req, res) => {
-    res.redirect(`${universeLink(req, req.params.shortname)}${req.params[0] || '/'}`);
+  get('/universes/:universeShortname*', sites.DISPLAY, (req, res) => {
+    res.redirect(`${universeLink(req, req.params.universeShortname)}${req.params[0] || '/'}`);
   });
   
-  get('/items', sites.DISPLAY, subdomain(pages.universe.itemList, (sub) => ({ shortname: sub })));
-  get('/items/create', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(pages.item.create, (sub) => ({ shortname: sub })));
-  post('/items/create', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(forms.createItem, (sub) => ({ shortname: sub })));
+  get('/items', sites.DISPLAY, subdomain(pages.universe.itemList, (sub) => ({ universeShortname: sub })));
+  get('/items/create', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(pages.item.create, (sub) => ({ universeShortname: sub })));
+  post('/items/create', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(forms.createItem, (sub) => ({ universeShortname: sub })));
   get('/items/:itemShortname', sites.DISPLAY, subdomain(pages.item.view, (sub) => ({ universeShortname: sub })));
   get('/items/:itemShortname/edit', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(pages.item.edit, (sub) => ({ universeShortname: sub })));
   post('/items/:itemShortname/edit', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(forms.editItem, (sub) => ({ universeShortname: sub })));

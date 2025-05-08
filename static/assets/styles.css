@@ -679,7 +679,6 @@ h4, h5 {
 }
 .link.link-animated {
   color: #069;
-  white-space: nowrap;
 }
 .link:not(.link-animated) {
   color: black;
@@ -696,30 +695,21 @@ h4, h5 {
 .link:focus:not(.link-broken):not(.link-animated), .link:hover:not(.link-broken):not(.link-animated) {
   color: #666;
 }
-.link:after.link-broken {
-  color: red;
+.link-animated {
+  text-decoration: none;
+  background-image: linear-gradient(#069, #069);
+  background-size: 100% 0;
+  background-repeat: no-repeat;
+  background-position: 0 calc(100% - 0.125rem);
+  transition: background-size 0.1s ease, background-position-y 0.1s ease;
 }
-.link:after:not(.link-broken) {
-  color: #069;
+.link-animated:hover,
+.link-animated:focus {
+  background-size: 100% 0.125rem;
+  background-position-y: bottom;
 }
-.link-animated:after {
-  content: '';
-  height: 0.125rem;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 0%;
-  background: #069;
-  transition: 0.2s;
-}
-.link-animated.link-broken:after {
-  background: red;
-}
-.link-animated:hover:after {
-  width: 100%;
-}
-.link-animated:focus:after {
-  width: 100%;
+.link-animated.link-broken {
+  background-image: linear-gradient(red, red);
 }
 .link-background {
   padding: 0.1875rem 0.625rem 0.1875rem 0.625rem;

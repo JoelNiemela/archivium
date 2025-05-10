@@ -3,65 +3,39 @@ const api = require('../api');
 const { ADDR_PREFIX } = require('../config');
 const logger = require('../logger');
 
-module.exports.createSession = (req, res, next) => {
+module.exports.createSession = async (req, res, next) => {
   if (req.cookies['archiviumuid']) {
-    api.session.getOne({hash: req.cookies['archiviumuid']})
-      .then((session) => {
-        if (session) {
-          if (session.user) {
-            req.session = {
-              userId: session.userId,
-              user: session.user,
-              id: session.id
-            }
-          } else {
-            req.session = {
-              id: session.id,
-              hash: session.hash
-            };
-          }
-          next();
-        } else {
-          api.session.post()
-            .then((data) => {
-              return api.session.getOne({ id: data.insertId });
-            })
-            .then((session) => {
-              res.cookie('archiviumuid', session.hash);
-              req.session = {
-                id: session.id,
-                hash: session.hash
-              };
-              next();
-            })
-            .catch((err) => {
-              logger.error(err)
-              next();
-            });
-        }
-      })
-      .catch((err) => {
-        logger.error(err)
-        next();
-      });
-  } else {
-    api.session.post()
-    .then((data) => {
-      return api.session.getOne({ id: data.insertId });
-    })
-    .then((session) => {
-      res.cookie('archiviumuid', session.hash);
+    const session = await api.session.getOne({ hash: req.cookies['archiviumuid'] });
+    if (session) {
       req.session = {
         id: session.id,
         hash: session.hash
       };
+      if (session.user) {
+        req.session = {
+          ...req.session,
+          userId: session.userId,
+          user: session.user,
+        }
+      }
       next();
-    })
-    .catch((err) => {
-      logger.error(err)
-      next();
-    });
+      return;
+    }
   }
+
+  const { insertId } = await api.session.post();
+  const session = api.session.getOne({ id: insertId });
+  res.cookie('archiviumuid', session.hash, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'Lax',
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+  });
+  req.session = {
+    id: session.id,
+    hash: session.hash
+  };
+  next();
 };
 
 /************************************************************/

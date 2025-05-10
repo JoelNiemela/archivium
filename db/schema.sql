@@ -204,7 +204,7 @@ CREATE TABLE itemlink (
   from_item INT NOT NULL,
   to_universe_short VARCHAR(64) NOT NULL,
   to_item_short VARCHAR(64) NOT NULL,
-  href VARCHAR(130) NOT NULL,
+  href VARCHAR(130) NOT NULL, -- This refers to the literal text in the text-body, i.e., for the link `[My Link](`universe/item`)`, `universe/item`. This is *not* guaranteed to be up-to-date with the shortnames of the universe and item.
   FOREIGN KEY (from_item) REFERENCES item (id)
 );
 

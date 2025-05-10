@@ -1,6 +1,7 @@
 const { QueryBuilder, Cond, executeQuery, parseData, perms } = require('../utils');
 const { getOne: getUniverse, validateShortname } = require('./universe');
 const { getOne: getUser } = require('./user');
+const { extractLinks } = require('../../static/scripts/markdown/parse');
 const logger = require('../../logger');
 
 async function getOne(user, conditions, permissionsRequired=perms.READ, basicOnly=false, options={}) {
@@ -52,6 +53,29 @@ async function getOne(user, conditions, permissionsRequired=perms.READ, basicOnl
       WHERE lineage.child_id = ?
     `, [item.id]);
     item.parents = parents;
+
+    if (item.obj_data) {
+      const objData = JSON.parse(item.obj_data);
+      if (objData.body) {
+        const links = await executeQuery(`
+          SELECT to_universe_short, to_item_short, href
+          FROM itemlink
+          WHERE from_item = ?
+        `, [item.id]);
+        const replacements = {};
+        for (const { to_universe_short, to_item_short, href } of links) {
+          const replacement = to_universe_short === item.universe_short ? `${to_item_short}` : `${to_universe_short}/${to_item_short}`;
+          replacements[href] = replacement;
+        }
+        objData.body = objData.body.replace(/(?<!\\)(\[[^\]]*?\])\(([^)]+)\)/g, (match, brackets, parens) => {
+          if (parens in replacements) {
+            return `${brackets}(@${replacements[parens]})`;
+          }
+          return match;
+        });
+        item.obj_data = JSON.stringify(objData);
+      }
+    }
 
     if (user) {
       const notifs = await executeQuery(`
@@ -386,6 +410,7 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
     gallery = body.obj_data.gallery;
     body.obj_data.gallery = { title: gallery.title };
   }
+  
   let code; let data;
   body.obj_data = JSON.stringify(body.obj_data);
 
@@ -495,6 +520,45 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
   return [200];
 }
 
+async function _getLinks(item) {
+  return await executeQuery('SELECT to_universe_short, to_item_short, href FROM itemlink WHERE from_item = ?', [ item.id ]);
+}
+
+async function getLinks(user, universeShortname, itemShortname) {
+  const [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE, true);
+  if (!item) return [code];
+  try {
+    return [200, await _getLinks(item)];
+  } catch (e) {
+    logger.error(e);
+    return [500];
+  }
+}
+
+async function handleLinks(item, objData) {
+  if (objData.body) {
+    const bodyText = objData.body;
+    const links = await extractLinks(item.universe_short, bodyText, { item: { ...item, obj_data: objData } });
+    const oldLinks = await _getLinks(item);
+    const existingLinks = {};
+    const newLinks = {};
+    for (const { href } of oldLinks) {
+      existingLinks[href] = true;
+    }
+    for (const [universeShort, itemShort, href] of links) {
+      newLinks[href] = true;
+      if (!existingLinks[href]) {
+        await executeQuery('INSERT INTO itemlink (from_item, to_universe_short, to_item_short, href) VALUES (?, ?, ?, ?)', [ item.id, universeShort, itemShort, href ]);
+      }
+    }
+    for (const { href } of oldLinks) {
+      if (!newLinks[href]) {
+        await executeQuery('DELETE FROM itemlink WHERE from_item = ? AND href = ?', [ item.id, href ]);
+      }
+    }
+  }
+}
+
 async function fetchEvents(itemId, options={}) {
   let queryString = `SELECT * FROM itemevent WHERE item_id = ?`;
   const values = [itemId];
@@ -550,6 +614,9 @@ async function put(user, universeShortname, itemShortname, changes) {
   const [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE);
   if (!item) return [code];
 
+  const objData = JSON.parse(obj_data);
+  await handleLinks(item, objData);
+
   if (tags) {
     const trimmedTags = tags.map(tag => tag[0] === '#' ? tag.substring(1) : tag);
 
@@ -576,7 +643,7 @@ async function put(user, universeShortname, itemShortname, changes) {
         last_updated_by = ?
       WHERE id = ?;
     `;
-    return [200, await executeQuery(queryString, [ title, item_type ?? item.item_type, obj_data, new Date(), user.id, item.id ])];
+    return [200, await executeQuery(queryString, [ title, item_type ?? item.item_type, JSON.stringify(objData), new Date(), user.id, item.id ])];
   } catch (err) {
     logger.error(err);
     return [500];
@@ -592,6 +659,8 @@ async function putData(user, universeShortname, itemShortname, changes) {
     ...JSON.parse(item.obj_data),
     ...changes,
   };
+
+  await handleLinks(item, item.obj_data);
 
   try {
     const queryString = `UPDATE item SET obj_data = ?, updated_at = ?, last_updated_by = ? WHERE id = ?;`;
@@ -812,6 +881,8 @@ module.exports = {
   forEachUserToNotify,
   post,
   save,
+  getLinks,
+  handleLinks,
   put,
   putData,
   exists,

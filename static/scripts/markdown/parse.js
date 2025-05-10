@@ -1,4 +1,14 @@
-if (!window.getJSON) throw 'fetchUtils.js not loaded!';
+// *Very* ugly hack to make this work in both backend and frontend, but it does work.
+let renderLinks = true;
+if (typeof window === 'undefined') {
+  var window = {
+    postJSON: () => {},
+  };
+  renderLinks = false;
+}
+if (typeof exports === 'undefined') var exports = {};
+
+if (!window.postJSON) throw 'fetchUtils.js not loaded!';
 
 (function () {
   class BulkFetcher {
@@ -112,15 +122,19 @@ if (!window.getJSON) throw 'fetchUtils.js not loaded!';
               universe = currentUniverse;
             }
             const [item, _] = itemHash.split('#');
-            this.attrs.href = `${universeLink(universe)}/items/${itemHash}`;
             this.attrs['data-universe'] = universe;
             this.attrs['data-item'] = item;
-            bulkCheckExists(universe, item, fetches, (exists) => {
-              if (!exists) this.addClass('link-broken');
-            });
+            this.attrs['data-type'] = 'item-link';
+            if (renderLinks) {
+              this.attrs.href = `${universeLink(universe)}/items/${itemHash}`;
+              bulkCheckExists(universe, item, fetches, (exists) => {
+                this.attrs['data-exists'] = exists;
+                if (!exists) this.addClass('link-broken');
+              });
+            }
           }
         } else {
-          if (!this.attrs.href.startsWith('/') && !this.attrs.href.startsWith('#') && !this.attrs.href.startsWith(window.location.origin)) {
+          if (!this.attrs.href.startsWith('/') && !this.attrs.href.startsWith('#') && !this.attrs.href.startsWith(window.location?.origin)) {
             this.attrs.target = '_blank';
           }
         }
@@ -184,7 +198,7 @@ if (!window.getJSON) throw 'fetchUtils.js not loaded!';
 
     getValue(ctx) {
       const id = this.idLookup.getValue(ctx);
-      return `/api/universes/${ctx.item.universe_short}/items/${ctx.item.shortname}/gallery/images/${id}`;
+      return `/api/universes/${ctx?.item?.universe_short}/items/${ctx?.item?.shortname}/gallery/images/${id}`;
     }
   }
 
@@ -459,5 +473,21 @@ if (!window.getJSON) throw 'fetchUtils.js not loaded!';
     return root;
   }
 
+  function _extractLinks(data) {
+    const [,, children, attrs] = data;
+    const links = [];
+    if ('data-type' in attrs && attrs['data-type']) {
+      links.push([attrs['data-universe'], attrs['data-item'], attrs.href]);
+    }
+    return [ ...links, ...children.reduce((acc, child) => ([ ...acc, ..._extractLinks(child) ]), []) ];
+  }
+
+  async function extractLinks(universeShortname, body, ctx) {
+    const tree = parseMarkdown(body);
+    const links = _extractLinks(await tree.evaluate(universeShortname, ctx));
+    return links;
+  }
+
   window.parseMarkdown = parseMarkdown;
+  exports.extractLinks = extractLinks;
 })();

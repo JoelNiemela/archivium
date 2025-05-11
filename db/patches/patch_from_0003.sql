@@ -1,4 +1,4 @@
-UPDATE schema_version SET version = 3, comment = 'Add link tracking', time = NOW();
+UPDATE schema_version SET version = 4, comment = 'Add link tracking', time = NOW();
 
 CREATE TABLE itemlink (
   from_item INT NOT NULL,

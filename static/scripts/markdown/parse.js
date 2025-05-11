@@ -483,9 +483,14 @@ if (!window.postJSON) throw 'fetchUtils.js not loaded!';
   }
 
   async function extractLinks(universeShortname, body, ctx) {
-    const tree = parseMarkdown(body);
-    const links = _extractLinks(await tree.evaluate(universeShortname, ctx));
-    return links;
+    try {
+      const tree = parseMarkdown(body);
+      const links = _extractLinks(await tree.evaluate(universeShortname, ctx));
+      return links;
+    } catch (err) {
+      console.error(err);
+      return [];
+    }
   }
 
   window.parseMarkdown = parseMarkdown;

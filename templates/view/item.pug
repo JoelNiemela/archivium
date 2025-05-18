@@ -79,7 +79,7 @@ block content
       if item.tags
         each tag in item.tags
           if tag
-            | ##{tag} 
+            a.link.link-animated( href=`${universeLink(universe.shortname)}/items?tag=${tag}` ) ##{tag} 
           
   hr
 

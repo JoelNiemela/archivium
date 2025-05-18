@@ -24,7 +24,7 @@ module.exports.createSession = async (req, res, next) => {
   }
 
   const { insertId } = await api.session.post();
-  const session = api.session.getOne({ id: insertId });
+  const session = await api.session.getOne({ id: insertId });
   res.cookie('archiviumuid', session.hash, {
     httpOnly: true,
     secure: true,

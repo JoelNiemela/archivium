@@ -55,7 +55,7 @@ async function loadSchema(db) {
   // drop old database and reload the schema
   await dropDb(db);
   await db.queryAsync(`USE ${DB_CONFIG.database};`);
-  const schema = await fsPromises.readFile(path.join(__dirname, 'schema.sql'), { encoding: 'utf8' });
+  const schema = await fsPromises.readFile(path.join(__dirname, 'schema_ref.sql'), { encoding: 'utf8' });
   await db.queryAsync(schema);
   console.log('Loaded schema.')
 }

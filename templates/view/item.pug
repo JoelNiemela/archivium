@@ -2,14 +2,6 @@ extends ../layout.pug
 
 block append styles
   link( rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" )
-  style.
-    .tags-and-icons {
-      display: grid;
-      grid-template-columns: 2rem 1fr 2rem;
-    }
-    .tags-and-icons a {
-      position: absolute;
-    }
 
 block scripts
   script( src="https://unpkg.com/easymde/dist/easymde.min.js" )
@@ -43,50 +35,51 @@ block content
   h1.center #{item.title}
   p.center #{capitalize(T(item.itemTypeName))} of 
     a.link.link-animated( href=`${universeLink(universe.shortname)}/` ) #{item.universe}
-  p.center
+  p.center.mb-2
     small Created by 
       a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
       |  #{formatDate(new Date(item.created_at))}
       |  - Last updated #{formatDate(new Date(item.updated_at))}
-  .tags-and-icons.my-4
-    .d-flex.justify-start.align-center
-      if contextUser
-        a.link.d-flex.align-center
-          span#notification-bell.material-symbols-outlined.mr-1(
-            style={ 'font-size': 'xx-large' }
-            title='Item Notifications'
-            class={ solid: item.notifs_enabled }
-          ) #{item.notifs_enabled ? 'notifications_active' : 'notifications'}
-        script.
-          (() => {
-            let isSubscribed = #{item.notifs_enabled};
-            const bell = document.getElementById('notification-bell');
-            bell.addEventListener('click', async () => {
+  #action-bar.d-flex.justify-center.align-center.gap-2.mb-1
+    if contextUser
+      a.link.d-flex.align-center
+        span#notification-bell.material-symbols-outlined.mr-1(
+          style={ 'font-size': 'xx-large' }
+          title='Item Notifications'
+          class={ solid: item.notifs_enabled }
+        ) #{item.notifs_enabled ? 'notifications_active' : 'notifications'}
+        span#subscribe-text #{item.notifs_enabled ? 'Unsubscribe' : 'Subscribe'}
+      script.
+        (() => {
+          let isSubscribed = #{item.notifs_enabled};
+          const bell = document.getElementById('notification-bell');
+          const text = document.getElementById('subscribe-text');
+          bell.parentElement.addEventListener('click', async () => {
+            isSubscribed = !isSubscribed;
+            bell.classList.add('disabled');
+            try {
+              await putJSON(`/api/universes/${universe.shortname}/items/${item.shortname}/subscribe`, { isSubscribed: isSubscribed });
+            } catch (err) {
+              console.error(err);
               isSubscribed = !isSubscribed;
-              bell.classList.add('disabled');
-              try {
-                await putJSON(`/api/universes/${universe.shortname}/items/${item.shortname}/subscribe`, { isSubscribed: isSubscribed });
-              } catch (err) {
-                console.error(err);
-                isSubscribed = !isSubscribed;
-              } finally {
-                bell.textContent = isSubscribed ? 'notifications_active' : 'notifications';
-                bell.classList.toggle('solid', isSubscribed);
-                bell.classList.remove('disabled');
-              }
-            });
-          })();
-    .center#tags
-      small
-        if item.tags
-          each tag in item.tags
-            if tag
-              | ##{tag} 
-    #action-bar.d-flex.justify-end.align-center
-      if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE/* || item.author === contextUser.username*/)
-        a.link.link-animated.d-flex.align-end( href=`${universeLink(universe.shortname)}/items/${item.shortname}/edit` )
-          span.material-symbols-outlined edit
-          |  Edit
+            } finally {
+              bell.textContent = isSubscribed ? 'notifications_active' : 'notifications';
+              bell.classList.toggle('solid', isSubscribed);
+              bell.classList.remove('disabled');
+              text.textContent = isSubscribed ? 'Unsubscribe' : 'Subscribe';
+            }
+          });
+        })();
+    if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE/* || item.author === contextUser.username*/)
+      a.link.link-animated.d-flex.align-center( href=`${universeLink(universe.shortname)}/items/${item.shortname}/edit` )
+        span.material-symbols-outlined edit
+        |  Edit
+  .center#tags
+    small
+      if item.tags
+        each tag in item.tags
+          if tag
+            | ##{tag} 
           
   hr
 

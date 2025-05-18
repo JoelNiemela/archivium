@@ -1,4 +1,4 @@
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 const { DB_CONFIG } = require('../config');
 const Promise = require('bluebird');
 const fsPromises = require('fs').promises;
@@ -42,8 +42,8 @@ async function dropDb(db) {
     if (ans.toUpperCase() === 'N') {
       await dbExport(db);
     }
-    await db.queryAsync(`DROP DATABASE IF EXISTS ${DB_CONFIG.database};`);
-    await db.queryAsync(`CREATE DATABASE ${DB_CONFIG.database};`);
+    await db.query(`DROP DATABASE IF EXISTS ${DB_CONFIG.database};`);
+    await db.query(`CREATE DATABASE ${DB_CONFIG.database};`);
     console.log('Dropped database.')
   } else {
     console.log('Aborting.');
@@ -51,12 +51,12 @@ async function dropDb(db) {
   }
 }
 
-async function loadSchema(db) {
+async function loadSchema(db, useRef=true) {
   // drop old database and reload the schema
   await dropDb(db);
-  await db.queryAsync(`USE ${DB_CONFIG.database};`);
-  const schema = await fsPromises.readFile(path.join(__dirname, 'schema_ref.sql'), { encoding: 'utf8' });
-  await db.queryAsync(schema);
+  await db.query(`USE ${DB_CONFIG.database};`);
+  const schema = await fsPromises.readFile(path.join(__dirname, `schema${useRef ? '_ref' : ''}.sql`), { encoding: 'utf8' });
+  await db.query(schema);
   console.log('Loaded schema.')
 }
 
@@ -69,9 +69,9 @@ async function dbImport(db, reset=true) {
   if (reset) await loadSchema(db);
 
   // disable constraint checking
-  await db.queryAsync('SET FOREIGN_KEY_CHECKS = 0;');
+  await db.query('SET FOREIGN_KEY_CHECKS = 0;');
 
-  const tables = (await db.queryAsync('SHOW TABLES;'))[0].map(item => item[`Tables_in_${DB_CONFIG.database}`]);
+  const tables = (await db.query('SHOW TABLES;'))[0].map(item => item[`Tables_in_${DB_CONFIG.database}`]);
   
   for (const table of tables) {
     if (table === 'session') continue;
@@ -82,7 +82,7 @@ async function dbImport(db, reset=true) {
         for (const key of keys) {
           data.items[id][key] = formatTypes(data.types[key], data.items[id][key]);
         }
-        await db.executeAsync(
+        await db.execute(
           `INSERT INTO ${table} (${keys.join(',')}) VALUES (${'?'.repeat(keys.length).split('').join(',')});`,
           Object.values(data.items[id])
         );
@@ -94,12 +94,11 @@ async function dbImport(db, reset=true) {
     }
   }
   // reenable constraint checking
-  await db.queryAsync('SET FOREIGN_KEY_CHECKS = 1;');
+  await db.query('SET FOREIGN_KEY_CHECKS = 1;');
   console.log('Done.');
 };
 async function main() {
-  const connection = mysql.createConnection({ ...DB_CONFIG, multipleStatements: true });
-  const db = Promise.promisifyAll(connection, { multiArgs: true });
+  const db = await mysql.createConnection({ ...DB_CONFIG, multipleStatements: true });
   await dbImport(db);
   db.end();
 }

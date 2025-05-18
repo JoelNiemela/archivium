@@ -1,15 +1,12 @@
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 const { DB_CONFIG } = require('../config');
-const Promise = require('bluebird');
 const logger = require('../logger');
 
-const connection = mysql.createConnection({ ...DB_CONFIG });
+const pool = mysql.createPool({
+  ...DB_CONFIG,
+  waitForConnections: true,
+  connectionLimit: 10,
+});
 
-const db = Promise.promisifyAll(connection, { multiArgs: true });
-
-db.connectPromise = db.connectAsync()
-  .then(() => {
-    logger.info(`Connected to ${DB_CONFIG.database} database as ID ${db.threadId}`);
-  });
-
-module.exports = db;
+logger.info(`Created MySQL connection pool for ${DB_CONFIG.database}`);
+module.exports = pool;

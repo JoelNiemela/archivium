@@ -1,6 +1,5 @@
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 const { DB_CONFIG } = require('../../config');
-const Promise = require('bluebird');
 const { loadSchema, askQuestion } = require('../import');
 const api = require('../../api');
 const { perms } = require('../../api/utils');
@@ -62,11 +61,8 @@ async function createNote(owner, title, body, public, tags, items=[], boards=[])
   return note;
 }
 async function main() {
-  await db.connectPromise;
-
-  const connection = mysql.createConnection({ ...DB_CONFIG, multipleStatements: true });
-  const schemaConn = Promise.promisifyAll(connection, { multiArgs: true });
-  await loadSchema(schemaConn);
+  const schemaConn = await mysql.createConnection({ ...DB_CONFIG, multipleStatements: true });
+  await loadSchema(schemaConn, false);
 
   console.log('Generating testing database...');
 

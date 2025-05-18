@@ -780,6 +780,20 @@ async function subscribeNotifs(user, universeShortname, itemShortname, isSubscri
   }
 }
 
+async function del(user, universeShortname, itemShortname) {
+  const [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.ADMIN, true);
+  if (!item) return [code];
+
+  try {
+    await executeQuery(`DELETE FROM authoruniverse WHERE universe_id = ?;`, [universe.id]);
+    await executeQuery(`DELETE FROM universe WHERE id = ?;`, [universe.id]);
+    return [200];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
 const image = (function() {
   async function getOneByItemShort(user, universeShortname, itemShortname, options) {
     const [code1, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.READ, true);

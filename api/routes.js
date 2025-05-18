@@ -147,6 +147,7 @@ module.exports = function(app, upload) {
           new APIRoute('/:itemShortName', {
             GET: async (req) => api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortName, req.params.itemShortName),
             PUT: async (req) => api.item.save(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body, true),
+            DELETE: (req) => api.item.del(req.session.user, req.params.universeShortName, req.params.itemShortName),
           }, [
             new APIRoute('/notes', {
               GET: (req) => api.note.getByItemShortname(req.session.user, req.params.universeShortName, req.params.itemShortName),

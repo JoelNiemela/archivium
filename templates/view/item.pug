@@ -70,10 +70,14 @@ block content
             }
           });
         })();
-    if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE/* || item.author === contextUser.username*/)
-      a.link.link-animated.d-flex.align-center( href=`${universeLink(universe.shortname)}/items/${item.shortname}/edit` )
-        span.material-symbols-outlined edit
-        |  Edit
+      if universe.author_permissions[contextUser.id] >= perms.WRITE
+        a.link.link-animated.d-flex.align-center( href=`${universeLink(universe.shortname)}/items/${item.shortname}/edit` )
+          span.material-symbols-outlined edit
+          |  Edit
+      if universe.author_permissions[contextUser.id] >= perms.ADMIN
+        a.link.link-animated.d-flex.align-center( href=`${universeLink(universe.shortname)}/items/${item.shortname}/delete` )
+          span.material-symbols-outlined delete
+          |  Delete
   .center#tags
     small
       if item.tags

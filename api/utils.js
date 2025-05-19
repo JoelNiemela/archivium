@@ -28,7 +28,7 @@ async function withTransaction(callback) {
     await connection.commit();
   } catch (err) {
     await connection.rollback();
-    logger.warning('Transaction rolled back.');
+    logger.warn('Transaction rolled back.');
     if (!(err instanceof RollbackError)) {
       throw err;
     }

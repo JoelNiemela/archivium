@@ -90,7 +90,7 @@ CREATE TABLE discussion (
   id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(256) NOT NULL,
   universe_id INT NOT NULL,
-  FOREIGN KEY (universe_id) REFERENCES universe (id)
+  FOREIGN KEY (universe_id) REFERENCES universe (id) ON DELETE CASCADE
 );
 
 CREATE TABLE threadnotification (
@@ -137,7 +137,7 @@ CREATE TABLE noteboard (
   shortname VARCHAR(64) UNIQUE NOT NULL,
   public BOOLEAN,
   universe_id INT NOT NULL,
-  FOREIGN KEY (universe_id) REFERENCES universe (id)
+  FOREIGN KEY (universe_id) REFERENCES universe (id) -- when boards are implemented we will either have to add on delete cascade here, OR make universe_id nullable
 );
 
 CREATE TABLE boardnote (
@@ -161,7 +161,7 @@ CREATE TABLE item (
   last_updated_by INT,
   obj_data TEXT NOT NULL,
   FOREIGN KEY (author_id) REFERENCES user (id),
-  FOREIGN KEY (universe_id) REFERENCES universe (id),
+  FOREIGN KEY (universe_id) REFERENCES universe (id) ON DELETE CASCADE,
   FOREIGN KEY (parent_id) REFERENCES item (id),
   FOREIGN KEY (last_updated_by) REFERENCES user (id),
   PRIMARY KEY (id)
@@ -172,21 +172,21 @@ CREATE TABLE itemnotification (
   user_id INT NOT NULL,
   UNIQUE(item_id, user_id),
   is_enabled BOOLEAN NOT NULL,
-  FOREIGN KEY (item_id) REFERENCES item (id),
+  FOREIGN KEY (item_id) REFERENCES item (id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES user (id)
 );
 
 CREATE TABLE itemcomment (
   item_id INT NOT NULL,
   comment_id INT NOT NULL,
-  FOREIGN KEY (item_id) REFERENCES item (id),
+  FOREIGN KEY (item_id) REFERENCES item (id) ON DELETE CASCADE,
   FOREIGN KEY (comment_id) REFERENCES comment (id)
 );
 
 CREATE TABLE itemnote (
   item_id INT NOT NULL,
   note_id INT NOT NULL,
-  FOREIGN KEY (item_id) REFERENCES item (id),
+  FOREIGN KEY (item_id) REFERENCES item (id) ON DELETE CASCADE,
   FOREIGN KEY (note_id) REFERENCES note (id)
 );
 
@@ -197,7 +197,7 @@ CREATE TABLE itemimage (
   label VARCHAR(256) NOT NULL,
   mimetype VARCHAR(32) NOT NULL,
   data LONGBLOB NOT NULL,
-  FOREIGN KEY (item_id) REFERENCES item (id)
+  FOREIGN KEY (item_id) REFERENCES item (id) ON DELETE CASCADE
 );
 
 CREATE TABLE itemlink (
@@ -205,7 +205,7 @@ CREATE TABLE itemlink (
   to_universe_short VARCHAR(64) NOT NULL,
   to_item_short VARCHAR(64) NOT NULL,
   href VARCHAR(130) NOT NULL, -- This refers to the literal text in the text-body, i.e., for the link `[My Link](`universe/item`)`, `universe/item`. This is *not* guaranteed to be up-to-date with the shortnames of the universe and item.
-  FOREIGN KEY (from_item) REFERENCES item (id)
+  FOREIGN KEY (from_item) REFERENCES item (id) ON DELETE CASCADE
 );
 
 CREATE TABLE snooze (
@@ -213,7 +213,7 @@ CREATE TABLE snooze (
   snoozed_by INT NOT NULL,
   item_id INT NOT NULL,
   FOREIGN KEY (snoozed_by) REFERENCES user (id),
-  FOREIGN KEY (item_id) REFERENCES item (id)
+  FOREIGN KEY (item_id) REFERENCES item (id) ON DELETE CASCADE
 );
 
 CREATE TABLE lineage (
@@ -221,8 +221,8 @@ CREATE TABLE lineage (
   child_id INT NOT NULL,
   parent_title VARCHAR(64),
   child_title VARCHAR(64),
-  FOREIGN KEY (parent_id) REFERENCES item (id),
-  FOREIGN KEY (child_id) REFERENCES item (id)
+  FOREIGN KEY (parent_id) REFERENCES item (id) ON DELETE CASCADE,
+  FOREIGN KEY (child_id) REFERENCES item (id) ON DELETE CASCADE
 );
 
 CREATE TABLE itemevent (
@@ -232,7 +232,7 @@ CREATE TABLE itemevent (
   abstime BIGINT,
   UNIQUE(item_id, event_title),
   PRIMARY KEY (id),
-  FOREIGN KEY (item_id) REFERENCES item (id)
+  FOREIGN KEY (item_id) REFERENCES item (id) ON DELETE CASCADE
 );
 CREATE INDEX idx_abstime ON itemevent (abstime);
 
@@ -240,16 +240,16 @@ CREATE TABLE eventorder (
   former INT NOT NULL,
   latter INT NOT NULL,
   PRIMARY KEY (former, latter),
-  FOREIGN KEY (former) REFERENCES itemevent (id),
-  FOREIGN KEY (latter) REFERENCES itemevent (id)
+  FOREIGN KEY (former) REFERENCES itemevent (id) ON DELETE CASCADE,
+  FOREIGN KEY (latter) REFERENCES itemevent (id) ON DELETE CASCADE
 );
 
 CREATE TABLE timelineitem (
   timeline_id INT NOT NULL,
   event_id INT NOT NULL,
   PRIMARY KEY (timeline_id, event_id),
-  FOREIGN KEY (timeline_id) REFERENCES item (id),
-  FOREIGN KEY (event_id) REFERENCES itemevent (id)
+  FOREIGN KEY (timeline_id) REFERENCES item (id) ON DELETE CASCADE,
+  FOREIGN KEY (event_id) REFERENCES itemevent (id) ON DELETE CASCADE
 );
 
 CREATE TABLE authoruniverse (
@@ -257,7 +257,7 @@ CREATE TABLE authoruniverse (
   universe_id INT NOT NULL,
   user_id INT NOT NULL,
   permission_level TINYINT NOT NULL,
-  FOREIGN KEY (universe_id) REFERENCES universe (id),
+  FOREIGN KEY (universe_id) REFERENCES universe (id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES user (id),
   PRIMARY KEY (id)
 );
@@ -266,7 +266,7 @@ CREATE TABLE universeaccessrequest (
   universe_id INT NOT NULL,
   user_id INT NOT NULL,
   permission_level TINYINT NOT NULL,
-  FOREIGN KEY (universe_id) REFERENCES universe (id),
+  FOREIGN KEY (universe_id) REFERENCES universe (id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES user (id)
 );
 
@@ -274,7 +274,7 @@ CREATE TABLE followeruniverse (
   universe_id INT NOT NULL,
   user_id INT NOT NULL,
   is_following BOOLEAN NOT NULL,
-  FOREIGN KEY (universe_id) REFERENCES universe (id),
+  FOREIGN KEY (universe_id) REFERENCES universe (id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES user (id)
 );
 
@@ -282,7 +282,7 @@ CREATE TABLE tag (
   item_id INT NOT NULL,
   tag VARCHAR(32),
   UNIQUE(item_id, tag),
-  FOREIGN KEY (item_id) REFERENCES item (id)
+  FOREIGN KEY (item_id) REFERENCES item (id) ON DELETE CASCADE
 );
 
 CREATE TABLE notetag (
@@ -312,7 +312,7 @@ CREATE TABLE universenotification (
   universe_id INT NOT NULL,
   user_id INT NOT NULL,
   is_enabled BOOLEAN NOT NULL,
-  FOREIGN KEY (universe_id) REFERENCES universe (id),
+  FOREIGN KEY (universe_id) REFERENCES universe (id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES user (id)
 );
 

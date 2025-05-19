@@ -839,7 +839,7 @@ const image = (function() {
     if (!item) return [code];
 
     const queryString = `INSERT INTO itemimage (item_id, name, mimetype, data, label) VALUES (?, ?, ?, ?, ?);`;
-    return [201, await executeQuery(queryString, [ item.id, originalname, mimetype, buffer, '' ])];
+    return [201, await executeQuery(queryString, [ item.id, originalname.substring(0, 64), mimetype, buffer, '' ])];
   }
 
   async function putLabel(user, imageId, label) {

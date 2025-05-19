@@ -353,10 +353,13 @@ const image = (function() {
     if (!user) return [code];
 
     try {
-      // We should do a transaction here, but I can't figure out how to make it work...
-      await executeQuery('DELETE FROM userimage WHERE user_id = ?', [user.id]);
+      let data;
+      await withTransaction(async (conn) => {
+        await conn.execute('DELETE FROM userimage WHERE user_id = ?', [user.id]);
       const queryString = `INSERT INTO userimage (user_id, name, mimetype, data) VALUES (?, ?, ?, ?);`;
-      return [201, await executeQuery(queryString, [ user.id, originalname, mimetype, buffer ])];
+        [ data ] = await conn.execute(queryString, [ user.id, originalname.substring(0, 64), mimetype, buffer ]);
+      });
+      return [201, data];
     } catch (err) {
       logger.error(err);
       return [500];

@@ -98,7 +98,7 @@ CREATE TABLE threadnotification (
   user_id INT NOT NULL,
   UNIQUE(thread_id, user_id),
   is_enabled BOOLEAN NOT NULL,
-  FOREIGN KEY (thread_id) REFERENCES discussion (id),
+  FOREIGN KEY (thread_id) REFERENCES discussion (id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES user (id)
 );
 
@@ -116,7 +116,7 @@ CREATE TABLE threadcomment (
   thread_id INT NOT NULL,
   comment_id INT NOT NULL,
   FOREIGN KEY (thread_id) REFERENCES discussion (id),
-  FOREIGN KEY (comment_id) REFERENCES comment (id)
+  FOREIGN KEY (comment_id) REFERENCES comment (id) ON DELETE CASCADE
 );
 
 CREATE TABLE note (

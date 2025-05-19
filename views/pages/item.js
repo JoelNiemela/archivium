@@ -138,7 +138,7 @@ module.exports = {
   async delete(req, res) {
     const [code, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.ADMIN);
     res.status(code);
-    if (!item) return;
+    if (!item) return res.redirect(`${universeLink(req, req.params.universeShortname)}/items`);
     res.prepareRender('deleteItem', { item });
   },
 };

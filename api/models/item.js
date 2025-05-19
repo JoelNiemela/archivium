@@ -791,6 +791,12 @@ async function del(user, universeShortname, itemShortname) {
 
   try {
     await withTransaction(async (conn) => {
+      await conn.execute(`
+        DELETE comment
+        FROM comment
+        INNER JOIN itemcomment AS ic ON ic.comment_id = comment.id
+        WHERE ic.item_id = ?;
+      `, [item.id]);
       await conn.execute(`DELETE FROM item WHERE id = ?;`, [item.id]);
     });
     return [200];
@@ -912,4 +918,5 @@ module.exports = {
   delTags,
   snoozeUntil,
   subscribeNotifs,
+  del,
 };

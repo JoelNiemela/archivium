@@ -42,6 +42,20 @@ ADD CONSTRAINT discussion_ibfk_1
 FOREIGN KEY (universe_id) REFERENCES universe (id)
 ON DELETE CASCADE;
 
+ALTER TABLE threadnotification
+DROP FOREIGN KEY threadnotification_ibfk_1;
+ALTER TABLE threadnotification
+ADD CONSTRAINT threadnotification_ibfk_1
+FOREIGN KEY (thread_id) REFERENCES discussion (id)
+ON DELETE CASCADE;
+
+ALTER TABLE threadcomment
+DROP FOREIGN KEY threadcomment_ibfk_2;
+ALTER TABLE threadcomment
+ADD CONSTRAINT threadcomment_ibfk_2
+FOREIGN KEY (comment_id) REFERENCES comment (id)
+ON DELETE CASCADE;
+
 ALTER TABLE itemevent
 DROP FOREIGN KEY itemevent_ibfk_1;
 ALTER TABLE itemevent

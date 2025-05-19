@@ -1,4 +1,4 @@
-const { executeQuery, parseData, perms, getPfpUrl } = require('../utils');
+const { executeQuery, parseData, perms, getPfpUrl, withTransaction } = require('../utils');
 const logger = require('../../logger');
 
 async function getOne(user, options, permissionLevel=perms.READ) {
@@ -371,19 +371,29 @@ async function delAccessRequest(user, shortname, requestingUser) {
 async function del(user, shortname) {
   const [code, universe] = await getOne(user, { shortname }, perms.ADMIN);
   if (!universe) return [code];
-
-  const itemCount = (await executeQuery(`SELECT COUNT(id) as count FROM item WHERE universe_id = ?;`, [universe.id]))[0].count;
-  if (itemCount > 0) {
-    return [409, 'Cannot delete universe, universe not empty.'];
-  }
-
+  
   try {
-    await executeQuery(`DELETE FROM authoruniverse WHERE universe_id = ?;`, [universe.id]);
-    await executeQuery(`DELETE FROM universe WHERE id = ?;`, [universe.id]);
+    await withTransaction(async (conn) => {
+      await conn.execute(`
+        DELETE comment
+        FROM comment
+        INNER JOIN threadcomment AS tc ON tc.comment_id = comment.id
+        INNER JOIN discussion ON tc.thread_id = discussion.id
+        WHERE discussion.universe_id = ?;
+      `, [universe.id]);
+      await conn.execute(`
+        DELETE comment
+        FROM comment
+        INNER JOIN itemcomment AS ic ON ic.comment_id = comment.id
+        INNER JOIN item ON ic.item_id = item.id
+        WHERE item.universe_id = ?;
+      `, [universe.id]);
+      await conn.execute(`DELETE FROM universe WHERE id = ?;`, [universe.id]);
+    });
     return [200];
   } catch (err) {
     logger.error(err);
-    return [500];
+    return [500, 'Error: could not delete universe.'];
   }
 }
 

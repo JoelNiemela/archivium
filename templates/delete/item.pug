@@ -20,7 +20,16 @@ block content
 
     .big-text
       p Are you want to delete #{item.title}? This action is 
-        b( style={color: 'red'} ) irreversible!
+        b permanent
+        |  and 
+        b.color-error cannot be undone!
+
+      ul
+        li All images uploaded to #{item.title} will be deleted.
+        li All comments on #{item.title} will be deleted.
+        li Notes pinned to #{item.title} will 
+          i not
+          |  be deleted, but will be unpinned.
 
       p If you are 
         i absolutely sure

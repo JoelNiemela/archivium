@@ -1,4 +1,4 @@
-const { executeQuery, parseData } = require('../utils');
+const { executeQuery, parseData, withTransaction } = require('../utils');
 const utils = require('../../lib/hashUtils');
 const universeapi = require('./universe');
 const logger = require('../../logger');
@@ -312,12 +312,13 @@ async function resetPassword(resetKey, newPassword) {
   const [code, user] = await getOne({ id: records[0].user_id });
   if (!user) return [code];
 
-  // TODO This should definitely also be in a transaction...
   const salt = utils.createRandom32String();
   const newHashedPass = utils.createHash(newPassword, salt);
-  await executeQuery('UPDATE user SET salt = ?, password = ? WHERE id = ?;', [salt, newHashedPass, user.id]);
-  await executeQuery('DELETE FROM session WHERE user_id = ?;', [user.id]);
-  await executeQuery('DELETE FROM userpasswordreset WHERE user_id = ?;', [user.id]);
+  await withTransaction(async (conn) => {
+    await conn.execute('UPDATE user SET salt = ?, password = ? WHERE id = ?;', [salt, newHashedPass, user.id]);
+    await conn.execute('DELETE FROM session WHERE user_id = ?;', [user.id]);
+    await conn.execute('DELETE FROM userpasswordreset WHERE user_id = ?;', [user.id]);
+  });
 
   logger.info(`Reset password for user ${user.username}.`);
 
@@ -356,7 +357,7 @@ const image = (function() {
       let data;
       await withTransaction(async (conn) => {
         await conn.execute('DELETE FROM userimage WHERE user_id = ?', [user.id]);
-      const queryString = `INSERT INTO userimage (user_id, name, mimetype, data) VALUES (?, ?, ?, ?);`;
+        const queryString = `INSERT INTO userimage (user_id, name, mimetype, data) VALUES (?, ?, ?, ?);`;
         [ data ] = await conn.execute(queryString, [ user.id, originalname.substring(0, 64), mimetype, buffer ]);
       });
       return [201, data];

@@ -1,4 +1,4 @@
-const { QueryBuilder, Cond, executeQuery, parseData, perms } = require('../utils');
+const { QueryBuilder, Cond, executeQuery, parseData, perms, withTransaction } = require('../utils');
 const { getOne: getUniverse, validateShortname } = require('./universe');
 const { getOne: getUser } = require('./user');
 const { extractLinks } = require('../../static/scripts/markdown/parse');
@@ -348,35 +348,38 @@ async function post(user, body, universeShortName) {
     const [code, universe] = await getUniverse(user, { 'universe.shortname': universeShortName }, perms.WRITE);
     if (!universe) return [code];
 
-    const queryString = `
-      INSERT INTO item (
+    let data;
+    await withTransaction(async (conn) => {
+      const queryString = `
+        INSERT INTO item (
+          title,
+          shortname,
+          item_type,
+          author_id,
+          universe_id,
+          parent_id,
+          obj_data,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+      `;
+      if (!title || !shortname || !item_type || !obj_data) return [400];
+      [ data ] = await conn.execute(queryString, [
         title,
         shortname,
         item_type,
-        author_id,
-        universe_id,
-        parent_id,
+        user.id,
+        universe.id,
+        parent_id ?? null,
         obj_data,
-        created_at,
-        updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
-    `;
-    if (!title || !shortname || !item_type || !obj_data) return [400];
-    const data = await executeQuery(queryString, [
-      title,
-      shortname,
-      item_type,
-      user.id,
-      universe.id,
-      parent_id ?? null,
-      obj_data,
-      new Date(),
-      new Date(),
-    ]);
+        new Date(),
+        new Date(),
+      ]);
 
-    await executeQuery(`
-      INSERT INTO itemnotification (item_id, user_id, is_enabled) VALUES (?, ?, ?)
-    `, [data.insertId, user.id, true]);
+      await conn.execute(`
+        INSERT INTO itemnotification (item_id, user_id, is_enabled) VALUES (?, ?, ?)
+      `, [data.insertId, user.id, true]);
+    });
 
     return [201, data];
   } catch (err) {
@@ -545,17 +548,19 @@ async function handleLinks(item, objData) {
     for (const { href } of oldLinks) {
       existingLinks[href] = true;
     }
-    for (const [universeShort, itemShort, href] of links) {
-      newLinks[href] = true;
-      if (!existingLinks[href]) {
-        await executeQuery('INSERT INTO itemlink (from_item, to_universe_short, to_item_short, href) VALUES (?, ?, ?, ?)', [ item.id, universeShort, itemShort, href ]);
+    await withTransaction(async (conn) => {
+      for (const [universeShort, itemShort, href] of links) {
+        newLinks[href] = true;
+        if (!existingLinks[href]) {
+          await conn.execute('INSERT INTO itemlink (from_item, to_universe_short, to_item_short, href) VALUES (?, ?, ?, ?)', [ item.id, universeShort, itemShort, href ]);
+        }
       }
-    }
-    for (const { href } of oldLinks) {
-      if (!newLinks[href]) {
-        await executeQuery('DELETE FROM itemlink WHERE from_item = ? AND href = ?', [ item.id, href ]);
+      for (const { href } of oldLinks) {
+        if (!newLinks[href]) {
+          await conn.execute('DELETE FROM itemlink WHERE from_item = ? AND href = ?', [ item.id, href ]);
+        }
       }
-    }
+    });
   }
 }
 
@@ -785,8 +790,9 @@ async function del(user, universeShortname, itemShortname) {
   if (!item) return [code];
 
   try {
-    await executeQuery(`DELETE FROM authoruniverse WHERE universe_id = ?;`, [universe.id]);
-    await executeQuery(`DELETE FROM universe WHERE id = ?;`, [universe.id]);
+    await withTransaction(async (conn) => {
+      await conn.execute(`DELETE FROM item WHERE id = ?;`, [item.id]);
+    });
     return [200];
   } catch (err) {
     logger.error(err);

@@ -1,4 +1,4 @@
-const { executeQuery, parseData, perms, getPfpUrl } = require('../utils');
+const { executeQuery, parseData, perms, getPfpUrl, withTransaction } = require('../utils');
 const logger = require('../../logger');
 const notification = require('./notification');
 const universeapi = require('./universe');
@@ -160,10 +160,13 @@ async function postCommentToThread(user, threadId, { body, reply_to }) {
   if (!body) return [400];
 
   try {
-    const queryString1 = `INSERT INTO comment (body, author_id, reply_to, created_at) VALUES (?, ?, ?, ?);`;
-    const data = await executeQuery(queryString1, [ body, user.id, reply_to ?? null, new Date() ]);
-    const queryString2 = `INSERT INTO threadcomment (thread_id, comment_id) VALUES (?, ?)`;
-    await executeQuery(queryString2, [ thread.id, data.insertId ])
+    let data;
+    await withTransaction(async (conn) => {
+      const queryString1 = `INSERT INTO comment (body, author_id, reply_to, created_at) VALUES (?, ?, ?, ?);`;
+      [ data ] = await conn.execute(queryString1, [ body, user.id, reply_to ?? null, new Date() ]);
+      const queryString2 = `INSERT INTO threadcomment (thread_id, comment_id) VALUES (?, ?)`;
+      await conn.execute(queryString2, [ thread.id, data.insertId ])
+    });
 
     forEachUserToNotify(thread, async (target) => {
       if (target.id === user.id) return;
@@ -197,10 +200,13 @@ async function postCommentToItem(user, universeShortname, itemShortname, { body,
   if (!body) return [400];
 
   try {
-    const queryString1 = `INSERT INTO comment (body, author_id, reply_to, created_at) VALUES (?, ?, ?, ?);`;
-    const data = await executeQuery(queryString1, [ body, user.id, reply_to ?? null, new Date() ]);
-    const queryString2 = `INSERT INTO itemcomment (item_id, comment_id) VALUES (?, ?)`;
-    await executeQuery(queryString2, [ item.id, data.insertId ]);
+    let data;
+    await withTransaction(async (conn) => {
+      const queryString1 = `INSERT INTO comment (body, author_id, reply_to, created_at) VALUES (?, ?, ?, ?);`;
+      [ data ] = await conn.execute(queryString1, [ body, user.id, reply_to ?? null, new Date() ]);
+      const queryString2 = `INSERT INTO itemcomment (item_id, comment_id) VALUES (?, ?)`;
+      await conn.execute(queryString2, [ item.id, data.insertId ]);
+    });
 
     itemapi.forEachUserToNotify(item, async (target) => {
       if (target.id === user.id) return;

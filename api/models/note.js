@@ -227,14 +227,14 @@ async function put(user, uuid, changes) {
 
     await executeQuery('DELETE FROM itemnote WHERE note_id = ?', [ note.id ]);
     for (const { item, universe } of items ?? []) {
-      this.linkToItem(user, universe, item, uuid);
+      await linkToItem(user, universe, item, uuid);
     }
     
     if (tags) {
       const trimmedTags = tags.map(tag => tag[0] === '#' ? tag.substring(1) : tag);
 
       // If tags list is provided, we can just as well handle it here
-      putTags(user, uuid, trimmedTags);
+      await putTags(user, uuid, trimmedTags);
       const tagLookup = {};
       note.tags?.forEach(tag => {
         tagLookup[tag] = true;
@@ -242,7 +242,7 @@ async function put(user, uuid, changes) {
       trimmedTags.forEach(tag => {
         delete tagLookup[tag];
       });
-      delTags(user, uuid, Object.keys(tagLookup));
+      await delTags(user, uuid, Object.keys(tagLookup));
     }
 
     return [200, data];

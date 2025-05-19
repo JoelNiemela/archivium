@@ -79,6 +79,31 @@ block content
 
     small.color-error.hidden#username-error
 
+  h3 Delete Account
+  form#changeUsername
+    div
+      b.color-error Warning!
+      p Deleting your account 
+        b cannot be undone
+        | .
+      ul
+        li All your account information will be deleted.
+        li Universes of which you are the sole owner will be deleted.
+        li Your universes with at least one co-owner will be scrubbed of any data pointing to your account.
+        li All notes you have created will be deleted.
+        li All comments you have writted will be deleted.
+    p If you are 
+      b absolutely sure
+      |  you want to delete your account, enter your password into the form below:
+    .inputGroup
+      label( for='password' ) Password:
+      input( id='password' name='password' type='password' )
+    .inputGroup
+      .d-flex.col-2
+        button.color-error( type='submit' ) Delete Account
+
+    small.color-error.hidden#username-error
+
   hr.w-100.mb-0
 
   h2 Notifications

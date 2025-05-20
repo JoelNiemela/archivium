@@ -2,6 +2,7 @@ extends ../layout.pug
 
 block scripts
   script
+    include /static/scripts/tabs.js
     include /static/scripts/fetchUtils.js
   script.
     const formatDate = !{formatDate};
@@ -9,169 +10,175 @@ block scripts
 
 block content
   h1.center Settings
-  h2 Account
-  h3 Change Username
-  form#changeUsername
-    .inputGroup
-      label( for='username' ) Username:
-      input( id='username' name='username' type='text' value=user.username )
-      small.row-2.col-2 You can only change your username once every 30 days, so choose carefully!
-      .d-flex
-        button( type='submit' ) Change Username
 
-    small.color-error.hidden#username-error
+  ul#tabBtns.navbarBtns.gap-1.mb-2.scroll-x
+    li.navbarBtn#bodyBtn( data-tab='account' )
+      h3.navbarBtnLink.navbarText.ma-0( onclick=`showTab('account')` ) Account
+    li.navbarBtn#bodyBtn( data-tab='notifications' )
+      h3.navbarBtnLink.navbarText.ma-0( onclick=`showTab('notifications')` ) Notifications
 
-    script.
-      (() => {
-        const form = document.forms.changeUsername;
-        const formError = document.querySelector('#username-error');
-        form.username.addEventListener('input', () => {
-          formError.classList.add('hidden');
-          const value = form.username.value;
-          const error = validateUsername(value);
-          if (error) {
-            formError.innerText = error;
-            formError.classList.remove('hidden');
+  .tabs
+    .itemTab.hidden.flex-col( data-tab='account' )
+      h3 Change Username
+      form#changeUsername
+        .inputGroup
+          label( for='username' ) Username:
+          input( id='username' name='username' type='text' value=user.username )
+          small.row-2.col-2 You can only change your username once every 30 days, so choose carefully!
+          .d-flex
+            button( type='submit' ) Change Username
+
+        small.color-error.hidden#username-error
+
+        script.
+          (() => {
+            const form = document.forms.changeUsername;
+            const formError = document.querySelector('#username-error');
+            form.username.addEventListener('input', () => {
+              formError.classList.add('hidden');
+              const value = form.username.value;
+              const error = validateUsername(value);
+              if (error) {
+                formError.innerText = error;
+                formError.classList.remove('hidden');
+              }
+            });
+            form.addEventListener('submit', async (e) => {
+              formError.classList.add('hidden');
+              e.preventDefault();
+
+              const value = form.username.value;
+              if (value === '#{user.username}') return;
+
+              const error = validateUsername(value);
+              if (error) {
+                formError.innerText = error;
+                formError.classList.remove('hidden');
+                return;
+              }
+
+              const [response, data] = await putJSON(`/api/users/#{user.username}/username`, { username: value });
+              if (response.status === 429) {
+                formError.innerText = `You have changed your username too recently. Try again ${formatDate(new Date(data))}.`;
+                formError.classList.remove('hidden');
+              } else if (response.status === 200) {
+                window.location.reload();
+              } else {
+                console.log(data)
+                formError.innerText = data;
+                formError.classList.remove('hidden');
+              }
+            });
+          })();
+
+      h3 Change Password
+      form#changeUsername
+        .inputGroup
+          label( for='old-password' ) Old password:
+          input( id='old-password' name='old-password' type='password' )
+        .inputGroup
+          label( for='new-password' ) New password:
+          input( id='new-password' name='new-password' type='password' )
+        .inputGroup
+          label( for='confirm-password' ) Confirm new password:
+          input( id='confirm-password' name='confirm-password' type='password' )
+        .inputGroup
+          .d-flex.col-2
+            button( type='submit' ) Change Password
+
+        small.color-error.hidden#username-error
+
+      h3 Delete Account
+      form#changeUsername
+        div
+          b.color-error Warning!
+          p Deleting your account 
+            b cannot be undone
+            | .
+          ul
+            li All your account information will be deleted.
+            li Universes of which you are the sole owner will be deleted.
+            li Your universes with at least one co-owner will be scrubbed of any data pointing to your account.
+            li All notes you have created will be deleted.
+            li All comments you have writted will be deleted.
+        p If you are 
+          b absolutely sure
+          |  you want to delete your account, enter your password into the form below:
+        .inputGroup
+          label( for='password' ) Password:
+          input( id='password' name='password' type='password' )
+        .inputGroup
+          .d-flex.col-2
+            button.color-error( type='submit' ) Delete Account
+
+        small.color-error.hidden#username-error
+
+    .itemTab.hidden.flex-col( data-tab='notifications' )
+      form#notificationSettings( method='POST' action=`${ADDR_PREFIX}/settings/notifications` )
+        .inputGroup
+          label( for='push_notifs' ) #{T('Push notifications')}: 
+          label.switch
+            input( id='push_notifs' name='push_notifs' type='checkbox' checked=false )
+            span.slider
+        .inputGroup
+          label( for='email_notifs' ) #{T('Email notifications')}: 
+          label.switch
+            input( id='email_notifs' name='email_notifs' type='checkbox' checked=Boolean(user.email_notifications) )
+            span.slider
+
+        h3 Filter Notifications
+        table.sheet#notificationFilters
+          thead
+            tr
+              th #{T('Notfication Type')}
+              each _, method_key in notificationMethods
+                th #{T(capitalize(method_key.toLowerCase()))}
+          tbody
+            each type in notificationTypes
+              tr
+                td #{T(`notif_${type}`)}
+                each method in notificationMethods
+                  td.center
+                    input(
+                      id=`notif_${type}_${method}`
+                      name=`notif_${type}_${method}`
+                      data-type=type
+                      data-method=method
+                      type='checkbox'
+                      checked=(`${type}_${method}` in typeSettings ? typeSettings[`${type}_${method}`] : (method === 0))
+                    )
+
+        .d-flex
+          button( type='submit' ) Update Preferences
+
+        script.
+          const form = document.forms.notificationSettings;
+
+          function updatePushFilters() {
+            form.querySelectorAll('[data-method="#{notificationMethods.PUSH}"]').forEach(el => {
+              el.disabled = !form.push_notifs.checked;
+            });
           }
-        });
-        form.addEventListener('submit', async (e) => {
-          formError.classList.add('hidden');
-          e.preventDefault();
+          form.push_notifs.addEventListener('change', updatePushFilters);
+          updatePushFilters();
 
-          const value = form.username.value;
-          if (value === '#{user.username}') return;
-
-          const error = validateUsername(value);
-          if (error) {
-            formError.innerText = error;
-            formError.classList.remove('hidden');
-            return;
+          function updateEmailFilters() {
+            form.querySelectorAll('[data-method="#{notificationMethods.EMAIL}"]').forEach(el => {
+              el.disabled = !form.email_notifs.checked;
+            });
           }
+          form.email_notifs.addEventListener('change', updateEmailFilters);
+          updateEmailFilters();
 
-          const [response, data] = await putJSON(`/api/users/#{user.username}/username`, { username: value });
-          if (response.status === 429) {
-            formError.innerText = `You have changed your username too recently. Try again ${formatDate(new Date(data))}.`;
-            formError.classList.remove('hidden');
-          } else if (response.status === 200) {
-            window.location.reload();
-          } else {
-            console.log(data)
-            formError.innerText = data;
-            formError.classList.remove('hidden');
+          function updateCheckbox(isSubscribed) {
+            form.push_notifs.checked = isSubscribed;
+            updatePushFilters();
           }
-        });
-      })();
+          form.push_notifs.addEventListener('change', () => {
+            setSubscribeStatus(updateCheckbox, form.push_notifs.checked);
+          });
+          checkSubscribed(updateCheckbox);
 
-  h3 Change Password
-  form#changeUsername
-    .inputGroup
-      label( for='old-password' ) Old password:
-      input( id='old-password' name='old-password' type='password' )
-    .inputGroup
-      label( for='new-password' ) New password:
-      input( id='new-password' name='new-password' type='password' )
-    .inputGroup
-      label( for='confirm-password' ) Confirm new password:
-      input( id='confirm-password' name='confirm-password' type='password' )
-    .inputGroup
-      .d-flex.col-2
-        button( type='submit' ) Change Password
-
-    small.color-error.hidden#username-error
-
-  h3 Delete Account
-  form#changeUsername
-    div
-      b.color-error Warning!
-      p Deleting your account 
-        b cannot be undone
-        | .
-      ul
-        li All your account information will be deleted.
-        li Universes of which you are the sole owner will be deleted.
-        li Your universes with at least one co-owner will be scrubbed of any data pointing to your account.
-        li All notes you have created will be deleted.
-        li All comments you have writted will be deleted.
-    p If you are 
-      b absolutely sure
-      |  you want to delete your account, enter your password into the form below:
-    .inputGroup
-      label( for='password' ) Password:
-      input( id='password' name='password' type='password' )
-    .inputGroup
-      .d-flex.col-2
-        button.color-error( type='submit' ) Delete Account
-
-    small.color-error.hidden#username-error
-
-  hr.w-100.mb-0
-
-  h2 Notifications
-  form#notificationSettings( method='POST' action=`${ADDR_PREFIX}/settings/notifications` )
-    .inputGroup
-      label( for='push_notifs' ) #{T('Push notifications')}: 
-      label.switch
-        input( id='push_notifs' name='push_notifs' type='checkbox' checked=false )
-        span.slider
-    .inputGroup
-      label( for='email_notifs' ) #{T('Email notifications')}: 
-      label.switch
-        input( id='email_notifs' name='email_notifs' type='checkbox' checked=Boolean(user.email_notifications) )
-        span.slider
-
-    h3 Filter Notifications
-    table.sheet#notificationFilters
-      thead
-        tr
-          th #{T('Notfication Type')}
-          each _, method_key in notificationMethods
-            th #{T(capitalize(method_key.toLowerCase()))}
-      tbody
-        each type in notificationTypes
-          tr
-            td #{T(`notif_${type}`)}
-            each method in notificationMethods
-              td.center
-                input(
-                  id=`notif_${type}_${method}`
-                  name=`notif_${type}_${method}`
-                  data-type=type
-                  data-method=method
-                  type='checkbox'
-                  checked=(`${type}_${method}` in typeSettings ? typeSettings[`${type}_${method}`] : (method === 0))
-                )
-
-    .d-flex
-      button( type='submit' ) Update Preferences
-
-    script.
-      const form = document.forms.notificationSettings;
-
-      function updatePushFilters() {
-        form.querySelectorAll('[data-method="#{notificationMethods.PUSH}"]').forEach(el => {
-          el.disabled = !form.push_notifs.checked;
-        });
-      }
-      form.push_notifs.addEventListener('change', updatePushFilters);
-      updatePushFilters();
-
-      function updateEmailFilters() {
-        form.querySelectorAll('[data-method="#{notificationMethods.EMAIL}"]').forEach(el => {
-          el.disabled = !form.email_notifs.checked;
-        });
-      }
-      form.email_notifs.addEventListener('change', updateEmailFilters);
-      updateEmailFilters();
-
-      function updateCheckbox(isSubscribed) {
-        form.push_notifs.checked = isSubscribed;
-        updatePushFilters();
-      }
-      form.push_notifs.addEventListener('change', () => {
-        setSubscribeStatus(updateCheckbox, form.push_notifs.checked);
-      });
-      checkSubscribed(updateCheckbox);
-
-      form.addEventListener('submit', async (e) => {
-        form.querySelectorAll('#notificationFilters input').forEach(el => el.disabled = false);
-      });
+          form.addEventListener('submit', async (e) => {
+            form.querySelectorAll('#notificationFilters input').forEach(el => el.disabled = false);
+          });

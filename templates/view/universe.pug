@@ -67,6 +67,7 @@ block content
           a.link.link-animated( href=`${universeLink(universe.shortname)}/edit` ) Edit
           |  - 
           a.link.link-animated( href=`${universeLink(universe.shortname)}/permissions` ) Set Permissions
+        if universe.author_permissions[contextUser.id] >= perms.OWNER
           |  - 
           a.link.link-animated( href=`${universeLink(universe.shortname)}/delete` ) Delete
 
@@ -144,6 +145,8 @@ block content
                 span.align-self-end.grow-1
                   if universe.author_permissions[id] === perms.ADMIN
                     | Admin
+                  else if universe.author_permissions[id] === perms.OWNER
+                    | Owner
     
     .card-list.hidden( data-tab='viewers' )
       each username, id in universe.authors

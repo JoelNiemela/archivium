@@ -244,6 +244,7 @@ module.exports = function(app, upload) {
                   [perms.COMMENT]: 'comment',
                   [perms.WRITE]: 'write',
                   [perms.ADMIN]: 'admin',
+                  [perms.OWNER]: 'owner',
                 };
                 if (target) {
                   await api.notification.notify(target, api.notification.types.UNIVERSE, {

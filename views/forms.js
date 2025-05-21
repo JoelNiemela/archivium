@@ -100,7 +100,7 @@ module.exports = {
   async editUniversePerms(req, res) {
     const { session, params, body } = req;
     const [_, user] = await api.user.getOne({ 'user.username': req.body.username });
-    const [code, data] = await api.universe.putPermissions(session.user, params.universeShortname, user, body.permission_level, perms.ADMIN);
+    const [code] = await api.universe.putPermissions(session.user, params.universeShortname, user, body.permission_level);
     res.status(code);
     if (code !== 200) return;
     res.redirect(`${universeLink(req, params.universeShortname)}/permissions`);

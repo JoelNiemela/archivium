@@ -90,6 +90,8 @@ block content
                   | Author
                 when perms.ADMIN
                   | Admin
+                when perms.OWNER
+                  | Owner
             td( data-sort=universe.created_at ) #{formatDate(universe.created_at, true)}
             td( data-sort=universe.updated_at ) #{formatDate(universe.updated_at, true)}
   

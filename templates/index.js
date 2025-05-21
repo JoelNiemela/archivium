@@ -31,6 +31,7 @@ const locale = {
     [`perms_${perms.COMMENT}`]: 'Comment',
     [`perms_${perms.WRITE}`]: 'Write',
     [`perms_${perms.ADMIN}`]: 'Admin',
+    [`perms_${perms.OWNER}`]: 'Owner',
     [`notif_${api.notification.types.CONTACTS}`]: 'Contact Requests',
     [`notif_${api.notification.types.UNIVERSE}`]: 'Universe Updates',
     [`notif_${api.notification.types.COMMENTS}`]: 'Comments & Discussion',

@@ -178,7 +178,7 @@ async function post(user, body) {
       new Date(),
     ]);
     const queryString2 = `INSERT INTO authoruniverse (universe_id, user_id, permission_level) VALUES (?, ?, ?)`;
-    return [201, [data, await executeQuery(queryString2, [ data.insertId, user.id, perms.ADMIN ])]];
+    return [201, [data, await executeQuery(queryString2, [ data.insertId, user.id, perms.OWNER ])]];
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') return [400, 'Universe shortname must be unique.'];
     if (err.code === 'ER_BAD_NULL_ERROR') return [400, 'Missing parameters.'];
@@ -214,18 +214,25 @@ async function put(user, shortname, changes) {
 }
 
 async function putPermissions(user, shortname, targetUser, permission_level) {
-  const [code, universe] = await getOne(user, { shortname }, perms.ADMIN);
+  permission_level = Number(permission_level); // just yet another proof that we need typescript...
+  const [code, universe] = await getOne(
+    user,
+    { shortname },
+    permission_level === perms.OWNER ? perms.OWNER : Math.max(perms.ADMIN, permission_level + 1),
+  );
   if (!universe) return [code];
 
-  if (universe.author_permissions[targetUser.id] === perms.ADMIN && permission_level < perms.ADMIN) {
-    let adminWouldStillExist = false;
+  if (universe.author_permissions[targetUser.id] > universe.author_permissions[user.id]) return [403];
+
+  if (universe.author_permissions[targetUser.id] === perms.OWNER && permission_level < perms.OWNER) {
+    let ownerWouldStillExist = false;
     for (const userID in universe.author_permissions) {
-      if (Number(userID) !== Number(targetUser.id) && universe.author_permissions[userID] === perms.ADMIN) {
-        adminWouldStillExist = true;
+      if (Number(userID) !== Number(targetUser.id) && universe.author_permissions[userID] === perms.OWNER) {
+        ownerWouldStillExist = true;
         break;
       }
     }
-    if (!adminWouldStillExist) return [400];
+    if (!ownerWouldStillExist) return [400];
   }
 
   let query;
@@ -369,7 +376,7 @@ async function delAccessRequest(user, shortname, requestingUser) {
 }
 
 async function del(user, shortname) {
-  const [code, universe] = await getOne(user, { shortname }, perms.ADMIN);
+  const [code, universe] = await getOne(user, { shortname }, perms.OWNER);
   if (!universe) return [code];
   
   try {

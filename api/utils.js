@@ -9,6 +9,7 @@ const perms = {
   COMMENT: 2,
   WRITE: 3,
   ADMIN: 4,
+  OWNER: 5,
 };
 
 async function executeQuery(query, values) {

@@ -53,7 +53,7 @@ module.exports = {
   },
 
   async delete(req, res) {
-    const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.universeShortname }, perms.ADMIN);
+    const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.universeShortname }, perms.OWNER);
     res.status(code);
     if (!universe) return res.redirect(`${ADDR_PREFIX}/universes`);
     res.prepareRender('deleteUniverse', { universe });
@@ -139,10 +139,10 @@ module.exports = {
         universe.author_permissions[contact.id] = perms.NONE;
       }
     });
-    let adminCount = 0;
+    let ownerCount = 0;
     for (const userID in universe.author_permissions) {
-      if (universe.author_permissions[userID] === perms.ADMIN) adminCount++;
+      if (universe.author_permissions[userID] === perms.OWNER) ownerCount++;
     }
-    res.prepareRender('editUniversePerms', { universe, users, requests, adminCount });
+    res.prepareRender('editUniversePerms', { universe, users, requests, ownerCount });
   },
 };

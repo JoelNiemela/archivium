@@ -786,7 +786,7 @@ async function subscribeNotifs(user, universeShortname, itemShortname, isSubscri
 }
 
 async function del(user, universeShortname, itemShortname) {
-  const [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.ADMIN, true);
+  const [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.OWNER, true);
   if (!item) return [code];
 
   try {

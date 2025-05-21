@@ -74,7 +74,7 @@ block content
         a.link.link-animated.d-flex.align-center( href=`${universeLink(universe.shortname)}/items/${item.shortname}/edit` )
           span.material-symbols-outlined edit
           |  Edit
-      if universe.author_permissions[contextUser.id] >= perms.ADMIN
+      if universe.author_permissions[contextUser.id] >= perms.OWNER
         a.link.link-animated.d-flex.align-center( href=`${universeLink(universe.shortname)}/items/${item.shortname}/delete` )
           span.material-symbols-outlined delete
           |  Delete

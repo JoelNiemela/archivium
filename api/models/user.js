@@ -241,12 +241,16 @@ async function putUsername(sessionUser, oldUsername, newUsername) {
  * @param {number} user_id id of user to delete 
  * @returns {Promise<[status, data]>}
  */
-async function doDeleteUser(user_id) {
+async function doDeleteUser(userId) {
   try {
-    const sessionQueryString = `DELETE FROM session WHERE user_id = ${user_id};`;
-    const userQueryString = `DELETE FROM user WHERE id = ${user_id};`;
-    await executeQuery(sessionQueryString);
-    await executeQuery(userQueryString);
+    await withTransaction(async (conn) => {
+      await conn.execute('UPDATE comment SET body = NULL, author_id = NULL WHERE author_id = ?', [userId]);
+      await conn.execute('UPDATE item SET author_id = NULL WHERE author_id = ?', [userId]);
+      await conn.execute('UPDATE item SET last_updated_by = NULL WHERE last_updated_by = ?', [userId]);
+      await conn.execute('UPDATE universe SET author_id = NULL WHERE author_id = ?', [userId]);
+      await conn.execute('DELETE FROM session WHERE user_id = ?', [userId]);
+      await conn.execute('DELETE FROM user WHERE id = ?', [userId]);
+    });
     return [200];
   } catch (err) {
     logger.error(err);
@@ -254,20 +258,21 @@ async function doDeleteUser(user_id) {
   }
 }
 
-async function del(req) {
+async function del(sessionUser, username, password) {
+  if (!sessionUser) return [401];
   try {  
-    const [status, user] = await getOne({ 'user.id': req.params.id, 'user.email': req.body.email }, true);
+    const [status, user] = await getOne({ 'user.username': username }, true);
     if (user) {
-      req.loginId = user.id;
-      const isValidUser = validatePassword(req.body.password, user.password, user.salt);
-      if (isValidUser) {
-        doDeleteUser(req.params.id);
-        return [200];
-      } else {
-        return [401];
+      if (sessionUser.id !== user.id) {
+        return [403, 'Can\'t delete user you\'re not logged in as!'];
       }
+      const isCorrectLogin = validatePassword(password, user.password, user.salt);
+      if (!isCorrectLogin) {
+        return [403, 'Password incorrect!'];
+      }
+      return await doDeleteUser(user.id);
     } else {
-      return [404];
+      return [status];
     }
   } catch (err) {
     logger.error(err);

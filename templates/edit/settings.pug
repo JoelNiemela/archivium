@@ -64,7 +64,6 @@ block content
               } else if (response.status === 200) {
                 window.location.reload();
               } else {
-                console.log(data)
                 formError.innerText = data;
                 formError.classList.remove('hidden');
               }
@@ -72,7 +71,7 @@ block content
           })();
 
       h3 Change Password
-      form#changeUsername
+      form#changePassword
         .inputGroup
           label( for='old-password' ) Old password:
           input( id='old-password' name='old-password' type='password' )
@@ -86,22 +85,25 @@ block content
           .d-flex.col-2
             button( type='submit' ) Change Password
 
-        small.color-error.hidden#username-error
+        small.color-error.hidden#password-error
 
-      h3 Delete Account
-      form#changeUsername
-        div
+      h3 Request Account Deletion
+      form#deleteAccount
+        p.mb-1.mt-0
           b.color-error Warning!
-          p Deleting your account 
-            b cannot be undone
-            | .
-          ul
-            li All your account information will be deleted.
-            li Universes of which you are the sole owner will be deleted.
-            li Your universes with at least one co-owner will be scrubbed of any data pointing to your account.
-            li All notes you have created will be deleted.
-            li All comments you have writted will be deleted.
-        p If you are 
+          br
+          | Once the site owner has processed your delete request, your account  
+          b cannot be recovered
+          | . If you want to cancel the delete request before it has been processed, you can reach out to the site owner at  
+          a.link.link-animated( href='mailto:contact@archivium.net' ) contact@archivium.net
+          | .
+        ul.ma-1
+          li All your account information will be deleted.
+          li Universes of which you are the sole owner will be deleted.
+          li Your universes with at least one co-owner will be scrubbed of any data pointing to your account.
+          li All notes you have created will be deleted.
+          li All comments you have written will be deleted.
+        p.mt-1 If you are 
           b absolutely sure
           |  you want to delete your account, enter your password into the form below:
         .inputGroup
@@ -111,7 +113,25 @@ block content
           .d-flex.col-2
             button.color-error( type='submit' ) Delete Account
 
-        small.color-error.hidden#username-error
+        small.color-error.hidden#delete-account-error
+
+        script.
+          (() => {
+            const form = document.forms.deleteAccount;
+            const formError = document.querySelector('#delete-account-error');
+            form.addEventListener('submit', async (e) => {
+              formError.classList.add('hidden');
+              e.preventDefault();
+
+              const [response, data] = await deleteJSON(`/api/users/#{user.username}`, { password: form.password.value });
+              if (response.status === 200) {
+                window.location.reload();
+              } else {
+                formError.innerText = data;
+                formError.classList.remove('hidden');
+              }
+            });
+          })();
 
     .itemTab.hidden.flex-col( data-tab='notifications' )
       form#notificationSettings( method='POST' action=`${ADDR_PREFIX}/settings/notifications` )

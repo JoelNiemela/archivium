@@ -30,20 +30,20 @@ CREATE TABLE userimage (
   name VARCHAR(64) NOT NULL,
   mimetype VARCHAR(32) NOT NULL,
   data LONGBLOB NOT NULL,
-  FOREIGN KEY (user_id) REFERENCES user (id)
+  FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE
 );
 
 CREATE TABLE userverification (
   user_id INT NOT NULL,
   verification_key VARCHAR(64),
-  FOREIGN KEY (user_id) REFERENCES user (id)
+  FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE
 );
 
 CREATE TABLE userpasswordreset (
   user_id INT NOT NULL,
   reset_key VARCHAR(64) NOT NULL,
   expires_at TIMESTAMP NOT NULL,
-  FOREIGN KEY (user_id) REFERENCES user (id)
+  FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE
 );
 
 CREATE TABLE usernamechange (
@@ -51,7 +51,7 @@ CREATE TABLE usernamechange (
   changed_from VARCHAR(32) NOT NULL,
   changed_to VARCHAR(32) NOT NULL,
   changed_at TIMESTAMP NOT NULL,
-  FOREIGN KEY (changed_for) REFERENCES user (id)
+  FOREIGN KEY (changed_for) REFERENCES user (id) ON DELETE CASCADE
 );
 
 CREATE TABLE session (
@@ -67,15 +67,15 @@ CREATE TABLE contact (
   requesting_user INT NOT NULL,
   accepting_user INT NOT NULL,
   accepted BOOLEAN,
-  FOREIGN KEY (requesting_user) REFERENCES user (id),
-  FOREIGN KEY (accepting_user) REFERENCES user (id)
+  FOREIGN KEY (requesting_user) REFERENCES user (id) ON DELETE CASCADE,
+  FOREIGN KEY (accepting_user) REFERENCES user (id) ON DELETE CASCADE
 );
 
 CREATE TABLE universe (
   id INT NOT NULL AUTO_INCREMENT,
   title VARCHAR(64) NOT NULL,
   shortname VARCHAR(64) UNIQUE NOT NULL,
-  author_id INT NOT NULL,
+  author_id INT,
   created_at TIMESTAMP NOT NULL,
   updated_at TIMESTAMP NOT NULL,
   public BOOLEAN NOT NULL,
@@ -99,13 +99,13 @@ CREATE TABLE threadnotification (
   UNIQUE(thread_id, user_id),
   is_enabled BOOLEAN NOT NULL,
   FOREIGN KEY (thread_id) REFERENCES discussion (id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES user (id)
+  FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE
 );
 
 CREATE TABLE comment (
   id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  body VARCHAR(2048) NOT NULL,
-  author_id INT NOT NULL,
+  body VARCHAR(2048),
+  author_id INT,
   reply_to INT,
   created_at TIMESTAMP NOT NULL,
   FOREIGN KEY (author_id) REFERENCES user (id),
@@ -128,7 +128,7 @@ CREATE TABLE note (
   author_id INT NOT NULL,
   created_at TIMESTAMP NOT NULL,
   updated_at TIMESTAMP NOT NULL,
-  FOREIGN KEY (author_id) REFERENCES user (id)
+  FOREIGN KEY (author_id) REFERENCES user (id) ON DELETE CASCADE
 );
 
 CREATE TABLE noteboard (
@@ -152,7 +152,7 @@ CREATE TABLE item (
   title VARCHAR(64) NOT NULL,
   shortname VARCHAR(64) NOT NULL,
   item_type VARCHAR(16) NOT NULL,
-  author_id INT NOT NULL,
+  author_id INT,
   universe_id INT NOT NULL,
   UNIQUE(shortname, universe_id),
   parent_id INT,
@@ -173,7 +173,7 @@ CREATE TABLE itemnotification (
   UNIQUE(item_id, user_id),
   is_enabled BOOLEAN NOT NULL,
   FOREIGN KEY (item_id) REFERENCES item (id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES user (id)
+  FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE
 );
 
 CREATE TABLE itemcomment (
@@ -187,7 +187,7 @@ CREATE TABLE itemnote (
   item_id INT NOT NULL,
   note_id INT NOT NULL,
   FOREIGN KEY (item_id) REFERENCES item (id) ON DELETE CASCADE,
-  FOREIGN KEY (note_id) REFERENCES note (id)
+  FOREIGN KEY (note_id) REFERENCES note (id) ON DELETE CASCADE
 );
 
 CREATE TABLE itemimage (
@@ -212,7 +212,7 @@ CREATE TABLE snooze (
   snoozed_at TIMESTAMP NOT NULL,
   snoozed_by INT NOT NULL,
   item_id INT NOT NULL,
-  FOREIGN KEY (snoozed_by) REFERENCES user (id),
+  FOREIGN KEY (snoozed_by) REFERENCES user (id) ON DELETE CASCADE,
   FOREIGN KEY (item_id) REFERENCES item (id) ON DELETE CASCADE
 );
 
@@ -258,7 +258,7 @@ CREATE TABLE authoruniverse (
   user_id INT NOT NULL,
   permission_level TINYINT NOT NULL,
   FOREIGN KEY (universe_id) REFERENCES universe (id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES user (id),
+  FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE,
   PRIMARY KEY (id)
 );
 
@@ -267,7 +267,7 @@ CREATE TABLE universeaccessrequest (
   user_id INT NOT NULL,
   permission_level TINYINT NOT NULL,
   FOREIGN KEY (universe_id) REFERENCES universe (id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES user (id)
+  FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE
 );
 
 CREATE TABLE followeruniverse (
@@ -275,7 +275,7 @@ CREATE TABLE followeruniverse (
   user_id INT NOT NULL,
   is_following BOOLEAN NOT NULL,
   FOREIGN KEY (universe_id) REFERENCES universe (id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES user (id)
+  FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE
 );
 
 CREATE TABLE tag (
@@ -289,7 +289,7 @@ CREATE TABLE notetag (
   note_id INT NOT NULL,
   tag VARCHAR(32),
   UNIQUE(note_id, tag),
-  FOREIGN KEY (note_id) REFERENCES note (id)
+  FOREIGN KEY (note_id) REFERENCES note (id) ON DELETE CASCADE
 );
 
 CREATE TABLE sentemail (
@@ -304,7 +304,7 @@ CREATE TABLE notificationsubscription (
   endpoint_hash CHAR(32) UNIQUE NOT NULL,
   push_endpoint TEXT NOT NULL,
   push_keys JSON NOT NULL,
-  FOREIGN KEY (user_id) REFERENCES user (id),
+  FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE,
   PRIMARY KEY (id)
 );
 
@@ -313,7 +313,7 @@ CREATE TABLE universenotification (
   user_id INT NOT NULL,
   is_enabled BOOLEAN NOT NULL,
   FOREIGN KEY (universe_id) REFERENCES universe (id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES user (id)
+  FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE
 );
 
 CREATE TABLE notificationtype (
@@ -321,7 +321,7 @@ CREATE TABLE notificationtype (
   notif_type VARCHAR(16) NOT NULL,
   notif_method TINYINT NOT NULL,
   is_enabled BOOLEAN NOT NULL,
-  FOREIGN KEY (user_id) REFERENCES user (id)
+  FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE
 );
 
 CREATE TABLE sentnotification (
@@ -334,5 +334,5 @@ CREATE TABLE sentnotification (
   user_id INT NOT NULL,
   sent_at TIMESTAMP NOT NULL,
   is_read BOOLEAN DEFAULT FALSE,
-  FOREIGN KEY (user_id) REFERENCES user (id)
+  FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE
 );

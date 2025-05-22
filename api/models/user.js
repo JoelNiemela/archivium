@@ -1,4 +1,4 @@
-const { executeQuery, parseData, withTransaction } = require('../utils');
+const { executeQuery, parseData, withTransaction, perms } = require('../utils');
 const utils = require('../../lib/hashUtils');
 const universeapi = require('./universe');
 const logger = require('../../logger');
@@ -248,8 +248,37 @@ async function doDeleteUser(userId) {
       await conn.execute('UPDATE item SET author_id = NULL WHERE author_id = ?', [userId]);
       await conn.execute('UPDATE item SET last_updated_by = NULL WHERE last_updated_by = ?', [userId]);
       await conn.execute('UPDATE universe SET author_id = NULL WHERE author_id = ?', [userId]);
+
+      // Promote highest-ranking user of abandoned universes with at least one other admin
+      await conn.execute(`
+        UPDATE authoruniverse
+        INNER JOIN (
+          SELECT MIN(au1.id) AS id
+          FROM authoruniverse AS au1
+          INNER JOIN (
+            SELECT universe_id, MAX(permission_level) AS max_perm
+            FROM authoruniverse
+            WHERE universe_id IN (
+              SELECT universe_id FROM authoruniverse WHERE user_id = ?
+            ) AND user_id != ? AND permission_level >= ?
+            GROUP BY universe_id
+          ) au2 ON au1.universe_id = au2.universe_id AND au1.permission_level = au2.max_perm
+          WHERE au1.permission_level < ?
+          GROUP BY au1.universe_id
+        ) AS to_promote ON authoruniverse.id = to_promote.id
+        SET authoruniverse.permission_level = ?
+      `, [userId, userId, perms.ADMIN, perms.OWNER, perms.OWNER]);
+
       await conn.execute('DELETE FROM session WHERE user_id = ?', [userId]);
       await conn.execute('DELETE FROM user WHERE id = ?', [userId]);
+
+      // Delete orphaned universes (universes with no other owner or admin)
+      await conn.execute(`
+        DELETE FROM universe
+        WHERE id NOT IN (
+          SELECT DISTINCT universe_id FROM authoruniverse WHERE permission_level >= ?
+        )
+      `, [perms.ADMIN]);
     });
     return [200];
   } catch (err) {

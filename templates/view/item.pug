@@ -37,7 +37,10 @@ block content
     a.link.link-animated( href=`${universeLink(universe.shortname)}/` ) #{item.universe}
   p.center.mb-2
     small Created by 
-      a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
+      if item.author
+        a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
+      else
+        | Deleted User
       |  #{formatDate(new Date(item.created_at))}
       |  - Last updated #{formatDate(new Date(item.updated_at))}
   #action-bar.d-flex.justify-center.align-center.gap-2.mb-1

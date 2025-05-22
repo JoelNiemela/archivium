@@ -23,7 +23,10 @@
       .d-flex.flex-col.grow-3
           span 
             b #{T('Author')}: 
-            a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
+            if item.author
+              a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
+            else
+              | Deleted User
           span 
             b #{T('Created')}: 
             | #{formatDate(item.created_at)}

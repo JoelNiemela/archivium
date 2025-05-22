@@ -32,7 +32,10 @@ block content
   h1.center #{universe.title}
   p#info-bar.center
     small Created by 
-      a.link.link-animated( href=`${ADDR_PREFIX}/users/${universe.owner}` ) #{universe.owner}
+      if universe.owner
+        a.link.link-animated( href=`${ADDR_PREFIX}/users/${universe.owner}` ) #{universe.owner}
+      else
+        | Deleted User
       |  #{formatDate(new Date(universe.created_at))}
       |  - Last updated #{formatDate(new Date(universe.updated_at))}
       if contextUser

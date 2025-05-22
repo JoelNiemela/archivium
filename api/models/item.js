@@ -105,7 +105,7 @@ function getQuery(selects=[], permsCond=undefined, whereConds=undefined, options
       'tag.tags',
     ])
     .from('item')
-    .innerJoin('user', new Cond('user.id = item.author_id'))
+    .leftJoin('user', new Cond('user.id = item.author_id'))
     .innerJoin('universe', new Cond('universe.id = item.universe_id'))
     .innerJoin(['authoruniverse', 'au_filter'], new Cond('universe.id = au_filter.universe_id').and(permsCond))
     .leftJoin(`(

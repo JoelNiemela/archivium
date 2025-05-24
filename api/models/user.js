@@ -1,6 +1,8 @@
 const { executeQuery, parseData, withTransaction, perms } = require('../utils');
 const utils = require('../../lib/hashUtils');
 const logger = require('../../logger');
+const { SITE_OWNER_EMAIL } = require('../../config');
+
 let api;
 function setApi(_api) {
   api = _api;
@@ -302,10 +304,29 @@ async function del(sessionUser, username, password) {
       if (!isCorrectLogin) {
         return [403, 'Password incorrect!'];
       }
-      return await doDeleteUser(user.id);
+      await executeQuery('INSERT INTO userdeleterequest (user_id) VALUES (?);', [user.id]);
+      await api.email.sendTemplateEmail(api.email.templates.DELETE, SITE_OWNER_EMAIL, { username }, api.email.groups.ACCOUNT_ALERTS);
+      return [200];
     } else {
       return [status];
     }
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
+async function getDeleteRequest(user) {
+  if (!user) return [401];
+  
+  try {
+    const request = (await executeQuery(
+      'SELECT * FROM userdeleterequest WHERE user_id = ?',
+      [user.id],
+    ))[0];
+    if (!request) return [404];
+
+    return [200, request];
   } catch (err) {
     logger.error(err);
     return [500];
@@ -439,6 +460,8 @@ module.exports = {
   put,
   putUsername,
   del,
+  doDeleteUser,
+  getDeleteRequest,
   prepareVerification,
   verifyUser,
   preparePasswordReset,

@@ -5,6 +5,7 @@ const {
   DOMAIN,
   ADDR_PREFIX,
   DEV_MODE,
+  SITE_OWNER_EMAIL,
   SENDGRID_API_KEY,
   OPENAI_API_KEY,
   RECAPTCHA_KEY,
@@ -21,6 +22,7 @@ module.exports.PORT = Number(PORT);
 module.exports.DOMAIN = DOMAIN;
 module.exports.ADDR_PREFIX = ADDR_PREFIX;
 module.exports.DEV_MODE = DEV_MODE === 'true';
+module.exports.SITE_OWNER_EMAIL = SITE_OWNER_EMAIL;
 module.exports.SENDGRID_API_KEY = SENDGRID_API_KEY;
 module.exports.OPENAI_API_KEY = OPENAI_API_KEY;
 module.exports.RECAPTCHA_KEY = RECAPTCHA_KEY;

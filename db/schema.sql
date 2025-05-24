@@ -54,6 +54,12 @@ CREATE TABLE usernamechange (
   FOREIGN KEY (changed_for) REFERENCES user (id) ON DELETE CASCADE
 );
 
+CREATE TABLE userdeleterequest (
+  user_id INT NOT NULL,
+  requested_at TIMESTAMP DEFAULT NOW(),
+  FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE
+);
+
 CREATE TABLE session (
   id INT NOT NULL AUTO_INCREMENT,
   hash VARCHAR(64) NOT NULL,

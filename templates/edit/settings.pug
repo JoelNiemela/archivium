@@ -103,15 +103,20 @@ block content
           li Your universes with at least one other owner or admin will be scrubbed of any data pointing to your account.
           li All notes you have created will be deleted.
           li All comments you have written will be deleted.
-        p.mt-1 If you are 
-          b absolutely sure
-          |  you want to delete your account, enter your password into the form below:
-        .inputGroup
-          label( for='password' ) Password:
-          input( id='password' name='password' type='password' )
-        .inputGroup
-          .d-flex.col-2
-            button.color-error( type='submit' ) Delete Account
+        if deleteRequest
+          p.mt-1
+            i A delete request for this account was made #{formatDate(deleteRequest.requested_at, true)} and is currently pending.
+        else
+          p.mt-1
+            | If you are 
+            b absolutely sure
+            |  you want to delete your account, enter your password into the form below:
+          .inputGroup
+            label( for='password' ) Password:
+            input( id='password' name='password' type='password' )
+          .inputGroup
+            .d-flex.col-2
+              button.color-error( type='submit' ) Delete Account
 
         small.color-error.hidden#delete-account-error
 

@@ -1,8 +1,11 @@
 const { QueryBuilder, Cond, executeQuery, parseData, perms, withTransaction } = require('../utils');
-const { getOne: getUniverse, validateShortname } = require('./universe');
-const { getOne: getUser } = require('./user');
 const { extractLinks } = require('../../static/scripts/markdown/parse');
 const logger = require('../../logger');
+
+let api;
+function setApi(_api) {
+  api = _api;
+}
 
 async function getOne(user, conditions, permissionsRequired=perms.READ, basicOnly=false, options={}) {
 
@@ -331,9 +334,9 @@ async function getCountsByUniverse(user, universe, validate=true) {
 async function forEachUserToNotify(item, callback) {
   const targetIDs = (await executeQuery(`SELECT user_id FROM itemnotification WHERE item_id = ? AND is_enabled`, [ item.id ])).map(row => row.user_id);
   for (const userID of targetIDs) {
-    const [_, user] = await getUser({ 'user.id': userID });
+    const [_, user] = await api.user.getOne({ 'user.id': userID });
     if (user) {
-      callback(user);
+      await callback(user);
     }
   }
 }
@@ -342,10 +345,10 @@ async function post(user, body, universeShortName) {
   const { title, shortname, item_type, parent_id, obj_data } = body;
 
   try {
-    const shortnameError = validateShortname(shortname);
+    const shortnameError = api.user.validateShortname(shortname);
     if (shortnameError) return [400, shortnameError];
 
-    const [code, universe] = await getUniverse(user, { 'universe.shortname': universeShortName }, perms.WRITE);
+    const [code, universe] = await api.user.getOne(user, { 'universe.shortname': universeShortName }, perms.WRITE);
     if (!universe) return [code];
 
     let data;
@@ -895,6 +898,7 @@ const image = (function() {
 })();
 
 module.exports = {
+  setApi,
   image,
   getOne,
   getMany,

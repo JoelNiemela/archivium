@@ -1,9 +1,10 @@
 const { executeQuery, parseData, perms, getPfpUrl, withTransaction } = require('../utils');
 const logger = require('../../logger');
-const notification = require('./notification');
-const universeapi = require('./universe');
-const userapi = require('./user');
-const itemapi = require('./item');
+
+let api;
+function setApi(_api) {
+  api = _api;
+}
 
 async function getThreads(user, options, canPost=false, includeExtra=false) {
   try {
@@ -99,7 +100,7 @@ async function getCommentsByThread(user, threadId, validate=true, inclCommenters
 async function getCommentsByItem(user, itemId, validate=true, inclCommenters=false) {
   try {
     if (validate) {
-      const [code, item] = await itemapi.getOne(user, itemId, permissionLevel, true);
+      const [code, item] = await api.item.getOne(user, itemId, permissionLevel, true);
       if (!item) return [code];
     }
     const queryString1 = `
@@ -127,7 +128,7 @@ async function getCommentsByItem(user, itemId, validate=true, inclCommenters=fal
 }
 
 async function postUniverseThread(user, universeShortname, { title }) {
-  const [code, universe] = await universeapi.getOne(user, { shortname: universeShortname }, perms.READ);
+  const [code, universe] = await api.universe.getOne(user, { shortname: universeShortname }, perms.READ);
   if (!universe) return [code];
   if (!universe.discussion_enabled) return [403];
   if (!universe.discussion_open && universe.author_permissions[user.id] < perms.COMMENT) return [403];
@@ -146,7 +147,7 @@ async function postUniverseThread(user, universeShortname, { title }) {
 async function forEachUserToNotify(thread, callback) {
   const targetIDs = (await executeQuery(`SELECT user_id FROM threadnotification WHERE thread_id = ? AND is_enabled`, [ thread.id ])).map(row => row.user_id);
   for (const userID of targetIDs) {
-    const [_, user] = await userapi.getOne({ 'user.id': userID });
+    const [_, user] = await api.user.getOne({ 'user.id': userID });
     if (user) {
       callback(user);
     }
@@ -170,7 +171,7 @@ async function postCommentToThread(user, threadId, { body, reply_to }) {
 
     forEachUserToNotify(thread, async (target) => {
       if (target.id === user.id) return;
-      await notification.notify(target, notification.types.COMMENTS, {
+      await api.notification.notify(target, api.notification.types.COMMENTS, {
         title: `${user.username} commented in ${thread.title}:`,
         body: body,
         icon: getPfpUrl(user),
@@ -186,10 +187,10 @@ async function postCommentToThread(user, threadId, { body, reply_to }) {
 }
 
 async function postCommentToItem(user, universeShortname, itemShortname, { body, reply_to }) {
-  const [code1, universe] = await universeapi.getOne(user, { shortname: universeShortname }, perms.READ);
+  const [code1, universe] = await api.universe.getOne(user, { shortname: universeShortname }, perms.READ);
   if (!universe) return [code1];
   if (!universe.discussion_enabled) return [403];
-  const [code2, item] = await itemapi.getByUniverseAndItemShortnames(
+  const [code2, item] = await api.item.getByUniverseAndItemShortnames(
     user,
     universeShortname,
     itemShortname,
@@ -208,9 +209,9 @@ async function postCommentToItem(user, universeShortname, itemShortname, { body,
       await conn.execute(queryString2, [ item.id, data.insertId ]);
     });
 
-    itemapi.forEachUserToNotify(item, async (target) => {
+    await api.item.forEachUserToNotify(item, async (target) => {
       if (target.id === user.id) return;
-      await notification.notify(target, notification.types.COMMENTS, {
+      await api.notification.notify(target, api.notification.types.COMMENTS, {
         title: `${user.username} commented on ${item.title}:`,
         body: body,
         icon: getPfpUrl(user),
@@ -243,6 +244,7 @@ async function subscribeToThread(user, threadId, isSubscribed) {
 }
 
 module.exports = {
+  setApi,
   getThreads,
   getCommentsByThread,
   getCommentsByItem,

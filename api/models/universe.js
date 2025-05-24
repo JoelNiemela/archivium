@@ -1,5 +1,10 @@
-const { executeQuery, parseData, perms, getPfpUrl, withTransaction } = require('../utils');
+const { executeQuery, parseData, perms, withTransaction } = require('../utils');
 const logger = require('../../logger');
+
+let api;
+function setApi(_api) {
+  api = _api;
+}
 
 async function getOne(user, options, permissionLevel=perms.READ) {
   if (!options) return [400];
@@ -405,6 +410,7 @@ async function del(user, shortname) {
 }
 
 module.exports = {
+  setApi,
   getOne,
   getMany,
   getManyByAuthorId,

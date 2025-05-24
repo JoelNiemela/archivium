@@ -1,7 +1,10 @@
 const { executeQuery, parseData, withTransaction, perms } = require('../utils');
 const utils = require('../../lib/hashUtils');
-const universeapi = require('./universe');
 const logger = require('../../logger');
+let api;
+function setApi(_api) {
+  api = _api;
+}
 
 /**
    * returns a "safe" version of the user object with password data removed unless the includeAuth parameter is true
@@ -64,7 +67,7 @@ async function getMany(options, includeEmail=false) {
 
 async function getByUniverseShortname(user, shortname) {
 
-  const [code, universe] = await universeapi.getOne(user, { shortname });
+  const [code, universe] = await api.universe.getOne(user, { shortname });
   if (!universe) return [code];
 
   try {
@@ -425,6 +428,7 @@ const image = (function() {
 })();
 
 module.exports = {
+  setApi,
   image,
   getOne,
   getMany,

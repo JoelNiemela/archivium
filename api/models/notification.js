@@ -1,9 +1,13 @@
 const { executeQuery, parseData } = require('../utils');
 const { WEB_PUSH_ENABLED, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, ADDR_PREFIX, DOMAIN } = require('../../config');
-const email = require('./email');
 const logger = require('../../logger');
 const md5 = require('md5');
 const webpush = require('web-push');
+
+let api;
+function setApi(_api) {
+  api = _api;
+}
 
 if (WEB_PUSH_ENABLED) {
   webpush.setVapidDetails(
@@ -133,7 +137,7 @@ async function notify(target, notifType, message) {
     }
   
     if (enabledMethods[methods.EMAIL] && target.email_notifications) {
-      await email.sendTemplateEmail(email.templates.NOTIFY, target.email, { title, body, icon, clickUrl: `https://${DOMAIN}${ADDR_PREFIX}${clickUrl}` }, email.groups.NOTIFICATIONS);
+      await api.email.sendTemplateEmail(api.email.templates.NOTIFY, target.email, { title, body, icon, clickUrl: `https://${DOMAIN}${ADDR_PREFIX}${clickUrl}` }, api.email.groups.NOTIFICATIONS);
     }
 
     return [200, true];
@@ -235,6 +239,7 @@ const methods = {
 };
 
 module.exports = {
+  setApi,
   isSubscribed,
   subscribe,
   unsubscribe,

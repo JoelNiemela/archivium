@@ -42,14 +42,17 @@ module.exports = {
     const search = req.query.search;
     if (search) {
       const [code1, universes] = await api.universe.getMany(req.session.user, { strings: ['title LIKE ?'], values: [`%${search}%`] });
+      res.status(code1);
+      if (!universes) return;
       const [code2, itemsRaw] = await api.item.getMany(req.session.user, null, perms.READ, { search });
+      res.status(code2);
+      if (!itemsRaw) return;
       let notes, code3;
       if (req.session.user) {
         [code3, notes] = await api.note.getByUsername(req.session.user, req.session.user.username, null, { search });
+        res.status(code3);
+        if (!notes) return;
       }
-      const code = code1 !== 200 ? code1 : code2 !== 200 ? code2 : code3;
-      res.status(code);
-      if (code !== 200) return;
       const matchedItems = {};
       for (const item of itemsRaw) {
         if (item.id in matchedItems) {

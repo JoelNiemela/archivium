@@ -25,7 +25,7 @@ async function getOne(user, uuid) {
 }
 
 /**
- * This should never be called on it's own.
+ * This should never be called on its own.
  * Users should have access to notes iff:
  * * they own the note,
  * * they have access to a board this note is pinned to, or,
@@ -81,7 +81,7 @@ async function getMany(user, conditions, options) {
       ${options?.limit ? `LIMIT ${options.limit}` : ''}
     `;
     const notes = await executeQuery(queryString, parsedConds.values);
-    if (options?.limit === 1 && options?.connections) {
+    if (options?.limit === 1 && options?.connections && notes[0]) {
       notes[0].items = (notes[0].items ?? []).filter(val => val[0] !== null);
       notes[0].boards = (notes[0].boards ?? []).filter(val => val[0] !== null);
     }
@@ -94,7 +94,7 @@ async function getMany(user, conditions, options) {
 
 async function getByUsername(sessionUser, username, conditions, options) {
   try {
-    const [code, user] = await api.universe.getOne({ 'user.username': username });
+    const [code, user] = await api.user.getOne({ 'user.username': username });
     if (!user) return [code];
     const [_, notes] = await getMany(
       sessionUser,
@@ -328,6 +328,24 @@ async function delTags(user, uuid, tags) {
   }
 }
 
+async function del(user, uuid) {
+  if (!user) return [401];
+  try {
+    const [code, note] = await getOne(user, uuid);
+    if (!note) return [code];
+
+    // getOne will only return a note if we own it, but it doesn't hurt to double check for clarity
+    if (note.author_id !== user.id) return [403];
+
+    const data = await executeQuery('DELETE FROM note WHERE uuid = ?', [ uuid ]);
+
+    return [200, data];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
 module.exports = {
   setApi,
   getOne,
@@ -342,4 +360,5 @@ module.exports = {
   linkToItem,
   putTags,
   delTags,
+  del,
 };

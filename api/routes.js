@@ -76,6 +76,7 @@ module.exports = function(app, upload) {
         }, [
           new APIRoute('/:uuid', {
             GET: (req) => api.note.getOne(req.session.user, req.params.uuid),
+            DELETE: (req) => api.note.del(req.session.user, req.params.uuid),
           }),
         ]),
         new APIRoute('/universes', {

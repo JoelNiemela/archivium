@@ -55,7 +55,6 @@ block content
           } else if (response.status === 200) {
             window.location.reload();
           } else {
-            console.log(data)
             formError.innerText = data;
             formError.classList.remove('hidden');
           }

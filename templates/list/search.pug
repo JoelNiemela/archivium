@@ -53,7 +53,8 @@ block content
       .card.sheet.gap-4.align-start( data-goto=`${universeLink(item.universe_short)}/items/${item.shortname}` )
         .d-flex.flex-col.grow-1
           h3.ma-0
-            a.link.link-animated( href=`${universeLink(item.universe_short)}/items/${item.shortname}` ) #{item.title}
+            a.link.link-animated( href=`${universeLink(item.universe_short)}/items/${item.shortname}` )
+              +highlight(item.title, search, true)
           span #{capitalize(item.item_type)}
           div
             a.link.link-animated( href=`${universeLink(item.universe_short)}/` ) #{item.universe}
@@ -72,4 +73,15 @@ block content
         .d-flex.flex-wrap.gap-1.grow-4
           if item.tags
             each itemTag in item.tags
-              span ##{itemTag} 
+              if itemTag === search
+                b ##{itemTag} 
+              else
+                span #
+                  +highlight(itemTag, search)
+        
+        if item.snippet
+          .row-2( style={ 'grid-column': '1 / 3' } )
+            small
+              i
+                - const snippet = item.snippet
+                +highlight(formatSnippet(snippet, item.match_pos >= 50, snippet.length === 100), search)

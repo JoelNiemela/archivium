@@ -24,13 +24,13 @@ block content
     label( for='sort' )
       b #{T('Sort by')}: 
     select( id='sort' name='sort' )
-      option( value='created_at' ) Created
       option( value='updated_at' ) Updated
+      option( value='created_at' ) Created
       option( value='item_type' ) Type
       option( value='title' ) Title
       option( value='author' ) Author
     select( id='sort_order' name='sort_order' )
-      option( value='asc' ) Ascending
       option( value='desc' ) Descending
+      option( value='asc' ) Ascending
   hr
   include ../components/itemList.pug

@@ -118,8 +118,14 @@ function getQuery(selects=[], permsCond=undefined, whereConds=undefined, options
     ) tag`, new Cond('tag.item_id = item.id'))
     .where(whereConds)
     .groupBy(['item.id', 'user.username', 'universe.title', ...(options.groupBy ?? [])]);
-  if (options.sort) query.orderBy(options.sort, options.sortDesc);
-  if (options.limit) query.limit(options.limit);
+  if (options.sort) {
+    query.orderBy(options.sort, options.sortDesc);
+  } else {
+    query.orderBy('updated_at', true);
+  }
+  if (options.limit) {
+    query.limit(options.limit);
+  }
 
   return query;
 }

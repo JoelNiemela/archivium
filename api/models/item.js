@@ -229,7 +229,7 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, options
             ],
           ],
           permsCond,
-          whereConds.and('item.obj_data LIKE ?', `%"body":%"%${options.search}%"%`),
+          whereConds.and(`JSON_UNQUOTE(JSON_EXTRACT(item.obj_data, '$.body')) LIKE ?`, `%${options.search}%`),
           options,
         ).execute()),
       ]

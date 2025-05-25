@@ -9,12 +9,10 @@ block scripts
     async function sendVerifyLink() {
       clearInterval(updateRetryAfterInterval);
       const [response, data] = await getJSON('#{ADDR_PREFIX}/api/users/#{user.username}/send-verify-link');
-      console.log(response)
       const retryAfterText = document.querySelector('#retry-after');
       if (response.status === 429) {
         const retryAfter = new Date(data);
         const secondsLeft = Math.round((retryAfter - new Date()) / 1000);
-        console.log(retryAfter, secondsLeft)
         retryAfterText.textContent = `Please wait ${secondsLeft} seconds before trying again.`;
         updateRetryAfterInterval = setInterval(() => {
           const secondsLeft = Math.round((retryAfter - new Date()) / 1000);

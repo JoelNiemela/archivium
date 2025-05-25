@@ -211,15 +211,28 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, options
           whereConds.and('search_tag.tag LIKE ?', `%${options.search}%`),
           options,
         ).innerJoin(['tag', 'search_tag'], new Cond('search_tag.item_id = item.id'))
-      ).union(
-        getQuery(
-          selects,
-          permsCond,
-          whereConds.and('item.obj_data LIKE ?', `%${options.search}%`),
-          options,
-        )
       );
       data = await query.execute();
+      data = [
+        ...data,
+        ...(await getQuery(
+          [
+            ...selects,
+            ['LOCATE(?, item.obj_data) AS match_pos', null, options.search],
+            [`
+              SUBSTRING(
+                JSON_UNQUOTE(JSON_EXTRACT(item.obj_data, '$.body')),
+                GREATEST(1, LOCATE(?, JSON_UNQUOTE(JSON_EXTRACT(item.obj_data, '$.body'))) - 50),
+                100
+              ) AS snippet`,
+              null, options.search,
+            ],
+          ],
+          permsCond,
+          whereConds.and('item.obj_data LIKE ?', `%"body":%"%${options.search}%"%`),
+          options,
+        ).execute()),
+      ]
     } else {
       const query = getQuery(selects, permsCond, whereConds, options);
       for (const join of joins) {

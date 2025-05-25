@@ -184,7 +184,6 @@ block content
           const hash = location.hash.substr(1);
           if (hash) {
             const el = document.getElementById(hash);
-            console.log(hash, el)
             el.scrollIntoView();
           }
         });
@@ -217,7 +216,6 @@ block content
           e.stopPropagation();
           if (!galleryModalState[i]) {
             itemKey.classList.add('modal');
-            console.log(itemKey)
             galleryModalState[i] = true;
           }
         };

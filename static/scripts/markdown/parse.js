@@ -121,7 +121,7 @@ if (!window.postJSON) throw 'fetchUtils.js not loaded!';
               itemHash = universe;
               universe = currentUniverse;
             }
-            const [item, _] = itemHash.split('#');
+            const item = itemHash.split('#')[0].split('?')[0];
             this.attrs['data-universe'] = universe;
             this.attrs['data-item'] = item;
             this.attrs['data-type'] = 'item-link';

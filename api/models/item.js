@@ -66,13 +66,17 @@ async function getOne(user, conditions, permissionsRequired=perms.READ, basicOnl
           WHERE from_item = ?
         `, [item.id]);
         const replacements = {};
+        const attachments = {};
         for (const { to_universe_short, to_item_short, href } of links) {
           const replacement = to_universe_short === item.universe_short ? `${to_item_short}` : `${to_universe_short}/${to_item_short}`;
           replacements[href] = replacement;
+          const match = href.match(/[?#]/);
+          const attachment = match ? `${match[0]}${href.slice(match.index + 1)}` : '';
+          attachments[href] = attachment;
         }
         objData.body = objData.body.replace(/(?<!\\)(\[[^\]]*?\])\(([^)]+)\)/g, (match, brackets, parens) => {
           if (parens in replacements) {
-            return `${brackets}(@${replacements[parens]})`;
+            return `${brackets}(@${replacements[parens]}${attachments[parens]})`;
           }
           return match;
         });

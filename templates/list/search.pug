@@ -25,7 +25,8 @@ block content
       .card.sheet.gap-4.align-start( data-goto=`${universeLink(universe.shortname)}/` )
         .d-flex.flex-col.grow-1
           h3.ma-0
-            a.link.link-animated( href=`${universeLink(universe.shortname)}/` ) #{universe.title}
+            a.link.link-animated( href=`${universeLink(universe.shortname)}/` )
+              +highlight(universe.title, search, true)
           .d-flex.gap-1
 
         .d-flex.flex-col.grow-3
@@ -78,3 +79,33 @@ block content
               i
                 - const snippet = item.snippet
                 +highlight(formatSnippet(snippet, item.match_pos >= 50, snippet.length === 100), search)
+    each note in notes
+      .card.sheet.gap-4.align-start( data-goto=`/notes/${note.uuid}` )
+        .d-flex.flex-col.grow-1
+          h3.ma-0
+            a.link.link-animated( href=`/notes/${note.uuid}` )
+              +highlight(note.title, search, true)
+
+        .d-flex.flex-col.grow-3
+            span 
+              b #{T('Created')}: 
+              | #{formatDate(note.created_at)}
+            span 
+              b #{T('Updated')}: 
+              | #{formatDate(note.updated_at)}
+
+        .d-flex.flex-wrap.gap-1.grow-4
+          if note.tags
+            each noteTag in note.tags
+              if noteTag === search
+                b ##{noteTag} 
+              else
+                span #
+                  +highlight(noteTag, search)
+        
+        if note.snippet
+          .row-2( style={ 'grid-column': '1 / 3' } )
+            small
+              i
+                - const snippet = note.snippet
+                +highlight(formatSnippet(snippet, note.match_pos >= 50, snippet.length === 100), search)

@@ -1,4 +1,5 @@
 extends ../layout.pug
+include ../mixins.pug
 
 block scripts
   script
@@ -7,8 +8,8 @@ block scripts
 
 block content
   h1.center Items
-  div
-    label( for='sort' )
+  .d-flex.align-center
+    label.mr-1( for='sort' )
       b #{T('Sort by')}: 
     select( id='sort' name='sort' )
       option( value='updated_at' ) Updated
@@ -19,5 +20,9 @@ block content
     select( id='sort_order' name='sort_order' )
       option( value='desc' ) Descending
       option( value='asc' ) Ascending
+    .grow-1
+    form.flex-row.gap-0
+      input( id='search' name='search' value=search placeholder='Search...' )
+      button( type='submit' ) &#x1F50E;&#xFE0E;
   hr
   include ../components/itemList.pug

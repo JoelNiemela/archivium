@@ -12,6 +12,11 @@ block content
     include /static/scripts/fetchUtils.js
   
   h1.center Universes
-  a.link.link-animated( href=`${ADDR_PREFIX}/universes/create` ) Create New
+  .d-flex.align-end
+    a.link.link-animated( href=`${ADDR_PREFIX}/universes/create` ) Create New
+    .grow-1
+    form.flex-row.gap-0
+      input( id='search' name='search' value=search placeholder='Search...' )
+      button( type='submit' ) &#x1F50E;&#xFE0E;
   hr
   include ../components/universeList.pug

@@ -45,12 +45,12 @@ async function getMany(user, conditions, options) {
       parsedConds.strings.push('note.public');
     }
     if (options?.search) {
-      parsedConds.strings.push('note.title LIKE ? OR note.body LIKE ? OR tag.tags LIKE ?');
+      parsedConds.strings.push('(note.title LIKE ? OR note.body LIKE ? OR tag.tags LIKE ?)');
       parsedConds.values.push(`%${options?.search}%`);
       parsedConds.values.push(`%${options?.search}%`);
       parsedConds.values.push(`%${options?.search}%`);
-      parsedConds.values.push(`%${options?.search}%`);
-      parsedConds.values.push(`%${options?.search}%`);
+      parsedConds.values.unshift(`%${options?.search}%`);
+      parsedConds.values.unshift(`%${options?.search}%`);
     }
     const queryString = `
       SELECT DISTINCT

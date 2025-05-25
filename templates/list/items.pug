@@ -11,33 +11,13 @@ block content
     label( for='sort' )
       b #{T('Sort by')}: 
     select( id='sort' name='sort' )
-      option( value='created_at' ) Created
       option( value='updated_at' ) Updated
+      option( value='created_at' ) Created
       option( value='item_type' ) Type
       option( value='title' ) Title
       option( value='author' ) Author
     select( id='sort_order' name='sort_order' )
-      option( value='asc' ) Ascending
       option( value='desc' ) Descending
+      option( value='asc' ) Ascending
   hr
   include ../components/itemList.pug
-  //- table.sheet.w-100
-  //-   thead
-  //-     th Name
-  //-     th Type
-  //-     th Universe
-  //-     th Author
-  //-     th Created
-  //-     th Updated
-  //-   tbody
-  //-     each item in items
-  //-       tr
-  //-         td
-  //-           a.link.link-animated( href=`${ADDR_PREFIX}/items/${item.shortname}` ) #{item.title}
-  //-         td #{capitalize(item.itemTypeName)}
-  //-         td
-  //-           a.link.link-animated( href=`${ADDR_PREFIX}/universes/${item.universe_short}` ) #{item.universe}
-  //-         td
-  //-           a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
-  //-         td #{formatDate(item.created_at, true)}
-  //-         td #{formatDate(item.updated_at, true)}

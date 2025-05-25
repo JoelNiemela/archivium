@@ -218,7 +218,7 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, options
         ...(await getQuery(
           [
             ...selects,
-            ['LOCATE(?, item.obj_data) AS match_pos', null, options.search],
+            [`LOCATE(?, JSON_UNQUOTE(JSON_EXTRACT(item.obj_data, '$.body'))) AS match_pos`, null, options.search],
             [`
               SUBSTRING(
                 JSON_UNQUOTE(JSON_EXTRACT(item.obj_data, '$.body')),

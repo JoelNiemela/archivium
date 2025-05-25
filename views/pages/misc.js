@@ -43,7 +43,11 @@ module.exports = {
     if (search) {
       const [code1, universes] = await api.universe.getMany(req.session.user, { strings: ['title LIKE ?'], values: [`%${search}%`] });
       const [code2, itemsRaw] = await api.item.getMany(req.session.user, null, perms.READ, { search });
-      const code = code1 !== 200 ? code1 : code2;
+      let notes, code3;
+      if (req.session.user) {
+        [code3, notes] = await api.note.getByUsername(req.session.user, req.session.user.username, null, { search });
+      }
+      const code = code1 !== 200 ? code1 : code2 !== 200 ? code2 : code3;
       res.status(code);
       if (code !== 200) return;
       const matchedItems = {};
@@ -55,9 +59,9 @@ module.exports = {
         }
       }
       const items = Object.values(matchedItems).sort((a, b) => a.updated_at < b.updated_at ? 1 : -1);
-      res.prepareRender('search', {items, universes, search });
+      res.prepareRender('search', {items, universes, notes: notes ?? [], search });
     } else {
-      res.prepareRender('search', { items: [], universes: [], search: '' });
+      res.prepareRender('search', { items: [], universes: [], notes: [], search: '' });
     }
   },
 };

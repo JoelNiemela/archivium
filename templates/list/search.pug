@@ -12,17 +12,10 @@ block content
     include /static/scripts/listUtils.js
 
   script.
-    function search() {
-      const url = new URL(window.location);
-      url.searchParams.set('search', document.getElementById('search').value);
-      history.pushState(null, '', url);
-      location.reload();
-    }
-
   h1.center Search
-  div
+  form.flex-row.gap-0
     input( id='search', name='search', value=search )
-    button( onclick='search()' ) &#x1F50E;&#xFE0E;
+    button( type='submit' ) &#x1F50E;&#xFE0E;
   hr
   if search
     p

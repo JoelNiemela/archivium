@@ -44,25 +44,16 @@ module.exports = {
       const [code1, universes] = await api.universe.getMany(req.session.user, { strings: ['title LIKE ?'], values: [`%${search}%`] });
       res.status(code1);
       if (!universes) return;
-      const [code2, itemsRaw] = await api.item.getMany(req.session.user, null, perms.READ, { search });
+      const [code2, items] = await api.item.getMany(req.session.user, null, perms.READ, { search });
       res.status(code2);
-      if (!itemsRaw) return;
+      if (!items) return;
       let notes, code3;
       if (req.session.user) {
         [code3, notes] = await api.note.getByUsername(req.session.user, req.session.user.username, null, { search });
         res.status(code3);
         if (!notes) return;
       }
-      const matchedItems = {};
-      for (const item of itemsRaw) {
-        if (item.id in matchedItems) {
-          matchedItems[item.id] = {...item, ...matchedItems[item.id]};
-        } else {
-          matchedItems[item.id] = item;
-        }
-      }
-      const items = Object.values(matchedItems).sort((a, b) => a.updated_at < b.updated_at ? 1 : -1);
-      res.prepareRender('search', {items, universes, notes: notes ?? [], search });
+      res.prepareRender('search', { items, universes, notes: notes ?? [], search });
     } else {
       res.prepareRender('search', { items: [], universes: [], notes: [], search: '' });
     }

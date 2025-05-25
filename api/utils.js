@@ -126,7 +126,10 @@ class QueryBuilder {
     if (selectCols.length) {
       if (!this.table) throw 'No table specified!';
       queryStr += `SELECT ${selectCols.map(col => {
-        if (this.selectValues[col]) values = [...values, this.selectValues[col]];
+        if (this.selectValues[col]) {
+          if (this.selectValues[col] instanceof Array) values = [...values, ...this.selectValues[col]];
+          else values = [...values, this.selectValues[col]];
+        }
         if (this.selects[col]) return `${col} AS ${this.selects[col]}`;
         else return col;
       }).join(', ')}`;

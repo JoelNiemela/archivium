@@ -9,6 +9,7 @@ const logger = require('../../logger');
 
 module.exports = {
   async list(req, res) {
+    const search = req.query.search;
     const [code1, universes] = await api.universe.getMany(req.session.user);
     const [code2, items] = await api.item.getMany(req.session.user, null, Math.max(perms.READ, Number(req.query.perms)) || perms.READ, {
       sort: req.query.sort,
@@ -18,6 +19,7 @@ module.exports = {
       tag: req.query.tag,
       universe: req.query.universe,
       author: req.query.author,
+      search,
     });
     const code = code1 !== 200 ? code1 : code2;
     res.status(code);
@@ -33,6 +35,7 @@ module.exports = {
       universe: req.query.universe,
       author: req.query.author,
       showUniverse: true,
+      search,
     });
   },
 

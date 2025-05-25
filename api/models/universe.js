@@ -54,7 +54,8 @@ async function getMany(user, conditions, permissionLevel=perms.READ) {
       LEFT JOIN followeruniverse AS fu ON universe.id = fu.universe_id
       LEFT JOIN user AS owner ON universe.author_id = owner.id
       ${conditionString}
-      GROUP BY universe.id;`;
+      GROUP BY universe.id
+      ORDER BY updated_at DESC;`;
     const data = await executeQuery(queryString, conditions && conditions.values);
     return [200, data];
   } catch (err) {

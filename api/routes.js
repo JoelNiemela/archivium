@@ -207,6 +207,16 @@ module.exports = function(app, upload) {
                 }),
               ]),
             ]),
+            new APIRoute('/comments', {
+              GET: async (req) => {
+                const [_, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortName, req.params.itemShortName);
+                return await api.discussion.getCommentsByItem(req.session.user, item.id);
+              },
+            }, [
+              new APIRoute('/:commentId', {
+                DELETE: (req) => api.discussion.deleteItemComment(req.session.user, req.params.universeShortName, req.params.itemShortName, req.params.commentId),
+              }),
+            ]),
           ]),
         ]),
         new APIRoute('/events', {
@@ -216,15 +226,17 @@ module.exports = function(app, upload) {
           PUT: (req) => api.universe.putUserFollowing(req.session.user, req.params.universeShortName, req.body.isFollowing),
         }),
         new APIRoute('/discussion', {
-          GET: (req) => frmtData(
-            api.discussion.getThreads(req.session.user, { 'universe.shortname': req.params.universeShortName }),
-            (data) => data[0],
-          ),
+          GET: (req) => api.discussion.getThreads(req.session.user, { 'universe.shortname': req.params.universeShortName }, false, true),
           POST: (req) => api.discussion.postThread(req.session.user, req.params.universeShortName, req.body),
         }, [
-          new APIRoute('/:id', {}, [
+          new APIRoute('/:discussionId', {
+            GET: (req) => api.discussion.getCommentsByThread(req.session.user, req.params.discussionId),
+          }, [
+            new APIRoute('/:commentId', {
+              DELETE: (req) => api.discussion.deleteThreadComment(req.session.user, req.params.discussionId, req.params.commentId),
+            }),
             new APIRoute('/subscribe', {
-              PUT: (req) => api.discussion.subscribeToThread(req.session.user, req.params.id, req.body.isSubscribed),
+              PUT: (req) => api.discussion.subscribeToThread(req.session.user, req.params.discussionId, req.body.isSubscribed),
             }),
           ]),
         ]),

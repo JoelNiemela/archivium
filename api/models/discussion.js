@@ -9,9 +9,6 @@ function setApi(_api) {
 async function getThreads(user, options, canPost=false, includeExtra=false) {
   try {
     const parsedOptions = parseData(options);
-    // const readOnlyQueryString = permissionLevel > perms.READ ? '' : `universe.public = 1`;
-    // const usrQueryString = user ? `(au_filter.user_id = ${user.id} AND au_filter.permission_level >= ${permissionLevel})` : '';
-    // const permsQueryString = `${readOnlyQueryString}${(readOnlyQueryString && usrQueryString) ? ' OR ' : ''}${usrQueryString}`;
     const filter = user
       ? (canPost
         ? `
@@ -100,7 +97,7 @@ async function getCommentsByThread(user, threadId, validate=true, inclCommenters
 async function getCommentsByItem(user, itemId, validate=true, inclCommenters=false) {
   try {
     if (validate) {
-      const [code, item] = await api.item.getOne(user, itemId, permissionLevel, true);
+      const [code, item] = await api.item.getOne(user, { 'item.id': itemId }, perms.READ, true);
       if (!item) return [code];
     }
     const queryString1 = `
@@ -243,6 +240,62 @@ async function subscribeToThread(user, threadId, isSubscribed) {
   }
 }
 
+async function deleteThreadComment(user, threadId, commentId) {
+  if (!user) return [401];
+  const [code, threads] = await getThreads(user, { 'discussion.id': threadId });
+  const thread = threads[0];
+  if (!thread) return [code];
+
+  try {
+    const comment = (await executeQuery(`
+      SELECT comment.*
+      FROM comment
+      INNER JOIN threadcomment AS tc ON tc.comment_id = comment.id
+      WHERE tc.thread_id = ? AND comment.id = ?
+    `, [thread.id, commentId]))[0];
+    if (comment.author_id !== user.id) {
+      const [code, universe] = await api.universe.getOne(user, { 'universe.shortname': thread.universe_short }, perms.ADMIN);
+      if (!universe) return [code];
+    }
+
+    await executeQuery('UPDATE comment SET body = NULL, author_id = NULL WHERE id = ?', [commentId]);
+    return [200];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
+async function deleteItemComment(user, universeShortname, itemShortname, commentId) {
+  const [code, item] = await api.item.getByUniverseAndItemShortnames(
+    user,
+    universeShortname,
+    itemShortname,
+    perms.READ,
+    true,
+  );
+  if (!item) return [code];
+
+  try {
+    const comment = (await executeQuery(`
+      SELECT comment.*
+      FROM comment
+      INNER JOIN itemcomment AS ic ON ic.comment_id = comment.id
+      WHERE ic.item_id = ? AND comment.id = ?
+    `, [item.id, commentId]))[0];
+    if (comment.author_id !== user.id) {
+      const [code, universe] = await api.universe.getOne(user, { 'universe.shortname': item.universe_short }, perms.ADMIN);
+      if (!universe) return [code];
+    }
+
+    await executeQuery('UPDATE comment SET body = NULL, author_id = NULL WHERE id = ?', [commentId]);
+    return [200];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
 module.exports = {
   setApi,
   getThreads,
@@ -252,4 +305,6 @@ module.exports = {
   postCommentToThread,
   postCommentToItem,
   subscribeToThread,
+  deleteThreadComment,
+  deleteItemComment,
 };

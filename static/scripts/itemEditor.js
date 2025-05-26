@@ -543,7 +543,14 @@ async function save(delay=5000) {
     }
 
     try {
-      await putJSON(`/api/universes/${window.item.universe_short}/items/${window.item.shortname}`, data);
+      const errSpan = document.querySelector('#item-error');
+      errSpan.classList.add('hidden');
+      const [response, err] = await putJSON(`/api/universes/${window.item.universe_short}/items/${window.item.shortname}`, data);
+      if (!response.ok) {
+        errSpan.classList.remove('hidden');
+        errSpan.textContent = err;
+        throw err;
+      }
       console.log('SAVED.');
       saveBtn.firstChild.innerText = 'Saved';
       previousData = data;
@@ -566,3 +573,11 @@ function preview() {
   needsSaving = false;
   document.forms.edit.submit();
 }
+
+window.addEventListener('load', () => {
+  document.forms.edit.addEventListener('submit', () => {
+    const saveBtn = document.getElementById('save-btn');
+    saveBtn.firstChild.innerText = 'Saving...';
+    needsSaving = false;
+  });
+});

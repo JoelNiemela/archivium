@@ -82,14 +82,17 @@ module.exports = {
   },
 
   async editItem(req, res) {
-    const [code, err] = await api.item.save(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
+    const [code, errOrId] = await api.item.save(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
     res.status(code);
-    if (err) {
-      // return res.prepareRender('editItem', { error: err, ...req.body });
-      await pages.item.edit(req, res, err, req.body);
+    if (code !== 200) {
+      await pages.item.edit(req, res, errOrId, req.body);
       return;
+    } else {
+      const [code, item] = await api.item.getOne(req.session.user, { 'item.id': errOrId }, perms.READ, true);
+      res.status(code);
+      if (!item) return;
+      res.redirect(`${universeLink(req, req.params.universeShortname)}/items/${item.shortname}`);
     }
-    res.redirect(`${universeLink(req, req.params.universeShortname)}/items/${req.params.itemShortname}`);
   },
 
   async commentOnItem(req, res) {

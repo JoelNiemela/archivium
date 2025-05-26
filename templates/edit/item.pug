@@ -28,39 +28,48 @@ block content
   h2 Edit #{item.title}
   form#edit( method='POST' )
 
-    div.inputGroup
+    .inputGroup
       label( for='title' ) Title: 
       input( id='title' type='text' name='title' value=item.title )
 
-    div.inputGroup
+    .inputGroup
+      label( for='shortname' ) Shortname: 
+      input( id='shortname' type='text' name='shortname' value=item.newShort )
+
+    .inputGroup
+      small( style={ 'grid-column': '2 / 4' } )
+        i NOTE: changes to the shortname will not auto-save.
+        br
+        i Other users currently editing this item will be unable to save their work. Change with caution.
+
+    .inputGroup
       label( for='item_type' ) Type: 
       select( id='item_type' name='item_type' )
         option( hidden disabled selected value ) #{T('Select one')}...
         each arr, type in universe.obj_data.cats
           option( value=type, selected=(item.item_type === type) )= capitalize(T(arr[0]))
 
-    div.inputGroup
+    .inputGroup
       label( for='tags' ) Tags: 
       textarea( id='tags' name='tags' ) #{(item.tags || []).join(' ')}
 
-    div.inputGroup
+    .inputGroup
       label( for='comments' ) Enable comments: 
       label.switch
         input( id='comments' name='comments' type='checkbox' checked=item.obj_data.comments onchange='updateObjData({ comments: this.checked })' )
         span.slider
 
-    div.inputGroup
+    .inputGroup
       label( for='notes' ) Enable notes: 
       label.switch
         input( id='notes' name='notes' type='checkbox' checked=item.obj_data.notes onchange='updateObjData({ notes: this.checked })' )
         span.slider
 
-    div.mt-2
+    .mt-2
       button( type='submit' ) Save Changes
 
-    if error
-      div
-        span( style={color: 'red', 'font-size': 'small'} )= error 
+    div
+      span#item-error( class={ hidden: !error } style={color: 'red', 'font-size': 'small'} )= error 
     
     hr.w-100.mb-0
 

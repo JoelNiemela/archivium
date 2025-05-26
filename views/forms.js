@@ -1,10 +1,9 @@
-const { ADDR_PREFIX, DEV_MODE } = require('../config');
-const Auth = require('../middleware/auth');
+const { ADDR_PREFIX } = require('../config');
 const api = require('../api');
-const md5 = require('md5');
 const { universeLink } = require('../templates');
-const { perms, Cond, getPfpUrl } = require('../api/utils');
+const { perms } = require('../api/utils');
 const logger = require('../logger');
+const pages = require('./pages');
 
 module.exports = {
   async notificationSettings(req, res) {
@@ -86,7 +85,9 @@ module.exports = {
     const [code, err] = await api.item.save(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
     res.status(code);
     if (err) {
-      return res.prepareRender('editItem', { error: err, ...body });
+      // return res.prepareRender('editItem', { error: err, ...req.body });
+      await pages.item.edit(req, res, err, req.body);
+      return;
     }
     res.redirect(`${universeLink(req, req.params.universeShortname)}/items/${req.params.itemShortname}`);
   },

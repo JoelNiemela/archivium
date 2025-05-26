@@ -39,9 +39,11 @@ block breadcrumbs
 
 block content
   .d-flex.justify-center
-    .sheet.mt-8.px-8.py-4( style={ 'background-color': item.itemTypeColor } )
+    .sheet.mt-8.px-8.py-4( style={ 'background-color': item.itemTypeColor, 'min-width': '15vw' } )
       h1.center.ma-0 #{item.title}
-      p.center.ma-0 #{capitalize(T(item.itemTypeName))} of #{item.universe}
+      p.center.ma-0 #{capitalize(T(item.itemTypeName))}
+        if !displayUniverse
+          |  of #{item.universe}
   p.center.mb-2
     small Created by 
       if item.author

@@ -23,7 +23,9 @@ block content
       });
     });
 
-  h2 Update Permissions for #{universe.title}
+  .d-flex.justify-between.align-baseline
+    h2 Update Permissions for #{universe.title}
+    a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) Go back
   .d-flex.flex-col.align-start
     .grid( style={ 'grid-template-columns': '1fr 1rem 1fr' } )
       each perm, aid in universe.author_permissions

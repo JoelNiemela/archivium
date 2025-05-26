@@ -10,11 +10,14 @@ block title
     | of #{universe.title}
     
 block breadcrumbs
-  a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
-  |  / 
-  a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
-  |  / 
-  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
+  if displayUniverse
+    a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{universe.title}
+  else
+    a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
+    |  / 
+    a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
+    |  / 
+    a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
   |  / 
   if type
     | #{capitalize(T(`${((universe.obj_data.cats || {})[type] || [, 'Missing Category'])[1]}`))}

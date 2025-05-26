@@ -24,11 +24,14 @@ block scripts
     //- include /static/scripts/editor/rich.js
 
 block breadcrumbs
-  a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
-  |  / 
-  a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
-  |  / 
-  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
+  if displayUniverse
+    a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{universe.title}
+  else
+    a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
+    |  / 
+    a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
+    |  / 
+    a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
   |  / 
   a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items?type=${item.item_type}` ) #{capitalize(T(`${((universe.obj_data.cats || {})[item.item_type] || [, 'Missing Category'])[1]}`))}
   |  / 

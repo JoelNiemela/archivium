@@ -15,6 +15,10 @@ h1, h2, h3, h4, h5, h6, .lora {
   scroll-margin-top: var(--page-margin-top);
 }
 
+ul, ol {
+  padding-inline-start: 2.5rem;
+}
+
 body {
   min-height: 100vh;
   margin: 0;

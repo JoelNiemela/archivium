@@ -92,7 +92,7 @@ module.exports = {
     const [code1, fetchedItem] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
     res.status(code1);
     if (!fetchedItem) return;
-    const item = {...fetchedItem, ...(body ?? {})};
+    const item = {...fetchedItem, ...(body ?? {}), shortname: fetchedItem.shortname, newShort: body?.shortname ?? fetchedItem.shortname};
     const [code2, itemList] = await api.item.getByUniverseId(req.session.user, item.universe_id, perms.READ, { type: 'character' });
     res.status(code2);
     if (code2 !== 200) return;

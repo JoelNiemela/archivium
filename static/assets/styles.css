@@ -1080,6 +1080,9 @@ input:checked + .slider:before {
 .mt-4 {
   margin-top: 1rem;
 }
+.mt-8 {
+  margin-top: 2rem;
+}
 
 .pa-0 {
   padding: 0;
@@ -1089,6 +1092,27 @@ input:checked + .slider:before {
 }
 .pa-2 {
   padding: 0.5rem;
+}
+
+.px-1 {
+  padding-right: 0.25rem;
+  padding-left: 0.25rem;
+}
+.px-2 {
+  padding-right: 0.5rem;
+  padding-left: 0.5rem;
+}
+.px-3 {
+  padding-right: 0.75rem;
+  padding-left: 0.75rem;
+}
+.px-4 {
+  padding-right: 1rem;
+  padding-left: 1rem;
+}
+.px-8 {
+  padding-right: 2rem;
+  padding-left: 2rem;
 }
 
 .py-1 {

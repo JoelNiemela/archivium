@@ -1,10 +1,6 @@
-const { ADDR_PREFIX, DEV_MODE } = require('../../config');
-const Auth = require('../../middleware/auth');
 const api = require('../../api');
-const md5 = require('md5');
-const { render, universeLink } = require('../../templates');
+const { universeLink } = require('../../templates');
 const { perms, Cond, getPfpUrl } = require('../../api/utils');
-const fs = require('fs/promises');
 const logger = require('../../logger');
 
 module.exports = {
@@ -92,10 +88,11 @@ module.exports = {
     });
   },
 
-  async edit(req, res) {
-    const [code1, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
+  async edit(req, res, error, body) {
+    const [code1, fetchedItem] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortname, req.params.itemShortname, perms.WRITE);
     res.status(code1);
-    if (!item) return;
+    if (!fetchedItem) return;
+    const item = {...fetchedItem, ...(body ?? {})};
     const [code2, itemList] = await api.item.getByUniverseId(req.session.user, item.universe_id, perms.READ, { type: 'character' });
     res.status(code2);
     if (code2 !== 200) return;
@@ -132,7 +129,7 @@ module.exports = {
     }
     const itemMap = {};
     itemList.forEach(item => itemMap[item.shortname] = item.title);
-    res.prepareRender(req.query.mode === 'raw' ? 'editItemRaw' : 'editItem', { item, itemMap, universe });
+    res.prepareRender(req.query.mode === 'raw' ? 'editItemRaw' : 'editItem', { item, itemMap, universe, error });
   },
 
   async delete(req, res) {

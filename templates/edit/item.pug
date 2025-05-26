@@ -57,6 +57,10 @@ block content
 
     div.mt-2
       button( type='submit' ) Save Changes
+
+    if error
+      div
+        span( style={color: 'red', 'font-size': 'small'} )= error 
     
     hr.w-100.mb-0
 
@@ -101,10 +105,6 @@ block content
       
     div
       input( id='obj_data' type='hidden' name='obj_data' value='{}' )
-
-    if error
-      div
-        span( style={color: 'red', 'font-size': 'small'} )= error 
 
   script.
     updateObjData(!{JSON.stringify(item.obj_data)});

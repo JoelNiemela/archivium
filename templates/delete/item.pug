@@ -5,7 +5,11 @@ block content
   script.
     async function deleteItem() {
       const shortname = document.getElementById('shortname').value;
-      if (shortname !== itemShortname) return;
+      if (shortname !== itemShortname) {
+        const errSpan = document.getElementById('error');
+        errSpan.innerText = 'Shortnames do not match!';
+        return;
+      };
       const response = await fetch(`/api/universes/#{item.universe_short}/items/${itemShortname}`, { method: 'DELETE' })
       if (response.ok) {
         window.location.reload();
@@ -33,7 +37,9 @@ block content
 
       p If you are 
         b absolutely sure
-        |  you want to delete #{item.title}, please type in its shortname below.
+        |  you want to delete #{item.title}, please type in its shortname (
+        code #{item.shortname}
+        | ) below.
 
     div.inputGroup
       label( for='title' ) Item shortname: 

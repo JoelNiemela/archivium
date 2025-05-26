@@ -398,7 +398,7 @@ block append styles
       searchBar.addEventListener('change', () => {
         noteList.querySelectorAll('.card').forEach((el) => {
           const { title, body } = JSON.parse(el.dataset.note);
-          el.classList.toggle('hidden', title.indexOf(searchBar.value) === -1 && body.indexOf(searchBar.value) === -1);
+          el.classList.toggle('hidden', title.toLowerCase().indexOf(searchBar.value.toLowerCase()) === -1 && body.toLowerCase().indexOf(searchBar.value.toLowerCase()) === -1);
         });
       });
 

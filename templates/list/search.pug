@@ -1,6 +1,9 @@
 extends ../layout.pug
 include ../mixins.pug
 
+block title
+  title Search — Archivium
+
 block breadcrumbs
   a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
   |  / 

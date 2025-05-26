@@ -1,6 +1,12 @@
 extends layout.pug
 include mixins.pug
 
+block title
+  if !contextUser
+    title Welcome to Archivium!
+  else
+    title Home — Archivium
+
 block scripts
   script
     include /static/scripts/fetchUtils.js

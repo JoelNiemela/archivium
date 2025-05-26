@@ -41,10 +41,18 @@ module.exports = {
       discussion_enabled: req.body.discussion_enabled === 'enabled',
       discussion_open: req.body.discussion_open === 'enabled',
     }
-    const [code, data] = await api.universe.put(req.session.user, req.params.universeShortname, req.body);
+    const [code, errOrId] = await api.universe.put(req.session.user, req.params.universeShortname, req.body);
     res.status(code);
-    if (code === 200) return res.redirect(`${universeLink(req, req.params.universeShortname)}/`);
-    res.prepareRender('editUniverse', { error: data, ...req.body });
+    if (code !== 200) {
+      await pages.universe.edit(req, res, errOrId, req.body);
+      return;
+    } else {
+      const [code, universe] = await api.universe.getOne(req.session.user, { 'universe.id': errOrId }, perms.READ);
+      res.status(code);
+      if (!universe) return;
+      res.redirect(`${universeLink(req, universe.shortname)}`);
+    }
+    
   },
 
   async createUniverseThread(req, res) {

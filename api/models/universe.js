@@ -192,18 +192,28 @@ async function post(user, body) {
   }
 }
 
-async function put(user, shortname, changes) {
-  const { title, public, discussion_enabled, discussion_open, obj_data } = changes;
+async function put(user, universeShortname, changes) {
+  const { title, shortname, public, discussion_enabled, discussion_open, obj_data } = changes;
 
   if (!title) return [400];
-  const [code, universe] = await getOne(user, { shortname }, perms.WRITE);
+  const [code, universe] = await getOne(user, { shortname: universeShortname }, perms.WRITE);
   if (!universe) return [code];
 
   try {
+    if (shortname !== null && shortname !== undefined && shortname !== universe.shortname) {
+      // The item shortname has changed, we need to update all links to it to reflect this
+      const shortnameError = validateShortname(shortname);
+      if (shortnameError) return [400, shortnameError];
+
+      await executeQuery('UPDATE itemlink SET to_universe_short = ? WHERE to_universe_short = ?', [shortname, universe.shortname]);
+    }
+
+
     const queryString = `
       UPDATE universe
       SET
         title = ?,
+        shortname = ?,
         public = ?,
         discussion_enabled = ?,
         discussion_open = ?,
@@ -211,7 +221,8 @@ async function put(user, shortname, changes) {
         updated_at = ?
       WHERE id = ?
     `;
-    return [200, await executeQuery(queryString, [ title, public, discussion_enabled, discussion_open, obj_data, new Date(), universe.id ])];
+    await executeQuery(queryString, [ title, shortname ?? universe.shortname, public, discussion_enabled, discussion_open, obj_data, new Date(), universe.id ]);
+    return [200, universe.id];
   } catch (err) {
     logger.error(err);
     return [500];

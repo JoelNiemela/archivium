@@ -1,10 +1,7 @@
-const { ADDR_PREFIX, DEV_MODE } = require('../../config');
-const Auth = require('../../middleware/auth');
+const { ADDR_PREFIX } = require('../../config');
 const api = require('../../api');
-const md5 = require('md5');
-const { render, universeLink } = require('../../templates');
-const { perms, Cond, getPfpUrl } = require('../../api/utils');
-const fs = require('fs/promises');
+const { universeLink } = require('../../templates');
+const { perms, getPfpUrl } = require('../../api/utils');
 const logger = require('../../logger');
 
 module.exports = {
@@ -59,11 +56,12 @@ module.exports = {
     res.prepareRender('deleteUniverse', { universe });
   },
 
-  async edit(req, res) {
-    const [code, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.universeShortname }, perms.WRITE);
+  async edit(req, res, error, body) {
+    const [code, fetchedUniverse] = await api.universe.getOne(req.session.user, { shortname: req.params.universeShortname }, perms.WRITE);
     res.status(code);
-    if (!universe) return;
-    res.prepareRender('editUniverse', { universe });
+    if (!fetchedUniverse) return;
+    const universe = {...fetchedUniverse, ...(body ?? {}), shortname: fetchedUniverse.shortname, newShort: body?.shortname ?? fetchedUniverse.shortname};
+    res.prepareRender('editUniverse', { universe, error });
   },
  
   async createDiscussionThread(req, res) {

@@ -30,14 +30,15 @@ block breadcrumbs
   |  / 
   a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
   |  / 
-  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items` ) #{T('Items')}
+  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items?type=${item.item_type}` ) #{capitalize(T(`${((universe.obj_data.cats || {})[item.item_type] || [, 'Missing Category'])[1]}`))}
   |  / 
   span #{item.title}
 
 block content
-  h1.center #{item.title}
-  p.center #{capitalize(T(item.itemTypeName))} of 
-    a.link.link-animated( href=`${universeLink(universe.shortname)}/` ) #{item.universe}
+  .d-flex.justify-center
+    .sheet.mt-8.px-8.py-4( style={ 'background-color': item.itemTypeColor } )
+      h1.center.ma-0 #{item.title}
+      p.center.ma-0 #{capitalize(T(item.itemTypeName))} of #{item.universe}
   p.center.mb-2
     small Created by 
       if item.author

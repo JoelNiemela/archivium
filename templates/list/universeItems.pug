@@ -2,8 +2,13 @@ extends ../layout.pug
 include ../mixins.pug
 
 block title
-  title Items — #{universe.title}
-
+  title
+    if type
+      | #{capitalize(T(`${((universe.obj_data.cats || {})[type] || [, 'Missing Category'])[1]}`))} 
+    else
+      | Items 
+    | of #{universe.title}
+    
 block breadcrumbs
   a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
   |  / 
@@ -11,7 +16,10 @@ block breadcrumbs
   |  / 
   a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
   |  / 
-  span #{T('Items')}
+  if type
+    | #{capitalize(T(`${((universe.obj_data.cats || {})[type] || [, 'Missing Category'])[1]}`))}
+  else
+    | #{T('Items')}
 
 block content
   script
@@ -22,7 +30,7 @@ block content
 
   h1.center 
     if type
-      | #{capitalize(T(`${((universe.obj_data.cats || {})[type] || [, 'Missing type items'])[1]}`))} 
+      | #{capitalize(T(`${((universe.obj_data.cats || {})[type] || [, 'Missing Category'])[1]}`))} 
     else
       | Items 
     | of #{universe.title}

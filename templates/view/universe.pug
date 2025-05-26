@@ -16,11 +16,12 @@ mixin typeCard(shortname, category)
         a.cardBtn.link( href=`${ADDR_PREFIX}/items?author=${contextUser.username}&universe=${universe.shortname}${shortname ? `&type=${shortname}` : ''}` ) My #{shortname ? category[1] : 'Items'}
 
 block breadcrumbs
-  a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
-  |  / 
-  a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
-  |  / 
-  span #{universe.title}
+  if !displayUniverse  
+    a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
+    |  / 
+    a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
+    |  / 
+    span #{universe.title}
 
 block scripts
   script

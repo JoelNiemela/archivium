@@ -2,14 +2,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 
 :root {
-  --navbar-height: 51px;
+  --navbar-height: 3.1875rem;
   --page-margin-top: calc(var(--navbar-height) + 1rem);
-}
-
-@media only screen and (max-device-width: 480px) {
-  :root {
-    --navbar-height: 102px;
-  }
 }
 
 * {

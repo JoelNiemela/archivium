@@ -1,7 +1,10 @@
 const { executeQuery, parseData, getPfpUrl } = require('../utils');
-const userapi = require('./user');
-const notification = require('./notification');
 const logger = require('../../logger');
+
+let api;
+function setApi(_api) {
+  api = _api;
+}
 
 async function getOne(sessionUser, targetID) {
   if (!sessionUser) return [401];
@@ -75,7 +78,7 @@ async function getAll(user, includePending=true, includeAccepted=true) {
 
 async function post(user, username) {
   
-  const [code, target] = await userapi.getOne({ 'user.username': username });
+  const [code, target] = await api.user.getOne({ 'user.username': username });
   if (!target) return [code];
   if (target.id === user.id) return [400];
   const [_, contact] = await getOne(user, target.id);
@@ -92,7 +95,7 @@ async function post(user, username) {
 
     const result = await executeQuery(queryString, [user.id, target.id, false]);
 
-    await notification.notify(target, notification.types.CONTACTS, {
+    await api.notification.notify(target, api.notification.types.CONTACTS, {
       title: 'Contact Request',
       body: `${user.username} has sent you a contact request.`,
       icon: getPfpUrl(user),
@@ -108,7 +111,7 @@ async function post(user, username) {
 
 async function put(user, username, accepted) {
   
-  const [code, target] = await userapi.getOne({ 'user.username': username });
+  const [code, target] = await api.user.getOne({ 'user.username': username });
   if (!target) return [code];
   const [_, contact] = await getOne(user, target.id);
   if (!contact) return [404];
@@ -126,7 +129,7 @@ async function put(user, username, accepted) {
       result = await del(user, target.id);
     }
 
-    await notification.notify(target, notification.types.CONTACTS, {
+    await api.notification.notify(target, api.notification.types.CONTACTS, {
       title: `Contact Request ${accepted ? 'Accepted' : 'Rejected'}`,
       body: `${user.username} has ${accepted ? 'accepted' : 'rejected'} your contact request.`,
       icon: getPfpUrl(user),
@@ -163,13 +166,14 @@ async function del(user, targetID) {
 }
 
 async function delByUsername(user, username) {
-  const [code, target] = await userapi.getOne({ 'user.username': username });
+  const [code, target] = await api.user.getOne({ 'user.username': username });
   if (!target) return [code];
 
   return await del(user, target.id);
 }
 
 module.exports = {
+  setApi,
   getOne,
   getAll,
   post,

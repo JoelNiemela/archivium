@@ -123,7 +123,7 @@ module.exports = function(app) {
   post('/universes/:universeShortname/edit', sites.NORMAL, Auth.verifySessionOrRedirect, forms.editUniverse);
   get('/universes/:universeShortname/discuss/create', sites.NORMAL, Auth.verifySessionOrRedirect, pages.universe.createDiscussionThread);
   post('/universes/:universeShortname/discuss/create', sites.NORMAL, Auth.verifySessionOrRedirect, forms.createUniverseThread);
-  get('/universes/:universeShortname/discuss/:threadId', sites.NORMAL, pages.universe.verifySessionUniverse);
+  get('/universes/:universeShortname/discuss/:threadId', sites.NORMAL, Auth.verifySessionOrRedirect, pages.universe.discussionThread);
   post('/universes/:universeShortname/discuss/:threadId/comment', sites.NORMAL, Auth.verifySessionOrRedirect, forms.commentOnThread);
   get('/universes/:universeShortname/items', sites.NORMAL, pages.universe.itemList);
   get('/universes/:universeShortname/permissions', sites.NORMAL, Auth.verifySessionOrRedirect, pages.universe.editPerms);
@@ -137,6 +137,7 @@ module.exports = function(app) {
   get('/universes/:universeShortname/items/:itemShortname/edit', sites.NORMAL, Auth.verifySessionOrRedirect, pages.item.edit);
   post('/universes/:universeShortname/items/:itemShortname/edit', sites.NORMAL, Auth.verifySessionOrRedirect, forms.editItem);
   post('/universes/:universeShortname/items/:itemShortname/comment', sites.NORMAL, Auth.verifySessionOrRedirect, forms.commentOnItem);
+  get('/universes/:universeShortname/items/:itemShortname/delete', sites.NORMAL, Auth.verifySessionOrRedirect, pages.item.delete);
 
   /* Display Mode Pages */
   get('/', sites.DISPLAY, subdomain(pages.universe.view, (sub) => ({ universeShortname: sub })));
@@ -162,4 +163,5 @@ module.exports = function(app) {
   get('/items/:itemShortname/edit', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(pages.item.edit, (sub) => ({ universeShortname: sub })));
   post('/items/:itemShortname/edit', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(forms.editItem, (sub) => ({ universeShortname: sub })));
   post('/items/:itemShortname/comment', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(forms.commentOnItem, (sub) => ({ universeShortname: sub })));
+  get('/items/:itemShortname/delete', sites.DISPLAY, Auth.verifySessionOrRedirect, subdomain(pages.item.delete, (sub) => ({ universeShortname: sub })));
 }

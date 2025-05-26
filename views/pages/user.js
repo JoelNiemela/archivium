@@ -73,9 +73,11 @@ module.exports = {
     for (const setting of typeSettingData) {
       typeSettings[`${setting.notif_type}_${setting.notif_method}`] = Boolean(setting.is_enabled);
     }
+    const [, deleteRequest] = await api.user.getDeleteRequest(user);
     res.prepareRender('settings', {
       user,
       typeSettings,
+      deleteRequest,
       notificationTypes: api.notification.types,
       notificationMethods: api.notification.methods,
     });

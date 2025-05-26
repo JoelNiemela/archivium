@@ -1,5 +1,10 @@
-const { executeQuery, parseData, perms, getPfpUrl } = require('../utils');
+const { executeQuery, parseData, perms, withTransaction } = require('../utils');
 const logger = require('../../logger');
+
+let api;
+function setApi(_api) {
+  api = _api;
+}
 
 async function getOne(user, options, permissionLevel=perms.READ) {
   if (!options) return [400];
@@ -47,7 +52,7 @@ async function getMany(user, conditions, permissionLevel=perms.READ) {
       LEFT JOIN authoruniverse AS au ON universe.id = au.universe_id
       LEFT JOIN user AS author ON author.id = au.user_id
       LEFT JOIN followeruniverse AS fu ON universe.id = fu.universe_id
-      INNER JOIN user AS owner ON universe.author_id = owner.id
+      LEFT JOIN user AS owner ON universe.author_id = owner.id
       ${conditionString}
       GROUP BY universe.id;`;
     const data = await executeQuery(queryString, conditions && conditions.values);
@@ -178,7 +183,7 @@ async function post(user, body) {
       new Date(),
     ]);
     const queryString2 = `INSERT INTO authoruniverse (universe_id, user_id, permission_level) VALUES (?, ?, ?)`;
-    return [201, [data, await executeQuery(queryString2, [ data.insertId, user.id, perms.ADMIN ])]];
+    return [201, [data, await executeQuery(queryString2, [ data.insertId, user.id, perms.OWNER ])]];
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') return [400, 'Universe shortname must be unique.'];
     if (err.code === 'ER_BAD_NULL_ERROR') return [400, 'Missing parameters.'];
@@ -214,18 +219,25 @@ async function put(user, shortname, changes) {
 }
 
 async function putPermissions(user, shortname, targetUser, permission_level) {
-  const [code, universe] = await getOne(user, { shortname }, perms.ADMIN);
+  permission_level = Number(permission_level); // just yet another proof that we need typescript...
+  const [code, universe] = await getOne(
+    user,
+    { shortname },
+    permission_level === perms.OWNER ? perms.OWNER : Math.max(perms.ADMIN, permission_level + 1),
+  );
   if (!universe) return [code];
 
-  if (universe.author_permissions[targetUser.id] === perms.ADMIN && permission_level < perms.ADMIN) {
-    let adminWouldStillExist = false;
+  if (universe.author_permissions[targetUser.id] > universe.author_permissions[user.id]) return [403];
+
+  if (universe.author_permissions[targetUser.id] === perms.OWNER && permission_level < perms.OWNER) {
+    let ownerWouldStillExist = false;
     for (const userID in universe.author_permissions) {
-      if (Number(userID) !== Number(targetUser.id) && universe.author_permissions[userID] === perms.ADMIN) {
-        adminWouldStillExist = true;
+      if (Number(userID) !== Number(targetUser.id) && universe.author_permissions[userID] === perms.OWNER) {
+        ownerWouldStillExist = true;
         break;
       }
     }
-    if (!adminWouldStillExist) return [400];
+    if (!ownerWouldStillExist) return [400];
   }
 
   let query;
@@ -369,25 +381,36 @@ async function delAccessRequest(user, shortname, requestingUser) {
 }
 
 async function del(user, shortname) {
-  const [code, universe] = await getOne(user, { shortname }, perms.ADMIN);
+  const [code, universe] = await getOne(user, { shortname }, perms.OWNER);
   if (!universe) return [code];
-
-  const itemCount = (await executeQuery(`SELECT COUNT(id) as count FROM item WHERE universe_id = ?;`, [universe.id]))[0].count;
-  if (itemCount > 0) {
-    return [409, 'Cannot delete universe, universe not empty.'];
-  }
-
+  
   try {
-    await executeQuery(`DELETE FROM authoruniverse WHERE universe_id = ?;`, [universe.id]);
-    await executeQuery(`DELETE FROM universe WHERE id = ?;`, [universe.id]);
+    await withTransaction(async (conn) => {
+      await conn.execute(`
+        DELETE comment
+        FROM comment
+        INNER JOIN threadcomment AS tc ON tc.comment_id = comment.id
+        INNER JOIN discussion ON tc.thread_id = discussion.id
+        WHERE discussion.universe_id = ?;
+      `, [universe.id]);
+      await conn.execute(`
+        DELETE comment
+        FROM comment
+        INNER JOIN itemcomment AS ic ON ic.comment_id = comment.id
+        INNER JOIN item ON ic.item_id = item.id
+        WHERE item.universe_id = ?;
+      `, [universe.id]);
+      await conn.execute(`DELETE FROM universe WHERE id = ?;`, [universe.id]);
+    });
     return [200];
   } catch (err) {
     logger.error(err);
-    return [500];
+    return [500, 'Error: could not delete universe.'];
   }
 }
 
 module.exports = {
+  setApi,
   getOne,
   getMany,
   getManyByAuthorId,

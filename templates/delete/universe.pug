@@ -20,20 +20,29 @@ block content
 
     .big-text
       p Are you want to delete #{universe.title}? This action is 
-        b( style={color: 'red'} ) irreversible!
+        b permanent
+        |  and 
+        b.color-error cannot be undone!
 
-      p A universe can only be deleted if it contains no items.
+      ul
+        li All items in #{universe.title} will be deleted.
+        li All images uploaded to #{universe.title} and its items will be deleted.
+        li All discussion threads and all comments (in threads and on items) will be deleted.
+        li Notes pinned to this universe and its items will 
+          i not
+          |  be deleted, but will be unpinned.
 
       p If you are 
-        i absolutely sure
+        b absolutely sure
         |  you want to delete #{universe.title}, please type in its shortname below.
 
     div.inputGroup
       label( for='title' ) Universe shortname: 
       input( id='shortname' type='text' name='shortname' )
-    
-    div
-      button( onclick='deleteUniverse()' ) Delete Universe
+
+    .d-flex.align-center.gap-2
+      button.color-error( onclick='deleteUniverse()' ) Delete Universe
+      a.link.link-animated( href=universeLink(universe.shortname) ) Go Back
 
     div
       span#error( style={color: 'red', 'font-size': 'small'} )

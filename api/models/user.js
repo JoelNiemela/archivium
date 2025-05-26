@@ -1,7 +1,12 @@
-const { executeQuery, parseData } = require('../utils');
+const { executeQuery, parseData, withTransaction, perms } = require('../utils');
 const utils = require('../../lib/hashUtils');
-const universeapi = require('./universe');
 const logger = require('../../logger');
+const { SITE_OWNER_EMAIL } = require('../../config');
+
+let api;
+function setApi(_api) {
+  api = _api;
+}
 
 /**
    * returns a "safe" version of the user object with password data removed unless the includeAuth parameter is true
@@ -64,7 +69,7 @@ async function getMany(options, includeEmail=false) {
 
 async function getByUniverseShortname(user, shortname) {
 
-  const [code, universe] = await universeapi.getOne(user, { shortname });
+  const [code, universe] = await api.universe.getOne(user, { shortname });
   if (!universe) return [code];
 
   try {
@@ -241,12 +246,45 @@ async function putUsername(sessionUser, oldUsername, newUsername) {
  * @param {number} user_id id of user to delete 
  * @returns {Promise<[status, data]>}
  */
-async function doDeleteUser(user_id) {
+async function doDeleteUser(userId) {
   try {
-    const sessionQueryString = `DELETE FROM session WHERE user_id = ${user_id};`;
-    const userQueryString = `DELETE FROM user WHERE id = ${user_id};`;
-    await executeQuery(sessionQueryString);
-    await executeQuery(userQueryString);
+    await withTransaction(async (conn) => {
+      await conn.execute('UPDATE comment SET body = NULL, author_id = NULL WHERE author_id = ?', [userId]);
+      await conn.execute('UPDATE item SET author_id = NULL WHERE author_id = ?', [userId]);
+      await conn.execute('UPDATE item SET last_updated_by = NULL WHERE last_updated_by = ?', [userId]);
+      await conn.execute('UPDATE universe SET author_id = NULL WHERE author_id = ?', [userId]);
+
+      // Promote highest-ranking user of abandoned universes with at least one other admin
+      await conn.execute(`
+        UPDATE authoruniverse
+        INNER JOIN (
+          SELECT MIN(au1.id) AS id
+          FROM authoruniverse AS au1
+          INNER JOIN (
+            SELECT universe_id, MAX(permission_level) AS max_perm
+            FROM authoruniverse
+            WHERE universe_id IN (
+              SELECT universe_id FROM authoruniverse WHERE user_id = ?
+            ) AND user_id != ? AND permission_level >= ?
+            GROUP BY universe_id
+          ) au2 ON au1.universe_id = au2.universe_id AND au1.permission_level = au2.max_perm
+          WHERE au1.permission_level < ?
+          GROUP BY au1.universe_id
+        ) AS to_promote ON authoruniverse.id = to_promote.id
+        SET authoruniverse.permission_level = ?
+      `, [userId, userId, perms.ADMIN, perms.OWNER, perms.OWNER]);
+
+      await conn.execute('DELETE FROM session WHERE user_id = ?', [userId]);
+      await conn.execute('DELETE FROM user WHERE id = ?', [userId]);
+
+      // Delete orphaned universes (universes with no other owner or admin)
+      await conn.execute(`
+        DELETE FROM universe
+        WHERE id NOT IN (
+          SELECT DISTINCT universe_id FROM authoruniverse WHERE permission_level >= ?
+        )
+      `, [perms.ADMIN]);
+    });
     return [200];
   } catch (err) {
     logger.error(err);
@@ -254,21 +292,41 @@ async function doDeleteUser(user_id) {
   }
 }
 
-async function del(req) {
+async function del(sessionUser, username, password) {
+  if (!sessionUser) return [401];
   try {  
-    const [status, user] = await getOne({ 'user.id': req.params.id, 'user.email': req.body.email }, true);
+    const [status, user] = await getOne({ 'user.username': username }, true);
     if (user) {
-      req.loginId = user.id;
-      const isValidUser = validatePassword(req.body.password, user.password, user.salt);
-      if (isValidUser) {
-        doDeleteUser(req.params.id);
-        return [200];
-      } else {
-        return [401];
+      if (sessionUser.id !== user.id) {
+        return [403, 'Can\'t delete user you\'re not logged in as!'];
       }
+      const isCorrectLogin = validatePassword(password, user.password, user.salt);
+      if (!isCorrectLogin) {
+        return [403, 'Password incorrect!'];
+      }
+      await executeQuery('INSERT INTO userdeleterequest (user_id) VALUES (?);', [user.id]);
+      await api.email.sendTemplateEmail(api.email.templates.DELETE, SITE_OWNER_EMAIL, { username }, api.email.groups.ACCOUNT_ALERTS);
+      return [200];
     } else {
-      return [404];
+      return [status];
     }
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
+async function getDeleteRequest(user) {
+  if (!user) return [401];
+  
+  try {
+    const request = (await executeQuery(
+      'SELECT * FROM userdeleterequest WHERE user_id = ?',
+      [user.id],
+    ))[0];
+    if (!request) return [404];
+
+    return [200, request];
   } catch (err) {
     logger.error(err);
     return [500];
@@ -312,12 +370,13 @@ async function resetPassword(resetKey, newPassword) {
   const [code, user] = await getOne({ id: records[0].user_id });
   if (!user) return [code];
 
-  // TODO This should definitely also be in a transaction...
   const salt = utils.createRandom32String();
   const newHashedPass = utils.createHash(newPassword, salt);
-  await executeQuery('UPDATE user SET salt = ?, password = ? WHERE id = ?;', [salt, newHashedPass, user.id]);
-  await executeQuery('DELETE FROM session WHERE user_id = ?;', [user.id]);
-  await executeQuery('DELETE FROM userpasswordreset WHERE user_id = ?;', [user.id]);
+  await withTransaction(async (conn) => {
+    await conn.execute('UPDATE user SET salt = ?, password = ? WHERE id = ?;', [salt, newHashedPass, user.id]);
+    await conn.execute('DELETE FROM session WHERE user_id = ?;', [user.id]);
+    await conn.execute('DELETE FROM userpasswordreset WHERE user_id = ?;', [user.id]);
+  });
 
   logger.info(`Reset password for user ${user.username}.`);
 
@@ -353,10 +412,13 @@ const image = (function() {
     if (!user) return [code];
 
     try {
-      // We should do a transaction here, but I can't figure out how to make it work...
-      await executeQuery('DELETE FROM userimage WHERE user_id = ?', [user.id]);
-      const queryString = `INSERT INTO userimage (user_id, name, mimetype, data) VALUES (?, ?, ?, ?);`;
-      return [201, await executeQuery(queryString, [ user.id, originalname, mimetype, buffer ])];
+      let data;
+      await withTransaction(async (conn) => {
+        await conn.execute('DELETE FROM userimage WHERE user_id = ?', [user.id]);
+        const queryString = `INSERT INTO userimage (user_id, name, mimetype, data) VALUES (?, ?, ?, ?);`;
+        [ data ] = await conn.execute(queryString, [ user.id, originalname.substring(0, 64), mimetype, buffer ]);
+      });
+      return [201, data];
     } catch (err) {
       logger.error(err);
       return [500];
@@ -387,6 +449,7 @@ const image = (function() {
 })();
 
 module.exports = {
+  setApi,
   image,
   getOne,
   getMany,
@@ -397,6 +460,8 @@ module.exports = {
   put,
   putUsername,
   del,
+  doDeleteUser,
+  getDeleteRequest,
   prepareVerification,
   verifyUser,
   preparePasswordReset,

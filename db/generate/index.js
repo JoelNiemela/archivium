@@ -1,6 +1,5 @@
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 const { DB_CONFIG } = require('../../config');
-const Promise = require('bluebird');
 const { loadSchema, askQuestion } = require('../import');
 const api = require('../../api');
 const { perms } = require('../../api/utils');
@@ -62,11 +61,8 @@ async function createNote(owner, title, body, public, tags, items=[], boards=[])
   return note;
 }
 async function main() {
-  await db.connectPromise;
-
-  const connection = mysql.createConnection({ ...DB_CONFIG, multipleStatements: true });
-  const schemaConn = Promise.promisifyAll(connection, { multiArgs: true });
-  await loadSchema(schemaConn);
+  const schemaConn = await mysql.createConnection({ ...DB_CONFIG, multipleStatements: true });
+  await loadSchema(schemaConn, false);
 
   console.log('Generating testing database...');
 
@@ -79,7 +75,7 @@ async function main() {
 
   console.log('Creating users...');
   const users = {};
-  for (const user of ['user', 'admin', 'writer', 'commenter', 'reader']) {
+  for (const user of ['user', 'owner', 'admin', 'writer', 'commenter', 'reader']) {
     const username = `test${user}`;
     users[username] = await createUser(username);
   }
@@ -91,16 +87,19 @@ async function main() {
   await createContact(users.testadmin, users.testreader);
   
   console.log('Creating universes...');
-  const publicUniverse = await createUniverse(users.testadmin, 'Public Test Universe', 'public-test-universe', true);
-  const privateUniverse = await createUniverse(users.testadmin, 'Private Test Universe', 'private-test-universe', false, true);
-  const chatroomUniverse = await createUniverse(users.testadmin, 'Chatroom', 'chatroom', true, true, true);
+  const publicUniverse = await createUniverse(users.testowner, 'Public Test Universe', 'public-test-universe', true);
+  const privateUniverse = await createUniverse(users.testowner, 'Private Test Universe', 'private-test-universe', false, true);
+  const chatroomUniverse = await createUniverse(users.testowner, 'Chatroom', 'chatroom', true, true, true);
 
   console.log('Setting permissions...');
+  await setUniversePerms(users.testowner, publicUniverse, users.testadmin, perms.ADMIN);
+  await setUniversePerms(users.testowner, privateUniverse, users.testadmin, perms.ADMIN);
+  await setUniversePerms(users.testowner, chatroomUniverse, users.testadmin, perms.ADMIN);
   await setUniversePerms(users.testadmin, publicUniverse, users.testwriter, perms.WRITE);
   await setUniversePerms(users.testadmin, privateUniverse, users.testwriter, perms.WRITE);
   await setUniversePerms(users.testadmin, privateUniverse, users.testcommenter, perms.COMMENT);
   await setUniversePerms(users.testadmin, privateUniverse, users.testreader, perms.READ);
-  await setUniversePerms(users.testadmin, chatroomUniverse, users.testuser, perms.ADMIN);
+  await setUniversePerms(users.testowner, chatroomUniverse, users.testuser, perms.ADMIN);
 
   console.log('Creating items...');
   const testArticle = await createItem(users.testwriter, publicUniverse, 'Test Article', 'test-article', 'article', defaultItemData.article);

@@ -101,6 +101,7 @@ block append styles
         
         input.hidden( id='create' type='submit' value='Create' formaction=`${ADDR_PREFIX}/notes/create` )
         input.hidden( id='save' type='submit' value='Save' formaction=`${ADDR_PREFIX}/notes/edit` )
+        input.hidden( id='delete' type='button' value='Delete' )
         
         input( id='note_body' type='hidden' name='note_body' )
         input( id='note_uuid' type='hidden' name='note_uuid' )
@@ -257,6 +258,7 @@ block append styles
         noteEdit.classList.remove('hidden');
         editForm.create.classList.add('hidden');
         editForm.save.classList.remove('hidden');
+        editForm.delete.classList.remove('hidden');
         editForm.note_uuid.value = uuid;
 
         const query = new URLSearchParams(window.location.search);
@@ -269,6 +271,12 @@ block append styles
         //- const { title, public, body, author_id } = noteCard && JSON.parse(noteCard.dataset.note);
         loadingNote();
         const [, note] = await getJSON(`#{noteBaseRoute}/${uuid}`);
+        console.log(note)
+        if (!note) {
+          leftBtn.classList.remove('hidden');
+          backToList();
+          return;
+        }
         const { title, public, body, author_id, items, boards } = note;
         easyMDE.value(body);
         editorNeedsRefresh = true;
@@ -337,12 +345,19 @@ block append styles
         editNote();
         editForm.create.classList.remove('hidden');
         editForm.save.classList.add('hidden');
+        editForm.delete.classList.add('hidden');
 
         editForm.note_title.value = '';
         editForm.note_public.checked = false;
         easyMDE.value('');
         updateTitle('');
         updateTags('');
+      }
+
+      async function deleteNote() {
+        if (!confirm('Are you sure you want to delete this note? This cannot be undone!')) return;
+        await deleteJSON(`/api/users/#{contextUser.username}/notes/${editForm.note_uuid.value}`);
+        window.location.reload();
       }
 
       function backToList() {
@@ -386,6 +401,8 @@ block append styles
           openNote(el.dataset.uuid);
         });
       });
+
+      editForm.delete.addEventListener('click', deleteNote);
 
       const query = new URLSearchParams(window.location.search);
       const uuid = query.get('note');

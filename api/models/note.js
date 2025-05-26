@@ -1,9 +1,11 @@
 const crypto = require('crypto');
 const { executeQuery, parseData, perms } = require('../utils');
 const logger = require('../../logger');
-const itemapi = require('./item');
-const universeapi = require('./universe');
-const userapi = require('./user');
+
+let api;
+function setApi(_api) {
+  api = _api;
+}
 
 async function getOne(user, uuid) {
   // Direct note access is only allowed for our own notes.
@@ -23,7 +25,7 @@ async function getOne(user, uuid) {
 }
 
 /**
- * This should never be called on it's own.
+ * This should never be called on its own.
  * Users should have access to notes iff:
  * * they own the note,
  * * they have access to a board this note is pinned to, or,
@@ -79,7 +81,7 @@ async function getMany(user, conditions, options) {
       ${options?.limit ? `LIMIT ${options.limit}` : ''}
     `;
     const notes = await executeQuery(queryString, parsedConds.values);
-    if (options?.limit === 1 && options?.connections) {
+    if (options?.limit === 1 && options?.connections && notes[0]) {
       notes[0].items = (notes[0].items ?? []).filter(val => val[0] !== null);
       notes[0].boards = (notes[0].boards ?? []).filter(val => val[0] !== null);
     }
@@ -92,7 +94,7 @@ async function getMany(user, conditions, options) {
 
 async function getByUsername(sessionUser, username, conditions, options) {
   try {
-    const [code, user] = await userapi.getOne({ 'user.username': username });
+    const [code, user] = await api.user.getOne({ 'user.username': username });
     if (!user) return [code];
     const [_, notes] = await getMany(
       sessionUser,
@@ -108,7 +110,7 @@ async function getByUsername(sessionUser, username, conditions, options) {
 
 async function getByItemShortname(user, universeShortname, itemShortname, conditions, options, inclAuthors=false) {
   try {
-    const [code, item] = await itemapi.getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.READ, true);
+    const [code, item] = await api.item.getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.READ, true);
     if (!item) return [code];
     const [_, notes] = await getMany(
       user,
@@ -135,7 +137,7 @@ async function getByItemShortname(user, universeShortname, itemShortname, condit
 
 async function getBoardsByUniverseShortname(user, shortname) {
   try {
-    const [code, universe] = await universeapi.getOne(user, { 'universe.shortname': shortname }, perms.READ);
+    const [code, universe] = await api.universe.getOne(user, { 'universe.shortname': shortname }, perms.READ);
     if (!universe) return [code];
     const boards = await executeQuery('SELECT * FROM noteboard WHERE universe_id = ?', [ universe.id ]);
     return [200, boards];
@@ -150,7 +152,7 @@ async function getByBoardShortname(user, shortname, conditions, options, validat
     const board = await executeQuery('SELECT * FROM noteboard WHERE shortname = ?', [ shortname ]);
     if (!board) return [404];
     if (validate) {
-      const [code, universe] = await universeapi.getOne(user, { 'universe.id': board.universe_id }, perms.READ);
+      const [code, universe] = await api.universe.getOne(user, { 'universe.id': board.universe_id }, perms.READ);
       if (!universe) return [code];
     }
     const [_, notes] = await getMany(
@@ -179,7 +181,7 @@ async function getByBoardShortname(user, shortname, conditions, options, validat
 async function postBoard(user, { title, shortname }, universeShortname) {
   if (!user) return [401];
   try {
-    const [code, universe] = await universeapi.getOne(user, { 'universe.shortname': universeShortname }, perms.WRITE);
+    const [code, universe] = await api.universe.getOne(user, { 'universe.shortname': universeShortname }, perms.WRITE);
     if (!universe) return [code];
 
     const queryString = `INSERT INTO noteboard (title, shortname, universe_id) VALUES (?, ?, ?);`;
@@ -227,14 +229,14 @@ async function put(user, uuid, changes) {
 
     await executeQuery('DELETE FROM itemnote WHERE note_id = ?', [ note.id ]);
     for (const { item, universe } of items ?? []) {
-      this.linkToItem(user, universe, item, uuid);
+      await linkToItem(user, universe, item, uuid);
     }
     
     if (tags) {
       const trimmedTags = tags.map(tag => tag[0] === '#' ? tag.substring(1) : tag);
 
       // If tags list is provided, we can just as well handle it here
-      putTags(user, uuid, trimmedTags);
+      await putTags(user, uuid, trimmedTags);
       const tagLookup = {};
       note.tags?.forEach(tag => {
         tagLookup[tag] = true;
@@ -242,7 +244,7 @@ async function put(user, uuid, changes) {
       trimmedTags.forEach(tag => {
         delete tagLookup[tag];
       });
-      delTags(user, uuid, Object.keys(tagLookup));
+      await delTags(user, uuid, Object.keys(tagLookup));
     }
 
     return [200, data];
@@ -273,7 +275,7 @@ async function linkToBoard(user, boardShortname, noteUuid) {
 async function linkToItem(user, universeShortname, itemShortname, noteUuid) {
   if (!noteUuid) return [400];
   if (!user) return [401];
-  const [code, item] = await itemapi.getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE, true)
+  const [code, item] = await api.item.getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE, true)
   if (!item) return [code];
   const [code2, note] = await getOne(user, noteUuid);
   if (!note) return [code2];
@@ -326,7 +328,26 @@ async function delTags(user, uuid, tags) {
   }
 }
 
+async function del(user, uuid) {
+  if (!user) return [401];
+  try {
+    const [code, note] = await getOne(user, uuid);
+    if (!note) return [code];
+
+    // getOne will only return a note if we own it, but it doesn't hurt to double check for clarity
+    if (note.author_id !== user.id) return [403];
+
+    const data = await executeQuery('DELETE FROM note WHERE uuid = ?', [ uuid ]);
+
+    return [200, data];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
 module.exports = {
+  setApi,
   getOne,
   getByUsername,
   getByItemShortname,
@@ -339,4 +360,5 @@ module.exports = {
   linkToItem,
   putTags,
   delTags,
+  del,
 };

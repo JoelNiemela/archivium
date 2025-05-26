@@ -1,0 +1,53 @@
+extends ../layout.pug
+
+block content
+  script!= `const itemShortname = '${item.shortname}'`
+  script.
+    async function deleteItem() {
+      const shortname = document.getElementById('shortname').value;
+      if (shortname !== itemShortname) {
+        const errSpan = document.getElementById('error');
+        errSpan.innerText = 'Shortnames do not match!';
+        return;
+      };
+      const response = await fetch(`/api/universes/#{item.universe_short}/items/${itemShortname}`, { method: 'DELETE' })
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        const errSpan = document.getElementById('error');
+        errSpan.innerText = await response.json();
+      }
+    }
+
+  h2 Delete #{item.title}
+  .d-flex.flex-col
+
+    .big-text
+      p Are you want to delete #{item.title}? This action is 
+        b permanent
+        |  and 
+        b.color-error cannot be undone!
+
+      ul
+        li All images uploaded to #{item.title} will be deleted.
+        li All comments on #{item.title} will be deleted.
+        li Notes pinned to #{item.title} will 
+          i not
+          |  be deleted, but will be unpinned.
+
+      p If you are 
+        b absolutely sure
+        |  you want to delete #{item.title}, please type in its shortname (
+        code #{item.shortname}
+        | ) below.
+
+    div.inputGroup
+      label( for='title' ) Item shortname: 
+      input( id='shortname' type='text' name='shortname' )
+    
+    .d-flex.align-center.gap-2
+      button( onclick='deleteItem()' ) Delete Item
+      a.link.link-animated( href=`${universeLink(item.universe_short)}/items/${item.shortname}` ) Go Back
+
+    div
+      span#error( style={color: 'red', 'font-size': 'small'} )

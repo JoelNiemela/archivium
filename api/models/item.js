@@ -1,8 +1,11 @@
-const { QueryBuilder, Cond, executeQuery, parseData, perms } = require('../utils');
-const { getOne: getUniverse, validateShortname } = require('./universe');
-const { getOne: getUser } = require('./user');
+const { QueryBuilder, Cond, executeQuery, parseData, perms, withTransaction } = require('../utils');
 const { extractLinks } = require('../../static/scripts/markdown/parse');
 const logger = require('../../logger');
+
+let api;
+function setApi(_api) {
+  api = _api;
+}
 
 async function getOne(user, conditions, permissionsRequired=perms.READ, basicOnly=false, options={}) {
 
@@ -105,7 +108,7 @@ function getQuery(selects=[], permsCond=undefined, whereConds=undefined, options
       'tag.tags',
     ])
     .from('item')
-    .innerJoin('user', new Cond('user.id = item.author_id'))
+    .leftJoin('user', new Cond('user.id = item.author_id'))
     .innerJoin('universe', new Cond('universe.id = item.universe_id'))
     .innerJoin(['authoruniverse', 'au_filter'], new Cond('universe.id = au_filter.universe_id').and(permsCond))
     .leftJoin(`(
@@ -331,9 +334,9 @@ async function getCountsByUniverse(user, universe, validate=true) {
 async function forEachUserToNotify(item, callback) {
   const targetIDs = (await executeQuery(`SELECT user_id FROM itemnotification WHERE item_id = ? AND is_enabled`, [ item.id ])).map(row => row.user_id);
   for (const userID of targetIDs) {
-    const [_, user] = await getUser({ 'user.id': userID });
+    const [_, user] = await api.user.getOne({ 'user.id': userID });
     if (user) {
-      callback(user);
+      await callback(user);
     }
   }
 }
@@ -342,41 +345,44 @@ async function post(user, body, universeShortName) {
   const { title, shortname, item_type, parent_id, obj_data } = body;
 
   try {
-    const shortnameError = validateShortname(shortname);
+    const shortnameError = api.universe.validateShortname(shortname);
     if (shortnameError) return [400, shortnameError];
 
-    const [code, universe] = await getUniverse(user, { 'universe.shortname': universeShortName }, perms.WRITE);
+    const [code, universe] = await api.universe.getOne(user, { 'universe.shortname': universeShortName }, perms.WRITE);
     if (!universe) return [code];
 
-    const queryString = `
-      INSERT INTO item (
+    let data;
+    await withTransaction(async (conn) => {
+      const queryString = `
+        INSERT INTO item (
+          title,
+          shortname,
+          item_type,
+          author_id,
+          universe_id,
+          parent_id,
+          obj_data,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+      `;
+      if (!title || !shortname || !item_type || !obj_data) return [400];
+      [ data ] = await conn.execute(queryString, [
         title,
         shortname,
         item_type,
-        author_id,
-        universe_id,
-        parent_id,
+        user.id,
+        universe.id,
+        parent_id ?? null,
         obj_data,
-        created_at,
-        updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
-    `;
-    if (!title || !shortname || !item_type || !obj_data) return [400];
-    const data = await executeQuery(queryString, [
-      title,
-      shortname,
-      item_type,
-      user.id,
-      universe.id,
-      parent_id ?? null,
-      obj_data,
-      new Date(),
-      new Date(),
-    ]);
+        new Date(),
+        new Date(),
+      ]);
 
-    await executeQuery(`
-      INSERT INTO itemnotification (item_id, user_id, is_enabled) VALUES (?, ?, ?)
-    `, [data.insertId, user.id, true]);
+      await conn.execute(`
+        INSERT INTO itemnotification (item_id, user_id, is_enabled) VALUES (?, ?, ?)
+      `, [data.insertId, user.id, true]);
+    });
 
     return [201, data];
   } catch (err) {
@@ -448,13 +454,13 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
     for (const { parent_shortname } of item.parents) {
       if (!newParents[parent_shortname]) {
         const [, parent] = await getByUniverseAndItemShortnames(user, universeShortname, parent_shortname, perms.WRITE);
-        delLineage(parent.id, item.id);
+        await delLineage(parent.id, item.id);
       }
     }
     for (const { child_shortname } of item.children) {
       if (!newChildren[child_shortname]) {
         const [, child] = await getByUniverseAndItemShortnames(user, universeShortname, child_shortname, perms.WRITE);
-        delLineage(item.id, child.id);
+        await delLineage(item.id, child.id);
       }
     }
   }
@@ -473,11 +479,11 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
       )).map(({ title, time }) => ({ event_title: title, abstime: time, id: existingEvents[title].id }));
       const newEventMap = myEvents.reduce((acc, event) => ({...acc, [event.title ?? null]: true}), {});
       const deletedEvents = events.filter(event => !newEventMap[event.event_title]).map(event => event.id);
-      insertEvents(item.id, newEvents);
+      await insertEvents(item.id, newEvents);
       for (const event of updatedEvents) {
-        updateEvent(event.id, event);
+        await updateEvent(event.id, event);
       }
-      deleteEvents(deletedEvents);
+      await deleteEvents(deletedEvents);
     }
 
     if (myImports) {
@@ -494,8 +500,8 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
         importsMap[event.id] = true;
       }
       const deletedImports = imports.filter(ti => !importsMap[ti.event_id]).map(ti => ti.event_id);
-      importEvents(item.id, newImports);
-      deleteImports(item.id, deletedImports);
+      await importEvents(item.id, newImports);
+      await deleteImports(item.id, deletedImports);
     }
   }
 
@@ -545,17 +551,19 @@ async function handleLinks(item, objData) {
     for (const { href } of oldLinks) {
       existingLinks[href] = true;
     }
-    for (const [universeShort, itemShort, href] of links) {
-      newLinks[href] = true;
-      if (!existingLinks[href]) {
-        await executeQuery('INSERT INTO itemlink (from_item, to_universe_short, to_item_short, href) VALUES (?, ?, ?, ?)', [ item.id, universeShort, itemShort, href ]);
+    await withTransaction(async (conn) => {
+      for (const [universeShort, itemShort, href] of links) {
+        newLinks[href] = true;
+        if (!existingLinks[href]) {
+          await conn.execute('INSERT INTO itemlink (from_item, to_universe_short, to_item_short, href) VALUES (?, ?, ?, ?)', [ item.id, universeShort, itemShort, href ]);
+        }
       }
-    }
-    for (const { href } of oldLinks) {
-      if (!newLinks[href]) {
-        await executeQuery('DELETE FROM itemlink WHERE from_item = ? AND href = ?', [ item.id, href ]);
+      for (const { href } of oldLinks) {
+        if (!newLinks[href]) {
+          await conn.execute('DELETE FROM itemlink WHERE from_item = ? AND href = ?', [ item.id, href ]);
+        }
       }
-    }
+    });
   }
 }
 
@@ -621,7 +629,7 @@ async function put(user, universeShortname, itemShortname, changes) {
     const trimmedTags = tags.map(tag => tag[0] === '#' ? tag.substring(1) : tag);
 
     // If tags list is provided, we can just as well handle it here
-    putTags(user, universeShortname, itemShortname, trimmedTags);
+    await putTags(user, universeShortname, itemShortname, trimmedTags);
     const tagLookup = {};
     item.tags?.forEach(tag => {
       tagLookup[tag] = true;
@@ -629,7 +637,7 @@ async function put(user, universeShortname, itemShortname, changes) {
     trimmedTags.forEach(tag => {
       delete tagLookup[tag];
     });
-    delTags(user, universeShortname, itemShortname, Object.keys(tagLookup));
+    await delTags(user, universeShortname, itemShortname, Object.keys(tagLookup));
   }
 
   try {
@@ -780,6 +788,27 @@ async function subscribeNotifs(user, universeShortname, itemShortname, isSubscri
   }
 }
 
+async function del(user, universeShortname, itemShortname) {
+  const [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.OWNER, true);
+  if (!item) return [code];
+
+  try {
+    await withTransaction(async (conn) => {
+      await conn.execute(`
+        DELETE comment
+        FROM comment
+        INNER JOIN itemcomment AS ic ON ic.comment_id = comment.id
+        WHERE ic.item_id = ?;
+      `, [item.id]);
+      await conn.execute(`DELETE FROM item WHERE id = ?;`, [item.id]);
+    });
+    return [200];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
 const image = (function() {
   async function getOneByItemShort(user, universeShortname, itemShortname, options) {
     const [code1, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.READ, true);
@@ -825,7 +854,7 @@ const image = (function() {
     if (!item) return [code];
 
     const queryString = `INSERT INTO itemimage (item_id, name, mimetype, data, label) VALUES (?, ?, ?, ?, ?);`;
-    return [201, await executeQuery(queryString, [ item.id, originalname, mimetype, buffer, '' ])];
+    return [201, await executeQuery(queryString, [ item.id, originalname.substring(0, 64), mimetype, buffer, '' ])];
   }
 
   async function putLabel(user, imageId, label) {
@@ -869,6 +898,7 @@ const image = (function() {
 })();
 
 module.exports = {
+  setApi,
   image,
   getOne,
   getMany,
@@ -892,4 +922,5 @@ module.exports = {
   delTags,
   snoozeUntil,
   subscribeNotifs,
+  del,
 };

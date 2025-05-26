@@ -22,12 +22,14 @@ describe('Notification spec', () => {
     cy.login('testadmin');
 
     cy.visit('/settings');
+    cy.get('#tabBtns [data-tab=notifications]').click();
     cy.get('#notif_contacts_0').uncheck();
     cy.get('#notificationSettings').contains('Update Preferences').click();
 
     cy.login('testuser');
 
     cy.visit('/settings');
+    cy.get('#tabBtns [data-tab=notifications]').click();
     cy.get('#notif_contacts_0').uncheck();
     cy.get('#notificationSettings').contains('Update Preferences').click();
   });
@@ -61,12 +63,14 @@ describe('Notification spec', () => {
     cy.login('testadmin');
 
     cy.visit('/settings');
+    cy.get('#tabBtns [data-tab=notifications]').click();
     cy.get('#notif_contacts_0').check();
     cy.get('#notificationSettings').contains('Update Preferences').click();
 
     cy.login('testuser');
 
     cy.visit('/settings');
+    cy.get('#tabBtns [data-tab=notifications]').click();
     cy.get('#notif_contacts_0').check();
     cy.get('#notificationSettings').contains('Update Preferences').click();
   });

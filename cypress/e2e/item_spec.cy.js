@@ -119,7 +119,16 @@ describe('Item spec', () => {
     cy.get('#shortname').should('have.value', 'cypress-character');
     cy.get('select#item_type option:selected').should('have.text', 'Character');
 
-    // TODO Don't actually create the item unil #70 is added.
-    // cy.get('button[type="submit"]').click();
+    cy.get('button[type="submit"]').click();
+  });
+
+  it('logs in as owner, deletes the new item', () => {
+    cy.login('testowner');
+
+    cy.visit('/universes/public-test-universe/items/cypress-character');
+    cy.get('#action-bar').contains('Delete').click();
+
+    cy.get('#shortname').type('cypress-character');
+    cy.get('button').contains('Delete Item').click();
   });
 });

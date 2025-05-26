@@ -20,4 +20,14 @@ const api = {
   user,
 };
 
+contact.setApi(api);
+discussion.setApi(api);
+email.setApi(api);
+item.setApi(api);
+note.setApi(api);
+notification.setApi(api);
+session.setApi(api);
+universe.setApi(api);
+user.setApi(api);
+
 module.exports = api;

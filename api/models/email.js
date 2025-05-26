@@ -1,11 +1,16 @@
 const { DOMAIN, ADDR_PREFIX, DEV_MODE, SENDGRID_API_KEY } = require('../../config');
 const logger = require('../../logger');
-const userapi = require('./user');
 const { executeQuery } = require('../utils');
+
+let api;
+function setApi(_api) {
+  api = _api;
+}
 
 const templates = {
   VERIFY: ['d-04ac9be5b7fb430ba3e23b7d93115644', 'verify'],
   NOTIFY: ['d-32bf5e61b7d14239a80a00518b1824c0', 'notify'],
+  DELETE: ['d-122cfcc3c3514b529ae2a648a4dd2650', 'delete'],
   RESET:  ['d-ef568fa2f9934ea0b26b9b5e0c8da03a', 'reset'],
 };
 
@@ -64,10 +69,10 @@ async function unsubscribeUser(emails, groupId) {
 }
 
 async function sendVerifyLink({ id, username, email }) {
-  const verificationKey = await userapi.prepareVerification(id);
+  const verificationKey = await api.user.prepareVerification(id);
   if (DEV_MODE) {
     // Can't send emails in dev mode, just auto-verify them instead.
-    await userapi.verifyUser(verificationKey);
+    await api.user.verifyUser(verificationKey);
     return true;
   }
   
@@ -96,7 +101,7 @@ async function trySendVerifyLink(sessionUser, username) {
 }
 
 async function sendPasswordReset({ id, username, email }) {
-  const resetKey = await userapi.preparePasswordReset(id);
+  const resetKey = await api.user.preparePasswordReset(id);
   
   const resetPasswordLink = `https://${DOMAIN}${ADDR_PREFIX}/reset-password/${resetKey}`;
   await sendTemplateEmail(templates.RESET, email, { username, resetPasswordLink }, groups.ACCOUNT_ALERTS);
@@ -118,6 +123,7 @@ async function trySendPasswordReset(user) {
 }
 
 module.exports = {
+  setApi,
   templates,
   groups,
   sendEmail,

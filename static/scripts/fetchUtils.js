@@ -38,9 +38,13 @@ async function putJSON(url, body) {
     .then(async (response) => [response, await response.json()]);
 }
 
-async function deleteJSON(url) {
+async function deleteJSON(url, body) {
   return await fetch(url, {
     method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
   })
-    .then(response => response.json());
+    .then(async (response) => [response, await response.json()]);
 }

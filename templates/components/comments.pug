@@ -2,13 +2,27 @@ div
   .d-flex.flex-col.gap-4
     each comment in comments
       .sheet.d-flex.gap-4.align-start
-        img.userIcon( alt=commenters[comment.author_id].username, src=commenters[comment.author_id].pfpUrl )
-        .d-flex.flex-col.grow-1
-          div
-            a.link.link-animated.mr-2( href=`/users/${commenters[comment.author_id].username}` ) 
-              b #{commenters[comment.author_id].username}
-            small #{formatDate(comment.created_at)}
-          .comment( data-val=comment.body )
+        if comment.author_id
+          img.userIcon( alt=commenters[comment.author_id].username, src=commenters[comment.author_id].pfpUrl )
+        if comment.body
+          .d-flex.flex-col.grow-1
+            .d-flex.align-baseline
+              if comment.author_id
+                a.link.link-animated( href=`/users/${commenters[comment.author_id].username}` ) 
+                  b #{commenters[comment.author_id].username}
+              else
+                | Deleted User
+              small.ml-2 #{formatDate(comment.created_at)}
+              if contextUser
+                .grow-1
+                if contextUser.id === comment.author_id || universe.author_permissions[contextUser.id] >= perms.ADMIN
+                  small.align-self-start
+                    a.link.link-animated.d-flex.align-center( onclick=`deleteComment(${comment.id})` )
+                      span.material-symbols-outlined( style={ 'font-size': '1rem' } ) delete
+                      | Delete
+            .comment( data-val=comment.body )
+        else
+          span.link.disabled Deleted comment
 
   br
   hr
@@ -37,3 +51,10 @@ div
     document.querySelectorAll('.comment').forEach((el) => {
       loadMarkdown(el, '#{universe.shortname}', el.dataset.val, null);
     });
+
+    async function deleteComment(commentID) {
+      const commentTypeRoute = '#{item ? `items/${item.shortname}/comments` : `discussion/${thread.id}`}';
+      const apiRoute = `/api/universes/#{universe.shortname}/${commentTypeRoute}/${commentID}`;
+      await deleteJSON(apiRoute);
+      window.location.reload();
+    }

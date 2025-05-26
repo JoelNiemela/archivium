@@ -1,5 +1,8 @@
 extends ../layout.pug
 
+block title
+  title #{thread-title} — #{universe.title}
+
 block breadcrumbs
   a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
   |  / 
@@ -9,7 +12,7 @@ block breadcrumbs
   |  / 
   a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}?tab=discuss` ) #{T('Discuss')}
   |  / 
-  span #{T('New')}
+  span #{thread.title}
 
 block scripts
   script

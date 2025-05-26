@@ -1,5 +1,8 @@
 extends ../layout.pug
 
+block title
+  title #{item.title}
+
 block append styles
   link( rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" )
 

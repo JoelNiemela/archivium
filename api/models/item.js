@@ -345,10 +345,10 @@ async function post(user, body, universeShortName) {
   const { title, shortname, item_type, parent_id, obj_data } = body;
 
   try {
-    const shortnameError = api.user.validateShortname(shortname);
+    const shortnameError = api.universe.validateShortname(shortname);
     if (shortnameError) return [400, shortnameError];
 
-    const [code, universe] = await api.user.getOne(user, { 'universe.shortname': universeShortName }, perms.WRITE);
+    const [code, universe] = await api.universe.getOne(user, { 'universe.shortname': universeShortName }, perms.WRITE);
     if (!universe) return [code];
 
     let data;
@@ -454,13 +454,13 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
     for (const { parent_shortname } of item.parents) {
       if (!newParents[parent_shortname]) {
         const [, parent] = await getByUniverseAndItemShortnames(user, universeShortname, parent_shortname, perms.WRITE);
-        delLineage(parent.id, item.id);
+        await delLineage(parent.id, item.id);
       }
     }
     for (const { child_shortname } of item.children) {
       if (!newChildren[child_shortname]) {
         const [, child] = await getByUniverseAndItemShortnames(user, universeShortname, child_shortname, perms.WRITE);
-        delLineage(item.id, child.id);
+        await delLineage(item.id, child.id);
       }
     }
   }
@@ -479,11 +479,11 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
       )).map(({ title, time }) => ({ event_title: title, abstime: time, id: existingEvents[title].id }));
       const newEventMap = myEvents.reduce((acc, event) => ({...acc, [event.title ?? null]: true}), {});
       const deletedEvents = events.filter(event => !newEventMap[event.event_title]).map(event => event.id);
-      insertEvents(item.id, newEvents);
+      await insertEvents(item.id, newEvents);
       for (const event of updatedEvents) {
-        updateEvent(event.id, event);
+        await updateEvent(event.id, event);
       }
-      deleteEvents(deletedEvents);
+      await deleteEvents(deletedEvents);
     }
 
     if (myImports) {
@@ -500,8 +500,8 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
         importsMap[event.id] = true;
       }
       const deletedImports = imports.filter(ti => !importsMap[ti.event_id]).map(ti => ti.event_id);
-      importEvents(item.id, newImports);
-      deleteImports(item.id, deletedImports);
+      await importEvents(item.id, newImports);
+      await deleteImports(item.id, deletedImports);
     }
   }
 
@@ -629,7 +629,7 @@ async function put(user, universeShortname, itemShortname, changes) {
     const trimmedTags = tags.map(tag => tag[0] === '#' ? tag.substring(1) : tag);
 
     // If tags list is provided, we can just as well handle it here
-    putTags(user, universeShortname, itemShortname, trimmedTags);
+    await putTags(user, universeShortname, itemShortname, trimmedTags);
     const tagLookup = {};
     item.tags?.forEach(tag => {
       tagLookup[tag] = true;
@@ -637,7 +637,7 @@ async function put(user, universeShortname, itemShortname, changes) {
     trimmedTags.forEach(tag => {
       delete tagLookup[tag];
     });
-    delTags(user, universeShortname, itemShortname, Object.keys(tagLookup));
+    await delTags(user, universeShortname, itemShortname, Object.keys(tagLookup));
   }
 
   try {

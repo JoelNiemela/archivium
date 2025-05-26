@@ -1,6 +1,10 @@
 extends layout.pug
 include mixins.pug
 
+block scripts
+  script
+    include /static/scripts/fetchUtils.js
+
 block content
   script.
     let snoozeTimeout;
@@ -44,6 +48,47 @@ block content
         | to get started!
   else
     .d-flex.gap-1.flex-wrap.align-start
+      .grow-1.d-flex.flex-col.gap-1
+        .sheet
+          h2 My Universes
+          table.w-100
+            thead
+              th Name
+              th Updated
+            tbody
+              each universe in universes
+                tr
+                  td
+                    a.link.link-animated( href=`${universeLink(universe.shortname)}` ) #{universe.title}
+                  td
+                    small #{formatDate(universe.updated_at, true)}
+        .sheet
+          h2 Universes I Follow
+          table.w-100
+            thead
+              th Name
+              th Updated
+            tbody
+              each universe in followedUniverses
+                tr
+                  td
+                    .d-flex.align-center.gap-1
+                      a.link.d-flex.align-center.unfollow-link( data-universe=universe.shortname )
+                        span.material-symbols-outlined( style={ 'font-size': '1rem' } ) cancel
+                      a.link.link-animated( href=`${universeLink(universe.shortname)}` ) #{universe.title}
+                  td
+                    small #{formatDate(universe.updated_at, true)}
+          script.
+            document.querySelectorAll('.unfollow-link').forEach(el => {
+              el.addEventListener('click', async () => {
+                try {
+                  await putJSON(`/api/universes/${el.dataset.universe}/follow`, { isFollowing: false });
+                  window.location.reload();
+                } catch (err) {
+                  console.error(err);
+                }
+              });
+            });
       .grow-3.sheet
         h2 Recent Updates by Others
         if followedUniverses.length > 0
@@ -57,7 +102,7 @@ block content
               each item in recentlyUpdated
                 tr
                   td
-                    a.big-text.link.link-animated( href=`${universeLink(item.universe_short)}/items/${item.shortname}` ) #{item.title}
+                    a.link.link-animated( href=`${universeLink(item.universe_short)}/items/${item.shortname}` ) #{item.title}
                     if !item.last_updated_by
                       small( style='font-size: x-small;' )  (New)
                   td
@@ -85,22 +130,9 @@ block content
                   .d-flex.gap-1
                     button.pa-1( onclick=`snooze('${item.universe_short}', '${item.shortname}')` data-item=item.shortname )
                       small Dismiss
-                    a.big-text.link.link-animated( href=`${universeLink(item.universe_short)}/items/${item.shortname}` ) #{item.title}
+                    a.link.link-animated( href=`${universeLink(item.universe_short)}/items/${item.shortname}` ) #{item.title}
                 td
                   small
                     a.link.link-animated( href=`${universeLink(item.universe_short)}` ) #{item.universe}
                 td
                   small #{formatDate(item.updated_at, true)}
-      .grow-1.d-flex.flex-col.gap-1
-        .sheet
-          h2 My Universes
-          ul
-            each universe in universes
-              li.big-text
-                a.link.link-animated( href=`${universeLink(universe.shortname)}` ) #{universe.title}
-        .sheet
-          h2 Universes I Follow
-          ul
-            each universe in followedUniverses
-              li.big-text
-                a.link.link-animated( href=`${universeLink(universe.shortname)}` ) #{universe.title}

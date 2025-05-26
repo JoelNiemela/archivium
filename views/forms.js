@@ -1,10 +1,9 @@
-const { ADDR_PREFIX, DEV_MODE } = require('../config');
-const Auth = require('../middleware/auth');
+const { ADDR_PREFIX } = require('../config');
 const api = require('../api');
-const md5 = require('md5');
 const { universeLink } = require('../templates');
-const { perms, Cond, getPfpUrl } = require('../api/utils');
+const { perms } = require('../api/utils');
 const logger = require('../logger');
+const pages = require('./pages');
 
 module.exports = {
   async notificationSettings(req, res) {
@@ -42,10 +41,18 @@ module.exports = {
       discussion_enabled: req.body.discussion_enabled === 'enabled',
       discussion_open: req.body.discussion_open === 'enabled',
     }
-    const [code, data] = await api.universe.put(req.session.user, req.params.universeShortname, req.body);
+    const [code, errOrId] = await api.universe.put(req.session.user, req.params.universeShortname, req.body);
     res.status(code);
-    if (code === 200) return res.redirect(`${universeLink(req, req.params.universeShortname)}/`);
-    res.prepareRender('editUniverse', { error: data, ...req.body });
+    if (code !== 200) {
+      await pages.universe.edit(req, res, errOrId, req.body);
+      return;
+    } else {
+      const [code, universe] = await api.universe.getOne(req.session.user, { 'universe.id': errOrId }, perms.READ);
+      res.status(code);
+      if (!universe) return;
+      res.redirect(`${universeLink(req, universe.shortname)}`);
+    }
+    
   },
 
   async createUniverseThread(req, res) {
@@ -83,12 +90,17 @@ module.exports = {
   },
 
   async editItem(req, res) {
-    const [code, err] = await api.item.save(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
+    const [code, errOrId] = await api.item.save(req.session.user, req.params.universeShortname, req.params.itemShortname, req.body);
     res.status(code);
-    if (err) {
-      return res.prepareRender('editItem', { error: err, ...body });
+    if (code !== 200) {
+      await pages.item.edit(req, res, errOrId, req.body);
+      return;
+    } else {
+      const [code, item] = await api.item.getOne(req.session.user, { 'item.id': errOrId }, perms.READ, true);
+      res.status(code);
+      if (!item) return;
+      res.redirect(`${universeLink(req, req.params.universeShortname)}/items/${item.shortname}`);
     }
-    res.redirect(`${universeLink(req, req.params.universeShortname)}/items/${req.params.itemShortname}`);
   },
 
   async commentOnItem(req, res) {

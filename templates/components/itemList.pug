@@ -1,4 +1,14 @@
 .card-list
+  if universe
+    .card.sheet( data-goto=`${universeLink(universe.shortname)}/items/create${type ? `?type=${type}` : ''}` )
+      .d-flex.justify-center( style={ 'grid-column': '1 / 4' } )
+        a.link.d-flex.justify-center( href=`${universeLink(universe.shortname)}/items/create${type ? `?type=${type}` : ''}` )
+          .navbarText.material-symbols-outlined.heavy.ma-0.pa-1.pr-0.grow-0( style={ 'font-size': '1.5rem' } onclick="showModal('new-tab-modal')" ) add
+          .big-text.navbarText.pa-1.grow-0 New 
+            if type
+              | #{capitalize(T(`${((universe.obj_data.cats || {})[type] || [, 'Missing Category'])[0]}`))}
+            else
+              | Item
   each item in items
     .card.sheet.gap-4.align-start( data-goto=`${universeLink(item.universe_short)}/items/${item.shortname}` )
       .d-flex.flex-col.grow-1

@@ -11,9 +11,13 @@ block breadcrumbs
     |  / 
     a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
     |  / 
-    a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
+    a.link.link-animated#uni-breadcrumb( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
   |  / 
-  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items` ) #{T('Items')}
+  a.link.link-animated#type-breadcrumb( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items${item_type ? `?type=${item_type}` : ''}` )
+    if item_type
+      | #{capitalize(T(`${((universe.obj_data.cats || {})[item_type] || [, 'Missing Category'])[1]}`))}
+    else
+      | #{T('Items')}
   |  / 
   span #{T('New')}
 
@@ -36,6 +40,10 @@ block scripts
     window.addEventListener('load', () => {
       const titleInput = document.querySelector('#title');
       const shortnameInput = document.querySelector('#shortname');
+      const typeSelect = document.querySelector('#item_type');
+      const uniBreadcrumb = document.querySelector('#uni-breadcrumb');
+      const typeBreadcrumb = document.querySelector('#type-breadcrumb');
+      const typeHeaderSpan = document.querySelector('#type-header-span');
       let hasEditedShortname = !!shortnameInput.value;
 
       titleInput.addEventListener('input', () => {
@@ -46,10 +54,17 @@ block scripts
       shortnameInput.addEventListener('input', () => {
         hasEditedShortname = true;
       });
+      typeSelect.addEventListener('change', () => {
+        typeBreadcrumb.href = `${uniBreadcrumb.href}/items?type=${typeSelect.value}`;
+        typeBreadcrumb.textContent = typeSelect.selectedOptions[0].dataset.typePl;
+        typeHeaderSpan.textContent = typeSelect.selectedOptions[0].textContent;
+      });
     });
 
 block content
-  h2 New Item for #{universe.title}
+  h2 New 
+    span#type-header-span #{capitalize(T(`${((universe.obj_data.cats || {})[item_type] || [, 'Missing Category'])[0]}`))}
+    |  for #{universe.title}
   if universe.obj_data.cats
     form( method='POST' )
       div.inputGroup
@@ -62,7 +77,7 @@ block content
         label( for='item_type' ) Type: 
         select( id='item_type' name='item_type' )
           each type, shortname in universe.obj_data.cats
-              option( value=(shortname) selected=(item_type === shortname) )= capitalize(type[0])
+              option( value=(shortname) selected=(item_type === shortname) data-type-pl=capitalize(type[1]) )= capitalize(type[0])
       div
         input( type='hidden' name='obj_data' value='{}' )
         button( type='submit' ) Create Item

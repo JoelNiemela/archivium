@@ -232,10 +232,6 @@ header {
   flex-grow: 3;
 }
 
-.cardLink:hover {
-  color: #666;
-}
-
 .item-type .cardLink div {
   height: 100%;
   display: flex;

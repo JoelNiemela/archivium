@@ -6,7 +6,7 @@ block title
 
 mixin typeCard(shortname, category)
   .card.item-type
-    a.cardLink.link( href=`${universeLink(universe.shortname)}/items${shortname ? `?type=${shortname}` : ''}` )
+    a.cardLink( href=`${universeLink(universe.shortname)}/items${shortname ? `?type=${shortname}` : ''}` )
       div(style={ 'background-color': shortname ? category[2] : '#f3f3f3' })
         h2.mb-0(align='center')= shortname ? capitalize(category[1]) : T('All Items')
         h2.mt-0(align='center') (#{counts[shortname] || 0})

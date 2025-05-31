@@ -27,7 +27,15 @@ async function getOne(user, options, permissionLevel=perms.READ) {
  * @param {number} permission_level
  * @returns 
  */
-async function getMany(user, conditions, permissionLevel=perms.READ) {
+async function getMany(user, conditions, permissionLevel=perms.READ, options={}) {
+
+  if (options.sort && !options.forceSort) {
+    const validSorts = { 'title': true, 'created_at': true, 'updated_at': true };
+    if (!validSorts[options.sort]) {
+      delete options.sort;
+    }
+  }
+
   try {
     if (!user && permissionLevel > perms.READ) return [400];
     const readOnlyQueryString = permissionLevel > perms.READ ? '' : `universe.public = 1`;
@@ -55,7 +63,7 @@ async function getMany(user, conditions, permissionLevel=perms.READ) {
       LEFT JOIN user AS owner ON universe.author_id = owner.id
       ${conditionString}
       GROUP BY universe.id
-      ORDER BY updated_at DESC;`;
+      ORDER BY ${options.sort ? `${options.sort} ${options.sortDesc ? 'DESC' : 'ASC'}` : 'updated_at DESC'}`;
     const data = await executeQuery(queryString, conditions && conditions.values);
     return [200, data];
   } catch (err) {

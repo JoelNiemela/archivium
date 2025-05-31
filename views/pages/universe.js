@@ -10,7 +10,15 @@ const logger = require('../../logger');
 module.exports = {
   async list(req, res) {
     const search = req.query.search;
-    const [code, universes] = await api.universe.getMany(req.session.user, search ? { strings: ['title LIKE ?'], values: [`%${search}%`] } : null);
+    const [code, universes] = await api.universe.getMany(
+      req.session.user,
+      search ? { strings: ['title LIKE ?'], values: [`%${search}%`] } : null,
+      perms.READ,
+      {
+        sort: req.query.sort,
+        sortDesc: req.query.sort_order === 'desc',
+      },
+    );
     res.status(code);
     if (!universes) return;
     res.prepareRender('universeList', { universes, search });

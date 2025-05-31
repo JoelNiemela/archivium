@@ -96,7 +96,7 @@ describe('Universe spec', () => {
 
   it('creates new private universe', () => {
     cy.visit('/universes');
-    cy.get('a').contains('Create New').click();
+    cy.get('a').contains('New Universe').click();
 
     cy.get('h2').contains('New Universe').should('exist');
 

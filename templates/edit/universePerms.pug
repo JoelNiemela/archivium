@@ -1,11 +1,17 @@
 extends ../layout.pug
 
+block title
+  title Permissions — #{universe.title}
+
 block breadcrumbs
-  a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
-  |  / 
-  a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
-  |  / 
-  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
+  if displayUniverse
+    a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{universe.title}
+  else
+    a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
+    |  / 
+    a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
+    |  / 
+    a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
   |  / 
   span #{T('Set Permissions')}
 
@@ -23,7 +29,9 @@ block content
       });
     });
 
-  h2 Update Permissions for #{universe.title}
+  .d-flex.justify-between.align-baseline
+    h2 Update Permissions for #{universe.title}
+    a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) Go back
   .d-flex.flex-col.align-start
     .grid( style={ 'grid-template-columns': '1fr 1rem 1fr' } )
       each perm, aid in universe.author_permissions

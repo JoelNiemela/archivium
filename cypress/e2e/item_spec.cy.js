@@ -113,7 +113,7 @@ describe('Item spec', () => {
 
     cy.get('.item-type a').contains('Characters').parent().parent().parent().find('.cardBtn').contains('New').click();-
 
-    cy.get('h2').contains('New Item for Public Test Universe').should('exist');
+    cy.get('h2').contains('New Character for Public Test Universe').should('exist');
 
     cy.get('#title').type('Cypress Character');
     cy.get('#shortname').should('have.value', 'cypress-character');

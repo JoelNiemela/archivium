@@ -1,6 +1,16 @@
 extends layout.pug
 include mixins.pug
 
+block title
+  if !contextUser
+    title Welcome to Archivium!
+  else
+    title Home — Archivium
+
+block scripts
+  script
+    include /static/scripts/fetchUtils.js
+
 block content
   script.
     let snoozeTimeout;
@@ -43,64 +53,93 @@ block content
         a.link.link-animated( href=`${ADDR_PREFIX}/universes/create` ) create a new universe 
         | to get started!
   else
-    .d-flex.gap-1.flex-wrap.align-start
-      .grow-3.sheet
-        h2 Recent Updates by Others
-        if followedUniverses.length > 0
+    .d-flex.flex-col
+      .d-flex.gap-1.flex-wrap.align-start.w-100
+        .grow-1.d-flex.flex-col.gap-1
+          .sheet
+            h2 My Universes
+            table.w-100
+              thead
+                th Name
+                th Updated
+              tbody
+                each universe in universes
+                  tr
+                    td
+                      a.link.link-animated( href=`${universeLink(universe.shortname)}` ) #{universe.title}
+                    td
+                      small #{formatDate(universe.updated_at, true)}
+          .sheet
+            h2 Universes I Follow
+            table.w-100
+              thead
+                th Name
+                th Updated
+              tbody
+                each universe in followedUniverses
+                  tr
+                    td
+                      .d-flex.align-center.gap-1
+                        a.link.d-flex.align-center.unfollow-link( data-universe=universe.shortname )
+                          span.material-symbols-outlined( style={ 'font-size': '1rem' } ) cancel
+                        a.link.link-animated( href=`${universeLink(universe.shortname)}` ) #{universe.title}
+                    td
+                      small #{formatDate(universe.updated_at, true)}
+            script.
+              document.querySelectorAll('.unfollow-link').forEach(el => {
+                el.addEventListener('click', async () => {
+                  try {
+                    await putJSON(`/api/universes/${el.dataset.universe}/follow`, { isFollowing: false });
+                    window.location.reload();
+                  } catch (err) {
+                    console.error(err);
+                  }
+                });
+              });
+        .grow-3.sheet.scroll-x
+          h2 Recent Updates by Others
+          if followedUniverses.length > 0
+            table.w-100
+              thead
+                th Name
+                th Universe
+                th Last updated by
+                th Updated
+              tbody
+                each item in recentlyUpdated
+                  tr
+                    td
+                      a.link.link-animated( href=`${universeLink(item.universe_short)}/items/${item.shortname}` ) #{item.title}
+                      if !item.last_updated_by
+                        small( style='font-size: x-small;' )  (New)
+                    td
+                      small
+                        a.link.link-animated( href=`${universeLink(item.universe_short)}` ) #{item.universe}
+                    td
+                      small
+                        a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.last_updated_by || item.author}` ) #{item.last_updated_by || item.author}
+                    td
+                      small #{formatDate(item.updated_at, true)}
+          else
+            p No updates here — try following some 
+              a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) universes
+              |  first!
+          h2 May Need Review
           table.w-100
             thead
               th Name
               th Universe
-              th Last updated by
               th Updated
             tbody
-              each item in recentlyUpdated
+              each item in oldestUpdated
                 tr
                   td
-                    a.big-text.link.link-animated( href=`${universeLink(item.universe_short)}/items/${item.shortname}` ) #{item.title}
-                    if !item.last_updated_by
-                      small( style='font-size: x-small;' )  (New)
+                    .d-flex.gap-1.align-center
+                      button.pa-1( onclick=`snooze('${item.universe_short}', '${item.shortname}')` data-item=item.shortname )
+                        small Dismiss
+                      a.link.link-animated( href=`${universeLink(item.universe_short)}/items/${item.shortname}` ) #{item.title}
                   td
                     small
                       a.link.link-animated( href=`${universeLink(item.universe_short)}` ) #{item.universe}
                   td
-                    small
-                      a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.last_updated_by || item.author}` ) #{item.last_updated_by || item.author}
-                  td
                     small #{formatDate(item.updated_at, true)}
-        else
-          p No updates here — try following some 
-            a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) universes
-            |  first!
-        h2 May Need Review
-        table.w-100
-          thead
-            th Name
-            th Universe
-            th Updated
-          tbody
-            each item in oldestUpdated
-              tr
-                td
-                  .d-flex.gap-1
-                    button.pa-1( onclick=`snooze('${item.universe_short}', '${item.shortname}')` data-item=item.shortname )
-                      small Dismiss
-                    a.big-text.link.link-animated( href=`${universeLink(item.universe_short)}/items/${item.shortname}` ) #{item.title}
-                td
-                  small
-                    a.link.link-animated( href=`${universeLink(item.universe_short)}` ) #{item.universe}
-                td
-                  small #{formatDate(item.updated_at, true)}
-      .grow-1.d-flex.flex-col.gap-1
-        .sheet
-          h2 My Universes
-          ul
-            each universe in universes
-              li.big-text
-                a.link.link-animated( href=`${universeLink(universe.shortname)}` ) #{universe.title}
-        .sheet
-          h2 Universes I Follow
-          ul
-            each universe in followedUniverses
-              li.big-text
-                a.link.link-animated( href=`${universeLink(universe.shortname)}` ) #{universe.title}

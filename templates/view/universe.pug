@@ -1,9 +1,12 @@
 extends ../layout.pug
 include ../mixins.pug
 
+block title
+  title #{universe.title}
+
 mixin typeCard(shortname, category)
   .card.item-type
-    a.cardLink.link( href=`${universeLink(universe.shortname)}/items${shortname ? `?type=${shortname}` : ''}` )
+    a.cardLink( href=`${universeLink(universe.shortname)}/items${shortname ? `?type=${shortname}` : ''}` )
       div(style={ 'background-color': shortname ? category[2] : '#f3f3f3' })
         h2.mb-0(align='center')= shortname ? capitalize(category[1]) : T('All Items')
         h2.mt-0(align='center') (#{counts[shortname] || 0})
@@ -13,11 +16,12 @@ mixin typeCard(shortname, category)
         a.cardBtn.link( href=`${ADDR_PREFIX}/items?author=${contextUser.username}&universe=${universe.shortname}${shortname ? `&type=${shortname}` : ''}` ) My #{shortname ? category[1] : 'Items'}
 
 block breadcrumbs
-  a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
-  |  / 
-  a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
-  |  / 
-  span #{universe.title}
+  if !displayUniverse  
+    a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
+    |  / 
+    a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
+    |  / 
+    span #{universe.title}
 
 block scripts
   script

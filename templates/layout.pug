@@ -46,7 +46,6 @@ html(lang='en')
       }
       function universeLink(uniShort) {
         const displayUniverse = '#{displayUniverse}';
-        console.log(displayUniverse)
         if (displayUniverse) {
           if (displayUniverse === uniShort) return '#{ADDR_PREFIX}';
           else return `https://#{DOMAIN}#{ADDR_PREFIX}/universes/${uniShort}`;

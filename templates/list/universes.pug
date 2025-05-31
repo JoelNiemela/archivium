@@ -9,9 +9,25 @@ block breadcrumbs
 block content
   script
     include /static/scripts/cardUtils.js
+    include /static/scripts/listUtils.js
     include /static/scripts/fetchUtils.js
+    include /static/scripts/searchUtils.js
   
   h1.center Universes
-  a.link.link-animated( href=`${ADDR_PREFIX}/universes/create` ) Create New
+  .d-flex.align-center
+    label.mr-1( for='sort' )
+      b #{T('Sort by')}: 
+    select( id='sort' name='sort' )
+      option( value='updated_at' ) Updated
+      option( value='created_at' ) Created
+      option( value='title' ) Title
+    select( id='sort_order' name='sort_order' )
+      option( value='desc' ) Descending
+      option( value='asc' ) Ascending
+    a.link.link-animated( href=`${ADDR_PREFIX}/universes/create` ) Create New
+    .grow-1
+    form.flex-row.gap-0
+      input( id='search' name='search' value=search placeholder='Search...' )
+      button( type='submit' ) &#x1F50E;&#xFE0E;
   hr
   include ../components/universeList.pug

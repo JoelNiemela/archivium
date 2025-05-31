@@ -13,7 +13,6 @@ window.addEventListener('load', () => {
   document.querySelectorAll('.filter').forEach((filter) => {
     filter.onclick = (e) => {
       e.stopPropagation();
-      console.log(filter.dataset)
       toggleFilter(filter.dataset.filterKey, filter.dataset.filterValue);
     };
   });

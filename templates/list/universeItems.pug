@@ -1,4 +1,5 @@
 extends ../layout.pug
+include ../mixins.pug
 
 block breadcrumbs
   a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
@@ -13,6 +14,8 @@ block content
   script
     include /static/scripts/cardUtils.js
     include /static/scripts/listUtils.js
+    include /static/scripts/searchUtils.js
+
 
   h1.center 
     if type
@@ -20,17 +23,21 @@ block content
     else
       | Items 
     | of #{universe.title}
-  div
-    label( for='sort' )
+  .d-flex.align-center
+    label.mr-1( for='sort' )
       b #{T('Sort by')}: 
     select( id='sort' name='sort' )
-      option( value='created_at' ) Created
       option( value='updated_at' ) Updated
+      option( value='created_at' ) Created
       option( value='item_type' ) Type
       option( value='title' ) Title
       option( value='author' ) Author
     select( id='sort_order' name='sort_order' )
-      option( value='asc' ) Ascending
       option( value='desc' ) Descending
+      option( value='asc' ) Ascending
+    .grow-1
+    form.flex-row.gap-0
+      input( id='search' name='search' value=search placeholder='Search...' )
+      button( type='submit' ) &#x1F50E;&#xFE0E;
   hr
   include ../components/itemList.pug

@@ -18,26 +18,26 @@ describe('Note spec', () => {
   it('note author visits item, sees both item notes', () => {
     cy.login('testwriter');
     cy.visit('/universes/public-test-universe/items/test-article?tab=notes');
-    cy.get('#note-list').children().should('have.length', 2);
+    cy.get('#note-list').children('.card').should('have.length', 2);
   });
 
   it('note author visits notes page, sees all four notes', () => {
     cy.login('testwriter');
     cy.visit('/notes');
-    cy.get('#note-list').children().should('have.length', 4);
+    cy.get('#note-list').children('.card').should('have.length', 4);
   });
 
   it('other user visits item, sees only the public note', () => {
     cy.login('testreader');
     cy.visit('/universes/public-test-universe/items/test-article?tab=notes');
-    cy.get('#note-list').children().should('have.length', 1);
+    cy.get('#note-list').children('.card').should('have.length', 1);
     cy.get('#note-list').get('h2').should('have.text', 'Public Article Note');
   });
 
   it('other user visits notes page, sees no notes', () => {
     cy.login('testreader');
     cy.visit('/notes');
-    cy.get('#note-list').children().should('have.length', 0);
+    cy.get('#note-list').children('.card').should('have.length', 0);
   });
 
   it('links note to an item, sees the note on that item\'s notes page', () => {
@@ -54,7 +54,7 @@ describe('Note spec', () => {
     cy.get('#note-items-list').contains('Test Character').click();
 
     cy.get('#tabBtns').contains('Notes (Hidden)').click();
-    cy.get('#note-list').children().should('have.length', 1);
+    cy.get('#note-list').children('.card').should('have.length', 1);
     cy.get('#note-list').get('h2').should('have.text', 'Public Test Note');
   });
 
@@ -109,7 +109,7 @@ describe('Note spec', () => {
     cy.visit('/notes');
     cy.get('#note-list .tags a').contains('cypress').click();
 
-    cy.get('#note-list').children().filter(':visible').should('have.length', 1);
+    cy.get('#note-list').children('.card').filter(':visible').should('have.length', 1);
     cy.get('#note-list').get('h2').filter(':visible').should('have.text', 'Public Test Note');
   });
 

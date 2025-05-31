@@ -9,10 +9,19 @@ const logger = require('../../logger');
 
 module.exports = {
   async list(req, res) {
-    const [code, universes] = await api.universe.getMany(req.session.user);
+    const search = req.query.search;
+    const [code, universes] = await api.universe.getMany(
+      req.session.user,
+      search ? { strings: ['title LIKE ?'], values: [`%${search}%`] } : null,
+      perms.READ,
+      {
+        sort: req.query.sort,
+        sortDesc: req.query.sort_order === 'desc',
+      },
+    );
     res.status(code);
     if (!universes) return;
-    res.prepareRender('universeList', { universes });
+    res.prepareRender('universeList', { universes, search });
   },
   
   async create(_, res) {
@@ -106,6 +115,7 @@ module.exports = {
   },
 
   async itemList(req, res) {
+    const search = req.query.search;
     const [code1, universe] = await api.universe.getOne(req.session.user, { shortname: req.params.universeShortname });
     const [code2, items] = await api.item.getByUniverseShortname(req.session.user, req.params.universeShortname, perms.READ, {
       sort: req.query.sort,
@@ -113,6 +123,7 @@ module.exports = {
       limit: req.query.limit,
       type: req.query.type,
       tag: req.query.tag,
+      search,
     });
     const code = code1 !== 200 ? code1 : code2;
     res.status(code);
@@ -122,6 +133,7 @@ module.exports = {
       universe,
       type: req.query.type,
       tag: req.query.tag,
+      search,
     });
   },
 

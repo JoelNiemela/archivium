@@ -200,11 +200,13 @@ header {
 
 .card {
   box-shadow: 0 0.25rem 0.5rem 0 rgb(0 0 0 / 20%);
-  transition: box-shadow 0.3s;
+  transition: box-shadow 0.3s, top 0.2s;
   display: grid;
   grid-template-columns: inherit;
   grid-column: 1 / 4;
   border-radius: 0.25rem;
+  position: relative;
+  top: 0;
 }
 
 .card.item-type {
@@ -217,6 +219,7 @@ header {
 
 .card:hover {
   box-shadow: 0 0.5rem 1rem 0 rgb(0 0 0 / 30%);
+  top: -0.125rem;
 }
 
 .card.item-type div {

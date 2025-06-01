@@ -1,6 +1,11 @@
 const { executeQuery, parseData } = require('../utils');
 const logger = require('../../logger');
 
+let api;
+function setApi(_api) {
+  api = _api;
+}
+
 /**
  * These methods should only be called from scripts or safe routes, no validation is being done here!
  */
@@ -47,6 +52,7 @@ async function post({ title, preview, body }) {
 }
 
 module.exports = {
+  setApi,
   getOne,
   getMany,
   post,

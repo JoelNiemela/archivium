@@ -26,6 +26,7 @@ contact.setApi(api);
 discussion.setApi(api);
 email.setApi(api);
 item.setApi(api);
+newsletter.setApi(api);
 note.setApi(api);
 notification.setApi(api);
 session.setApi(api);

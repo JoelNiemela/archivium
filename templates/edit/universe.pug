@@ -31,27 +31,49 @@ block content
   h2 Edit #{universe.title}
   form#edit( method='POST' )
 
-    div.inputGroup
+    .inputGroup
       label( for='title' ) Title: 
       input( id='title' type='text' name='title' value=universe.title )
 
-    div.inputGroup
+    .inputGroup
+      label( for='shortname' ) Shortname: 
+      input( id='shortname' type='text' name='shortname' value=universe.newShort )
+
+    .inputGroup
+      small( style={ 'grid-column': '2 / 4' } )
+        i 
+          b Warning: 
+          | changing the shortname will kick out any users currently browsing the universe, 
+          | any authors currently editing items will be unable to save their work, 
+          | and any external bookmarks/links to the universe will break. 
+          | Make sure you know what you're doing!
+
+    .inputGroup
       label( for='visibility' ) Visibility: 
       select( id='visibility' name='visibility' )
         option( value='public' selected=(universe.public) ) Public
         option( value='private' selected=(!universe.public) ) Private
 
-    div.inputGroup
+    .inputGroup
       label( for='discussion_enabled' ) Discussion: 
       select( id='discussion_enabled' name='discussion_enabled' )
         option( value='enabled' selected=(universe.discussion_enabled) ) Enabled
         option( value='disabled' selected=(!universe.discussion_enabled) ) Disabled
 
-    div.inputGroup
+    .inputGroup
       label( for='discussion_open' ) Who can comment: 
       select( id='discussion_open' name='discussion_open' )
         option( value='enabled' selected=(universe.discussion_open) ) Anyone
-        option( value='disabled' selected=(!universe.discussion_open) ) Only with COMMENT permission level
+        option( value='disabled' selected=(!universe.discussion_open) ) Only with COMMENT permissions
+
+    div
+      input( id='obj_data' type='hidden' name='obj_data' value='{}' )
+      button( type='submit' ) Save Changes
+
+    small.color-error.hidden#validation-error
+    if error
+      div
+        span( style={color: 'red', 'font-size': 'small'} )= error
 
     #home-body
       h3 Home Page
@@ -96,15 +118,6 @@ block content
     .d-flex.gap-2.mt-2
       button( type='button' onclick='addCat()' ) Add Type
       button( type='button' onclick='resetCats()' ) Reset to default types
-
-    div
-      input( id='obj_data' type='hidden' name='obj_data' value='{}' )
-      button( type='submit' ) Save Changes
-
-    small.color-error.hidden#validation-error
-    if error
-      div
-        span( style={color: 'red', 'font-size': 'small'} )= error
 
   script.
     updateObjData(!{JSON.stringify(universe.obj_data)});

@@ -66,13 +66,17 @@ async function getOne(user, conditions, permissionsRequired=perms.READ, basicOnl
           WHERE from_item = ?
         `, [item.id]);
         const replacements = {};
+        const attachments = {};
         for (const { to_universe_short, to_item_short, href } of links) {
           const replacement = to_universe_short === item.universe_short ? `${to_item_short}` : `${to_universe_short}/${to_item_short}`;
           replacements[href] = replacement;
+          const match = href.match(/[?#]/);
+          const attachment = match ? `${match[0]}${href.slice(match.index + 1)}` : '';
+          attachments[href] = attachment;
         }
         objData.body = objData.body.replace(/(?<!\\)(\[[^\]]*?\])\(([^)]+)\)/g, (match, brackets, parens) => {
           if (parens in replacements) {
-            return `${brackets}(@${replacements[parens]})`;
+            return `${brackets}(@${replacements[parens]}${attachments[parens]})`;
           }
           return match;
         });
@@ -410,12 +414,12 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
   body.obj_data = JSON.stringify(body.obj_data);
 
   // Actually save item
-  [code, data] = await put(user, universeShortname, itemShortname, body);
+  [code, errOrId] = await put(user, universeShortname, itemShortname, body);
   if (code !== 200) {
-    return [code, data];
+    return [code, errOrId];
   }
 
-  const [itemCode, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE);
+  const [itemCode, item] = await getOne(user, { 'item.id': errOrId }, perms.WRITE);
   if (!item) return [itemCode];
 
   // Handle lineage data
@@ -512,7 +516,7 @@ async function save(user, universeShortname, itemShortname, body, jsonMode=false
     }
   }
 
-  return [200];
+  return [200, item.id];
 }
 
 async function _getLinks(item) {
@@ -605,7 +609,7 @@ async function fetchImports(itemId) {
 }
 
 async function put(user, universeShortname, itemShortname, changes) {
-  const { title, item_type, obj_data, tags } = changes;
+  const { title, shortname, item_type, obj_data, tags } = changes;
 
   if (!title || !obj_data) return [400];
   const [code, item] = await getByUniverseAndItemShortnames(user, universeShortname, itemShortname, perms.WRITE);
@@ -630,17 +634,29 @@ async function put(user, universeShortname, itemShortname, changes) {
   }
 
   try {
-    const queryString = `
-      UPDATE item
-      SET
-        title = ?,
-        item_type = ?,
-        obj_data = ?,
-        updated_at = ?,
-        last_updated_by = ?
-      WHERE id = ?;
-    `;
-    return [200, await executeQuery(queryString, [ title, item_type ?? item.item_type, JSON.stringify(objData), new Date(), user.id, item.id ])];
+    await withTransaction(async (conn) => {
+      if (shortname !== null && shortname !== undefined && shortname !== item.shortname) {
+        // The item shortname has changed, we need to update all links to it to reflect this
+        const shortnameError = api.universe.validateShortname(shortname);
+        if (shortnameError) return [400, shortnameError];
+  
+        await conn.execute('UPDATE itemlink SET to_item_short = ? WHERE to_item_short = ?', [shortname, item.shortname]);
+      }
+  
+      const queryString = `
+        UPDATE item
+        SET
+          title = ?,
+          shortname = ?,
+          item_type = ?,
+          obj_data = ?,
+          updated_at = ?,
+          last_updated_by = ?
+        WHERE id = ?;
+      `;
+      await conn.execute(queryString, [ title, shortname ?? item.shortname, item_type ?? item.item_type, JSON.stringify(objData), new Date(), user.id, item.id ])
+    });
+    return [200, item.id];
   } catch (err) {
     logger.error(err);
     return [500];

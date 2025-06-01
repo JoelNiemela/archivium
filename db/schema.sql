@@ -11,6 +11,14 @@ CREATE TABLE schema_version (
 INSERT INTO schema_version (version, comment, time)
 VALUES (0, '', NULL);
 
+CREATE TABLE newsletter (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(128),
+  preview TEXT NOT NULL,
+  body TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL
+);
+
 CREATE TABLE user (
   id INT NOT NULL AUTO_INCREMENT,
   username VARCHAR(32) UNIQUE NOT NULL,

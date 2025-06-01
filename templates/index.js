@@ -127,6 +127,7 @@ const templates = {
   contactList: compile('templates/list/contacts.pug'),
 
   search: compile('templates/list/search.pug'),
+  news: compile('templates/list/news.pug'),
   notes: compile('templates/list/notes.pug'),
   verify: compile('templates/verify.pug'),
   settings: compile('templates/edit/settings.pug'),

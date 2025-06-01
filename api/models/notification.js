@@ -115,8 +115,8 @@ async function notify(target, notifType, message) {
   const { insertId } = await executeQuery('INSERT INTO sentnotification (title, body, icon_url, click_url, notif_type, user_id, sent_at, is_read) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
     title,
     body,
-    icon,
-    clickUrl,
+    icon ?? null,
+    clickUrl ?? null,
     notifType,
     target.id,
     new Date(),

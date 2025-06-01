@@ -7,11 +7,21 @@ block scripts
     include /static/scripts/markdown/parse.js
     include /static/scripts/markdown/render.js
 
+block breadcrumbs
+  if breadcrumbs
+    each crumb, i in breadcrumbs
+      - const [title, href] = crumb;
+      if href
+        a.link.link-animated( href=`${ADDR_PREFIX}${href}` ) #{T(title)}
+      else
+        span #{T(title)}
+      if i < breadcrumbs.length
+        |  / 
+
 block content
-  br
-  .sheet
-    #md-body
-      script!= `window.content = ${JSON.stringify(content)};`
-      script.
-        loadMarkdown(document.getElementById('md-body'), null, window.content);
+  if title
+    h1.center #{title}
+  else
+    br
+  include components/mdSheet.pug
   br

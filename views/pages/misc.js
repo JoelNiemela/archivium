@@ -1,6 +1,7 @@
 const api = require('../../api');
 const { perms } = require('../../api/utils');
 const fs = require('fs/promises');
+const { ADDR_PREFIX } = require('../../config');
 
 module.exports = {
   /* Terms and Agreements */
@@ -15,6 +16,24 @@ module.exports = {
   async codeOfConduct(_, res) {
     const content = (await fs.readFile('static/code_of_conduct.md')).toString();
     res.prepareRender('docs', { content });
+  },
+
+  /* Newsletter */
+  async news(req, res) {
+    const [code, newsletter] = await api.newsletter.getOne(req.params.id);
+    if (!newsletter) {
+      res.status(code);
+      return;
+    };
+    res.prepareRender('docs', {
+      title: newsletter.title,
+      content: newsletter.body,
+      breadcrumbs: [['Home', `${ADDR_PREFIX}/`], ['News', `${ADDR_PREFIX}/news`], [newsletter.title]],
+    });
+  },
+  async newsList(_, res) {
+    const newsletters = (await api.newsletter.getMany())[1].map(n => n.body);
+    res.prepareRender('news', { newsletters });
   },
 
   /* Help Pages */

@@ -107,6 +107,8 @@ module.exports = function(app) {
 
   /* Misc pages */
   get('/search', sites.ALL, pages.misc.search);
+  get('/news', sites.ALL, pages.misc.newsList);
+  get('/news/:id', sites.ALL, pages.misc.news);
 
   /* Note pages */
   get('/notes', sites.ALL, Auth.verifySessionOrRedirect, pages.misc.notes);

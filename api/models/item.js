@@ -645,27 +645,28 @@ async function put(user, universeShortname, itemShortname, changes) {
   }
 
   try {
-    // TODO put this in a transaction
-    if (shortname !== null && shortname !== undefined && shortname !== item.shortname) {
-      // The item shortname has changed, we need to update all links to it to reflect this
-      const shortnameError = validateShortname(shortname);
-      if (shortnameError) return [400, shortnameError];
-
-      await executeQuery('UPDATE itemlink SET to_item_short = ? WHERE to_item_short = ?', [shortname, item.shortname]);
-    }
-
-    const queryString = `
-      UPDATE item
-      SET
-        title = ?,
-        shortname = ?,
-        item_type = ?,
-        obj_data = ?,
-        updated_at = ?,
-        last_updated_by = ?
-      WHERE id = ?;
-    `;
-    await executeQuery(queryString, [ title, shortname ?? item.shortname, item_type ?? item.item_type, JSON.stringify(objData), new Date(), user.id, item.id ])
+    await withTransaction(async (conn) => {
+      if (shortname !== null && shortname !== undefined && shortname !== item.shortname) {
+        // The item shortname has changed, we need to update all links to it to reflect this
+        const shortnameError = api.universe.validateShortname(shortname);
+        if (shortnameError) return [400, shortnameError];
+  
+        await conn.execute('UPDATE itemlink SET to_item_short = ? WHERE to_item_short = ?', [shortname, item.shortname]);
+      }
+  
+      const queryString = `
+        UPDATE item
+        SET
+          title = ?,
+          shortname = ?,
+          item_type = ?,
+          obj_data = ?,
+          updated_at = ?,
+          last_updated_by = ?
+        WHERE id = ?;
+      `;
+      await conn.execute(queryString, [ title, shortname ?? item.shortname, item_type ?? item.item_type, JSON.stringify(objData), new Date(), user.id, item.id ])
+    });
     return [200, item.id];
   } catch (err) {
     logger.error(err);

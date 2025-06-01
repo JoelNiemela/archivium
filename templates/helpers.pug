@@ -7,6 +7,23 @@
     }
     return prefixedItems;
   };
+  const formatSnippet = (snippet, cutStart=true, cutEnd=true) => {
+    let clean = snippet.trim();
+
+    const firstSpace = clean.indexOf(' ');
+    if (cutStart && firstSpace > 0 && firstSpace < Math.min(15, clean.length - 15)) {
+      clean = clean.slice(firstSpace + 1);
+    }
+
+    const lastSpace = clean.lastIndexOf(' ');
+    if (cutEnd && lastSpace > clean.length - 15 && clean.length > 30) {
+      clean = clean.slice(0, lastSpace);
+    }
+
+    clean = clean.trim();
+
+    return `${cutStart ? '...' : ''}${clean}${cutEnd ? '...' : ''}`;
+  };
   const formatDate = (date, intervalOnly=false, short=false) => {
     if (!date) return;
     const now = new Date();

@@ -50,6 +50,7 @@ class QueryBuilder {
    constructor() {
     this.table = null;
     this.selects = {};
+    this.selectValues = {};
     this.joins = [];
     this.whereCond = null;
     this.groups = {};
@@ -59,12 +60,16 @@ class QueryBuilder {
     this.unions = [];
    }
 
-   select(col, selectAs=null) {
-    if (col instanceof Array) col.forEach(args => {
-      if (args instanceof Array) this.select(...args);
-      else this.select(args);
-    });
-    else this.selects[col] = selectAs;
+   select(col, selectAs=null, value=null) {
+    if (col instanceof Array) {
+      col.forEach(args => {
+        if (args instanceof Array) this.select(...args);
+        else this.select(args);
+      });
+    } else {
+      this.selects[col] = selectAs;
+      this.selectValues[col] = value;
+    }
     return this;
    }
 
@@ -121,6 +126,10 @@ class QueryBuilder {
     if (selectCols.length) {
       if (!this.table) throw 'No table specified!';
       queryStr += `SELECT ${selectCols.map(col => {
+        if (this.selectValues[col]) {
+          if (this.selectValues[col] instanceof Array) values = [...values, ...this.selectValues[col]];
+          else values = [...values, this.selectValues[col]];
+        }
         if (this.selects[col]) return `${col} AS ${this.selects[col]}`;
         else return col;
       }).join(', ')}`;

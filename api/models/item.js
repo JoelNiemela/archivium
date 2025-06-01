@@ -118,8 +118,14 @@ function getQuery(selects=[], permsCond=undefined, whereConds=undefined, options
     ) tag`, new Cond('tag.item_id = item.id'))
     .where(whereConds)
     .groupBy(['item.id', 'user.username', 'universe.title', ...(options.groupBy ?? [])]);
-  if (options.sort) query.orderBy(options.sort, options.sortDesc);
-  if (options.limit) query.limit(options.limit);
+  if (options.sort) {
+    query.orderBy(options.sort, options.sortDesc);
+  } else {
+    query.orderBy('updated_at', true);
+  }
+  if (options.limit) {
+    query.limit(options.limit);
+  }
 
   return query;
 }
@@ -181,52 +187,35 @@ async function getMany(user, conditions, permissionsRequired=perms.READ, options
       ...(options.join ?? []),
     ];
 
-    let data;
     if (options.search) {
-      const query = new QueryBuilder().union(
-        getQuery(
-          selects,
-          permsCond,
-          whereConds.and('item.title LIKE ?', `%${options.search}%`),
-          options,
-        )
-      ).union(
-        getQuery(
-          selects,
-          permsCond,
-          whereConds.and('item.shortname LIKE ?', `%${options.search}%`),
-          options,
-        )
-      ).union(
-        getQuery(
-          selects,
-          permsCond,
-          whereConds.and('search_tag.tag = ?', options.search),
-          options,
-        ).innerJoin(['tag', 'search_tag'], new Cond('search_tag.item_id = item.id'))
-      ).union(
-        getQuery(
-          selects,
-          permsCond,
-          whereConds.and('search_tag.tag LIKE ?', `%${options.search}%`),
-          options,
-        ).innerJoin(['tag', 'search_tag'], new Cond('search_tag.item_id = item.id'))
-      ).union(
-        getQuery(
-          selects,
-          permsCond,
-          whereConds.and('item.obj_data LIKE ?', `%${options.search}%`),
-          options,
-        )
-      );
-      data = await query.execute();
-    } else {
-      const query = getQuery(selects, permsCond, whereConds, options);
-      for (const join of joins) {
-        query.join(...join);
-      }
-      data = await query.execute();
+      const searchCond = new Cond('item.title LIKE ?', `%${options.search}%`)
+        .or('item.shortname LIKE ?', `%${options.search}%`)
+        .or('search_tag.tag = ?', options.search)
+        .or('search_tag.tag LIKE ?', `%${options.search}%`)
+        .or(`JSON_UNQUOTE(JSON_EXTRACT(item.obj_data, '$.body')) LIKE ?`, `%${options.search}%`);
+      whereConds = whereConds.and(searchCond);
+      selects.push([`LOCATE(?, JSON_UNQUOTE(JSON_EXTRACT(item.obj_data, '$.body'))) AS match_pos`, null, options.search]);
+      selects.push([`
+        CASE
+          WHEN LOCATE(?, JSON_UNQUOTE(JSON_EXTRACT(item.obj_data, '$.body'))) > 0
+          THEN SUBSTRING(
+            JSON_UNQUOTE(JSON_EXTRACT(item.obj_data, '$.body')),
+            GREATEST(1, LOCATE(?, JSON_UNQUOTE(JSON_EXTRACT(item.obj_data, '$.body'))) - 50),
+            100
+          )
+          ELSE NULL
+        END AS snippet`,
+        null, [options.search, options.search],
+      ]);
     }
+    const query = getQuery(selects, permsCond, whereConds, options);
+    for (const join of joins) {
+      query.join(...join);
+    }
+    if (options.search) {
+      query.innerJoin(['tag', 'search_tag'], new Cond('search_tag.item_id = item.id'));
+    }
+    const data = await query.execute();
 
     return [200, data];
   } catch (err) {

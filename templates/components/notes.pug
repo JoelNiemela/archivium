@@ -52,6 +52,7 @@ block append styles
 
   div
     #note-list.card-list
+      input( id='search' name='search' placeholder='Search...' )
       each note in notes
         .sheet.card.d-flex.flex-col.gap-1( data-uuid=note.uuid data-note=note )
           h2.ma-0 #{note.title}
@@ -133,6 +134,7 @@ block append styles
       let noteState = 'list';
       const leftBtn = document.querySelector('#notes-left-btn');
       const noteList = document.querySelector('#note-list');
+      const searchBar = noteList.querySelector('#search');
       const noteEdit = document.querySelector('#note-edit');
       const noteDisplay = document.querySelector('#note-display');
       const noteLoading = document.querySelector('#note-loading');
@@ -391,6 +393,13 @@ block append styles
         if (noteState === 'loading') return;
         else if (noteState === 'list') createNote();
         else backToList();
+      });
+
+      searchBar.addEventListener('change', () => {
+        noteList.querySelectorAll('.card').forEach((el) => {
+          const { title, body } = JSON.parse(el.dataset.note);
+          el.classList.toggle('hidden', title.toLowerCase().indexOf(searchBar.value.toLowerCase()) === -1 && body.toLowerCase().indexOf(searchBar.value.toLowerCase()) === -1);
+        });
       });
 
       editTab.addEventListener('click', editNote);

@@ -44,6 +44,14 @@ async function getMany(user, conditions, options) {
     } else {
       parsedConds.strings.push('note.public');
     }
+    if (options?.search) {
+      parsedConds.strings.push('(note.title LIKE ? OR note.body LIKE ? OR tag.tags LIKE ?)');
+      parsedConds.values.push(`%${options?.search}%`);
+      parsedConds.values.push(`%${options?.search}%`);
+      parsedConds.values.push(`%${options?.search}%`);
+      parsedConds.values.unshift(`%${options?.search}%`);
+      parsedConds.values.unshift(`%${options?.search}%`);
+    }
     const queryString = `
       SELECT DISTINCT
         note.id, note.uuid, note.title,
@@ -53,6 +61,8 @@ async function getMany(user, conditions, options) {
         ${options?.fullBody ? 'note.body' : 'SUBSTRING(note.body, 1, 255) AS body'}
         ${options?.connections ? ', item.items' : ''}
         ${options?.connections ? ', board.boards' : ''}
+        ${options?.search ? ', LOCATE(?, note.body) AS match_pos' : ''}
+        ${options?.search ? ', SUBSTRING(note.body,  GREATEST(1, LOCATE(?, note.body) - 50), 100) AS snippet' : ''}
       FROM note
         ${options?.connections ? `LEFT JOIN (
           SELECT itemnote.note_id, JSON_ARRAYAGG(JSON_ARRAY(item.title, item.shortname, iu.title, iu.shortname)) as items

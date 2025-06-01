@@ -42,13 +42,20 @@ module.exports = {
     const search = req.query.search;
     if (search) {
       const [code1, universes] = await api.universe.getMany(req.session.user, { strings: ['title LIKE ?'], values: [`%${search}%`] });
+      res.status(code1);
+      if (!universes) return;
       const [code2, items] = await api.item.getMany(req.session.user, null, perms.READ, { search });
-      const code = code1 !== 200 ? code1 : code2;
-      res.status(code);
-      if (code !== 200) return;
-      res.prepareRender('search', { items, universes, search });
+      res.status(code2);
+      if (!items) return;
+      let notes, code3;
+      if (req.session.user) {
+        [code3, notes] = await api.note.getByUsername(req.session.user, req.session.user.username, null, { search });
+        res.status(code3);
+        if (!notes) return;
+      }
+      res.prepareRender('search', { items, universes, notes: notes ?? [], search });
     } else {
-      res.prepareRender('search', { items: [], universes: [], search: '' });
+      res.prepareRender('search', { items: [], universes: [], notes: [], search: '' });
     }
   },
 };

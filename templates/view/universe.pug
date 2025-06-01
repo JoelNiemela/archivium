@@ -127,10 +127,21 @@ block content
           if contextUser && ((universe.author_permissions[contextUser.id] || 0) < perms.WRITE)
             button.button( type='submit' onclick=`requestAccess(${perms.WRITE})` disabled=hasRequested ) #{hasRequested ? T('Request Pending') : T('Request Write Access')}
           button.button( type='submit' onclick=`requestAccess(${perms.ADMIN})` disabled=hasRequested ) #{hasRequested ? T('Request Pending') : T('Request Admin Access')}
+      .d-flex.justify-end.mb-2
+        input( id='authorsearch' placeholder='Search...' )
+        script.
+          (() => {
+            const searchBar = document.querySelector('#authorsearch');
+            searchBar.addEventListener('change', () => {
+              document.querySelectorAll('[data-tab=authors] .card-list .card').forEach(el => {
+                el.classList.toggle('hidden', el.dataset.username.toLowerCase().indexOf(searchBar.value.toLowerCase()) === -1);
+              });
+            });
+          })();
       .card-list
         each username, id in universe.authors
           if universe.author_permissions[id] >= perms.WRITE
-            .card.sheet.gap-4( data-goto=`${ADDR_PREFIX}/users/${username}` )
+            .card.sheet.gap-4( data-goto=`${ADDR_PREFIX}/users/${username}` data-username=username )
               img.userIcon( alt=username, src=authors[id].pfpUrl )
               .d-flex.flex-col.grow-1
                 h2.ma-0
@@ -151,37 +162,60 @@ block content
                   else if universe.author_permissions[id] === perms.OWNER
                     | Owner
     
-    .card-list.hidden( data-tab='viewers' )
-      each username, id in universe.authors
-        if universe.author_permissions[id] < perms.WRITE && universe.author_permissions[id] >= perms.READ
-          .card.sheet.gap-4( data-goto=`${ADDR_PREFIX}/users/${username}` )
-            img.userIcon( alt=username, src=authors[id].pfpUrl )
-            .d-flex.flex-col.grow-1
-              h2.ma-0
-                a.link.link-animated( href=`${ADDR_PREFIX}/users/${username}` ) #{username}
-              span
-                b #{T('Joined')}: 
-                | #{formatDate(authors[id].created_at)}
-              span 
-                b #{T('Last seen')}: 
-                | #{formatDate(authors[id].updated_at)}
+    .hidden( data-tab='viewers' )
+      .d-flex.justify-end.mb-2
+        input( id='viewersearch' placeholder='Search...' )
+        script.
+          (() => {
+            const searchBar = document.querySelector('#viewersearch');
+            searchBar.addEventListener('change', () => {
+              document.querySelectorAll('[data-tab=viewers] .card-list .card').forEach(el => {
+                el.classList.toggle('hidden', el.dataset.username.toLowerCase().indexOf(searchBar.value.toLowerCase()) === -1);
+              });
+            });
+          })();
+      .card-list
+        each username, id in universe.authors
+          if universe.author_permissions[id] < perms.WRITE && universe.author_permissions[id] >= perms.READ
+            .card.sheet.gap-4( data-goto=`${ADDR_PREFIX}/users/${username}` data-username=username )
+              img.userIcon( alt=username, src=authors[id].pfpUrl )
+              .d-flex.flex-col.grow-1
+                h2.ma-0
+                  a.link.link-animated( href=`${ADDR_PREFIX}/users/${username}` ) #{username}
+                span
+                  b #{T('Joined')}: 
+                  | #{formatDate(authors[id].created_at)}
+                span 
+                  b #{T('Last seen')}: 
+                  | #{formatDate(authors[id].updated_at)}
     
-    .d-flex.flex-col.gap-4.hidden( data-tab='discuss' )
+    .hidden( data-tab='discuss' )
       if contextUser && universe.discussion_enabled && (universe.discussion_open || universe.author_permissions[id] >= perms.COMMENT)
-        div
+        .d-flex.justify-between.align-baseline.mb-2
           a.link.link-animated( href=`${universeLink(universe.shortname)}/discuss/create` ) Create New
-      each thread in threads
-        .sheet.d-flex.flex-col.gap-2.align-start( data-goto=`${universeLink(universe.shortname)}/discuss/${thread.id}` )
-          h2.ma-0
-            a.link.link-animated( href=`${universeLink(universe.shortname)}/discuss/${thread.id}` ) #{thread.title}
-          .d-flex.gap-4.flex-wrap
-            span
-              b #{T('Comments')}: 
-              | #{thread.comment_count}
-            span
-              b #{T('Created')}: 
-              | #{formatDate(thread.first_activity)}
-            span 
-              b #{T('Last activity')}: 
-              | #{formatDate(thread.last_activity)}
+          input( id='threadsearch' placeholder='Search...' )
+          script.
+            (() => {
+              const searchBar = document.querySelector('#threadsearch');
+              searchBar.addEventListener('change', () => {
+                document.querySelectorAll('[data-tab=discuss] .sheet').forEach(el => {
+                  el.classList.toggle('hidden', el.dataset.thread.toLowerCase().indexOf(searchBar.value.toLowerCase()) === -1);
+                });
+              });
+            })();
+      .d-flex.flex-col.gap-4
+        each thread in threads
+          .sheet.d-flex.flex-col.gap-2.align-start( data-goto=`${universeLink(universe.shortname)}/discuss/${thread.id}` data-thread=thread.title )
+            h2.ma-0
+              a.link.link-animated( href=`${universeLink(universe.shortname)}/discuss/${thread.id}` ) #{thread.title}
+            .d-flex.gap-4.flex-wrap
+              span
+                b #{T('Comments')}: 
+                | #{thread.comment_count}
+              span
+                b #{T('Created')}: 
+                | #{formatDate(thread.first_activity)}
+              span 
+                b #{T('Last activity')}: 
+                | #{formatDate(thread.last_activity)}
         

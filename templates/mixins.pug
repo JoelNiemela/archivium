@@ -12,3 +12,17 @@ mixin authorList(authors, author_permissions)
       a.link.link-animated( href=`${ADDR_PREFIX}/users/${author}` )= author
       | #{suff}
       - i++;
+
+mixin highlight(string, keyword, italics)
+  -
+    const regex = new RegExp(`(${keyword})`, 'gi');
+    const segments = string.split(regex);
+  span
+    each segment, idx in segments
+      if segment.toLowerCase() === keyword.toLowerCase()
+        if italics
+          i #{segment}
+        else
+          b #{segment}
+      else
+        | #{segment}

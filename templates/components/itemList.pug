@@ -39,3 +39,10 @@
           each itemTag in item.tags
             if itemTag
               a.filter.link.link-animated( class={ 'link-selected': itemTag == tag } data-filter-key='tag' data-filter-value=itemTag ) ##{itemTag} 
+
+      if item.snippet && search
+        .row-2( style={ 'grid-column': '1 / 3' } )
+          small
+            i
+              - const snippet = item.snippet
+              +highlight(formatSnippet(snippet, item.match_pos >= 50, snippet.length === 100), search)

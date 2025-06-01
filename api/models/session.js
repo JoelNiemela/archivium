@@ -1,6 +1,10 @@
 const { executeQuery, parseData } = require('../utils');
 const utils = require('../../lib/hashUtils');
-const userapi = require('./user');
+
+let api;
+function setApi(_api) {
+  api = _api;
+}
 
 /**
  * for internal use only - does not conform to the standard return format!
@@ -13,7 +17,7 @@ async function getOne(options) {
   const data = await executeQuery(queryString, parsedOptions.values);
   const session = data[0];
   if (!session || !session.user_id) return session;
-  const [_, user] = await userapi.getOne({ 'user.id': session.user_id }, false, true);
+  const [_, user] = await api.user.getOne({ 'user.id': session.user_id }, false, true);
   session.user = user;
   return session;
 }
@@ -54,6 +58,7 @@ function del(options) {
 }
 
 module.exports = {
+  setApi,
   getOne,
   post,
   put,

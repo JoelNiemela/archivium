@@ -65,7 +65,10 @@ module.exports = function(app, upload) {
     ]),
     new APIRoute('/is-subscribed', { POST: (req) => api.notification.isSubscribed(req.session.user, req.body) }),
     new APIRoute('/users', { GET: () => api.user.getMany() }, [
-      new APIRoute('/:username', { GET: (req) => api.user.getOne({ 'user.username': req.params.username }) }, [
+      new APIRoute('/:username', {
+        GET: (req) => api.user.getOne({ 'user.username': req.params.username }),
+        DELETE: (req) => api.user.del(req.session.user, req.params.username, req.body.password),
+      }, [
         new APIRoute('/send-verify-link', { GET: (req) => api.email.trySendVerifyLink(req.session.user, req.params.username) }),
         new APIRoute('/notes', {
           GET: (req) => api.note.getByUsername(req.session.user, req.params.username),
@@ -73,6 +76,7 @@ module.exports = function(app, upload) {
         }, [
           new APIRoute('/:uuid', {
             GET: (req) => api.note.getOne(req.session.user, req.params.uuid),
+            DELETE: (req) => api.note.del(req.session.user, req.params.uuid),
           }),
         ]),
         new APIRoute('/universes', {
@@ -147,6 +151,7 @@ module.exports = function(app, upload) {
           new APIRoute('/:itemShortName', {
             GET: async (req) => api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortName, req.params.itemShortName),
             PUT: async (req) => api.item.save(req.session.user, req.params.universeShortName, req.params.itemShortName, req.body, true),
+            DELETE: (req) => api.item.del(req.session.user, req.params.universeShortName, req.params.itemShortName),
           }, [
             new APIRoute('/notes', {
               GET: (req) => api.note.getByItemShortname(req.session.user, req.params.universeShortName, req.params.itemShortName),
@@ -203,6 +208,16 @@ module.exports = function(app, upload) {
                 }),
               ]),
             ]),
+            new APIRoute('/comments', {
+              GET: async (req) => {
+                const [_, item] = await api.item.getByUniverseAndItemShortnames(req.session.user, req.params.universeShortName, req.params.itemShortName);
+                return await api.discussion.getCommentsByItem(req.session.user, item.id);
+              },
+            }, [
+              new APIRoute('/:commentId', {
+                DELETE: (req) => api.discussion.deleteItemComment(req.session.user, req.params.universeShortName, req.params.itemShortName, req.params.commentId),
+              }),
+            ]),
           ]),
         ]),
         new APIRoute('/events', {
@@ -212,22 +227,24 @@ module.exports = function(app, upload) {
           PUT: (req) => api.universe.putUserFollowing(req.session.user, req.params.universeShortName, req.body.isFollowing),
         }),
         new APIRoute('/discussion', {
-          GET: (req) => frmtData(
-            api.discussion.getThreads(req.session.user, { 'universe.shortname': req.params.universeShortName }),
-            (data) => data[0],
-          ),
+          GET: (req) => api.discussion.getThreads(req.session.user, { 'universe.shortname': req.params.universeShortName }, false, true),
           POST: (req) => api.discussion.postThread(req.session.user, req.params.universeShortName, req.body),
         }, [
-          new APIRoute('/:id', {}, [
+          new APIRoute('/:discussionId', {
+            GET: (req) => api.discussion.getCommentsByThread(req.session.user, req.params.discussionId),
+          }, [
+            new APIRoute('/:commentId', {
+              DELETE: (req) => api.discussion.deleteThreadComment(req.session.user, req.params.discussionId, req.params.commentId),
+            }),
             new APIRoute('/subscribe', {
-              PUT: (req) => api.discussion.subscribeToThread(req.session.user, req.params.id, req.body.isSubscribed),
+              PUT: (req) => api.discussion.subscribeToThread(req.session.user, req.params.discussionId, req.body.isSubscribed),
             }),
           ]),
         ]),
         new APIRoute('/perms', {
           PUT: async (req) => {
             const [_, user] = await api.user.getOne({ 'user.username': req.body.username });
-            return await api.universe.putPermissions(req.session.user, req.params.universeShortName, user, req.body.permission_level, perms.ADMIN);
+            return await api.universe.putPermissions(req.session.user, req.params.universeShortName, user, req.body.permission_level);
           },
         }),
         new APIRoute('/request', {
@@ -243,6 +260,7 @@ module.exports = function(app, upload) {
                   [perms.COMMENT]: 'comment',
                   [perms.WRITE]: 'write',
                   [perms.ADMIN]: 'admin',
+                  [perms.OWNER]: 'owner',
                 };
                 if (target) {
                   await api.notification.notify(target, api.notification.types.UNIVERSE, {

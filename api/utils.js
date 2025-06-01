@@ -1,6 +1,7 @@
 const db = require('../db');
 const _ = require('lodash');
 const md5 = require('md5');
+const logger = require('../logger');
 
 const perms = {
   NONE: 0,
@@ -8,11 +9,34 @@ const perms = {
   COMMENT: 2,
   WRITE: 3,
   ADMIN: 4,
+  OWNER: 5,
 };
 
-const executeQuery = (query, values) => {
-  return db.executeAsync(query, values).spread(results => results);
-};
+async function executeQuery(query, values) {
+  const [ results ] = await db.execute(query, values);
+  return results;
+}
+
+class RollbackError extends Error {}
+
+async function withTransaction(callback) {
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    await callback(connection);
+
+    await connection.commit();
+  } catch (err) {
+    await connection.rollback();
+    logger.warn('Transaction rolled back.');
+    if (!(err instanceof RollbackError)) {
+      throw err;
+    }
+  } finally {
+    connection.release();
+  }
+}
 
 const parseData = (options) => {
   return _.reduce(options, (parsed, value, key) => {
@@ -190,6 +214,8 @@ function getPfpUrl(user) {
 module.exports = {
   perms,
   executeQuery,
+  RollbackError,
+  withTransaction,
   parseData,
   QueryBuilder,
   Cond,

@@ -1,6 +1,5 @@
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 const { DB_CONFIG } = require('../config');
-const Promise = require('bluebird');
 const fs = require('fs').promises;
 const path = require('path');
 const { askQuestion } = require('./import');
@@ -8,7 +7,7 @@ const backup = require('./backup');
 
 async function applySchemaPatches(db) {
   try {
-    const [rows] = await db.queryAsync('SELECT version FROM schema_version');
+    const [rows] = await db.query('SELECT version FROM schema_version');
     const currentVersion = rows[0].version || 0;
     console.log(`Current schema version: ${currentVersion}`);
 
@@ -43,12 +42,12 @@ async function applySchemaPatches(db) {
       console.log(`Applying patch: ${patch.file}`);
 
       try {
-        await db.beginTransactionAsync();
-        await db.queryAsync(sql);
-        await db.commitAsync();
+        await db.beginTransaction();
+        await db.query(sql);
+        await db.commit();
         console.log(`Patch ${patch.file} applied successfully.`);
       } catch (err) {
-        await db.rollbackAsync();
+        await db.rollback();
         console.error(`Error applying patch ${patch.file}:`, err);
         throw err;
       }
@@ -61,8 +60,7 @@ async function applySchemaPatches(db) {
 }
 
 async function main() {
-  const connection = mysql.createConnection({ ...DB_CONFIG, multipleStatements: true });
-  const db = Promise.promisifyAll(connection, { multiArgs: true });
+  const db = await mysql.createConnection({ ...DB_CONFIG, multipleStatements: true });
   await applySchemaPatches(db);
   db.end();
 }

@@ -62,6 +62,7 @@ module.exports = {
     }
     item.obj_data = JSON.parse(item.obj_data);
     item.itemTypeName = ((universe.obj_data.cats ?? {})[item.item_type] ?? ['missing_cat'])[0];
+    item.itemTypeColor = ((universe.obj_data.cats ?? {})[item.item_type] ?? [,,'#f3f3f3'])[2];
     if (item.gallery.length > 0) {
       item.gallery = item.gallery.sort((a, b) => a.id > b.id ? 1 : -1);
     }

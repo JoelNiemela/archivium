@@ -2,14 +2,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 
 :root {
-  --navbar-height: 51px;
+  --navbar-height: 3.1875rem;
   --page-margin-top: calc(var(--navbar-height) + 1rem);
-}
-
-@media only screen and (max-device-width: 480px) {
-  :root {
-    --navbar-height: 102px;
-  }
 }
 
 * {
@@ -19,6 +13,10 @@
 h1, h2, h3, h4, h5, h6, .lora {
   font-family: 'Lora', serif;
   scroll-margin-top: var(--page-margin-top);
+}
+
+ul, ol {
+  padding-inline-start: 2.5rem;
 }
 
 body {
@@ -202,11 +200,13 @@ header {
 
 .card {
   box-shadow: 0 0.25rem 0.5rem 0 rgb(0 0 0 / 20%);
-  transition: box-shadow 0.3s;
+  transition: box-shadow 0.3s, top 0.2s;
   display: grid;
   grid-template-columns: inherit;
   grid-column: 1 / 4;
   border-radius: 0.25rem;
+  position: relative;
+  top: 0;
 }
 
 .card.item-type {
@@ -219,6 +219,7 @@ header {
 
 .card:hover {
   box-shadow: 0 0.5rem 1rem 0 rgb(0 0 0 / 30%);
+  top: -0.125rem;
 }
 
 .card.item-type div {
@@ -232,10 +233,6 @@ header {
   color: black;
   text-decoration: none;
   flex-grow: 3;
-}
-
-.cardLink:hover {
-  color: #666;
 }
 
 .item-type .cardLink div {
@@ -306,7 +303,7 @@ header {
   padding: 1.25rem;
   background-color: #fefefe;
   border-radius: 0.25rem;
-  box-shadow: silver 2px 2px 5px 0px;
+  box-shadow: silver 0.125rem 0.125rem 0.3125rem 0;
 }
 
 .itemTab {
@@ -954,6 +951,9 @@ input:checked + .slider:before {
   justify-content: space-between;
 }
 
+.grow-0 {
+  flex-grow: 0;
+}
 .grow-1 {
   flex-grow: 1;
 }
@@ -1082,6 +1082,9 @@ input:checked + .slider:before {
 .mt-4 {
   margin-top: 1rem;
 }
+.mt-8 {
+  margin-top: 2rem;
+}
 
 .pa-0 {
   padding: 0;
@@ -1091,6 +1094,27 @@ input:checked + .slider:before {
 }
 .pa-2 {
   padding: 0.5rem;
+}
+
+.px-1 {
+  padding-right: 0.25rem;
+  padding-left: 0.25rem;
+}
+.px-2 {
+  padding-right: 0.5rem;
+  padding-left: 0.5rem;
+}
+.px-3 {
+  padding-right: 0.75rem;
+  padding-left: 0.75rem;
+}
+.px-4 {
+  padding-right: 1rem;
+  padding-left: 1rem;
+}
+.px-8 {
+  padding-right: 2rem;
+  padding-left: 2rem;
 }
 
 .py-1 {
@@ -1110,6 +1134,9 @@ input:checked + .slider:before {
   padding-bottom: 1rem;
 }
 
+.pl-0 {
+  padding-left: 0;
+}
 .pl-1 {
   padding-left: 0.25rem;
 }
@@ -1117,6 +1144,9 @@ input:checked + .slider:before {
   padding-left: 0.5rem;
 }
 
+.pr-0 {
+  padding-right: 0;
+}
 .pr-1 {
   padding-right: 0.25rem;
 }

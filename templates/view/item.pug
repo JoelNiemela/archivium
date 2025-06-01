@@ -1,5 +1,8 @@
 extends ../layout.pug
 
+block title
+  title #{item.title}
+
 block append styles
   link( rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" )
 
@@ -21,20 +24,26 @@ block scripts
     //- include /static/scripts/editor/rich.js
 
 block breadcrumbs
-  a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
+  if displayUniverse
+    a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{universe.title}
+  else
+    a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
+    |  / 
+    a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
+    |  / 
+    a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
   |  / 
-  a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
-  |  / 
-  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
-  |  / 
-  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items` ) #{T('Items')}
+  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items?type=${item.item_type}` ) #{capitalize(T(`${((universe.obj_data.cats || {})[item.item_type] || [, 'Missing Category'])[1]}`))}
   |  / 
   span #{item.title}
 
 block content
-  h1.center #{item.title}
-  p.center #{capitalize(T(item.itemTypeName))} of 
-    a.link.link-animated( href=`${universeLink(universe.shortname)}/` ) #{item.universe}
+  .d-flex.justify-center
+    .sheet.mt-8.px-8.py-4( style={ 'background-color': item.itemTypeColor, 'min-width': '15vw' } )
+      h1.center.ma-0 #{item.title}
+      p.center.ma-0 #{capitalize(T(item.itemTypeName))}
+        if !displayUniverse
+          |  of #{item.universe}
   p.center.mb-2
     small Created by 
       if item.author

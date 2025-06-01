@@ -1,11 +1,19 @@
 extends ../layout.pug
 include ../mixins.pug
 
+block title
+  title Items — Archivium
+
 block scripts
   script
     include /static/scripts/cardUtils.js
     include /static/scripts/listUtils.js
     include /static/scripts/searchUtils.js
+
+block breadcrumbs
+  a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
+  |  / 
+  span #{T('Items')}
 
 block content
   h1.center Items

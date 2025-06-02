@@ -1,22 +1,6 @@
 //- helper functions
 include helpers.pug
 
-mixin mdTag(parent, tag)
-  if tag[0] === 'text'
-    | #{tag[1]}
-    each subtag in tag[2]
-      +mdTag(tag, subtag)
-  else
-    #{tag[0]}&attributes(tag[3]) #{tag[1]}
-      each subtag in tag[2]
-        +mdTag(tag, subtag)
-
-mixin mdText(tag)
-  #{tag[0]}&attributes(tag[3]) #{tag[1]}
-    each subtag in tag[2]
-      +mdTag(tag, subtag)
-
-
 doctype html
 html(lang='en')
   head

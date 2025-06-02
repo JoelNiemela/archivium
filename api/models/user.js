@@ -241,6 +241,31 @@ async function putUsername(sessionUser, oldUsername, newUsername) {
   }
 }
 
+async function putPassword(sessionUser, username, { oldPassword, newPassword }) {
+  const [code, user] = await getOne({ 'user.username': username }, true);
+  if (!user) return [code];
+  if (Number(sessionUser.id) !== Number(user.id)) return [403];
+
+  const isCorrectLogin = validatePassword(oldPassword, user.password, user.salt);
+  if (!isCorrectLogin) return [401];
+
+  const salt = utils.createRandom32String();
+
+  try {
+    const data = await executeQuery(`
+      UPDATE user
+      SET
+        salt = ?,
+        password = ?
+      WHERE id = ?
+    `, [salt, utils.createHash(newPassword, salt), user.id]);
+    return [200, data];
+  } catch (err) {
+    logger.error(err);
+    return [500];
+  }
+}
+
 /**
  * WARNING: THIS METHOD IS *UNSAFE* AND SHOULD *ONLY* BE CALLED BY AUTHORIZED ROUTES!
  * @param {number} user_id id of user to delete 
@@ -459,6 +484,7 @@ module.exports = {
   validateUsername,
   put,
   putUsername,
+  putPassword,
   del,
   doDeleteUser,
   getDeleteRequest,

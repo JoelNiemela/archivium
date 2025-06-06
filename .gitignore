@@ -8,6 +8,4 @@ db/backups/
 
 logs/
 
-elm/elm-stuff/
-
 cypress/screenshots/

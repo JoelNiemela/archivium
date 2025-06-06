@@ -16,12 +16,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JoelNiemela/archivium.git"
+    "url": "git+https://github.com/HMI-Studios/archivium.git"
   },
   "author": "JoelNiemela",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/JoelNiemela/archivium/issues",
+    "url": "https://github.com/HMI-Studios/archivium/issues",
     "email": "contact@archivium.net"
   },
   "homepage": "https://archivium.net",

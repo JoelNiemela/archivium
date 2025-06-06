@@ -9,7 +9,7 @@
     </mj-attributes>
     <mj-style inline="inline">
       a {
-        color: #7cb8ff;
+        color: #069;
         text-decoration: none;
       }
     </mj-style>
@@ -41,14 +41,17 @@
       </mj-column>
     </mj-section>
 
-    <mj-section padding-top="32px">
-      <mj-column>
-        <mj-text font-size="12px" color="#666666">
-          You received this email because someone signed up for Archivium using this address.
-          If this wasn’t you, feel free to ignore it.
+    <mj-section background-color="#d8d8d8" padding="0">
+      <mj-column padding="12px 2px">
+        <mj-text font-size="14px" color="#666666" align="center" padding-bottom="0">
+          Need help? <a href="mailto:contact@archivium.net?subject=Archivium Support&amp;body=">Contact support</a> or visit the <a href="https://github.com/HMI-Studios/archivium/wiki">Archivium Wiki</a>.
         </mj-text>
-        <mj-text font-size="12px" color="#444444" padding-top="12px">
-          © 2024 Archivium — All rights reserved
+        <mj-text font-size="12px" color="#666666" align="center">
+          You're receiving this email because you signed up for Archivium. If this wasn't you, please <a href="mailto:contact@archivium.net">let us know</a>.
+          Want to stop receiving emails from us? Manage email preferences <a href="https://archivium.net/settings?tab=notifications">here</a>.
+        </mj-text>
+        <mj-text font-size="12px" color="#444444" padding-top="0" align="center">
+          © 2024 Archivium
         </mj-text>
       </mj-column>
     </mj-section>

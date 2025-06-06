@@ -330,7 +330,7 @@ async function del(sessionUser, username, password) {
         return [403, 'Password incorrect!'];
       }
       await executeQuery('INSERT INTO userdeleterequest (user_id) VALUES (?);', [user.id]);
-      await api.email.sendTemplateEmail(api.email.templates.DELETE, SITE_OWNER_EMAIL, { username }, api.email.groups.ACCOUNT_ALERTS);
+      await api.email.sendTemplateEmail(api.email.templates.DELETE, SITE_OWNER_EMAIL, { username });
       return [200];
     } else {
       return [status];

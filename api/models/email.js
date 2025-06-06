@@ -13,10 +13,10 @@ function setApi(_api) {
 }
 
 const templates = {
-  VERIFY: ['d-04ac9be5b7fb430ba3e23b7d93115644', 'verify', 'Account Verification'],
-  NOTIFY: ['d-32bf5e61b7d14239a80a00518b1824c0', 'notify', 'Notification'],
-  DELETE: ['d-122cfcc3c3514b529ae2a648a4dd2650', 'delete', 'User Delete Request'],
-  RESET:  ['welcome', 'reset', 'Password Reset'],
+  VERIFY: ['confirm', 'verify', 'Account Verification'],
+  NOTIFY: ['notification', 'notify', 'Notification'],
+  DELETE: ['delete', 'delete', 'User Delete Request'],
+  RESET:  ['passwordReset', 'reset', 'Password Reset'],
 };
 
 const mailerSend = new MailerSend({

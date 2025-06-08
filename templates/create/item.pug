@@ -23,6 +23,8 @@ block breadcrumbs
 
 block scripts
   script.
+    const validateShortname = !{validateShortname};
+
     function toShortname(title) {
       const shortname = title.toLowerCase()
         .replace(/[\s\(\)"']/g, '-')

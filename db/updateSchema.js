@@ -1,4 +1,4 @@
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 const { DB_CONFIG } = require('../config');
 const { loadSchema } = require('./import');
 

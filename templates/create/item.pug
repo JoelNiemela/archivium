@@ -24,15 +24,15 @@ block breadcrumbs
 block scripts
   script.
     function toShortname(title) {
-      let shortname = title.toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
+      const shortname = title.toLowerCase()
+        .replace(/[\s\(\)"']/g, '-')
+        .replace(/[^a-z0-9-]+/g, '')
         .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
+        .replace(/^-|-$/g, '')
+        .substring(0, 64);
 
-      if (shortname.length < 3) {
+      if (validateShortname(shortname) !== null) {
           return '';
-      } else if (shortname.length > 64) {
-          shortname = shortname.substring(0, 64);
       }
 
       return shortname;

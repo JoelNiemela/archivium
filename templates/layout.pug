@@ -24,8 +24,8 @@ html(lang='en')
       }
     block styles
 
-    script!= `const locale = JSON.parse('${JSON.stringify(locale)}');`
     script.
+      const locale = !{locale};
       const sprintf = !{sprintf};
       function T(str, ...args) {
         return sprintf(locale[str] ?? str, ...args);

@@ -45,3 +45,5 @@ function sprintf(format, ...args) {
 function T(str) {
   return locale[lang][str] ?? str;
 }
+
+module.exports = { locale, lang, sprintf, T };

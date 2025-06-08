@@ -1,3 +1,6 @@
+const { perms } = require('../api/utils');
+const api = require('../api');
+
 const locale = {
   en: {
     article: 'article',

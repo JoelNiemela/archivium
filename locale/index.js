@@ -42,8 +42,8 @@ function sprintf(format, ...args) {
  return format.replace(/%s/g, () => args[i++]);
 }
 
-function T(str) {
-  return locale[lang][str] ?? str;
+function T(str, ...args) {
+  return sprintf(locale[lang][str] ?? str, ...args);
 }
 
 module.exports = { locale, lang, sprintf, T };

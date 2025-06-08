@@ -26,8 +26,8 @@ html(lang='en')
 
     script!= `const locale = JSON.parse('${JSON.stringify(locale)}');`
     script.
-      function T(str) {
-        return locale[str] ?? str;
+      function T(str, ...args) {
+        return sprintf(locale[str] ?? str, ...args);
       }
       function universeLink(uniShort) {
         const displayUniverse = '#{displayUniverse}';

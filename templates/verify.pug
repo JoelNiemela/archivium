@@ -13,10 +13,10 @@ block scripts
       if (response.status === 429) {
         const retryAfter = new Date(data);
         const secondsLeft = Math.round((retryAfter - new Date()) / 1000);
-        retryAfterText.textContent = `Please wait ${secondsLeft} seconds before trying again.`;
+        retryAfterText.textContent = T('Please wait %s seconds before trying again.', secondsLeft);
         updateRetryAfterInterval = setInterval(() => {
           const secondsLeft = Math.round((retryAfter - new Date()) / 1000);
-          retryAfterText.textContent = `Please wait ${secondsLeft} seconds before trying again.`;
+          retryAfterText.textContent = T('Please wait %s seconds before trying again.', secondsLeft);
           if (secondsLeft < 1) {
             clearInterval(updateRetryAfterInterval);
             retryAfterText.classList.add('hidden');
@@ -32,16 +32,16 @@ block scripts
     }
 
 block content
-  h1.center Access Denied
+  h1.center #{T('Access Denied')}
   .sheet
     if reason === 'bad_key'
-      p Error: your verification link seems to be broken or have expired. A new one has been sent to your email (#{user.email}).
+      p #{T('Error: your verification link seems to be broken or have expired. A new one has been sent to your email (%s).', user.email)}
     else
-      p Your account has not yet been verified. A verification link has been sent to your email (#{user.email}).
-    p If you have not received this link, check your spam folder or request a new one below:
+      p #{T('Your account has not yet been verified. A verification link has been sent to your email (%s).', user.email)}
+    p #{T('If you have not received this link, check your spam folder or request a new one below:')}
     .d-flex.align-baseline.gap-2
-      button( onclick='sendVerifyLink()' ) Request a new verification link
+      button(onclick='sendVerifyLink()') #{T('Request a new verification link')}
       small.hidden.color-error#retry-after
-    p Once you have verified your account you can 
-      a.link.link-animated( href=`${ADDR_PREFIX}${nextPage}` ) continue to Archivium
+    p #{T('Once you have verified your account you can ')}
+      a.link.link-animated(href=`${ADDR_PREFIX}${nextPage}`) #{T('continue to Archivium')}
       | .

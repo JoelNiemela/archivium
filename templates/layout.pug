@@ -26,7 +26,7 @@ html(lang='en')
 
     script!= `const locale = JSON.parse('${JSON.stringify(locale)}');`
     script.
-      const sprintf = ${sprintf};
+      const sprintf = `${sprintf}`;
       function T(str, ...args) {
         return sprintf(locale[str] ?? str, ...args);
       }

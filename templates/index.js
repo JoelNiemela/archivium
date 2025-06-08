@@ -43,7 +43,7 @@ function contextData(req) {
     perms,
     locale: locale[lang],
     T,
-    sprintf: sprintf,
+    sprintf,
     validateUsername: api.user.validateUsername,
   };
 }

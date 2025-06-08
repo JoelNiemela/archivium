@@ -25,7 +25,7 @@ const locale = {
     items: 'items',
     organization: 'organization',
     organizations: 'organizations',
-    missing_cat: 'Missing Category',
+    'Missing Category': 'Missing Category',
     [`perms_${perms.NONE}`]: 'None',
     [`perms_${perms.READ}`]: 'Read',
     [`perms_${perms.COMMENT}`]: 'Comment',

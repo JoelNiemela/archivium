@@ -1,7 +1,7 @@
 extends ../layout.pug
 
 block title
-  title Access Denied
+  title #{T('Access Denied')}
 
 block scripts
   script 
@@ -21,13 +21,13 @@ block content
     br
   else
     .center.d-flex.flex-col.align-center
-      span.mt-4.material-symbols-outlined( style={ 'font-size': '8rem' } ) visibility_off
+      span.mt-4.material-symbols-outlined(style={ 'font-size': '8rem' }) visibility_off
       h1.mt-0 Access Denied
       p 
-        | Looks like the universe you're trying to reach is private.
+        | #{T('Looks like the universe you\'re trying to reach is private.')}
         br
         if contextUser
-          | You can ask the owner of this universe for access by clicking the button below:
+          | #{T('You can ask the owner of this universe for access by clicking the button below:')}
   
   .center.d-flex.flex-col.align-center
     if contextUser
@@ -36,8 +36,8 @@ block content
             await putJSON('/api/universes/#{shortname}/request', { permissionLevel: #{perms.READ} });
             window.location.reload();
           }
-        button.button.large( type='submit' onclick='requestAccess()' disabled=hasRequested ) #{hasRequested ? T('Request Pending') : T('Request Access')}
+        button.button.large(type='submit' onclick='requestAccess()' disabled=hasRequested) #{hasRequested ? T('Request Pending') : T('Request Access')}
     else
       p
-        a.link.link-animated( href=`${ADDR_PREFIX}/login?${encodedPath}` ) Log in
-        |  to request full access to this universe.
+        a.link.link-animated(href=`${ADDR_PREFIX}/login?${encodedPath}`) #{T('Log in')}
+        | #{T(' to request full access to this universe.')}

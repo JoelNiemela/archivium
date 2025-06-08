@@ -67,7 +67,7 @@ block append styles
             small.d-flex.flex-wrap.gap-1.tags
               each noteTag in note.tags
                 if noteTag
-                  a.link.link-animated( data-tag=noteTag ) ##{noteTag}
+                  a.link.link-animated(data-tag=noteTag) ##{noteTag}
     #note-edit.hidden
       textarea
     #note-display.sheet.hidden
@@ -78,18 +78,18 @@ block append styles
       .loader
 
   div
-    #note-controls.sheet( style={ position: 'sticky', top: '4rem' } )
-      form.edit.hidden( method='POST' )
-        .grid.align-baseline.gap-2( style={ 'grid-template-columns': 'auto auto' } )
-          label( for='note_title' ) Title:
-          input( id='note_title' type='text' name='note_title' )
+    #note-controls.sheet(style={ position: 'sticky', top: '4rem' })
+      form.edit.hidden(method='POST')
+        .grid.align-baseline.gap-2(style={ 'grid-template-columns': 'auto auto' })
+          label(for='note_title') #{T('Title')}:
+          input(id='note_title' type='text' name='note_title')
 
-          label( for='note_public' ) Public:
+          label(for='note_public') #{T('Public')}:
           label.switch
-            input( id='note_public' name='note_public' type='checkbox' )
+            input(id='note_public' name='note_public' type='checkbox')
             span.slider
         
-        label Linked items:
+        label #{T('Linked items')}:
         ul#note-items-edit.ma-0.pa-0
         #note-items
 
@@ -97,21 +97,21 @@ block append styles
         //- ul#note-boards-edit.ma-0.pa-0
         //- #note-boards
 
-        label( for='note_tags' ) Tags: 
-        textarea( id='note_tags' name='note_tags' )
+        label(for='note_tags') #{T('Tags')}: 
+        textarea(id='note_tags' name='note_tags')
         
-        input.hidden( id='create' type='submit' value='Create' formaction=`${ADDR_PREFIX}/notes/create` )
-        input.hidden( id='save' type='submit' value='Save' formaction=`${ADDR_PREFIX}/notes/edit` )
-        input.hidden( id='delete' type='button' value='Delete' )
+        input.hidden(id='create' type='submit' value='Create' formaction=`${ADDR_PREFIX}/notes/create`)
+        input.hidden(id='save' type='submit' value='Save' formaction=`${ADDR_PREFIX}/notes/edit`)
+        input.hidden(id='delete' type='button' value='Delete')
         
-        input( id='note_body' type='hidden' name='note_body' )
-        input( id='note_uuid' type='hidden' name='note_uuid' )
-        input( id='note_universe' type='hidden' name='note_universe' value=(universe && universe.shortname) )
-        input( id='note_item' type='hidden' name='note_item' value=(item && item.shortname) )
-        input( id='note_board' type='hidden' name='note_board' value=(board && board.shortname) )
+        input(id='note_body' type='hidden' name='note_body')
+        input(id='note_uuid' type='hidden' name='note_uuid')
+        input(id='note_universe' type='hidden' name='note_universe' value=(universe && universe.shortname))
+        input(id='note_item' type='hidden' name='note_item' value=(item && item.shortname))
+        input(id='note_board' type='hidden' name='note_board' value=(board && board.shortname))
       
       .preview.hidden
-        h3 Linked items:
+        h3 #{T('Linked items')}:
         ul#note-items-list.ma-0
         #note-items
 

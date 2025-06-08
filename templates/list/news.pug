@@ -1,7 +1,7 @@
 extends ../layout.pug
 
 block styles
-  link( rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" )
+  link(rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css")
 
 block scripts
   script 
@@ -11,12 +11,12 @@ block scripts
     include /static/scripts/markdown/render.js
 
 block breadcrumbs
-  a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
+  a.link.link-animated(href=`${ADDR_PREFIX}/`) #{T('Home')}
   |  / 
   span #{T('News')}
 
 block content
-  h1.center Archivium News
+  h1.center #{T('Archivium News')}
   
   .d-flex.flex-col.gap-4
     each content in newsletters

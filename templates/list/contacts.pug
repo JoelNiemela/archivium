@@ -2,7 +2,7 @@ extends ../layout.pug
 include ../mixins.pug
 
 block title
-  title Contacts — Archivium
+  title #{T('Contacts — Archivium')}
 
 block breadcrumbs
   a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
@@ -14,45 +14,45 @@ block content
     include /static/scripts/cardUtils.js
     include /static/scripts/contacts.js
   
-  h1.center Contacts
+  h1.center #{T('Contacts')}
   hr
   .d-flex
-    input( id='username' name='username' placeholder=T('Username') )
-    button( onclick="addContact(document.getElementById('username').value)" ) #{T('Add Contact')}
-  h2 All (#{contacts.length})
+    input(id='username' name='username' placeholder=T('Username'))
+    button(onclick="addContact(document.getElementById('username').value)") #{T('Add Contact')}
+  h2 ${T('All (%s)', contacts.length)}
   .card-list
     each user in contacts
-      .card.sheet.gap-4.align-start( data-goto=`${ADDR_PREFIX}/users/${user.username}` )
-        img.userIcon( alt=user.username, src=user.pfpUrl )
+      .card.sheet.gap-4.align-start(data-goto=`${ADDR_PREFIX}/users/${user.username}`)
+        img.userIcon(alt=user.username, src=user.pfpUrl)
         .d-flex.flex-col.grow-1
           h2.ma-0
-            a.link.link-animated( href=`${ADDR_PREFIX}/users/${user.username}` ) #{user.username}
+            a.link.link-animated(href=`${ADDR_PREFIX}/users/${user.username}`) #{user.username}
           span
             b #{T('Joined')}: 
             | #{formatDate(user.created_at)}
           span 
             b #{T('Last seen')}: 
             | #{formatDate(user.updated_at)}
-        .d-flex.gap-1.justify-end( data-user=user.username )
-          button.contact-delete Remove
+        .d-flex.gap-1.justify-end(data-user=user.username)
+          button.contact-delete #{T('Remove')}
   
-  h2 Pending (#{pending.length})
+  h2 #{T('Pending (%s)', pending.length)}
   .card-list
     each user in pending
-      .card.sheet.gap-4.align-start( data-goto=`${ADDR_PREFIX}/users/${user.username}` )
-        img.userIcon( alt=user.username, src=user.pfpUrl )
+      .card.sheet.gap-4.align-start(data-goto=`${ADDR_PREFIX}/users/${user.username}`)
+        img.userIcon(alt=user.username, src=user.pfpUrl)
         .d-flex.flex-col
           h2.ma-0
-            a.link.link-animated( href=`${ADDR_PREFIX}/users/${user.username}` ) #{user.username}
+            a.link.link-animated(href=`${ADDR_PREFIX}/users/${user.username}`) #{user.username}
           span
             b #{T('Joined')}: 
             | #{formatDate(user.created_at)}
           span 
             b #{T('Last seen')}: 
             | #{formatDate(user.updated_at)}
-        .d-flex.gap-1.justify-end( data-user=user.username )
+        .d-flex.gap-1.justify-end(data-user=user.username)
           if user.is_request
-            button.contact-accept Accept
-            button.contact-reject Reject
+            button.contact-accept #{T('Accept')}
+            button.contact-reject #{T('Reject')}
           else
-            span Pending
+            span #{T('Pending')}

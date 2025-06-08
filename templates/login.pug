@@ -1,28 +1,28 @@
 extends layout.pug
 
 block title
-  title Login to Archivium
+  title #{T('Login to Archivium')}
 
 block content
-  h2 Login
-  form#login( method='post' )
+  h2 #{T('Login')}
+  form#login(method='POST')
     div.inputGroup
-      label( for='username' ) Username: 
-      input( id='username' type='text' name='username' )
+      label(for='username') #{T('Username')}: 
+      input(id='username' type='text' name='username')
       script.
         const form = document.forms.login;
         form.username.addEventListener('input', () => {
           form.username.value = form.username.value.trim();
         })
     div.inputGroup
-      label( for='password' ) Password: 
-      input( id='password' type='password' name='password' )
+      label(for='password') #{T('Password')}: 
+      input(id='password' type='password' name='password')
     div
-      button( type='submit' ) Login
+      button(type='submit') #{T('Login')}
     if error
       div
-        span( style={'font-size': 'small'} ).color-error= error
+        span(style={'font-size': 'small'}).color-error= error
   p
-    a.link.link-animated( href=`${ADDR_PREFIX}/forgot-password` ) Forgot password?
+    a.link.link-animated(href=`${ADDR_PREFIX}/forgot-password`) #{T('Forgot password?')}
   p
-    a.link.link-animated( href=`${ADDR_PREFIX}/signup${searchQueries ? `?${searchQueries}`: ''}` ) Create an Account
+    a.link.link-animated(href=`${ADDR_PREFIX}/signup${searchQueries ? `?${searchQueries}`: ''}`) #{T('Create an Account')}

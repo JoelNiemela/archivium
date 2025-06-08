@@ -1,33 +1,33 @@
 extends ../layout.pug
 
 block title
-  title New Discussion for #{universe.title}
+  title #{T('New Discussion for %s', universe.title)}
 
 block breadcrumbs
   if displayUniverse
-    a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{universe.title}
+    a.link.link-animated(href=`${ADDR_PREFIX}/`) #{universe.title}
   else
-    a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
+    a.link.link-animated(href=`${ADDR_PREFIX}/`) #{T('Home')}
     |  / 
-    a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
+    a.link.link-animated(href=`${ADDR_PREFIX}/universes`) #{T('Universes')}
     |  / 
-    a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
+    a.link.link-animated(href=`${ADDR_PREFIX}/universes/${universe.shortname}`) #{universe.title}
   |  / 
-  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}?tab=discuss` ) #{T('Discuss')}
+  a.link.link-animated(href=`${ADDR_PREFIX}/universes/${universe.shortname}?tab=discuss`) #{T('Discuss')}
   |  / 
   span #{T('New')}
 
 block content
-  h2 New Discussion Thread
-  form( method='POST' )
+  h2 #{T('New Discussion Thread')}
+  form(method='POST')
     div.inputGroup
-      label( for='title' ) Subject: 
-      input( id='title' type='text' name='title' value=`${title || ''}` )
+      label(for='title') #{T('Subject')}: 
+      input(id='title' type='text' name='title' value=`${title || ''}`)
     div.inputGroup
-      label( for='comment' ) Message: 
-      textarea( id='comment' name='comment' value=`${comment || ''}` )
+      label(for='comment') #{T('Message')}: 
+      textarea(id='comment' name='comment' value=`${comment || ''}`)
     div
-      button( type='submit' ) Create Thread
+      button(type='submit') #{T('Create Thread')}
     if error
       div
-        span( style={'font-size': 'small'} ).color-error= error
+        span(style={ 'font-size': 'small' }).color-error= error

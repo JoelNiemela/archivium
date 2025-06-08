@@ -11,13 +11,13 @@ block title
     
 block breadcrumbs
   if displayUniverse
-    a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{universe.title}
+    a.link.link-animated(href=`${ADDR_PREFIX}/`) #{universe.title}
   else
-    a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
+    a.link.link-animated(href=`${ADDR_PREFIX}/`) #{T('Home')}
     |  / 
-    a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
+    a.link.link-animated(href=`${ADDR_PREFIX}/universes`) #{T('Universes')}
     |  / 
-    a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
+    a.link.link-animated(href=`${ADDR_PREFIX}/universes/${universe.shortname}`) #{universe.title}
   |  / 
   if type
     | #{capitalize(T(`${((universe.obj_data.cats || {})[type] || [, 'Missing Category'])[1]}`))}
@@ -38,20 +38,20 @@ block content
       | Items 
     | of #{universe.title}
   .d-flex.align-center.scroll-x
-    label.mr-1.nowrap( for='sort' )
+    label.mr-1.nowrap(for='sort')
       b #{T('Sort by')}: 
-    select( id='sort' name='sort' )
-      option( value='updated_at' ) Updated
-      option( value='created_at' ) Created
-      option( value='item_type' ) Type
-      option( value='title' ) Title
-      option( value='author' ) Author
-    select( id='sort_order' name='sort_order' )
-      option( value='desc' ) Descending
-      option( value='asc' ) Ascending
+    select(id='sort' name='sort')
+      option(value='updated_at') #{T('Updated')}
+      option(value='created_at') #{T('Created')}
+      option(value='item_type') #{T('Type')}
+      option(value='title') #{T('Title')}
+      option(value='author') #{T('Author')}
+    select(id='sort_order' name='sort_order')
+      option(value='desc') #{T('Descending')}
+      option(value='asc') #{T('Ascending')}
     .grow-1
     form.flex-row.gap-0
-      button( type='submit' ) &#x1F50E;&#xFE0E;
-      input( id='search' name='search' value=search placeholder='Search...' )
+      button(type='submit') &#x1F50E;&#xFE0E;
+      input(id='search' name='search' value=search placeholder='Search...')
   hr
   include ../components/itemList.pug

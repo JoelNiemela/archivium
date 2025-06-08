@@ -1,7 +1,7 @@
 extends ../layout.pug
 
 block title
-  title Settings — Archivium
+  title #{T('Settings — Archivium')}
 
 block scripts
   script
@@ -12,24 +12,24 @@ block scripts
     const validateUsername = !{validateUsername};
 
 block content
-  h1.center Settings
+  h1.center #{T('Settings')}
 
   ul#tabBtns.navbarBtns.gap-1.mb-2.scroll-x
-    li.navbarBtn( data-tab='account' )
-      h3.navbarBtnLink.navbarText.ma-0( onclick=`showTab('account')` ) Account
-    li.navbarBtn( data-tab='notifications' )
-      h3.navbarBtnLink.navbarText.ma-0( onclick=`showTab('notifications')` ) Notifications
+    li.navbarBtn(data-tab='account')
+      h3.navbarBtnLink.navbarText.ma-0(onclick=`showTab('account')`) #{T('Account')}
+    li.navbarBtn(data-tab='notifications')
+      h3.navbarBtnLink.navbarText.ma-0(onclick=`showTab('notifications')`) #{T('Notifications')}
 
   .tabs
-    .itemTab.hidden.flex-col( data-tab='account' )
-      h3 Change Username
+    .itemTab.hidden.flex-col(data-tab='account')
+      h3 #{T('Change Username')}
       form#changeUsername
         .inputGroup
-          label( for='username' ) Username:
-          input( id='username' name='username' type='text' value=user.username )
-          small.row-2.col-2 You can only change your username once every 30 days, so choose carefully!
+          label(for='username') #{T('Username')}:
+          input(id='username' name='username' type='text' value=user.username)
+          small.row-2.col-2 #{T('You can only change your username once every 30 days, so choose carefully!')}
           .d-flex
-            button( type='submit' ) Change Username
+            button(type='submit') #{T('Change Username')}
 
         small.color-error.hidden#username-error
 
@@ -76,17 +76,17 @@ block content
       h3 Change Password
       form#changePassword
         .inputGroup
-          label( for='oldPassword' ) Old password:
-          input( id='oldPassword' name='old-password' type='password' )
+          label(for='oldPassword') #{T('Old password')}:
+          input(id='oldPassword' name='old-password' type='password')
         .inputGroup
-          label( for='newPassword' ) New password:
-          input( id='newPassword' name='newPassword' type='password' )
+          label(for='newPassword') #{T('New password')}:
+          input(id='newPassword' name='newPassword' type='password')
         .inputGroup
-          label( for='confirmPassword' ) Confirm new password:
-          input( id='confirmPassword' name='confirmPassword' type='password' )
+          label(for='confirmPassword') #{T('Confirm new password')}:
+          input(id='confirmPassword' name='confirmPassword' type='password')
         .inputGroup
           .d-flex.col-2
-            button( type='submit' ) Change Password
+            button(type='submit') #{T('Change Password')}
 
         small.color-error.hidden#password-error
 
@@ -114,36 +114,36 @@ block content
             });
           })();
 
-      h3 Request Account Deletion
+      h3 #{T('Request Account Deletion')}
       form#deleteAccount
         p.mb-1.mt-0
           b.color-error Warning!
           br
-          | Once the site owner has processed your delete request, your account  
-          b cannot be recovered
-          | . If you want to cancel the delete request before it has been processed, you can reach out to the site owner at  
-          a.link.link-animated( href='mailto:contact@archivium.net' ) contact@archivium.net
+          | #{T('Once the site owner has processed your delete request, your account ')}
+          b #{T('cannot be recovered')}
+          | . #{T('If you want to cancel the delete request before it has been processed, you can reach out to the site owner at ')} 
+          a.link.link-animated(href='mailto:contact@archivium.net') contact@archivium.net
           | .
         ul.ma-1
-          li All your account information will be deleted.
-          li Universes of which you are the sole owner will be deleted.
-          li Your universes with at least one other owner or admin will be scrubbed of any data pointing to your account.
-          li All notes you have created will be deleted.
-          li All comments you have written will be deleted.
+          li #{T('All your account information will be deleted.')}
+          li #{T('Universes of which you are the sole owner will be deleted.')}
+          li #{T('Your universes with at least one other owner or admin will be scrubbed of any data pointing to your account.')}
+          li #{T('All notes you have created will be deleted.')}
+          li #{T('All comments you have written will be deleted.')}
         if deleteRequest
           p.mt-1
-            i A delete request for this account was made #{formatDate(deleteRequest.requested_at, true)} and is currently pending.
+            i #{T('A delete request for this account was made %s and is currently pending.', formatDate(deleteRequest.requested_at, true))}
         else
           p.mt-1
-            | If you are 
-            b absolutely sure
-            |  you want to delete your account, enter your password into the form below:
+            | #{T('If you are ')}
+            b #{T('absolutely sure')}
+            |  #{T('you want to delete your account, enter your password into the form below:')}
           .inputGroup
-            label( for='password' ) Password:
-            input( id='password' name='password' type='password' )
+            label(for='password') #{T('Password')}:
+            input(id='password' name='password' type='password')
           .inputGroup
             .d-flex.col-2
-              button.color-error( type='submit' ) Delete Account
+              button.color-error(type='submit') #{T('Delete Account')}
 
         small.color-error.hidden#delete-account-error
 
@@ -165,20 +165,20 @@ block content
             });
           })();
 
-    .itemTab.hidden.flex-col( data-tab='notifications' )
-      form#notificationSettings( method='POST' action=`${ADDR_PREFIX}/settings/notifications` )
+    .itemTab.hidden.flex-col(data-tab='notifications')
+      form#notificationSettings(method='POST' action=`${ADDR_PREFIX}/settings/notifications`)
         .inputGroup
-          label( for='push_notifs' ) #{T('Push notifications')}: 
+          label(for='push_notifs') #{T('Push notifications')}: 
           label.switch
-            input( id='push_notifs' name='push_notifs' type='checkbox' checked=false )
+            input(id='push_notifs' name='push_notifs' type='checkbox' checked=false)
             span.slider
         .inputGroup
-          label( for='email_notifs' ) #{T('Email notifications')}: 
+          label(for='email_notifs') #{T('Email notifications')}: 
           label.switch
-            input( id='email_notifs' name='email_notifs' type='checkbox' checked=Boolean(user.email_notifications) )
+            input(id='email_notifs' name='email_notifs' type='checkbox' checked=Boolean(user.email_notifications))
             span.slider
 
-        h3 Filter Notifications
+        h3 #{T('Filter Notifications')}
         table.sheet#notificationFilters
           thead
             tr
@@ -201,7 +201,7 @@ block content
                     )
 
         .d-flex
-          button( type='submit' ) Update Preferences
+          button(type='submit') #{T('Update Preferences')}
 
         script.
           const form = document.forms.notificationSettings;

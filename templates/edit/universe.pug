@@ -1,10 +1,10 @@
 extends ../layout.pug
 
 block title
-  title Edit #{universe.title}
+  title #{T('Edit %s', universe.title)}
 
 block append styles
-  link( rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" )
+  link(rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css")
   style.
     #cats td {
       padding: 0.125rem 0;
@@ -19,10 +19,10 @@ block append styles
 block append save
   li#save-btn.navbarBtn
     script.
-    a.navbarBtnLink.navbarText( onclick='document.forms.edit.requestSubmit()' ) Save Changes
+    a.navbarBtnLink.navbarText(onclick='document.forms.edit.requestSubmit()') #{T('Save Changes')}
 
 block content
-  script( src="https://unpkg.com/easymde/dist/easymde.min.js" )
+  script(src="https://unpkg.com/easymde/dist/easymde.min.js")
   script
     include /static/scripts/domUtils.js
     include /static/scripts/universes.js
@@ -31,78 +31,78 @@ block content
     include /static/scripts/markdown/render.js
     include /static/scripts/easyMDE.js
 
-  h2 Edit #{universe.title}
-  form#edit( method='POST' )
+  h2 #{T('Edit %s', universe.title)}
+  form#edit(method='POST')
 
     .inputGroup
-      label( for='title' ) Title: 
-      input( id='title' type='text' name='title' value=universe.title )
+      label(for='title') #{T('Title')}: 
+      input(id='title' type='text' name='title' value=universe.title)
 
     .inputGroup
-      label( for='shortname' ) Shortname: 
-      input( id='shortname' type='text' name='shortname' value=universe.newShort )
+      label(for='shortname') #{T('Shortname')}: 
+      input(id='shortname' type='text' name='shortname' value=universe.newShort)
 
     .inputGroup
-      small( style={ 'grid-column': '2 / 4' } )
+      small(style={ 'grid-column': '2 / 4' })
         i 
-          b Warning: 
-          | changing the shortname will kick out any users currently browsing the universe, 
-          | any authors currently editing items will be unable to save their work, 
-          | and any external bookmarks/links to the universe will break. 
-          | Make sure you know what you're doing!
+          b #{T('Warning')}: 
+          | #{T('changing the shortname will kick out any users currently browsing the universe, ')}
+          | #{T('any authors currently editing items will be unable to save their work, ')}
+          | #{T('and any external bookmarks/links to the universe will break.')
+          | #{T('Make sure you know what you\'re doing!')}
 
     .inputGroup
-      label( for='visibility' ) Visibility: 
-      select( id='visibility' name='visibility' )
-        option( value='public' selected=(universe.public) ) Public
-        option( value='private' selected=(!universe.public) ) Private
+      label(for='visibility') #{T('Visibility')}: 
+      select(id='visibility' name='visibility')
+        option(value='public' selected=(universe.public)) #{T('Public')}
+        option(value='private' selected=(!universe.public)) #{T('Private')}
 
     .inputGroup
-      label( for='discussion_enabled' ) Discussion: 
-      select( id='discussion_enabled' name='discussion_enabled' )
-        option( value='enabled' selected=(universe.discussion_enabled) ) Enabled
-        option( value='disabled' selected=(!universe.discussion_enabled) ) Disabled
+      label(for='discussion_enabled') #{T('Discussion')}: 
+      select(id='discussion_enabled' name='discussion_enabled')
+        option(value='enabled' selected=(universe.discussion_enabled)) #{T('Enabled')}
+        option(value='disabled' selected=(!universe.discussion_enabled)) #{T('Disabled')}
 
     .inputGroup
-      label( for='discussion_open' ) Who can comment: 
-      select( id='discussion_open' name='discussion_open' )
-        option( value='enabled' selected=(universe.discussion_open) ) Anyone
-        option( value='disabled' selected=(!universe.discussion_open) ) Only with COMMENT permissions
+      label(for='discussion_open') #{T('Who can comment')}: 
+      select(id='discussion_open' name='discussion_open')
+        option(value='enabled' selected=(universe.discussion_open)) #{T('Anyone')}
+        option(value='disabled' selected=(!universe.discussion_open)) #{T('Only with COMMENT permissions')}
 
     div
-      input( id='obj_data' type='hidden' name='obj_data' value='{}' )
-      button( type='submit' ) Save Changes
+      input(id='obj_data' type='hidden' name='obj_data' value='{}')
+      button(type='submit') #{T('Save Changes')}
 
     small.color-error.hidden#validation-error
     if error
       div
-        span( style={color: 'red', 'font-size': 'small'} )= error
+        span(style={ color: 'red', 'font-size': 'small' })= error
 
     #home-body
-      h3 Home Page
+      h3 #{T('Home Page')}
       .mb-2
-        small This markdown will be shown in the "Home" tab of your universe page.
+        small #{T('This markdown will be shown in the "Home" tab of your universe page.')}
       textarea
         | #{universe.obj_data.homeBody || ''}
 
     #public-body
-      h3 Public Page
+      h3 #{T('Public Page')}
       .mb-2
-        small This markdown will be shown to users that don't have access to your universe instead of the "Access Denied" page.
+        small #{T('This markdown will be shown to users that don\'t have access to your universe instead of the "Access Denied" page.')}
       textarea
         | #{universe.obj_data.publicBody || ''}
 
-    h3 Item Types
+    h3 #{T('Item Types')}
     small
-      b Note: 
-      | be aware that removing or renaming item types will not update any existing items with that type.
+      b #{T('Note:')} 
+      | #{T('be aware that removing or renaming item types will not update any existing items with that type.')}
     table
       thead
         tr
-          th Shortname
-          th Singular Type Name
-          th Plural Type Name
-          th Color
+          th #{T('Shortname')}
+          th #{T('Singular Type Name')}
+          th #{T('Plural Type Name')}
+          th #{T('Color')}
           th
         tr
           td
@@ -119,8 +119,8 @@ block content
       tbody#cats
 
     .d-flex.gap-2.mt-2
-      button( type='button' onclick='addCat()' ) Add Type
-      button( type='button' onclick='resetCats()' ) Reset to default types
+      button(type='button' onclick='addCat()') #{T('Add Type')}
+      button(type='button' onclick='resetCats()') #{T('Reset to default types')}
 
   script.
     updateObjData(!{JSON.stringify(universe.obj_data)});

@@ -4,10 +4,10 @@ block title
   title #{item.title}
 
 block append styles
-  link( rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" )
+  link(rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css")
 
 block scripts
-  script( src="https://unpkg.com/easymde/dist/easymde.min.js" )
+  script(src="https://unpkg.com/easymde/dist/easymde.min.js")
   script
     include /static/scripts/tabs.js
     include /static/scripts/domUtils.js
@@ -25,31 +25,31 @@ block scripts
 
 block breadcrumbs
   if displayUniverse
-    a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{universe.title}
+    a.link.link-animated(href=`${ADDR_PREFIX}/`) #{universe.title}
   else
-    a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
+    a.link.link-animated(href=`${ADDR_PREFIX}/`) #{T('Home')}
     |  / 
-    a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
+    a.link.link-animated(href=`${ADDR_PREFIX}/universes`) #{T('Universes')}
     |  / 
-    a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}` ) #{universe.title}
+    a.link.link-animated(href=`${ADDR_PREFIX}/universes/${universe.shortname}`) #{universe.title}
   |  / 
-  a.link.link-animated( href=`${ADDR_PREFIX}/universes/${universe.shortname}/items?type=${item.item_type}` ) #{capitalize(T(`${((universe.obj_data.cats || {})[item.item_type] || [, 'Missing Category'])[1]}`))}
+  a.link.link-animated(href=`${ADDR_PREFIX}/universes/${universe.shortname}/items?type=${item.item_type}`) #{capitalize(T(`${((universe.obj_data.cats || {})[item.item_type] || [, 'Missing Category'])[1]}`))}
   |  / 
   span #{item.title}
 
 block content
   .d-flex.justify-center
-    .sheet.mt-8.px-8.py-4( style={ 'background-color': item.itemTypeColor, 'min-width': '15vw' } )
+    .sheet.mt-8.px-8.py-4(style={ 'background-color': item.itemTypeColor, 'min-width': '15vw' })
       h1.center.ma-0 #{item.title}
       p.center.ma-0 #{capitalize(T(item.itemTypeName))}
         if !displayUniverse
           |  of #{item.universe}
   p.center.mb-2
-    small Created by 
+    small #{T('Created by ')}
       if item.author
-        a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
+        a.link.link-animated(href=`${ADDR_PREFIX}/users/${item.author}`) #{item.author}
       else
-        | Deleted User
+        | #{T('Deleted User')}
       |  #{formatDate(new Date(item.created_at))}
       |  - Last updated #{formatDate(new Date(item.updated_at))}
   #action-bar.d-flex.justify-center.align-center.gap-2.mb-1
@@ -83,43 +83,43 @@ block content
           });
         })();
       if universe.author_permissions[contextUser.id] >= perms.WRITE
-        a.link.link-animated.d-flex.align-center( href=`${universeLink(universe.shortname)}/items/${item.shortname}/edit` )
+        a.link.link-animated.d-flex.align-center(href=`${universeLink(universe.shortname)}/items/${item.shortname}/edit`)
           span.material-symbols-outlined edit
-          |  Edit
+          |  #{T('Edit')}
       if universe.author_permissions[contextUser.id] >= perms.OWNER
-        a.link.link-animated.d-flex.align-center( href=`${universeLink(universe.shortname)}/items/${item.shortname}/delete` )
+        a.link.link-animated.d-flex.align-center(href=`${universeLink(universe.shortname)}/items/${item.shortname}/delete`)
           span.material-symbols-outlined delete
-          |  Delete
+          |  #{T('Delete')}
   .center#tags
     small
       if item.tags
         each tag in item.tags
           if tag
-            a.link.link-animated( href=`${universeLink(universe.shortname)}/items?tag=${tag}` ) ##{tag} 
+            a.link.link-animated(href=`${universeLink(universe.shortname)}/items?tag=${tag}`) ##{tag} 
           
   hr
 
   //- Tab buttons
   ul#tabBtns.navbarBtns.gap-1.mb-2.scroll-x
     if 'body' in item.obj_data
-      li.navbarBtn#bodyBtn( data-tab='body' )
-        h3.navbarBtnLink.navbarText.ma-0( onclick=`showTab('body')` ) Main Text
+      li.navbarBtn#bodyBtn(data-tab='body')
+        h3.navbarBtnLink.navbarText.ma-0(onclick=`showTab('body')`) #{T('Main Text')}
     if 'tabs' in item.obj_data
       each tab, name in item.obj_data.tabs
-        li.navbarBtn( data-tab=name )
-          h3.navbarBtnLink.navbarText.ma-0( onclick=`showTab('${name}')` ) #{name}
+        li.navbarBtn(data-tab=name)
+          h3.navbarBtnLink.navbarText.ma-0(onclick=`showTab('${name}')`) #{name}
     each dataType in ['timeline', 'gallery', 'lineage']
       if dataType in item.obj_data && 'title' in item.obj_data[dataType]
-        li.navbarBtn( data-tab=dataType )
-          h3.navbarBtnLink.navbarText.ma-0( onclick=`showTab('${dataType}')` ) #{item.obj_data[dataType].title}
+        li.navbarBtn(data-tab=dataType)
+          h3.navbarBtnLink.navbarText.ma-0(onclick=`showTab('${dataType}')`) #{item.obj_data[dataType].title}
     if item.obj_data.comments
-      li.navbarBtn( data-tab='comments' )
-        h3.navbarBtnLink.navbarText.ma-0( onclick=`showTab('comments')` ) #{capitalize(T('comments'))}
+      li.navbarBtn(data-tab='comments')
+        h3.navbarBtnLink.navbarText.ma-0(onclick=`showTab('comments')`) #{capitalize(T('comments'))}
     if item.obj_data.notes || (contextUser && universe.author_permissions[contextUser.id] >= perms.WRITE && notes.length > 0)
-      li.navbarBtn( data-tab='notes' )
+      li.navbarBtn(data-tab='notes')
           h3.navbarBtnLink.navbarText.ma-0( onclick=`showTab('notes')` ) #{capitalize(T('notes'))}
             if !item.obj_data.notes
-              |  (Hidden)
+              |  #{T('(Hidden)')}
 
   
   script!= `window.item = ${JSON.stringify(item)};`
@@ -128,15 +128,15 @@ block content
   .tabs
     if 'tabs' in item.obj_data
       each tab, name in item.obj_data.tabs
-        .itemTab.hidden( data-tab=name )
+        .itemTab.hidden(data-tab=name)
           each val, key in tab
             .itemKey
               span #{key}
               hr
-              .mdVal( data-val=val )
+              .mdVal(data-val=val)
 
     if 'timeline' in item.obj_data && 'title' in item.obj_data.timeline
-      .itemTab.hidden( data-tab='timeline' )
+      .itemTab.hidden(data-tab='timeline')
       script.
         const timelineTab = document.querySelector('.itemTab[data-tab=timeline]');
         if (timelineTab) {
@@ -144,12 +144,12 @@ block content
         };
 
     if 'gallery' in item.obj_data && 'title' in item.obj_data.gallery
-      .itemTab.hidden.gallery( data-tab='gallery' )
+      .itemTab.hidden.gallery(data-tab='gallery')
         each img in item.gallery || []
           .itemKey
-            img( src=`/api/universes/${universe.shortname}/items/${item.shortname}/gallery/images/${img.id}`, title=img.name, alt=img.label )
+            img(src=`/api/universes/${universe.shortname}/items/${item.shortname}/gallery/images/${img.id}`, title=img.name, alt=img.label)
             if img.label
-              .mdLabel( data-val=img.label )
+              .mdLabel(data-val=img.label)
 
     if 'lineage' in item.obj_data && 'title' in item.obj_data.lineage
       .itemTab.hidden( data-tab='lineage' )
@@ -157,31 +157,31 @@ block content
           .itemKey
             span #{parent.parent_label || T('Parent')}
             hr
-            a.link.link-animated( href=`${universeLink(universe.shortname)}/items/${parent.parent_shortname}` )
+            a.link.link-animated(href=`${universeLink(universe.shortname)}/items/${parent.parent_shortname}`)
               | #{parent.parent_title}
         each child in item.children
           .itemKey
             span #{child.child_label || T('Child')}
             hr
-            a.link.link-animated( href=`${universeLink(universe.shortname)}/items/${child.child_shortname}` )
+            a.link.link-animated(href=`${universeLink(universe.shortname)}/items/${child.child_shortname}`)
               | #{child.child_title}
         
     if item.obj_data.comments
-      .hidden( data-tab='comments' )
+      .hidden(data-tab='comments')
         include ../components/comments.pug
         
     if item.obj_data.notes || (contextUser && universe.author_permissions[contextUser.id] >= perms.WRITE && notes.length > 0)
-      .hidden( data-tab='notes' )
+      .hidden(data-tab='notes')
         if !item.obj_data.notes
           .center
-            .ma-auto.my-2( style={ 'max-width': '32rem' } )
+            .ma-auto.my-2(style={ 'max-width': '32rem' })
               small
-                i This tab is visible to you since this item has notes linked to it and you have edit access. 
-                  | To make this tab visible to everyone, enable notes for this item.
+                i #{T('This tab is visible to you since this item has notes linked to it and you have edit access.')}
+                  | #{T('To make this tab visible to everyone, enable notes for this item.')}
         include ../components/notes.pug
 
     if 'body' in item.obj_data
-      .sheet.hidden( data-tab='body' )
+      .sheet.hidden(data-tab='body')
         #markdown-body
 
   script.

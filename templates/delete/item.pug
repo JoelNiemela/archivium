@@ -19,35 +19,35 @@ block content
       }
     }
 
-  h2 Delete #{item.title}
+  h2 #{T('Delete %s', item.title)}
   .d-flex.flex-col
 
     .big-text
-      p Are you want to delete #{item.title}? This action is 
-        b permanent
-        |  and 
-        b.color-error cannot be undone!
+      p ${T('Are you want to delete %s? This action is ', item.title)}
+        b #{T('permanent')}
+        |  #{T('and')} 
+        b.color-error #{T(' cannot be undone!')}
 
       ul
-        li All images uploaded to #{item.title} will be deleted.
-        li All comments on #{item.title} will be deleted.
-        li Notes pinned to #{item.title} will 
-          i not
-          |  be deleted, but will be unpinned.
+        li #{T('All images uploaded to %s will be deleted.', item.title)}
+        li #{T('All comments on %s will be deleted.', item.title)}
+        li #{T('Notes pinned to %s will ', item.title)}
+          i #{T('not')}
+          |  #{T('be deleted, but will be unpinned.')}
 
-      p If you are 
-        b absolutely sure
-        |  you want to delete #{item.title}, please type in its shortname (
+      p #{T('If you are ')}
+        b #{T('absolutely sure')}
+        | #{T(' you want to delete %s, please type in its shortname', item.title)} (
         code #{item.shortname}
-        | ) below.
+        | ) #{T('below')}.
 
     div.inputGroup
-      label( for='title' ) Item shortname: 
-      input( id='shortname' type='text' name='shortname' )
+      label(for='title') #{T('Item shortname')}: 
+      input(id='shortname' type='text' name='shortname')
     
     .d-flex.align-center.gap-2
-      button( onclick='deleteItem()' ) Delete Item
-      a.link.link-animated( href=`${universeLink(item.universe_short)}/items/${item.shortname}` ) Go Back
+      button(onclick='deleteItem()') #{T('Delete Item')}
+      a.link.link-animated(href=`${universeLink(item.universe_short)}/items/${item.shortname}`) #{T('Go Back')}
 
     div
-      span#error( style={color: 'red', 'font-size': 'small'} )
+      span#error(style={ color: 'red', 'font-size': 'small' })

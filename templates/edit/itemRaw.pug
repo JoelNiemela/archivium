@@ -1,7 +1,7 @@
 extends ../layout.pug
 
 block title
-  title Edit #{item.title} (JSON Editor)
+  title #{T('Edit %s (JSON Editor)', item.title)}
 
 block content
   script
@@ -13,27 +13,27 @@ block content
     include /static/scripts/fileUpload.js
     include /static/scripts/itemEditor.js
 
-  h2 Edit #{item.title}
-  form( method='POST' )
+  h2 #{T('Edit %s', item.title)}
+  form(method='POST')
 
     div.inputGroup
-      label( for='title' ) Title: 
-      input( id='title' type='text' name='title' value=item.title )
+      label(for='title') #{T('Title')}: 
+      input(id='title' type='text' name='title' value=item.title)
 
     div.inputGroup
-      label( for='tags' ) Tags: 
-      textarea( id='tags' name='tags' ) #{(item.tags || []).join(' ')}
+      label(for='tags') #{T('Tags')}: 
+      textarea(id='tags' name='tags') #{(item.tags || []).join(' ')}
 
     div.editor
-      textarea( id='obj_data_edit' value='{}' oninput="this.parentNode.dataset.replicatedValue = this.value" )
+      textarea(id='obj_data_edit' value='{}' oninput="this.parentNode.dataset.replicatedValue = this.value")
       
     div
-      input( id='obj_data' type='hidden' name='obj_data' value='{}' )
-      button( type='submit' ) Save Changes
+      input(id='obj_data' type='hidden' name='obj_data' value='{}')
+      button(type='submit') #{T('Save Changes')}
 
     if error
       div
-        span( style={color: 'red', 'font-size': 'small'} )= error 
+        span(style={ color: 'red', 'font-size': 'small' })= error 
 
   script.
     const editor = document.getElementById('obj_data_edit');

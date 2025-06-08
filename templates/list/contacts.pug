@@ -19,7 +19,7 @@ block content
   .d-flex
     input(id='username' name='username' placeholder=T('Username'))
     button(onclick="addContact(document.getElementById('username').value)") #{T('Add Contact')}
-  h2 ${T('All (%s)', contacts.length)}
+  h2 #{T('All (%s)', contacts.length)}
   .card-list
     each user in contacts
       .card.sheet.gap-4.align-start(data-goto=`${ADDR_PREFIX}/users/${user.username}`)

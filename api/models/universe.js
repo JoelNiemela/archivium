@@ -139,7 +139,6 @@ async function getPublicBodyByShortname(shortname) {
 }
 
 function validateShortname(shortname, reservedShortnames = []) {
-
   if (shortname.length < 3 || shortname.length > 64) {
     return 'Shortnames must be between 3 and 64 characters long.';
   }

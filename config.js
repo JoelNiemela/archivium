@@ -26,7 +26,7 @@ module.exports.SITE_OWNER_EMAIL = SITE_OWNER_EMAIL;
 module.exports.MAILERSEND_API_KEY = MAILERSEND_API_KEY;
 module.exports.OPENAI_API_KEY = OPENAI_API_KEY;
 module.exports.RECAPTCHA_KEY = RECAPTCHA_KEY;
-module.exports.WEB_PUSH_ENABLED = Boolean(WEB_PUSH_ENABLED);
+module.exports.WEB_PUSH_ENABLED = WEB_PUSH_ENABLED === 'true';
 module.exports.VAPID_PUBLIC_KEY = VAPID_PUBLIC_KEY;
 module.exports.VAPID_PRIVATE_KEY = VAPID_PRIVATE_KEY;
 

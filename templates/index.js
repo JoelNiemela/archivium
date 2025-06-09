@@ -45,6 +45,7 @@ function contextData(req) {
     T,
     sprintf,
     validateUsername: api.user.validateUsername,
+    validateShortname: api.universe.validateShortname,
   };
 }
 

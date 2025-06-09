@@ -5,7 +5,6 @@ const { locale, lang, sprintf, T } = require('../locale');
 const api = require('../api');
 const md5 = require('md5');
 const path = require('path');
-const {validateShortname} = require('../api/models/universe');
 
 function universeLink(req, uniShort) {
   const displayUniverse = req.headers['x-subdomain'];

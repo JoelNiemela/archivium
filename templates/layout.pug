@@ -25,7 +25,7 @@ html(lang='en')
     block styles
 
     script.
-      const locale = !{locale};
+      const locale = #{locale};
       const sprintf = !{sprintf};
       function T(str, ...args) {
         return sprintf(locale[str] ?? str, ...args);

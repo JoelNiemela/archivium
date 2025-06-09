@@ -50,8 +50,8 @@ block content
     .sheet.big-text.ma-auto.center(style={'max-width': '40rem'})
       p
         | #{T('Hello %s! Looks like there\'s nothing here yet — go ahead and ', contextUser.username)}
-        a.link.link-animated(href=`${ADDR_PREFIX}/universes/create`) #{T('create a new universe ')}
-        | #{T('to get started!')}
+        a.link.link-animated(href=`${ADDR_PREFIX}/universes/create`) #{T('create a new universe')}
+        | #{T(' to get started!')}
   else
     .d-flex.flex-col
       .d-flex.gap-1.flex-wrap.align-start.w-100

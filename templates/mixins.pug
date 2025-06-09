@@ -9,7 +9,7 @@ mixin authorList(authors, author_permissions)
         if (i === authorsList.length - 1) suff = '';
         else if (i === authorsList.length - 2) suff = authorsList.length === 2 ? ' and ' : ', and ';
         else suff = ', ';
-      a.link.link-animated( href=`${ADDR_PREFIX}/users/${author}` )= author
+      a.link.link-animated(href=`${ADDR_PREFIX}/users/${author}`)= author
       | #{suff}
       - i++;
 

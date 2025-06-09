@@ -1,12 +1,12 @@
 extends ../layout.pug
 
 block title
-  title New Universe — Archivium
+  title #{T('New Universe')} — #{T('Archivium')}
 
 block breadcrumbs
-  a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
+  a.link.link-animated(href=`${ADDR_PREFIX}/`) #{T('Home')}
   |  / 
-  a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
+  a.link.link-animated(href=`${ADDR_PREFIX}/universes`) #{T('Universes')}
   |  / 
   span #{T('New')}
 
@@ -45,35 +45,35 @@ block content
   script
     include /static/scripts/universes.js
 
-  h2 New Universe
-  form( method='POST' )
+  h2 #{T('New Universe')}
+  form(method='POST')
     div.inputGroup
-      label( for='title' ) Title: 
-      input( id='title' type='text' name='title' value=`${title || ''}` )
+      label(for='title') #{T('Title')}: 
+      input(id='title' type='text' name='title' value=`${title || ''}`)
     div.inputGroup
-      label( for='shortname' ) Shortname: 
-      input( id='shortname' type='text' name='shortname' value=`${shortname || ''}` )
+      label(for='shortname') #{T('Shortname')}: 
+      input(id='shortname' type='text' name='shortname' value=`${shortname || ''}`)
     div.inputGroup
-      label( for='visibility' ) Visibility: 
-      select( id='visibility' name='visibility' )
-        option( value='public' selected=(visibility === 'public') ) Public
-        option( value='private' selected=(visibility === 'private') ) Private
+      label(for='visibility') #{T('Visibility')}: 
+      select(id='visibility' name='visibility')
+        option(value='public' selected=(visibility === 'public')) #{T('Public')}
+        option(value='private' selected=(visibility === 'private')) #{T('Private')}
     div.inputGroup
-      label( for='discussion_enabled' ) Discussion: 
-      select( id='discussion_enabled' name='discussion_enabled' )
-        option( value='enabled' selected=(discussion_enabled === 'enabled') ) Enabled
-        option( value='disabled' selected=(discussion_enabled === 'disabled') ) Disabled
+      label(for='discussion_enabled') #{T('Discussion')}: 
+      select(id='discussion_enabled' name='discussion_enabled')
+        option(value='enabled' selected=(discussion_enabled === 'enabled')) #{T('Enabled')}
+        option(value='disabled' selected=(discussion_enabled === 'disabled')) #{T('Disabled')}
     div.inputGroup
-      label( for='discussion_open' ) Who can comment: 
-      select( id='discussion_open' name='discussion_open' )
-        option( value='enabled' selected=(discussion_open) ) Anyone
-        option( value='disabled' selected=(!discussion_open) ) Only with COMMENT permission level
+      label(for='discussion_open') #{T('Who can comment')}: 
+      select(id='discussion_open' name='discussion_open')
+        option(value='enabled' selected=(discussion_open)) #{T('Anyone')}
+        option(value='disabled' selected=(!discussion_open)) #{T('Only with COMMENT permission level')}
     div
-      input( type='hidden' id='obj_data' name='obj_data' value='{}' )
-      button( type='submit' ) Create Universe
+      input(type='hidden' id='obj_data' name='obj_data' value='{}')
+      button(type='submit') #{T('Create Universe')}
     if error
       div
-        span( style={'font-size': 'small'} ).color-error= error
+        span(style={'font-size': 'small'}).color-error= error
   
   script.
     setDefaultCats();

@@ -1,43 +1,10 @@
 const pug = require('pug');
 const { ADDR_PREFIX, VAPID_PUBLIC_KEY, DOMAIN } = require('../config');
 const { perms, getPfpUrl } = require('../api/utils');
+const { locale, lang, sprintf, T } = require('../locale');
 const api = require('../api');
 const md5 = require('md5');
 const path = require('path');
-
-const locale = {
-  en: {
-    article: 'article',
-    articles: 'articles',
-    character: 'character',
-    characters: 'characters',
-    location: 'location',
-    locations: 'locations',
-    event: 'event',
-    events: 'events',
-    archive: 'archive',
-    archives: 'archives',
-    document: 'document',
-    documents: 'documents',
-    timeline: 'timeline',
-    timelines: 'timelines',
-    item: 'item',
-    items: 'items',
-    organization: 'organization',
-    organizations: 'organizations',
-    missing_cat: 'Missing Category',
-    [`perms_${perms.NONE}`]: 'None',
-    [`perms_${perms.READ}`]: 'Read',
-    [`perms_${perms.COMMENT}`]: 'Comment',
-    [`perms_${perms.WRITE}`]: 'Write',
-    [`perms_${perms.ADMIN}`]: 'Admin',
-    [`perms_${perms.OWNER}`]: 'Owner',
-    [`notif_${api.notification.types.CONTACTS}`]: 'Contact Requests',
-    [`notif_${api.notification.types.UNIVERSE}`]: 'Universe Updates',
-    [`notif_${api.notification.types.COMMENTS}`]: 'Comments & Discussion',
-    [`notif_${api.notification.types.FEATURES}`]: 'Archivium Updates',
-  }
-};
 
 function universeLink(req, uniShort) {
   const displayUniverse = req.headers['x-subdomain'];
@@ -59,12 +26,6 @@ function contextData(req) {
     pfpUrl: getPfpUrl(user),
   } : null;
 
-  const lang = 'en';
-
-  function T(str) {
-    return locale[lang][str] ?? str;
-  }
-
   const searchQueries = new URLSearchParams(req.query);
   const pageQuery = new URLSearchParams();
   pageQuery.append('page', req.path)
@@ -82,6 +43,7 @@ function contextData(req) {
     perms,
     locale: locale[lang],
     T,
+    sprintf,
     validateUsername: api.user.validateUsername,
   };
 }

@@ -1,7 +1,7 @@
 extends layout.pug
 
 block title
-  title Create Account — Archivium
+  title #{T('Create Account')} — #{T('Archivium')}
 
 block scripts
   script( src='https://www.google.com/recaptcha/api.js' )
@@ -13,36 +13,36 @@ block scripts
     }
 
 block content
-  h2 Create Account
-  form#signup( method='post' )
+  h2 #{T('Create Account')}
+  form#signup(method='POST')
     div.inputGroup
-      label( for='username' ) Username: 
-      input( id='username' type='text' name='username' value=username )
+      label(for='username') #{T('Username')}: 
+      input(id='username' type='text' name='username' value=username)
     div.inputGroup
-      label( for='email' ) Email: 
-      input( id='email' type='email' name='email' value=email )
+      label(for='email') #{T('Email')}: 
+      input(id='email' type='email' name='email' value=email)
     div.inputGroup
-      label( for='password' ) Password: 
-      input( id='password' type='password' name='password' )
+      label(for='password') #{T('Password')}: 
+      input(id='password' type='password' name='password')
     div.inputGroup.hidden
-      label( for='hp' ) HP: 
-      input( id='hp' type='text' name='hp' )
+      label(for='hp') #{T('HP')}: 
+      input(id='hp' type='text' name='hp')
     br
     .d-flex.gap-4
-      input( id='tos' type='checkbox' required )
-      small Yes, I agree to the 
-        a.link.link-animated( href='/privacy-policy' ) privacy policy
-        |  and 
-        a.link.link-animated( href='/terms-of-service' ) terms of service
+      input(id='tos' type='checkbox' required)
+      small #{T('Yes, I agree to the ')}
+        a.link.link-animated(href='/privacy-policy') #{T('privacy policy')}
+        |  #{T('and')} 
+        a.link.link-animated(href='/terms-of-service') #{T('terms of service')}
         | .
     .d-flex.gap-4
-      input( id='newsletter' type='checkbox' name='newsletter' )
-      small Yes, I want to receive email updates about Archivium (optional).
+      input(id='newsletter' type='checkbox' name='newsletter')
+      small #{T('Yes, I want to receive email updates about Archivium (optional).')}
     br
     div
-      button( class='g-recaptcha' data-sitekey='6Lf35qkqAAAAAMnKLqoBJ9wIX30sodE4lWQS6Y3A' data-callback='onSubmit' data-action='submit' ) Create Account
+      button(class='g-recaptcha' data-sitekey='6Lf35qkqAAAAAMnKLqoBJ9wIX30sodE4lWQS6Y3A' data-callback='onSubmit' data-action='submit') #{T('Create Account')}
     div
-      small.color-error#error( class=(error ? '' : 'hidden') )= error
+      small.color-error#error(class=(error ? '' : 'hidden'))= error
 
     script.
       (() => {
@@ -72,4 +72,4 @@ block content
       })();
 
   p
-    a.link.link-animated( href=`${ADDR_PREFIX}/login${searchQueries ? `?${searchQueries}`: ''}` ) Login to your account
+    a.link.link-animated(href=`${ADDR_PREFIX}/login${searchQueries ? `?${searchQueries}`: ''}`) #{T('Login to your account')}

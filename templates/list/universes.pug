@@ -2,10 +2,10 @@ extends ../layout.pug
 include ../mixins.pug
 
 block title
-  title Universes — Archivium
+  title #{T('Universes')} — #{T('Archivium')}
 
 block breadcrumbs
-  a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
+  a.link.link-animated(href=`${ADDR_PREFIX}/`) #{T('Home')}
   |  / 
   span #{T('Universes')}
 
@@ -18,18 +18,18 @@ block content
   
   h1.center Universes
   .d-flex.align-center.scroll-x
-    label.mr-1.nowrap( for='sort' )
+    label.mr-1.nowrap(for='sort')
       b #{T('Sort by')}: 
-    select( id='sort' name='sort' )
-      option( value='updated_at' ) Updated
-      option( value='created_at' ) Created
-      option( value='title' ) Title
-    select( id='sort_order' name='sort_order' )
-      option( value='desc' ) Descending
-      option( value='asc' ) Ascending
+    select(id='sort' name='sort')
+      option(value='updated_at') #{T('Updated')}
+      option(value='created_at') #{T('Created')}
+      option(value='title') #{T('Title')}
+    select(id='sort_order' name='sort_order')
+      option(value='desc') #{T('Descending')}
+      option(value='asc') #{T('Ascending')}
     .grow-1
     form.flex-row.gap-0
-      button( type='submit' ) &#x1F50E;&#xFE0E;
-      input( id='search' name='search' value=search placeholder='Search...' )
+      button(type='submit') &#x1F50E;&#xFE0E;
+      input(id='search' name='search' value=search placeholder='Search...')
   hr
   include ../components/universeList.pug

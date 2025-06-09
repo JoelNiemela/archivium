@@ -4,10 +4,10 @@ block title
   title #{title || T('Markdown Demo')}
 
 block styles
-  link( rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" )
+  link(rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css")
 
 block scripts
-  script( src="https://unpkg.com/easymde/dist/easymde.min.js" )
+  script(src="https://unpkg.com/easymde/dist/easymde.min.js")
   script
     include /static/scripts/domUtils.js
     include /static/scripts/fetchUtils.js
@@ -17,9 +17,9 @@ block scripts
 
 block append save
   li#save-btn.navbarBtn
-    a.navbarBtnLink.navbarText( onclick='save(0)' ) Save
+    a.navbarBtnLink.navbarText(onclick='save(0)') #{T('Save')}
   li#save-btn.navbarBtn
-    a.navbarBtnLink.navbarText( onclick='preview()' ) Preview
+    a.navbarBtnLink.navbarText(onclick='preview()') #{T('Preview')}
 
 block content
   h1 #{title || T('Markdown Demo')}

@@ -1,11 +1,11 @@
 mixin universeCard(universe)
-  .card.sheet.gap-4.align-start( data-goto=`${universeLink(universe.shortname)}/` )
+  .card.sheet.gap-4.align-start(data-goto=`${universeLink(universe.shortname)}/`)
     .d-flex.flex-col.grow-1
       h3.ma-0
-        a.link.link-animated( href=`${universeLink(universe.shortname)}/` ) #{universe.title}
+        a.link.link-animated(href=`${universeLink(universe.shortname)}/`) #{universe.title}
       .d-flex.gap-1
 
-    .d-flex.flex-col.grow-3( style='grid-column: 2 / 4;' )
+    .d-flex.flex-col.grow-3(style='grid-column: 2 / 4;')
       span 
         b #{T('Authors')}: 
         +authorList(universe.authors, universe.author_permissions)
@@ -18,18 +18,18 @@ mixin universeCard(universe)
           b #{T('Updated')}: 
           | #{formatDate(universe.updated_at, true)}
         | —
-        span #{universe.public ? 'Public' : 'Private'}
+        span #{universe.public ? T('Public') : T('Private')}
         if contextUser
           | —
-          a.follow-btn.link.link-animated( data-following=universe.followers[contextUser.id] data-universe-short=universe.shortname )
-            | #{universe.followers[contextUser.id] ? 'Unfollow' : 'Follow'}
+          a.follow-btn.link.link-animated(data-following=universe.followers[contextUser.id] data-universe-short=universe.shortname)
+            | #{universe.followers[contextUser.id] ? T('Unfollow') : T('Follow')}
 
 .card-list
-  .card.sheet( data-goto=`${ADDR_PREFIX}/universes/create` )
-    .d-flex.justify-center( style={ 'grid-column': '1 / 4' } )
-      a.link.d-flex.justify-center( href=`${ADDR_PREFIX}/universes/create` )
-        .navbarText.material-symbols-outlined.heavy.ma-0.pa-1.pr-0.grow-0( style={ 'font-size': '1.5rem' } onclick="showModal('new-tab-modal')" ) add
-        .big-text.navbarText.pa-1.grow-0 New Universe
+  .card.sheet(data-goto=`${ADDR_PREFIX}/universes/create`)
+    .d-flex.justify-center(style={ 'grid-column': '1 / 4' })
+      a.link.d-flex.justify-center(href=`${ADDR_PREFIX}/universes/create`)
+        .navbarText.material-symbols-outlined.heavy.ma-0.pa-1.pr-0.grow-0(style={ 'font-size': '1.5rem' } onclick="showModal('new-tab-modal')") add
+        .big-text.navbarText.pa-1.grow-0 #{T('New Universe')}
   if contextUser
     each universe in universes.filter(universe => (universe.followers[contextUser.id] || universe.author_permissions[contextUser.id] >= perms.WRITE))
       +universeCard(universe)

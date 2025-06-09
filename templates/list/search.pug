@@ -2,10 +2,10 @@ extends ../layout.pug
 include ../mixins.pug
 
 block title
-  title Search — Archivium
+  title #{T('Search')} — #{T('Archivium')}
 
 block breadcrumbs
-  a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
+  a.link.link-animated(href=`${ADDR_PREFIX}/`) #{T('Home')}
   |  / 
   span #{T('Search')}
 
@@ -18,18 +18,18 @@ block content
   script.
   h1.center Search
   form.flex-row.gap-0.justify-end
-    button( type='submit' ) &#x1F50E;&#xFE0E;
-    input( id='search' name='search' value=search placeholder='Search...' )
+    button(type='submit') &#x1F50E;&#xFE0E;
+    input(id='search' name='search' value=search placeholder='Search...')
   hr
   if search
     p
       i #{universes.length + items.length} result(s)
   .card-list
     each universe in universes
-      .card.sheet.gap-4.align-start( data-goto=`${universeLink(universe.shortname)}/` )
+      .card.sheet.gap-4.align-start(data-goto=`${universeLink(universe.shortname)}/`)
         .d-flex.flex-col.grow-1
           h3.ma-0
-            a.link.link-animated( href=`${universeLink(universe.shortname)}/` )
+            a.link.link-animated(href=`${universeLink(universe.shortname)}/`)
               +highlight(universe.title, search, true)
           .d-flex.gap-1
 
@@ -48,19 +48,19 @@ block content
               | —
               span #{universe.public ? 'Public' : 'Private'}
     each item in items
-      .card.sheet.gap-4.align-start( data-goto=`${universeLink(item.universe_short)}/items/${item.shortname}` )
+      .card.sheet.gap-4.align-start(data-goto=`${universeLink(item.universe_short)}/items/${item.shortname}`)
         .d-flex.flex-col.grow-1
           h3.ma-0
-            a.link.link-animated( href=`${universeLink(item.universe_short)}/items/${item.shortname}` )
+            a.link.link-animated(href=`${universeLink(item.universe_short)}/items/${item.shortname}`)
               +highlight(item.title, search, true)
           span #{capitalize(item.item_type)}
           div
-            a.link.link-animated( href=`${universeLink(item.universe_short)}/` ) #{item.universe}
+            a.link.link-animated(href=`${universeLink(item.universe_short)}/`) #{item.universe}
 
         .d-flex.flex-col.grow-3
             span 
               b #{T('Author')}: 
-              a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.author}` ) #{item.author}
+              a.link.link-animated(href=`${ADDR_PREFIX}/users/${item.author}`) #{item.author}
             span 
               b #{T('Created')}: 
               | #{formatDate(item.created_at)}
@@ -78,16 +78,16 @@ block content
                   +highlight(itemTag, search)
         
         if item.snippet
-          .row-2( style={ 'grid-column': '1 / 3' } )
+          .row-2(style={ 'grid-column': '1 / 3' })
             small
               i
                 - const snippet = item.snippet
                 +highlight(formatSnippet(snippet, item.match_pos >= 50, snippet.length === 100), search)
     each note in notes
-      .card.sheet.gap-4.align-start( data-goto=`/notes/${note.uuid}` )
+      .card.sheet.gap-4.align-start(data-goto=`/notes/${note.uuid}`)
         .d-flex.flex-col.grow-1
           h3.ma-0
-            a.link.link-animated( href=`/notes/${note.uuid}` )
+            a.link.link-animated(href=`/notes/${note.uuid}`)
               +highlight(note.title, search, true)
 
         .d-flex.flex-col.grow-3
@@ -108,7 +108,7 @@ block content
                   +highlight(noteTag, search)
         
         if note.snippet
-          .row-2( style={ 'grid-column': '1 / 3' } )
+          .row-2(style={ 'grid-column': '1 / 3' })
             small
               i
                 - const snippet = note.snippet

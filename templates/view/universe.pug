@@ -12,14 +12,14 @@ mixin typeCard(shortname, category)
         h2.mt-0(align='center') (#{counts[shortname] || 0})
     if contextUser && (universe.author_permissions[contextUser.id] >= perms.WRITE)
       div
-        a.cardBtn.link( href=`${universeLink(universe.shortname)}/items/create${shortname ? `?type=${shortname}` : ''}` ) &#x2795; New
-        a.cardBtn.link( href=`${ADDR_PREFIX}/items?author=${contextUser.username}&universe=${universe.shortname}${shortname ? `&type=${shortname}` : ''}` ) My #{shortname ? category[1] : 'Items'}
+        a.cardBtn.link(href=`${universeLink(universe.shortname)}/items/create${shortname ? `?type=${shortname}` : ''}`) &#x2795; New
+        a.cardBtn.link(href=`${ADDR_PREFIX}/items?author=${contextUser.username}&universe=${universe.shortname}${shortname ? `&type=${shortname}` : ''}`) My #{shortname ? category[1] : 'Items'}
 
 block breadcrumbs
   if !displayUniverse  
-    a.link.link-animated( href=`${ADDR_PREFIX}/` ) #{T('Home')}
+    a.link.link-animated(href=`${ADDR_PREFIX}/`) #{T('Home')}
     |  / 
-    a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) #{T('Universes')}
+    a.link.link-animated(href=`${ADDR_PREFIX}/universes`) #{T('Universes')}
     |  / 
     span #{universe.title}
 
@@ -71,30 +71,30 @@ block content
             });
         if universe.author_permissions[contextUser.id] >= perms.ADMIN
           |  - 
-          a.link.link-animated( href=`${universeLink(universe.shortname)}/edit` ) Edit
+          a.link.link-animated(href=`${universeLink(universe.shortname)}/edit`) #{T('Edit')}
           |  - 
-          a.link.link-animated( href=`${universeLink(universe.shortname)}/permissions` ) Set Permissions
+          a.link.link-animated(href=`${universeLink(universe.shortname)}/permissions`) #{T('Set Permissions')}
         if universe.author_permissions[contextUser.id] >= perms.OWNER
           |  - 
-          a.link.link-animated( href=`${universeLink(universe.shortname)}/delete` ) Delete
+          a.link.link-animated(href=`${universeLink(universe.shortname)}/delete`) #{T('Delete')}
 
   hr
 
   //- Tab buttons
   ul.navbarBtns#tabBtns.gap-1.scroll-x
     if universe.obj_data.homeBody
-      li.navbarBtn#bodyBtn( data-tab='home' )
-        h3.navbarBtnLink.navbarText( onclick=`showTab('home')` ) Home
-    li.navbarBtn#bodyBtn( data-tab='items' )
-      h3.navbarBtnLink.navbarText( onclick=`showTab('items')` ) Items
-    li.navbarBtn#bodyBtn( data-tab='authors' )
-      h3.navbarBtnLink.navbarText( onclick=`showTab('authors')` ) Authors
+      li.navbarBtn#bodyBtn(data-tab='home')
+        h3.navbarBtnLink.navbarText(onclick=`showTab('home')`) #{T('Home')}
+    li.navbarBtn#bodyBtn(data-tab='items')
+      h3.navbarBtnLink.navbarText(onclick=`showTab('items')`) #{T('Items')}
+    li.navbarBtn#bodyBtn(data-tab='authors')
+      h3.navbarBtnLink.navbarText(onclick=`showTab('authors')`) #{T('Authors')}
     if !universe.public
-      li.navbarBtn#bodyBtn( data-tab='viewers' )
-        h3.navbarBtnLink.navbarText( onclick=`showTab('viewers')` ) Viewers
+      li.navbarBtn#bodyBtn(data-tab='viewers')
+        h3.navbarBtnLink.navbarText(onclick=`showTab('viewers')`) #{T('Viewers')}
     if universe.discussion_enabled
-      li.navbarBtn#bodyBtn( data-tab='discuss' )
-        h3.navbarBtnLink.navbarText( onclick=`showTab('discuss')` ) Discuss
+      li.navbarBtn#bodyBtn(data-tab='discuss')
+        h3.navbarBtnLink.navbarText(onclick=`showTab('discuss')`) #{T('Discuss')}
 
   .tabs
     .hidden( data-tab='home' )
@@ -115,10 +115,10 @@ block content
         p No item types have been defined yet — 
           if contextUser && (universe.author_permissions[contextUser.id] >= perms.ADMIN)
             | go to the 
-            a.link.link-animated( href=`${universeLink(universe.shortname)}/edit` ) edit
+            a.link.link-animated(href=`${universeLink(universe.shortname)}/edit`) edit
             |  page to add some.
           else
-            | ask the owner of this universe to add some.
+            | #{T('ask the owner of this universe to add some.')}
     
     .hidden( data-tab='authors' )
       if contextUser && ((universe.author_permissions[contextUser.id] || 0) < perms.ADMIN)
@@ -145,11 +145,11 @@ block content
       .card-list
         each username, id in universe.authors
           if universe.author_permissions[id] >= perms.WRITE
-            .card.sheet.gap-4( data-goto=`${ADDR_PREFIX}/users/${username}` data-username=username )
-              img.userIcon( alt=username, src=authors[id].pfpUrl )
+            .card.sheet.gap-4(data-goto=`${ADDR_PREFIX}/users/${username}` data-username=username)
+              img.userIcon(alt=username, src=authors[id].pfpUrl)
               .d-flex.flex-col.grow-1
                 h2.ma-0
-                  a.link.link-animated( href=`${ADDR_PREFIX}/users/${username}` ) #{username}
+                  a.link.link-animated(href=`${ADDR_PREFIX}/users/${username}`) #{username}
                 span
                   b #{T('Joined')}: 
                   | #{formatDate(authors[id].created_at)}
@@ -162,9 +162,9 @@ block content
               .d-flex.flex-col.grow-1
                 span.align-self-end.grow-1
                   if universe.author_permissions[id] === perms.ADMIN
-                    | Admin
+                    | #{T('Admin')}
                   else if universe.author_permissions[id] === perms.OWNER
-                    | Owner
+                    | #{T('Owner')}
     
     .hidden( data-tab='viewers' )
       .d-flex.justify-end.mb-2
@@ -181,11 +181,11 @@ block content
       .card-list
         each username, id in universe.authors
           if universe.author_permissions[id] < perms.WRITE && universe.author_permissions[id] >= perms.READ
-            .card.sheet.gap-4( data-goto=`${ADDR_PREFIX}/users/${username}` data-username=username )
-              img.userIcon( alt=username, src=authors[id].pfpUrl )
+            .card.sheet.gap-4(data-goto=`${ADDR_PREFIX}/users/${username}` data-username=username)
+              img.userIcon(alt=username, src=authors[id].pfpUrl)
               .d-flex.flex-col.grow-1
                 h2.ma-0
-                  a.link.link-animated( href=`${ADDR_PREFIX}/users/${username}` ) #{username}
+                  a.link.link-animated(href=`${ADDR_PREFIX}/users/${username}`) #{username}
                 span
                   b #{T('Joined')}: 
                   | #{formatDate(authors[id].created_at)}

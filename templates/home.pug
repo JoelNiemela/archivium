@@ -3,9 +3,9 @@ include mixins.pug
 
 block title
   if !contextUser
-    title Welcome to Archivium!
+    title #{T('Welcome to Archivium!')}
   else
-    title Home — Archivium
+    title #{T('Home')} — #{T('Archivium')}
 
 block scripts
   script
@@ -32,57 +32,57 @@ block content
   h1(align='center') Welcome to Archivium
   br
   if !contextUser
-    .sheet.big-text.ma-auto.p-indent( style={'max-width': '60rem'} )
+    .sheet.big-text.ma-auto.p-indent(style={'max-width': '60rem'})
       p
-        | Archivium is a worldbuilding tool, allowing you to organize everything about your world in one place. 
-        | It's designed for creators who want to keep track of all the details that make their worlds unique — from characters and histories to maps and cultures.
-        | Whether you're developing a novel, designing a game, or just exploring new ideas, 
-        | Archivium offers a flexible space to collect, connect, and expand on your world's elements at your own pace.
-        | You can work privately or collaborate with others, bringing your imaginative landscapes and stories to life.
+        | #{T('Archivium is a worldbuilding tool, allowing you to organize everything about your world in one place.')}
+        | #{T('It\'s designed for creators who want to keep track of all the details that make their worlds unique — from characters and histories to maps and cultures.')}
+        | #{T('Whether you\'re developing a novel, designing a game, or just exploring new ideas, ')}
+        | #{T('Archivium offers a flexible space to collect, connect, and expand on your world\'s elements at your own pace.')}
+        | #{T('You can work privately or collaborate with others, bringing your imaginative landscapes and stories to life.')}
       .d-flex.flex-col.align-center.gap-1
         h3.navbarBtn
-          a.navbarBtnLink.navbarText( href=`${ADDR_PREFIX}/signup?page=%2Funiverses%2Fcreate` ) Create Account
+          a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/signup?page=%2Funiverses%2Fcreate`) #{T('Create Account')}
         small
           i or
         h3.navbarBtn
-          a.navbarBtnLink.navbarText( href=`${ADDR_PREFIX}/login` ) Log In
+          a.navbarBtnLink.navbarText(href=`${ADDR_PREFIX}/login`) #{T('Log In')}
   else if universes.length === 0
-    .sheet.big-text.ma-auto.center( style={'max-width': '40rem'} )
+    .sheet.big-text.ma-auto.center(style={'max-width': '40rem'})
       p
-        | Hello #{contextUser.username}! Looks like there's nothing here yet — go ahead and 
-        a.link.link-animated( href=`${ADDR_PREFIX}/universes/create` ) create a new universe 
-        | to get started!
+        | #{T('Hello %s! Looks like there\'s nothing here yet — go ahead and ', contextUser.username)}
+        a.link.link-animated(href=`${ADDR_PREFIX}/universes/create`) #{T('create a new universe')}
+        | #{T(' to get started!')}
   else
     .d-flex.flex-col
       .d-flex.gap-1.flex-wrap.align-start.w-100
         .grow-1.d-flex.flex-col.gap-1
           .sheet
-            h2 My Universes
+            h2 #{T('My Universes')}
             table.w-100
               thead
-                th Name
-                th Updated
+                th #{T('Name')}
+                th #{T('Updated')}
               tbody
                 each universe in universes
                   tr
                     td
-                      a.link.link-animated( href=`${universeLink(universe.shortname)}` ) #{universe.title}
+                      a.link.link-animated(href=`${universeLink(universe.shortname)}`) #{universe.title}
                     td
                       small #{formatDate(universe.updated_at, true)}
           .sheet
-            h2 Universes I Follow
+            h2 #{T('Universes I Follow')}
             table.w-100
               thead
-                th Name
-                th Updated
+                th #{T('Name')}
+                th #{T('Updated')}
               tbody
                 each universe in followedUniverses
                   tr
                     td
                       .d-flex.align-center.gap-1
-                        a.link.d-flex.align-center.unfollow-link( data-universe=universe.shortname )
-                          span.material-symbols-outlined( style={ 'font-size': '1rem' } ) cancel
-                        a.link.link-animated( href=`${universeLink(universe.shortname)}` ) #{universe.title}
+                        a.link.d-flex.align-center.unfollow-link(data-universe=universe.shortname)
+                          span.material-symbols-outlined(style={ 'font-size': '1rem' }) cancel
+                        a.link.link-animated(href=`${universeLink(universe.shortname)}`) #{universe.title}
                     td
                       small #{formatDate(universe.updated_at, true)}
             script.
@@ -97,49 +97,49 @@ block content
                 });
               });
         .grow-3.sheet.scroll-x
-          h2 Recent Updates by Others
+          h2 #{T('Recent Updates by Others')}
           if followedUniverses.length > 0
             table.w-100
               thead
-                th Name
-                th Universe
-                th Last updated by
-                th Updated
+                th #{T('Name')}
+                th #{T('Universe')}
+                th #{T('Last updated by')}
+                th #{T('Updated')}
               tbody
                 each item in recentlyUpdated
                   tr
                     td
-                      a.link.link-animated( href=`${universeLink(item.universe_short)}/items/${item.shortname}` ) #{item.title}
+                      a.link.link-animated(href=`${universeLink(item.universe_short)}/items/${item.shortname}`) #{item.title}
                       if !item.last_updated_by
-                        small( style='font-size: x-small;' )  (New)
+                        small(style='font-size: x-small;') #{T('(New)')}
                     td
                       small
-                        a.link.link-animated( href=`${universeLink(item.universe_short)}` ) #{item.universe}
+                        a.link.link-animated(href=`${universeLink(item.universe_short)}`) #{item.universe}
                     td
                       small
-                        a.link.link-animated( href=`${ADDR_PREFIX}/users/${item.last_updated_by || item.author}` ) #{item.last_updated_by || item.author}
+                        a.link.link-animated(href=`${ADDR_PREFIX}/users/${item.last_updated_by || item.author}`) #{item.last_updated_by || item.author}
                     td
                       small #{formatDate(item.updated_at, true)}
           else
-            p No updates here — try following some 
-              a.link.link-animated( href=`${ADDR_PREFIX}/universes` ) universes
-              |  first!
-          h2 May Need Review
+            p #{T('No updates here — try following some ')}
+              a.link.link-animated(href=`${ADDR_PREFIX}/universes`) #{T('universes')}
+              | #{T(' first!')}
+          h2 #{T('May Need Review')}
           table.w-100
             thead
-              th Name
-              th Universe
-              th Updated
+              th #{T('Name')}
+              th #{T('Universe')}
+              th #{T('Updated')}
             tbody
               each item in oldestUpdated
                 tr
                   td
                     .d-flex.gap-1.align-center
-                      button.pa-1( onclick=`snooze('${item.universe_short}', '${item.shortname}')` data-item=item.shortname )
-                        small Dismiss
-                      a.link.link-animated( href=`${universeLink(item.universe_short)}/items/${item.shortname}` ) #{item.title}
+                      button.pa-1(onclick=`snooze('${item.universe_short}', '${item.shortname}')` data-item=item.shortname)
+                        small #{T('Dismiss')}
+                      a.link.link-animated(href=`${universeLink(item.universe_short)}/items/${item.shortname}`) #{item.title}
                   td
                     small
-                      a.link.link-animated( href=`${universeLink(item.universe_short)}` ) #{item.universe}
+                      a.link.link-animated(href=`${universeLink(item.universe_short)}`) #{item.universe}
                   td
                     small #{formatDate(item.updated_at, true)}

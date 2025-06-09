@@ -25,7 +25,7 @@ module.exports = {
       return { ...cats, [universe.id]: universe.obj_data.cats };
     }, {});
     res.prepareRender('itemList', {
-      items: items.map(item => ({ ...item, itemTypeName: ((universeCats[item.universe_id] ?? {})[item.item_type] ?? ['missing_cat'])[0] })),
+      items: items.map(item => ({ ...item, itemTypeName: ((universeCats[item.universe_id] ?? {})[item.item_type] ?? ['Missing Category'])[0] })),
       type: req.query.type,
       tag: req.query.tag,
       universe: req.query.universe,
@@ -61,7 +61,7 @@ module.exports = {
       return;
     }
     item.obj_data = JSON.parse(item.obj_data);
-    item.itemTypeName = ((universe.obj_data.cats ?? {})[item.item_type] ?? ['missing_cat'])[0];
+    item.itemTypeName = ((universe.obj_data.cats ?? {})[item.item_type] ?? ['Missing Category'])[0];
     item.itemTypeColor = ((universe.obj_data.cats ?? {})[item.item_type] ?? [,,'#f3f3f3'])[2];
     if (item.gallery.length > 0) {
       item.gallery = item.gallery.sort((a, b) => a.id > b.id ? 1 : -1);

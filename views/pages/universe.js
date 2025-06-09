@@ -127,7 +127,7 @@ module.exports = {
     res.status(code);
     if (code !== 200) return;
     res.prepareRender('universeItemList', {
-      items: items.map(item => ({ ...item, itemTypeName: ((universe.obj_data.cats ?? {})[item.item_type] ?? ['missing_cat'])[0] })),
+      items: items.map(item => ({ ...item, itemTypeName: ((universe.obj_data.cats ?? {})[item.item_type] ?? ['Missing Category'])[0] })),
       universe,
       type: req.query.type,
       tag: req.query.tag,

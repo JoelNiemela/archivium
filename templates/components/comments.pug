@@ -3,41 +3,41 @@ div
     each comment in comments
       .sheet.d-flex.gap-4.align-start
         if comment.author_id
-          img.userIcon( alt=commenters[comment.author_id].username, src=commenters[comment.author_id].pfpUrl )
+          img.userIcon(alt=commenters[comment.author_id].username, src=commenters[comment.author_id].pfpUrl)
         if comment.body
           .d-flex.flex-col.grow-1
             .d-flex.align-baseline
               if comment.author_id
-                a.link.link-animated( href=`/users/${commenters[comment.author_id].username}` ) 
+                a.link.link-animated(href=`/users/${commenters[comment.author_id].username}`) 
                   b #{commenters[comment.author_id].username}
               else
-                | Deleted User
+                | #{T('Deleted User')}
               small.ml-2 #{formatDate(comment.created_at)}
               if contextUser
                 .grow-1
                 if contextUser.id === comment.author_id || universe.author_permissions[contextUser.id] >= perms.ADMIN
                   small.align-self-start
-                    a.link.link-animated.d-flex.align-center( onclick=`deleteComment(${comment.id})` )
-                      span.material-symbols-outlined( style={ 'font-size': '1rem' } ) delete
-                      | Delete
-            .comment( data-val=comment.body )
+                    a.link.link-animated.d-flex.align-center(onclick=`deleteComment(${comment.id})`)
+                      span.material-symbols-outlined(style={ 'font-size': '1rem' }) delete
+                      | #{T('Delete')}
+            .comment(data-val=comment.body)
         else
-          span.link.disabled Deleted comment
+          span.link.disabled #{T('Deleted comment')}
 
   br
   hr
   br
 
   if contextUser && ((universe.public && universe.discussion_open) || (universe.author_permissions[contextUser.id] >= (universe.discussion_open ? perms.READ : perms.COMMENT)))
-    form( method='POST' action=commentAction )
-      .editor( data-replicated-value='' )
-        textarea.comment-field( id='body' name='body' oninput="t" )
+    form(method='POST' action=commentAction)
+      .editor(data-replicated-value='')
+        textarea.comment-field(id='body' name='body' oninput="t")
         span.chars 2000
       div
-        button#post( type='submit' ) Post Comment
+        button#post(type='submit') #{T('Post Comment')}
       if error
         div
-          span( style={'font-size': 'small'} ).color-error= error
+          span(style={ 'font-size': 'small' }).color-error= error
 
   script.
     document.querySelectorAll('textarea.comment-field').forEach(el => {

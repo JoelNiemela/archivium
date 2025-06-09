@@ -30,6 +30,9 @@ html(lang='en')
       function T(str, ...args) {
         return sprintf(locale[str] ?? str, ...args);
       }
+
+      const validateShortname = !{validateShortname};
+
       function universeLink(uniShort) {
         const displayUniverse = '#{displayUniverse}';
         if (displayUniverse) {

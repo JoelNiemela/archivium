@@ -18,11 +18,11 @@ div
                 if contextUser.id === comment.author_id || universe.author_permissions[contextUser.id] >= perms.ADMIN
                   small.align-self-start
                     a.link.link-animated.d-flex.align-center(onclick=`deleteComment(${comment.id})`)
-                      span.material-symbols-outlined(style={ 'font-size': '1rem' }) #{T('delete')}
+                      span.material-symbols-outlined(style={ 'font-size': '1rem' }) delete
                       | #{T('Delete')}
             .comment(data-val=comment.body)
         else
-          span.link.disabled Deleted comment
+          span.link.disabled #{T('Deleted comment')}
 
   br
   hr
